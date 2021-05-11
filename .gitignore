@@ -1,0 +1,5 @@
+.idea
+terraform-provider-opslevel
+examples/.terraform
+*.tfstate
+examples/terraform.tfstate.backup
