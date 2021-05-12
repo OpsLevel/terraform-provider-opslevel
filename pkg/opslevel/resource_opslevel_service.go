@@ -56,6 +56,12 @@ func resourceOpsLevelService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"owner_id": {
+				Type:        schema.TypeString,
+				Description: "The ID of the Team that owns this service.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"product": {
 				Type:        schema.TypeString,
 				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
@@ -68,9 +74,9 @@ func resourceOpsLevelService() *schema.Resource {
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"tier": {
+			"tier_id": {
 				Type:        schema.TypeString,
-				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
+				Description: "The ID of the software tier that the service belongs to.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -128,30 +134,10 @@ func resourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) error
 		return nil
 	}
 
-	d.Set("name", svc.Name)
-	d.Set("description", svc.Description)
-	d.Set("framework", svc.Framework)
-	d.Set("language", svc.Language)
-	d.Set("owner_id", svc.Owner.Id)
-	d.Set("product", svc.Product)
-	d.Set("tier_id", svc.Tier.Id)
-
-	aliases := []string{}
-	for _, alias := range svc.Aliases {
-		str := string(alias)
-		if str == strcase.ToSnake(string(svc.Name)) {
-			log.Printf("[DEBUG] ignoring alias `%s`", str)
-			continue
-		}
-		aliases = append(aliases, str)
+	flattened := flattenService(svc)
+	for k, v := range flattened {
+		d.Set(k, v)
 	}
-	d.Set("aliases", aliases)
-
-	tags := map[string]string{}
-	for _, tag := range svc.Tags.Nodes {
-		tags[string(tag.Key)] = string(tag.Value)
-	}
-	d.Set("tags", tags)
 
 	return nil
 }
@@ -197,4 +183,40 @@ func expandStringMap(m map[string]interface{}) map[string]string {
 		result[k] = v.(string)
 	}
 	return result
+}
+
+func flattenService(svc *opslevel.Service) map[string]interface{} {
+	m := make(map[string]interface{})
+
+	m["id"] = svc.Id.(string)
+	m["name"] = string(svc.Name)
+	m["description"] = string(svc.Description)
+	m["framework"] = string(svc.Framework)
+	m["language"] = string(svc.Language)
+
+	if svc.Owner.Id != nil {
+		m["owner_id"] = svc.Owner.Id.(string)
+	}
+
+	m["product"] = string(svc.Product)
+	m["tier_id"] = string(svc.Tier.Id)
+
+	aliases := []string{}
+	for _, alias := range svc.Aliases {
+		str := string(alias)
+		if str == strcase.ToSnake(string(svc.Name)) {
+			log.Printf("[DEBUG] ignoring alias `%s`", str)
+			continue
+		}
+		aliases = append(aliases, str)
+	}
+	m["aliases"] = aliases
+
+	tags := map[string]string{}
+	for _, tag := range svc.Tags.Nodes {
+		tags[string(tag.Key)] = string(tag.Value)
+	}
+	m["tags"] = tags
+
+	return m
 }
