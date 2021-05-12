@@ -62,6 +62,12 @@ func resourceOpsLevelService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"tags": {
+				Type:        schema.TypeMap,
+				Description: "A map of tags applied to the service",
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"tier": {
 				Type:        schema.TypeString,
 				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
@@ -87,7 +93,6 @@ func resourceOpsLevelServiceCreate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-
 	log.Println("[DEBUG] created OpsLevel service ID:", svc.Id)
 	d.SetId(svc.Id.(string))
 
@@ -96,6 +101,12 @@ func resourceOpsLevelServiceCreate(d *schema.ResourceData, meta interface{}) err
 	if len(aliases) > 0 {
 		p.client.CreateAliases(svc.Id, aliases)
 	}
+
+	// add tags
+	if v, ok := d.Get("tags").(map[string]interface{}); ok && len(v) > 0 {
+		p.client.AssignTagsForId(svc.Id, expandStringMap(d.Get("tags").(map[string]interface{})))
+	}
+
 	return resourceOpsLevelServiceRead(d, meta)
 }
 
@@ -135,6 +146,13 @@ func resourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) error
 		aliases = append(aliases, str)
 	}
 	d.Set("aliases", aliases)
+
+	tags := map[string]string{}
+	for _, tag := range svc.Tags.Nodes {
+		tags[string(tag.Key)] = string(tag.Value)
+	}
+	d.Set("tags", tags)
+
 	return nil
 }
 
@@ -171,4 +189,12 @@ func expandServiceAliases(cfg []interface{}) []string {
 	}
 
 	return aliases
+}
+
+func expandStringMap(m map[string]interface{}) map[string]string {
+	result := make(map[string]string)
+	for k, v := range m {
+		result[k] = v.(string)
+	}
+	return result
 }

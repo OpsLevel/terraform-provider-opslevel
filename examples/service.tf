@@ -4,4 +4,8 @@ resource "opslevel_service" "test" {
   description = "test service"
   framework   = "rails"
   language    = "ruby"
+
+  tags = {
+    foo = "bar"
+  }
 }
