@@ -1,8 +1,10 @@
 package opslevel
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/iancoleman/strcase"
 	"github.com/shurcooL/graphql"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -31,7 +33,7 @@ func resourceOpsLevelService() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "A list of human-friendly, unique identifiers for the service",
 				ForceNew:    false,
-				Computed:    true,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -89,6 +91,11 @@ func resourceOpsLevelServiceCreate(d *schema.ResourceData, meta interface{}) err
 	log.Println("[DEBUG] created OpsLevel service ID:", svc.Id)
 	d.SetId(svc.Id.(string))
 
+	// add Aliases
+	aliases := expandServiceAliases(d.Get("aliases").([]interface{}))
+	if len(aliases) > 0 {
+		p.client.CreateAliases(svc.Id, aliases)
+	}
 	return resourceOpsLevelServiceRead(d, meta)
 }
 
@@ -118,6 +125,16 @@ func resourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("product", svc.Product)
 	d.Set("tier_id", svc.Tier.Id)
 
+	aliases := []string{}
+	for _, alias := range svc.Aliases {
+		str := string(alias)
+		if str == strcase.ToSnake(string(svc.Name)) {
+			log.Printf("[DEBUG] ignoring alias `%s`", str)
+			continue
+		}
+		aliases = append(aliases, str)
+	}
+	d.Set("aliases", aliases)
 	return nil
 }
 
@@ -143,4 +160,15 @@ func resourceOpsLevelServiceDelete(d *schema.ResourceData, meta interface{}) err
 	d.SetId("")
 
 	return nil
+}
+
+func expandServiceAliases(cfg []interface{}) []string {
+	aliases := make([]string, len(cfg))
+	if len(cfg) > 0 {
+		for i, v := range cfg {
+			aliases[i] = v.(string)
+		}
+	}
+
+	return aliases
 }
