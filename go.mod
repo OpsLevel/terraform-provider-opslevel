@@ -9,6 +9,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.6.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.15.0
+	github.com/iancoleman/strcase v0.1.3
 	github.com/kr/pretty v0.2.1
 	github.com/opslevel/kubectl-opslevel v0.1.2
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
