@@ -3,7 +3,7 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	opslevel "github.com/zapier/opslevel-go"
+	"github.com/opslevel/kubectl-opslevel/opslevel"
 )
 
 const defaultUrl = "https://api.opslevel.com/graphql"

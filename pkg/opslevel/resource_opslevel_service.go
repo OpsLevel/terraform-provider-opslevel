@@ -1,13 +1,14 @@
 package opslevel
 
 import (
-	"context"
 	"log"
-	"strings"
+
+	"github.com/shurcooL/graphql"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/kr/pretty"
-	"github.com/zapier/opslevel-go"
+	"github.com/opslevel/kubectl-opslevel/opslevel"
+	_ "github.com/opslevel/kubectl-opslevel/opslevel"
 )
 
 func resourceOpsLevelService() *schema.Resource {
@@ -72,7 +73,7 @@ func resourceOpsLevelService() *schema.Resource {
 func resourceOpsLevelServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	p := meta.(provider)
 
-	serviceData := opslevel.Service{
+	svcCreate := opslevel.ServiceCreateInput{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Framework:   d.Get("framework").(string),
@@ -80,13 +81,13 @@ func resourceOpsLevelServiceCreate(d *schema.ResourceData, meta interface{}) err
 		Product:     d.Get("product").(string),
 	}
 
-	resp, err := p.client.CreateService(context.Background(), serviceData)
+	svc, err := p.client.CreateService(svcCreate)
 	if err != nil {
 		return err
 	}
 
-	log.Println("[DEBUG] created OpsLevel service ID:", resp.Id)
-	d.SetId(resp.Id)
+	log.Println("[DEBUG] created OpsLevel service ID:", svc.Id)
+	d.SetId(svc.Id.(string))
 
 	return resourceOpsLevelServiceRead(d, meta)
 }
@@ -97,15 +98,16 @@ func resourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) error
 
 	log.Println("[DEBUG] querying OpsLevel for service with ID:", id)
 
-	svc, err := p.client.GetServiceById(context.Background(), id)
+	svc, err := p.client.GetServiceWithId(id)
 	if err != nil {
-		if strings.Contains(err.Error(), "no service was found") {
-			d.SetId("")
-			return nil
-		}
 		log.Printf("[DEBUG] query service error: %s", pretty.Sprint(err))
 
 		return err
+	}
+	if svc.Id == nil || svc.Id.(string) == "" {
+		log.Println("[DEBUG] service no longer exists")
+		d.SetId("")
+		return nil
 	}
 
 	d.Set("name", svc.Name)
@@ -130,7 +132,11 @@ func resourceOpsLevelServiceDelete(d *schema.ResourceData, meta interface{}) err
 	p := meta.(provider)
 	id := d.Id()
 
-	_, err := p.client.DeleteServiceById(context.Background(), id)
+	delInput := opslevel.ServiceDeleteInput{
+		Id: graphql.ID(id),
+	}
+
+	err := p.client.DeleteService(delInput)
 	if err != nil {
 		return err
 	}
