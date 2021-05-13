@@ -27,7 +27,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"opslevel_service": datasourceOpsLevelService(),
+			"opslevel_services": datasourceOpsLevelServices(),
 			"opslevel_teams":   datasourceOpsLevelTeams(),
 		},
 		ResourcesMap: map[string]*schema.Resource{

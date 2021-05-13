@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func datasourceOpsLevelService() *schema.Resource {
+func datasourceOpsLevelServices() *schema.Resource {
 	serviceSchema := datasourceSchemaFromResourceSchema(resourceOpsLevelService().Schema)
 
 	serviceSchema["id"] = &schema.Schema{
@@ -23,7 +23,7 @@ func datasourceOpsLevelService() *schema.Resource {
 	}
 
 	return &schema.Resource{
-		Read: datasourceOpsLevelServiceRead,
+		Read: datasourceOpsLevelServicesRead,
 		Schema: map[string]*schema.Schema{
 			"filter": {
 				Type:        schema.TypeList,
@@ -35,13 +35,13 @@ func datasourceOpsLevelService() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"field": {
 							Type:        schema.TypeString,
-							Description: "The service field to filter on.",
+							Description: "The service field to filter on. Accepts `alias`, `id`, `framework`, `language`, `ownerAlias`, `tag`.",
 							ForceNew:    true,
 							Required:    true,
 						},
 						"value": {
 							Type:        schema.TypeString,
-							Description: "The field value to match.",
+							Description: "The service field value to match.",
 							ForceNew:    true,
 							Optional:    true,
 						},
@@ -50,7 +50,7 @@ func datasourceOpsLevelService() *schema.Resource {
 			},
 			"services": {
 				Type:        schema.TypeList,
-				Description: "The services matching filter.",
+				Description: "The services matching specified filters.",
 				ForceNew:    false,
 				Computed:    true,
 				Elem: &schema.Resource{
@@ -61,7 +61,7 @@ func datasourceOpsLevelService() *schema.Resource {
 	}
 }
 
-func datasourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceOpsLevelServicesRead(d *schema.ResourceData, meta interface{}) error {
 	p := meta.(provider)
 
 	services := []interface{}{}
@@ -96,6 +96,10 @@ func datasourceOpsLevelServiceRead(d *schema.ResourceData, meta interface{}) err
 		switch field {
 		case "framework":
 			response, err = ListServicesByFramework(p.client, value)
+		case "language":
+			response, err = ListServicesByLanguage(p.client, value)
+		case "ownerAlias":
+			response, err = ListServicesByOwnerAlias(p.client, value)
 		case "tag":
 			tagKV := strings.Split(value, ":")
 			if len(tagKV) != 2 {
@@ -150,6 +154,83 @@ func (q *ListServicesByFrameworkQuery) Query(client *opslevel.Client, framework 
 
 func ListServicesByFramework(client *opslevel.Client, framework string) ([]opslevel.Service, error) {
 	q := ListServicesByFrameworkQuery{}
+	if err := q.Query(client, framework); err != nil {
+		return []opslevel.Service{}, err
+	}
+	return q.Account.Services.Nodes, nil
+}
+
+
+// By Language
+
+type ListServicesByLanguageQuery struct {
+	Account struct {
+		Services struct {
+			Nodes    []opslevel.Service
+			PageInfo opslevel.PageInfo
+		} `graphql:"services(language: $language, after: $after, first: $first)"`
+	}
+}
+
+func (q *ListServicesByLanguageQuery) Query(client *opslevel.Client, language string) error {
+	var subQ ListServicesByLanguageQuery
+	v := opslevel.PayloadVariables{
+		"language": graphql.String(language),
+		"after":     q.Account.Services.PageInfo.End,
+		"first":     graphql.Int(100),
+	}
+	if err := client.Query(&subQ, v); err != nil {
+		return err
+	}
+	if subQ.Account.Services.PageInfo.HasNextPage {
+		subQ.Query(client, language)
+	}
+	for _, service := range subQ.Account.Services.Nodes {
+		q.Account.Services.Nodes = append(q.Account.Services.Nodes, service)
+	}
+	return nil
+}
+
+func ListServicesByLanguage(client *opslevel.Client, framework string) ([]opslevel.Service, error) {
+	q := ListServicesByLanguageQuery{}
+	if err := q.Query(client, framework); err != nil {
+		return []opslevel.Service{}, err
+	}
+	return q.Account.Services.Nodes, nil
+}
+
+// By OwnerAlias
+
+type ListServicesByOwnerAliasQuery struct {
+	Account struct {
+		Services struct {
+			Nodes    []opslevel.Service
+			PageInfo opslevel.PageInfo
+		} `graphql:"services(ownerAlias: $ownerAlias, after: $after, first: $first)"`
+	}
+}
+
+func (q *ListServicesByOwnerAliasQuery) Query(client *opslevel.Client, ownerAlias string) error {
+	var subQ ListServicesByOwnerAliasQuery
+	v := opslevel.PayloadVariables{
+		"ownerAlias": graphql.String(ownerAlias),
+		"after":     q.Account.Services.PageInfo.End,
+		"first":     graphql.Int(100),
+	}
+	if err := client.Query(&subQ, v); err != nil {
+		return err
+	}
+	if subQ.Account.Services.PageInfo.HasNextPage {
+		subQ.Query(client, ownerAlias)
+	}
+	for _, service := range subQ.Account.Services.Nodes {
+		q.Account.Services.Nodes = append(q.Account.Services.Nodes, service)
+	}
+	return nil
+}
+
+func ListServicesByOwnerAlias(client *opslevel.Client, framework string) ([]opslevel.Service, error) {
+	q := ListServicesByOwnerAliasQuery{}
 	if err := q.Query(client, framework); err != nil {
 		return []opslevel.Service{}, err
 	}

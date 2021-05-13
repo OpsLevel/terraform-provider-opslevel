@@ -14,21 +14,21 @@ resource "opslevel_service" "test" {
   }
 }
 
-data "opslevel_service" "test" {
+data "opslevel_services" "test" {
   filter {
     field = "alias"
     value = opslevel_service.test.aliases.0
   }
 }
 
-data "opslevel_service" "django" {
+data "opslevel_services" "django" {
   filter {
     field = "framework"
     value = "django"
   }
 }
 
-data "opslevel_service" "zkms" {
+data "opslevel_services" "zkms" {
   filter {
     field = "tag"
     value = "zkms:true"
@@ -40,13 +40,13 @@ output "test_service_id" {
 }
 
 output "found_services" {
-  value = data.opslevel_service.test
+  value = data.opslevel_services.test
 }
 
 output "django_services" {
-  value = data.opslevel_service.django
+  value = data.opslevel_services.django
 }
 
 output "zkms_services" {
-  value = data.opslevel_service.zkms
+  value = data.opslevel_services.zkms
 }
