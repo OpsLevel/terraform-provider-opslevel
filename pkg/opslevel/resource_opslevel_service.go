@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/kr/pretty"
-	"github.com/opslevel/kubectl-opslevel/opslevel"
+	"github.com/opslevel/opslevel-go"
 )
 
 func resourceOpsLevelService() *schema.Resource {

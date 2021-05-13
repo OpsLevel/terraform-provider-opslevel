@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/opslevel/kubectl-opslevel/opslevel"
+	"github.com/opslevel/opslevel-go"
 	"github.com/shurcooL/graphql"
 
 	"github.com/kr/pretty"
