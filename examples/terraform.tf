@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     opslevel = {
-      source  = "zapier/opslevel"
+      source = "zapier/opslevel"
     }
   }
 }
