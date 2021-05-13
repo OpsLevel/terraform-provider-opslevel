@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/iancoleman/strcase"
@@ -10,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/kr/pretty"
 	"github.com/opslevel/kubectl-opslevel/opslevel"
-	_ "github.com/opslevel/kubectl-opslevel/opslevel"
 )
 
 func resourceOpsLevelService() *schema.Resource {
