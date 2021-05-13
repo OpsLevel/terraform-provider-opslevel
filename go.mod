@@ -1,4 +1,4 @@
-module terraform-provider-opslevel
+module github.com/zapier/terraform-provider-opslevel
 
 go 1.16
 

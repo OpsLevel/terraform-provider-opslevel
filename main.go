@@ -1,7 +1,7 @@
 package main
 
 import (
-	opslevel "terraform-provider-opslevel/pkg/opslevel"
+	opslevel "github.com/zapier/terraform-provider-opslevel/pkg/opslevel"
 
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 )
