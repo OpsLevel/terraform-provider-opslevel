@@ -2,10 +2,8 @@ package opslevel
 
 import (
 	"fmt"
-	"log"
-	"strings"
-
 	"github.com/kr/pretty"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -98,11 +96,7 @@ func datasourceOpsLevelServicesRead(d *schema.ResourceData, meta interface{}) er
 		case "ownerAlias":
 			response, err = ListServicesByOwnerAlias(p.client, value)
 		case "tag":
-			tagKV := strings.Split(value, ":")
-			if len(tagKV) != 2 {
-				return fmt.Errorf("tag filter requires `value` in format 'key:value'")
-			}
-			response, err = ListServicesByTag(p.client, tagKV[0], tagKV[1])
+			response, err = ListServicesByTag(p.client, value)
 		}
 
 		if err != nil {

@@ -5,6 +5,7 @@ import (
 	"github.com/kr/pretty"
 	"github.com/opslevel/opslevel-go"
 	"github.com/shurcooL/graphql"
+	"strings"
 )
 
 // Queries
@@ -166,17 +167,46 @@ func ListServicesByOwnerAlias(client *opslevel.Client, framework string) ([]Serv
 
 // By Tag
 
+type listServicesByTagQuery interface {
+	Query(client *opslevel.Client, key, value string) (error)
+	Services() []Service
+}
+
+func ListServicesByTag(client *opslevel.Client, value string) ([]Service, error) {
+	tagKV := strings.Split(value, ":")
+	if len(tagKV) != 2 {
+		return nil, fmt.Errorf("tag filter requires `value` in format 'key:value', or `key:` if only filtering on the presence of a tag.")
+	}
+
+	var query  listServicesByTagQuery
+	if tagKV[1] == "" {
+		query = &ListServicesByTagQuery{}
+	} else {
+		query = &ListServicesByTagValueQuery{}
+	}
+
+	err := query.Query(client, tagKV[0], tagKV[1])
+	if err != nil {
+		return nil, err
+	}
+	return query.Services(), nil
+}
+
+
 type ListServicesByTagQuery struct {
 	Account struct {
-		Services ServiceConnection `graphql:"services(tag: {key:$key, value:$value}, after: $after, first: $first)"`
+		Services ServiceConnection `graphql:"services(tag: {key:$key, value:}, after: $after, first: $first)"`
 	}
+}
+
+func (q *ListServicesByTagQuery) Services() []Service {
+	return q.Account.Services.Nodes
 }
 
 func (q *ListServicesByTagQuery) Query(client *opslevel.Client, key, value string) error {
 	var subQ ListServicesByTagQuery
 	v := opslevel.PayloadVariables{
 		"key":   graphql.String(key),
-		"value": graphql.String(value),
 		"after": q.Account.Services.PageInfo.End,
 		"first": graphql.Int(100),
 	}
@@ -192,10 +222,33 @@ func (q *ListServicesByTagQuery) Query(client *opslevel.Client, key, value strin
 	return nil
 }
 
-func ListServicesByTag(client *opslevel.Client, key, value string) ([]Service, error) {
-	q := ListServicesByTagQuery{}
-	if err := q.Query(client, key, value); err != nil {
-		return []Service{}, err
+type ListServicesByTagValueQuery struct {
+	Account struct {
+		Services ServiceConnection `graphql:"services(tag: {key:$key, value:$value}, after: $after, first: $first)"`
 	}
-	return q.Account.Services.Nodes, nil
 }
+
+func (q ListServicesByTagValueQuery) Query(client *opslevel.Client, key, value string) error {
+	var subQ ListServicesByTagValueQuery
+	v := opslevel.PayloadVariables{
+		"key":   graphql.String(key),
+		"value":   graphql.String(value),
+		"after": q.Account.Services.PageInfo.End,
+		"first": graphql.Int(100),
+	}
+	if err := client.Query(&subQ, v); err != nil {
+		return err
+	}
+	if subQ.Account.Services.PageInfo.HasNextPage {
+		subQ.Query(client, key, value)
+	}
+	for _, service := range subQ.Account.Services.Nodes {
+		q.Account.Services.Nodes = append(q.Account.Services.Nodes, service)
+	}
+	return nil
+}
+
+func (q *ListServicesByTagValueQuery) Services() []Service {
+	return q.Account.Services.Nodes
+}
+
