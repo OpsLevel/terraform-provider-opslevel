@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.15.0
 	github.com/iancoleman/strcase v0.1.3
 	github.com/kr/pretty v0.2.1
-	github.com/opslevel/opslevel-go v0.1.0
+	github.com/opslevel/opslevel-go v0.1.1-0.20210513125820-487a475934b0
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/zclconf/go-cty v1.5.1 // indirect
