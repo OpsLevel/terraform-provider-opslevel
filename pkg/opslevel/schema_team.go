@@ -2,7 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/kubectl-opslevel/opslevel"
+	"github.com/opslevel/opslevel-go"
 )
 
 var opsLevelTeamSchema = map[string]*schema.Schema{
