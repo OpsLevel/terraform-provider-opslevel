@@ -2,8 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/iancoleman/strcase"
 	"log"
+	"strings"
 )
 
 var serviceSchema = map[string]*schema.Schema{
@@ -52,6 +52,12 @@ var serviceSchema = map[string]*schema.Schema{
 		ForceNew:    false,
 		Optional:    true,
 	},
+	"slug": {
+		Type:        schema.TypeString,
+		Description: "Slug form of the service name. Also a valid service alias.",
+		ForceNew:    false,
+		Computed:    true,
+	},
 	"tags": {
 		Type:        schema.TypeMap,
 		Description: "A map of tags applied to the service",
@@ -82,11 +88,12 @@ func flattenService(svc *Service) map[string]interface{} {
 	m["product"] = string(svc.Product)
 	m["tier_id"] = string(svc.Tier.Id)
 
+	m["slug"] = strings.Replace(svc.HtmlURL,"https://app.opslevel.com/services/", "", 1)
 	aliases := []string{}
-	for _, alias := range svc.Aliases {
+	for i, alias := range svc.Aliases {
 		str := string(alias)
-		if str == strcase.ToSnake(string(svc.Name)) {
-			log.Printf("[DEBUG] ignoring alias `%s`", str)
+		if str == m["slug"] {
+			log.Printf("[DEBUG] ignoring alias #%d `%s` as slug", i, str)
 			continue
 		}
 		aliases = append(aliases, str)

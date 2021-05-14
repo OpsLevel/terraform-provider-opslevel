@@ -31,4 +31,8 @@ description: |-
 - **tags** (Map of String) A map of tags applied to the service
 - **tier_id** (String) The ID of the software tier that the service belongs to.
 
+### Read-Only
+
+- **slug** (String) Slug form of the service name. Also a valid service alias.
+
 

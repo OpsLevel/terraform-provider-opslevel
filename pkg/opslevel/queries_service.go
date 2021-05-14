@@ -12,7 +12,8 @@ import (
 
 type Service struct {
 	opslevel.Service
-	Tags ServiceTagsConnection `json:"tags"`
+	Tags    ServiceTagsConnection `json:"tags"`
+	HtmlURL string `json:"htmlUrl"`
 }
 
 type ServiceTagsConnection struct {

@@ -52,6 +52,7 @@ Read-Only:
 - **name** (String)
 - **owner_id** (String)
 - **product** (String)
+- **slug** (String)
 - **tags** (Map of String)
 - **tier_id** (String)
 
