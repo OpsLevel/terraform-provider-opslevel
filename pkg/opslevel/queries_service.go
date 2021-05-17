@@ -193,7 +193,6 @@ func ListServicesByTag(client *opslevel.Client, value string) ([]Service, error)
 	return query.Services(), nil
 }
 
-
 type ListServicesByTagQuery struct {
 	Account struct {
 		Services ServiceConnection `graphql:"services(tag: {key:$key, value:}, after: $after, first: $first)"`
@@ -229,7 +228,7 @@ type ListServicesByTagValueQuery struct {
 	}
 }
 
-func (q ListServicesByTagValueQuery) Query(client *opslevel.Client, key, value string) error {
+func (q *ListServicesByTagValueQuery) Query(client *opslevel.Client, key, value string) error {
 	var subQ ListServicesByTagValueQuery
 	v := opslevel.PayloadVariables{
 		"key":   graphql.String(key),
