@@ -1,4 +1,4 @@
-module github.com/zapier/terraform-provider-opslevel
+module github.com/opslevel/terraform-provider-opslevel
 
 go 1.16
 
@@ -13,9 +13,8 @@ require (
 	github.com/hashicorp/hcl/v2 v2.6.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.15.0
-	github.com/iancoleman/strcase v0.1.3
 	github.com/kr/pretty v0.2.1
-	github.com/opslevel/opslevel-go v0.1.1-0.20210513125820-487a475934b0
+	github.com/opslevel/opslevel-go v0.2.2
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/zclconf/go-cty v1.5.1 // indirect
@@ -23,7 +22,9 @@ require (
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/text v0.3.4 // indirect
-	golang.org/x/tools v0.1.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
+
+// Uncomment for local development
+// replace github.com/opslevel/opslevel-go => ../../opslevel-go
