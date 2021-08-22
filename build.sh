@@ -1,5 +1,5 @@
 #! /bin/bash
-VERSION=$(git describe --tags --match "v[0-9].*" --always)
+VERSION="v99.99.99"
 HOSTNAME=registry.terraform.io
 NAMESPACE=opslevel
 NAME=opslevel
@@ -8,6 +8,6 @@ OS_ARCH=darwin_amd64
 
 go build -o ${BINARY}
 chmod +x ${BINARY}
-mkdir -p ${HOME}/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}
-mv ${BINARY} ${HOME}/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}
-echo "Built terraform provider to - ${HOME}/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}/${BINARY}"
+mkdir -p ./.terraform/providers/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}
+mv ${BINARY} ./.terraform/providers/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}
+echo "Built terraform provider to - ./.terraform/providers/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION:1}/${OS_ARCH}/${BINARY}"

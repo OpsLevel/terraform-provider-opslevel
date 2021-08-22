@@ -1,10 +1,12 @@
 package main
 
 import (
-	opslevel "github.com/opslevel/terraform-provider-opslevel/pkg/opslevel"
+	"github.com/opslevel/terraform-provider-opslevel/opslevel"
 
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 )
+
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 var (
 	version string = "dev"
