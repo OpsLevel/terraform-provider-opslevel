@@ -45,20 +45,14 @@ func resourceCheckCustomEvent() *schema.Resource {
 }
 
 func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckCustomEventCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+	input := opslevel.CheckCustomEventCreateInput{}
+	setCheckCreateInput(d, &input)
 
-		Integration:      getID(d, "integration"),
-		ServiceSelector:  d.Get("service_selector").(string),
-		SuccessCondition: d.Get("success_condition").(string),
-		Message:          d.Get("message").(string),
-	}
+	input.Integration = getID(d, "integration")
+	input.ServiceSelector = d.Get("service_selector").(string)
+	input.SuccessCondition = d.Get("success_condition").(string)
+	input.Message = d.Get("message").(string)
+
 	resource, err := client.CreateCheckCustomEvent(input)
 	if err != nil {
 		return err
@@ -76,7 +70,20 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+
+	if err := d.Set("integration", resource.Integration.Id.(string)); err != nil {
+		return err
+	}
+	if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
+		return err
+	}
+	if err := d.Set("success_condition", resource.SuccessCondition); err != nil {
+		return err
+	}
+	if err := d.Set("message", resource.ResultMessage); err != nil {
 		return err
 	}
 
@@ -84,32 +91,8 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 }
 
 func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckCustomEventUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckCustomEventUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("integration") {
 		input.Integration = getID(d, "integration")

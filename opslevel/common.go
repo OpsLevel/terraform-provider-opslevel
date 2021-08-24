@@ -178,7 +178,7 @@ func getPredicateInputSchema(required bool) *schema.Schema {
 	return output
 }
 
-func getPredicateInput(d *schema.ResourceData, key string) *opslevel.PredicateInput {
+func expandPredicate(d *schema.ResourceData, key string) *opslevel.PredicateInput {
 	if _, ok := d.GetOk(key); !ok {
 		return nil
 	}
@@ -186,6 +186,17 @@ func getPredicateInput(d *schema.ResourceData, key string) *opslevel.PredicateIn
 		Type:  opslevel.PredicateType(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
 		Value: d.Get(fmt.Sprintf("%s.0.value", key)).(string),
 	}
+}
+
+func flattenPredicate(input *opslevel.Predicate) []map[string]string {
+	output := []map[string]string{}
+	if input != nil {
+		output = append(output, map[string]string{
+			"type":  string(input.Type),
+			"value": input.Value,
+		})
+	}
+	return output
 }
 
 func getDatasourceFilter(required bool, validFieldNames []string) *schema.Schema {

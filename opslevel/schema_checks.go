@@ -61,7 +61,7 @@ func getCheckSchema(extras map[string]*schema.Schema) map[string]*schema.Schema 
 	return output
 }
 
-func resourceCheckRead(d *schema.ResourceData, resource *opslevel.Check) error {
+func setCheckData(d *schema.ResourceData, resource *opslevel.Check) error {
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
@@ -84,6 +84,45 @@ func resourceCheckRead(d *schema.ResourceData, resource *opslevel.Check) error {
 		return err
 	}
 	return nil
+}
+
+func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProvider) {
+	input := p.GetCheckCreateInput()
+	input.Name = d.Get("name").(string)
+	input.Enabled = d.Get("enabled").(bool)
+	input.Category = getID(d, "category")
+	input.Level = getID(d, "level")
+	input.Owner = getID(d, "owner")
+	input.Filter = getID(d, "filter")
+	input.Notes = d.Get("notes").(string)
+}
+
+func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProvider) {
+	input := p.GetCheckUpdateInput()
+	input.Id = d.Id()
+
+	if d.HasChange("name") {
+		input.Name = d.Get("name").(string)
+	}
+	if d.HasChange("enabled") {
+		value := d.Get("enabled").(bool)
+		input.Enabled = &value
+	}
+	if d.HasChange("category") {
+		input.Category = getID(d, "category")
+	}
+	if d.HasChange("level") {
+		input.Level = getID(d, "level")
+	}
+	if d.HasChange("owner") {
+		input.Owner = getID(d, "owner")
+	}
+	if d.HasChange("filter") {
+		input.Filter = getID(d, "filter")
+	}
+	if d.HasChange("notes") {
+		input.Notes = d.Get("notes").(string)
+	}
 }
 
 func resourceCheckDelete(d *schema.ResourceData, client *opslevel.Client) error {

@@ -38,19 +38,13 @@ func resourceCheckRepositoryFile() *schema.Resource {
 }
 
 func resourceCheckRepositoryFileCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryFileCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+	input := opslevel.CheckRepositoryFileCreateInput{}
+	setCheckCreateInput(d, &input)
 
-		DirectorySearch:       d.Get("directory_search").(bool),
-		Filepaths:             getStringArray(d, "filepaths"),
-		FileContentsPredicate: getPredicateInput(d, "file_contents_predicate"),
-	}
+	input.DirectorySearch = d.Get("directory_search").(bool)
+	input.Filepaths = getStringArray(d, "filepaths")
+	input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+
 	resource, err := client.CreateCheckRepositoryFile(input)
 	if err != nil {
 		return err
@@ -68,7 +62,16 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+	if err := d.Set("directory_search", resource.DirectorySearch); err != nil {
+		return err
+	}
+	if err := d.Set("filepaths", resource.Filepaths); err != nil {
+		return err
+	}
+	if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryFileCheckFragment.FileContentsPredicate)); err != nil {
 		return err
 	}
 
@@ -76,32 +79,8 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 }
 
 func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryFileUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckRepositoryFileUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("directory_search") {
 		input.DirectorySearch = d.Get("directory_search").(bool)
@@ -112,7 +91,7 @@ func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.
 	}
 
 	if d.HasChange("file_contents_predicate") {
-		input.FileContentsPredicate = getPredicateInput(d, "file_contents_predicate")
+		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
 	}
 
 	_, err := client.UpdateCheckRepositoryFile(input)

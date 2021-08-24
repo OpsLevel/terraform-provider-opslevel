@@ -1,6 +1,9 @@
 package opslevel
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go"
@@ -58,25 +61,35 @@ func resourceCheckManual() *schema.Resource {
 	}
 }
 
-func resourceCheckManualCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckManualCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+func expandUpdateFrequency(d *schema.ResourceData, key string) *opslevel.ManualCheckFrequencyInput {
+	if _, ok := d.GetOk(key); !ok {
+		return nil
+	}
+	return opslevel.NewManualCheckFrequencyInput(
+		d.Get(fmt.Sprintf("%s.0.starting_data", key)).(string),
+		opslevel.FrequencyTimeScale(d.Get(fmt.Sprintf("%s.0.time_scale", key)).(string)),
+		d.Get(fmt.Sprintf("%s.0.value", key)).(int),
+	)
+}
 
-		UpdateRequiresComment: d.Get("update_requires_comment").(bool),
+func flattenUpdateFrequency(input *opslevel.ManualCheckFrequency) []map[string]interface{} {
+	output := []map[string]interface{}{}
+	if input != nil {
+		output = append(output, map[string]interface{}{
+			"starting_data": input.StartingDate.Format(time.RFC3339),
+			"time_scale":    string(input.FrequencyTimeScale),
+			"value":         input.FrequencyValue,
+		})
 	}
-	if _, ok := d.GetOk("update_frequency"); ok {
-		input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
-			d.Get("update_frequency.0.starting_data").(string),
-			opslevel.FrequencyTimeScale(d.Get("update_frequency.0.time_scale").(string)),
-			d.Get("update_frequency.0.value").(int),
-		)
-	}
+	return output
+}
+
+func resourceCheckManualCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	input := opslevel.CheckManualCreateInput{}
+	setCheckCreateInput(d, &input)
+
+	input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)
+	input.UpdateFrequency = expandUpdateFrequency(d, "update_frequency")
 
 	resource, err := client.CreateCheckManual(input)
 	if err != nil {
@@ -95,7 +108,13 @@ func resourceCheckManualRead(d *schema.ResourceData, client *opslevel.Client) er
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+	if err := d.Set("update_frequency", flattenUpdateFrequency(resource.UpdateFrequency)); err != nil {
+		return err
+	}
+	if err := d.Set("update_requires_comment", resource.UpdateRequiresComment); err != nil {
 		return err
 	}
 
@@ -103,39 +122,11 @@ func resourceCheckManualRead(d *schema.ResourceData, client *opslevel.Client) er
 }
 
 func resourceCheckManualUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckManualUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckManualUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("update_frequency") {
-		input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
-			d.Get("update_frequency.0.starting_data").(string),
-			opslevel.FrequencyTimeScale(d.Get("update_frequency.0.time_scale").(string)),
-			d.Get("update_frequency.0.value").(int),
-		)
+		input.UpdateFrequency = expandUpdateFrequency(d, "update_frequency")
 	}
 	if d.HasChange("update_requires_comment") {
 		input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)

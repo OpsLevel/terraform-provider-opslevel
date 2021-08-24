@@ -31,19 +31,13 @@ func resourceCheckToolUsage() *schema.Resource {
 }
 
 func resourceCheckToolUsageCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckToolUsageCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+	input := opslevel.CheckToolUsageCreateInput{}
+	setCheckCreateInput(d, &input)
 
-		ToolCategory:         opslevel.ToolCategory(d.Get("tool_category").(string)),
-		ToolNamePredicate:    getPredicateInput(d, "tool_name_predicate"),
-		EnvironmentPredicate: getPredicateInput(d, "environment_predicate"),
-	}
+	input.ToolCategory = opslevel.ToolCategory(d.Get("tool_category").(string))
+	input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
+	input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
+
 	resource, err := client.CreateCheckToolUsage(input)
 	if err != nil {
 		return err
@@ -61,7 +55,16 @@ func resourceCheckToolUsageRead(d *schema.ResourceData, client *opslevel.Client)
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+	if err := d.Set("tool_category", string(resource.ToolCategory)); err != nil {
+		return err
+	}
+	if err := d.Set("tool_name_predicate", flattenPredicate(resource.ToolNamePredicate)); err != nil {
+		return err
+	}
+	if err := d.Set("environment_predicate", flattenPredicate(resource.EnvironmentPredicate)); err != nil {
 		return err
 	}
 
@@ -69,41 +72,17 @@ func resourceCheckToolUsageRead(d *schema.ResourceData, client *opslevel.Client)
 }
 
 func resourceCheckToolUsageUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckToolUsageUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckToolUsageUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("tool_category") {
 		input.ToolCategory = opslevel.ToolCategory(d.Get("tool_category").(string))
 	}
 	if d.HasChange("tool_name_predicate") {
-		input.ToolNamePredicate = getPredicateInput(d, "tool_name_predicate")
+		input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
 	}
 	if d.HasChange("environment_predicate") {
-		input.EnvironmentPredicate = getPredicateInput(d, "environment_predicate")
+		input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
 	}
 
 	_, err := client.UpdateCheckToolUsage(input)

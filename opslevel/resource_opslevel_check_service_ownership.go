@@ -20,15 +20,9 @@ func resourceCheckServiceOwnership() *schema.Resource {
 }
 
 func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceOwnershipCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
-	}
+	input := opslevel.CheckServiceOwnershipCreateInput{}
+	setCheckCreateInput(d, &input)
+
 	resource, err := client.CreateCheckServiceOwnership(input)
 	if err != nil {
 		return err
@@ -46,7 +40,7 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
 		return err
 	}
 
@@ -54,32 +48,8 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceOwnershipUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckServiceOwnershipUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	_, err := client.UpdateCheckServiceOwnership(input)
 	if err != nil {

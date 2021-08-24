@@ -32,18 +32,12 @@ func resourceCheckRepositorySearch() *schema.Resource {
 }
 
 func resourceCheckRepositorySearchCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositorySearchCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+	input := opslevel.CheckRepositorySearchCreateInput{}
+	setCheckCreateInput(d, &input)
 
-		FileExtensions:        getStringArray(d, "file_extensions"),
-		FileContentsPredicate: *getPredicateInput(d, "file_contents_predicate"),
-	}
+	input.FileExtensions = getStringArray(d, "file_extensions")
+	input.FileContentsPredicate = *expandPredicate(d, "file_contents_predicate")
+
 	resource, err := client.CreateCheckRepositorySearch(input)
 	if err != nil {
 		return err
@@ -61,7 +55,13 @@ func resourceCheckRepositorySearchRead(d *schema.ResourceData, client *opslevel.
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+	if err := d.Set("file_extensions", resource.FileExtensions); err != nil {
+		return err
+	}
+	if err := d.Set("file_contents_predicate", flattenPredicate(&resource.RepositorySearchCheckFragment.FileContentsPredicate)); err != nil {
 		return err
 	}
 
@@ -69,39 +69,15 @@ func resourceCheckRepositorySearchRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckRepositorySearchUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositorySearchUpdateInput{
-		Id: d.Id(),
-	}
+	input := opslevel.CheckRepositorySearchUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
-
-	if d.HasChange("filepaths") {
+	if d.HasChange("file_extensions") {
 		input.FileExtensions = getStringArray(d, "file_extensions")
 	}
 
 	if d.HasChange("file_contents_predicate") {
-		input.FileContentsPredicate = getPredicateInput(d, "file_contents_predicate")
+		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
 	}
 
 	_, err := client.UpdateCheckRepositorySearch(input)

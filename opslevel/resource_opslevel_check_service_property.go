@@ -30,18 +30,12 @@ func resourceCheckServiceProperty() *schema.Resource {
 }
 
 func resourceCheckServicePropertyCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServicePropertyCreateInput{
-		Name:     d.Get("name").(string),
-		Enabled:  d.Get("enabled").(bool),
-		Category: getID(d, "category"),
-		Level:    getID(d, "level"),
-		Owner:    getID(d, "owner"),
-		Filter:   getID(d, "filter"),
-		Notes:    d.Get("notes").(string),
+	input := opslevel.CheckServicePropertyCreateInput{}
+	setCheckCreateInput(d, &input)
 
-		Property:  opslevel.ServiceProperty(d.Get("property").(string)),
-		Predicate: getPredicateInput(d, "predicate"),
-	}
+	input.Property = opslevel.ServiceProperty(d.Get("property").(string))
+	input.Predicate = expandPredicate(d, "predicate")
+
 	resource, err := client.CreateCheckServiceProperty(input)
 	if err != nil {
 		return err
@@ -59,7 +53,13 @@ func resourceCheckServicePropertyRead(d *schema.ResourceData, client *opslevel.C
 		return err
 	}
 
-	if err := resourceCheckRead(d, resource); err != nil {
+	if err := setCheckData(d, resource); err != nil {
+		return err
+	}
+	if err := d.Set("property", string(resource.Property)); err != nil {
+		return err
+	}
+	if err := d.Set("predicate", flattenPredicate(resource.Predicate)); err != nil {
 		return err
 	}
 
@@ -67,38 +67,14 @@ func resourceCheckServicePropertyRead(d *schema.ResourceData, client *opslevel.C
 }
 
 func resourceCheckServicePropertyUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServicePropertyUpdateInput{
-		Id: d.Id(),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
-	if d.HasChange("category") {
-		input.Category = getID(d, "category")
-	}
-	if d.HasChange("level") {
-		input.Level = getID(d, "level")
-	}
-	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
-	}
-	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
-	}
-	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
-	}
+	input := opslevel.CheckServicePropertyUpdateInput{}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("property") {
 		input.Property = opslevel.ServiceProperty(d.Get("property").(string))
 	}
 	if d.HasChange("predicate") {
-		input.Predicate = getPredicateInput(d, "predicate")
+		input.Predicate = expandPredicate(d, "predicate")
 	}
 
 	_, err := client.UpdateCheckServiceProperty(input)
