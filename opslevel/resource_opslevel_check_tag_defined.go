@@ -57,7 +57,7 @@ func resourceCheckTagDefinedRead(d *schema.ResourceData, client *opslevel.Client
 	if err := d.Set("tag_key", resource.TagKey); err != nil {
 		return err
 	}
-	if err := d.Set("tag_predicate", flattenPredicate(resource.Predicate)); err != nil {
+	if err := d.Set("tag_predicate", flattenPredicate(resource.TagPredicate)); err != nil {
 		return err
 	}
 
