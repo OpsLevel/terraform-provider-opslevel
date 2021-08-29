@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,9 +12,6 @@ import (
 	"github.com/opslevel/opslevel-go"
 	"github.com/shurcooL/graphql"
 )
-
-var tagKeyRegex = regexp.MustCompile("\\A[a-z][0-9a-z_\\.\\/\\\\-]*\\z")
-var tagKeyRegexErrorMsg = "Must start with a letter and only allows lowercase alphanumerics, underscores, hyphens, periods, and slashes are allowed."
 
 func timeID() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
@@ -78,69 +74,78 @@ func getStringArray(d *schema.ResourceData, key string) []string {
 
 func findService(aliasKey string, idKey string, d *schema.ResourceData, client *opslevel.Client) (*opslevel.Service, error) {
 	alias := d.Get(aliasKey).(string)
-	id := d.Get(idKey).(string)
+	id := d.Get(idKey)
 	if alias == "" && id == "" {
-		return nil, fmt.Errorf("Must provide one of `%s` or `%s` field to find by.", aliasKey, idKey)
+		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Service
-	if id == "" {
+	if id == nil {
 		found, err := client.GetServiceWithAlias(alias)
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	} else {
-		found, err := client.GetService(id)
+		found, err := client.GetService(id.(string))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
+	}
+	if resource.Id == nil {
+		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
 }
 
 func findRepository(aliasKey string, idKey string, d *schema.ResourceData, client *opslevel.Client) (*opslevel.Repository, error) {
 	alias := d.Get(aliasKey).(string)
-	id := d.Get(idKey).(string)
+	id := d.Get(idKey)
 	if alias == "" && id == "" {
-		return nil, fmt.Errorf("Must provide one of `%s` or `%s` field to find by.", aliasKey, idKey)
+		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Repository
-	if id == "" {
+	if id == nil {
 		found, err := client.GetRepositoryWithAlias(alias)
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	} else {
-		found, err := client.GetRepository(id)
+		found, err := client.GetRepository(id.(string))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
+	}
+	if resource.Id == nil {
+		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
 }
 
 func findTeam(aliasKey string, idKey string, d *schema.ResourceData, client *opslevel.Client) (*opslevel.Team, error) {
 	alias := d.Get(aliasKey).(string)
-	id := d.Get(idKey).(string)
+	id := d.Get(idKey)
 	if alias == "" && id == "" {
-		return nil, fmt.Errorf("Must provide one of `%s` or `%s` field to find by.", aliasKey, idKey)
+		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Team
-	if id == "" {
+	if id == nil {
 		found, err := client.GetTeamWithAlias(alias)
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	} else {
-		found, err := client.GetTeam(id)
+		found, err := client.GetTeam(id.(string))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
+	}
+	if resource.Id == nil {
+		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
 }

@@ -111,6 +111,8 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 	if err != nil {
 		return err
 	}
-	d.Set("last_updated", timeLastUpdated())
+	if err := d.Set("last_updated", timeLastUpdated()); err != nil {
+		return err
+	}
 	return resourceCheckCustomEventRead(d, client)
 }

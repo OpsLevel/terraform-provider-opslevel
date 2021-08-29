@@ -118,7 +118,7 @@ func resourceServiceToolRead(d *schema.ResourceData, client *opslevel.Client) er
 		}
 	}
 	if resource == nil {
-		return fmt.Errorf("Unable to find tool with id '%s' on service '%s'", id, service.Aliases[0])
+		return fmt.Errorf("unable to find tool with id '%s' on service '%s'", id, service.Aliases[0])
 	}
 
 	if err := d.Set("name", resource.DisplayName); err != nil {

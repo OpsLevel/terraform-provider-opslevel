@@ -33,7 +33,7 @@ func resourceCheckManual() *schema.Resource {
 							Description:  "The date that the check will start to evaluate.",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.ValidateRFC3339TimeString,
+							ValidateFunc: validation.IsRFC3339Time,
 						},
 						"time_scale": {
 							Type:         schema.TypeString,

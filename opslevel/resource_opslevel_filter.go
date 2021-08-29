@@ -50,7 +50,7 @@ func resourceFilter() *schema.Resource {
 						},
 						"key": {
 							Type:         schema.TypeString,
-							Description:  "The condition key used by the predicate. Possible valuas are 'tier_index', 'lifecycle_index', 'language', 'framework', 'product', 'owner_id', 'name' and 'tags'.",
+							Description:  "The condition key used by the predicate.",
 							ForceNew:     false,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice(opslevel.GetPredicateKeyEnumTypes(), false),

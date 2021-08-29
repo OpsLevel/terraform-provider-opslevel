@@ -41,7 +41,7 @@ func resourceServiceTag() *schema.Resource {
 				Description:  "The tag's key.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringMatch(tagKeyRegex, tagKeyRegexErrorMsg),
+				ValidateFunc: validation.StringMatch(opslevel.TagKeyRegex, opslevel.TagKeyErrorMsg),
 			},
 			"value": {
 				Type:        schema.TypeString,
@@ -96,7 +96,7 @@ func resourceServiceTagRead(d *schema.ResourceData, client *opslevel.Client) err
 		}
 	}
 	if resource == nil {
-		return fmt.Errorf("Unable to find tag with id '%s' on service '%s'", id, service.Aliases[0])
+		return fmt.Errorf("unable to find tag with id '%s' on service '%s'", id, service.Aliases[0])
 	}
 
 	if err := d.Set("key", resource.Key); err != nil {
