@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -113,26 +112,21 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 			return err
 		}
 	}
-	for i, configuredTag := range tags {
-		if stringInArray(configuredTag, existingTags) {
-			continue
-		}
-		// Add
-		parts := strings.Split(configuredTag, ":")
-		keyName := strings.TrimSpace(parts[0])
-		if !tagKeyRegex.MatchString(keyName) {
-			return fmt.Errorf("field 'tags.%d.key' == '%s' - %s", i, keyName, tagKeyRegexErrorMsg)
-		}
-		keyValue := strings.TrimSpace(parts[1])
-		_, err := client.CreateTag(opslevel.TagCreateInput{
-			Id:    service.Id,
-			Key:   keyName,
-			Value: keyValue,
+	tagInput := []opslevel.TagInput{}
+	for _, tag := range tags {
+		tagInput = append(tagInput, opslevel.TagInput{
+			Key:   strings.TrimSpace(strings.Split(tag, ":")[0]),
+			Value: strings.TrimSpace(strings.Split(tag, ":")[1]),
 		})
-		if err != nil {
-			return err
-		}
 	}
+	_, err := client.AssignTags(opslevel.TagAssignInput{
+		Id:   service.Id,
+		Tags: tagInput,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -290,13 +284,11 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 
 	tags := map[string]string{}
-	for i, entry := range d.Get("tags").([]interface{}) {
+	for _, entry := range d.Get("tags").([]interface{}) {
 		parts := strings.Split(strings.TrimSpace(entry.(string)), ":")
 		key := strings.TrimSpace(parts[0])
-		if !tagKeyRegex.MatchString(key) {
-			return fmt.Errorf("tag.%d.key '%s' - %s", i, key, tagKeyRegexErrorMsg)
-		}
-		tags[key] = strings.TrimSpace(parts[1])
+		value := strings.TrimSpace(parts[1])
+		tags[key] = value
 	}
 	_, tagsErr := client.AssignTagsForId(resource.Id, tags)
 	if tagsErr != nil {
