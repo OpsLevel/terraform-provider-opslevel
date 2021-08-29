@@ -58,7 +58,7 @@ resource "opslevel_filter" "tier2_alpha" {
 
 Required:
 
-- **key** (String) The condition key used by the predicate. Possible valuas are 'tier_index', 'lifecycle_index', 'language', 'framework', 'product', 'owner_id', 'name' and 'tags'.
+- **key** (String) The condition key used by the predicate.
 - **type** (String) The condition type used by the predicate.
 
 Optional:

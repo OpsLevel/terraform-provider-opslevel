@@ -13,11 +13,11 @@ const defaultUrl = "https://api.opslevel.com/graphql"
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"token": {
+			"apitoken": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_APITOKEN", ""),
-				Description: "The OpsLevel API token to use for authentication.",
+				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.",
 				Sensitive:   true,
 			},
 		},
@@ -64,7 +64,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
-			token := d.Get("token").(string)
+			token := d.Get("apitoken").(string)
 			log.Println("[INFO] Initializing OpsLevel client")
 			client := opslevel.NewClient(token)
 			return client, nil

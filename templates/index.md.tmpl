@@ -7,10 +7,19 @@ description: |-
 
 # OpsLevel Provider
 
+Solve service ownership and ship more reliable services with our microservice catalog. Say goodbye to stale spreadsheets and break down knowledge silos for good.
 The OpsLevel provider provides lifecycle management of data in your OpsLevel account.
+
+Use the navigation to the left to read about the available resources and datasource with detailed examples of how use them.
 
 ## Example Usage
 
 {{tffile "examples/provider/provider.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `token` - (Required) The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.

@@ -7,13 +7,72 @@ description: |-
 
 # OpsLevel Provider
 
+Solve service ownership and ship more reliable services with our microservice catalog. Say goodbye to stale spreadsheets and break down knowledge silos for good.
 The OpsLevel provider provides lifecycle management of data in your OpsLevel account.
+
+Use the navigation to the left to read about the available resources and datasource with detailed examples of how use them.
 
 ## Example Usage
 
 ```terraform
 provider "opslevel" {
-  token = "XXX" // or environment variable OPSLEVEL_APITOKEN
+  apitoken = "XXX" // or environment variable OPSLEVEL_APITOKEN
+}
+
+resource "opslevel_team" "foo" {
+  name = "foo"
+  manager_email = "foo@example.com"
+  responsibilities = "Responsible for foo frontend and backend"
+}
+
+resource "opslevel_service" "foo-frontend" {
+  name = "foo-frontend"
+
+  description = "The foo frontend service"
+  framework   = "rails"
+  language    = "ruby"
+
+  lifecycle_alias = "beta"
+  tier_alias = "tier_3"
+  owner_alias = opslevel_team.foo.alias
+
+  tags = [
+    "environment:production",
+  ]
+}
+
+data "opslevel_rubric_category" "security" {
+  filter {
+    field = "name"
+    value = "Security"
+  }
+}
+
+data "opslevel_rubric_level" "bronze" {
+  filter {
+    field = "name"
+    value = "Bronze"
+  }
+}
+
+resource "opslevel_filter" "filter" {
+  name = "foo"
+  predicate {
+    key = "tier_index"
+    type = "equals"
+    value = "tier_3"
+  }
+  connective = "and"
+}
+
+resource "opslevel_check_repository_integrated" "foo" {
+  name = "foo"
+  enabled = true
+  category = data.opslevel_rubric_category.security.id
+  level = data.opslevel_rubric_level.bronze.id
+  owner = opslevel_team.foo.id
+  filter = opslevel_filter.filter.id
+  notes = "Optional additional info on why this check is run or how to fix it"
 }
 ```
 
@@ -22,4 +81,10 @@ provider "opslevel" {
 
 ### Optional
 
-- **token** (String, Sensitive) The OpsLevel API token to use for authentication.
+- **apitoken** (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `token` - (Required) The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.

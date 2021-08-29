@@ -47,7 +47,7 @@ resource "opslevel_check_repository_search" "example" {
   filter = data.opslevel_filter.tier1.id
   file_extensions = ["sbt", "py"]
   file_contents_predicate {
-      type = "equals"
+      type = "contains"
       value = "postgres"
   }
   notes = "Optional additional info on why this check is run or how to fix it"
