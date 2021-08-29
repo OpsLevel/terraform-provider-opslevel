@@ -1,6 +1,22 @@
-# terraform-provider-opslevel
+<p align="center">
+    <a href="https://github.com/OpsLevel/terraform-provider-opslevel/blob/main/LICENSE" alt="License">
+        <img src="https://img.shields.io/github/license/OpsLevel/terraform-provider-opslevel.svg" /></a>
+    <a href="http://golang.org" alt="Made With Go">
+        <img src="https://img.shields.io/github/go-mod/go-version/OpsLevel/terraform-provider-opslevel" /></a>
+    <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/releases/" alt="Release">
+        <img src="https://img.shields.io/github/v/release/OpsLevel/terraform-provider-opslevel?include_prereleases" /></a>  
+    <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/issues/" alt="Issues">
+        <img src="https://img.shields.io/github/issues/OpsLevel/terraform-provider-opslevel.svg" /></a>  
+    <a href="https://github.com/OpsLevel/terraform-provider-opslevel/graphs/contributors" alt="Contributors">
+        <img src="https://img.shields.io/github/contributors/OpsLevel/terraform-provider-opslevel" /></a>
+    <a href="https://github.com/OpsLevel/terraform-provider-opslevel/pulse" alt="Activity">
+        <img src="https://img.shields.io/github/commit-activity/m/OpsLevel/terraform-provider-opslevel" /></a>
+    <a href="https://github.com/OpsLevel/terraform-provider-opslevel/releases" alt="Downloads">
+        <img src="https://img.shields.io/github/downloads/OpsLevel/terraform-provider-opslevel/total" /></a>
+</p>
 
 Terraform Provider for [OpsLevel](https://opslevel.com)
+===============================
 
 [Documentation](https://registry.terraform.io/providers/OpsLevel/opslevel/latest/docs)
 
