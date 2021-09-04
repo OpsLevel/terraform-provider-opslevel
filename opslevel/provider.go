@@ -13,6 +13,12 @@ const defaultUrl = "https://api.opslevel.com/graphql"
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"apiurl": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_APIURL", "https://api.opslevel.com/graphql"),
+				Description: "The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_APIURL environment variable.",
+			},
 			"apitoken": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -64,9 +70,10 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
+			url := d.Get("apiurl").(string)
 			token := d.Get("apitoken").(string)
 			log.Println("[INFO] Initializing OpsLevel client")
-			client := opslevel.NewClient(token)
+			client := opslevel.NewClient(token, opslevel.SetURL(url))
 			return client, nil
 		},
 	}
