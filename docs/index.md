@@ -16,7 +16,7 @@ Use the navigation to the left to read about the available resources and datasou
 
 ```terraform
 provider "opslevel" {
-  apitoken = "XXX" // or environment variable OPSLEVEL_APITOKEN
+  api_token = "XXX" // or environment variable OPSLEVEL_API_TOKEN
 }
 
 resource "opslevel_team" "foo" {
@@ -81,7 +81,8 @@ resource "opslevel_check_repository_integrated" "foo" {
 
 ### Optional
 
-- **apitoken** (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.
+- **api_token** (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.
+- **api_url** (String) The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.
 
 ## Argument Reference
 

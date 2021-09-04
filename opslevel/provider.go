@@ -8,22 +8,20 @@ import (
 	"github.com/opslevel/opslevel-go"
 )
 
-const defaultUrl = "https://api.opslevel.com/graphql"
-
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"apiurl": {
+			"api_url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_APIURL", "https://api.opslevel.com/graphql"),
-				Description: "The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_APIURL environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_URL", "https://api.opslevel.com/graphql"),
+				Description: "The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.",
 			},
-			"apitoken": {
+			"api_token": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_APITOKEN", ""),
-				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_TOKEN", ""),
+				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.",
 				Sensitive:   true,
 			},
 		},
@@ -70,8 +68,8 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
-			url := d.Get("apiurl").(string)
-			token := d.Get("apitoken").(string)
+			url := d.Get("api_url").(string)
+			token := d.Get("api_token").(string)
 			log.Println("[INFO] Initializing OpsLevel client")
 			client := opslevel.NewClient(token, opslevel.SetURL(url))
 			return client, nil

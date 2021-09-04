@@ -26,7 +26,7 @@ Terraform Provider for [OpsLevel](https://opslevel.com)
 
 ```
 provider "opslevel" {
-  apitoken = "XXX" // or environment variable OPSLEVEL_APITOKEN
+  api_token = "XXX" // or environment variable OPSLEVEL_API_TOKEN
 }
 
 resource "opslevel_team" "foo" {
