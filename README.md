@@ -18,9 +18,11 @@
 Terraform Provider for [OpsLevel](https://opslevel.com)
 ===============================
 
-[Documentation](https://registry.terraform.io/providers/OpsLevel/opslevel/latest/docs)
+[Provider Documentation](https://registry.terraform.io/providers/OpsLevel/opslevel/latest/docs)
+[Quickstart](https://www.opslevel.com/docs/api/terraform)
+[Importing All Existing Account Data](https://www.opslevel.com/docs/api/terraform/#Importing)
 
-## Using the provider
+## Example
 
 ```
 provider "opslevel" {
@@ -84,10 +86,20 @@ resource "opslevel_check_repository_integrated" "foo" {
 }
 ```
 
-# Useful Snippets
+# Useful Terraform Snippets
 
-Get Tag Values
+Get a service's tag keys
 
 ```hcl
-values({for entry in data.opslevel_service.example.tags : entry => split(":", entry)[1]})
+output "service_tag_keys" {
+    value = values({for entry in opslevel_service.example.tags : entry => split(":", entry)[0]})
+}
+```
+
+Get a service's tag values
+
+```hcl
+output "service_tag_values" {
+    value = values({for entry in opslevel_service.example.tags : entry => split(":", entry)[1]})
+}
 ```

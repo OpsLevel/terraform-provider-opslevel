@@ -29,7 +29,7 @@ resource "opslevel_service_repository" "foo" {
   base_directory = "/"
 }
 
-resource "opslevel_service_tag" "bar" {
+resource "opslevel_service_repository" "bar" {
   service_alias = "bar"
   repository_alias = "github.com:example/bar"
 

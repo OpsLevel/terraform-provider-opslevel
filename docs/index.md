@@ -8,9 +8,9 @@ description: |-
 # OpsLevel Provider
 
 Solve service ownership and ship more reliable services with our microservice catalog. Say goodbye to stale spreadsheets and break down knowledge silos for good.
-The OpsLevel provider provides lifecycle management of data in your OpsLevel account.
+Leverage Terraform to provide lifecycle management of the data in your OpsLevel account.
 
-Use the navigation to the left to read about the available resources and datasource with detailed examples of how use them.
+Use the navigation to the left to read about the available resources and datasources with detailed examples of how use them.
 
 ## Example Usage
 

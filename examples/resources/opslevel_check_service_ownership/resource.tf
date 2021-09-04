@@ -23,7 +23,7 @@ data "opslevel_filter" "tier1" {
   }
 }
 
-resource "opslevel_check_service_owner" "example" {
+resource "opslevel_check_service_ownership" "example" {
   name = "foo"
   enabled = true
   category = data.opslevel_rubric_category.security.id
