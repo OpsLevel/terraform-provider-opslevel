@@ -22,7 +22,7 @@ Terraform Provider for [OpsLevel](https://opslevel.com)
 
 ## Using the provider
 
-```
+```terraform
 provider "opslevel" {
   apitoken = "XXX" // or environment variable OPSLEVEL_APITOKEN
 }
