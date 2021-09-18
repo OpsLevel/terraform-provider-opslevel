@@ -79,7 +79,7 @@ func findService(aliasKey string, idKey string, d *schema.ResourceData, client *
 		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Service
-	if id == nil {
+	if id == "" {
 		found, err := client.GetServiceWithAlias(alias)
 		if err != nil {
 			return nil, err
@@ -105,7 +105,7 @@ func findRepository(aliasKey string, idKey string, d *schema.ResourceData, clien
 		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Repository
-	if id == nil {
+	if id == "" {
 		found, err := client.GetRepositoryWithAlias(alias)
 		if err != nil {
 			return nil, err
@@ -131,7 +131,7 @@ func findTeam(aliasKey string, idKey string, d *schema.ResourceData, client *ops
 		return nil, fmt.Errorf("must provide one of `%s` or `%s` field to find by", aliasKey, idKey)
 	}
 	var resource *opslevel.Team
-	if id == nil {
+	if id == "" {
 		found, err := client.GetTeamWithAlias(alias)
 		if err != nil {
 			return nil, err
