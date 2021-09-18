@@ -69,7 +69,7 @@ func resourceFilter() *schema.Resource {
 				Description:  "The logical operator to be used in conjunction with predicates.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.GetConnectiveTypes(), false),
+				ValidateFunc: validation.StringInSlice(append(opslevel.GetConnectiveTypes(), ""), false),
 			},
 		},
 	}
@@ -114,6 +114,10 @@ func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	if err := d.Set("name", resource.Name); err != nil {
+		return err
+	}
+
+	if err := d.Set("connective", string(resource.Connective)); err != nil {
 		return err
 	}
 
