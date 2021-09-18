@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -104,12 +105,21 @@ func resourceServiceToolCreate(d *schema.ResourceData, client *opslevel.Client) 
 }
 
 func resourceServiceToolRead(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
+
+	// Handle Import by spliting the ID into the 2 parts
+	parts := strings.SplitN(id, ":", 2)
+	if len(parts) == 2 {
+		d.Set("service", parts[0])
+		id = parts[1]
+		d.SetId(id)
+	}
+
 	service, err := findService("service_alias", "service", d, client)
 	if err != nil {
 		return err
 	}
 
-	id := d.Id()
 	var resource *opslevel.Tool
 	for _, t := range service.Tools.Nodes {
 		if t.Id == id {

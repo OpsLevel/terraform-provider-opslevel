@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go"
@@ -97,12 +98,21 @@ func resourceServiceRepositoryCreate(d *schema.ResourceData, client *opslevel.Cl
 }
 
 func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
+
+	// Handle Import by spliting the ID into the 2 parts
+	parts := strings.SplitN(id, ":", 2)
+	if len(parts) == 2 {
+		d.Set("service", parts[0])
+		id = parts[1]
+		d.SetId(id)
+	}
+
 	service, err := findService("service_alias", "service", d, client)
 	if err != nil {
 		return err
 	}
 
-	id := d.Id()
 	var resource *opslevel.ServiceRepository
 	for _, edge := range service.Repositories.Edges {
 		for _, repository := range edge.ServiceRepositories {
@@ -120,6 +130,9 @@ func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Clie
 	}
 
 	if err := d.Set("name", resource.DisplayName); err != nil {
+		return err
+	}
+	if err := d.Set("repository", resource.Repository.Id.(string)); err != nil {
 		return err
 	}
 	if err := d.Set("base_directory", resource.BaseDirectory); err != nil {
