@@ -57,5 +57,5 @@ resource "opslevel_service_repository" "bar" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import opslevel_service_repository.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
+terraform import opslevel_service_repository.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
 ```

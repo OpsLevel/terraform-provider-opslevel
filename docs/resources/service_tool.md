@@ -58,5 +58,5 @@ resource "opslevel_service_tool" "bar_datadog" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import opslevel_service_tool.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
+terraform import opslevel_service_tool.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
 ```
