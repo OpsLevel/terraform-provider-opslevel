@@ -297,6 +297,10 @@ github.com/opslevel/opslevel-go v0.2.2 h1:weff7XCMChuQ1aO/i1OVASkYXjK+VCA7vE+PLY
 github.com/opslevel/opslevel-go v0.2.2/go.mod h1:Ns7xfaf9GH7gIVkJcfceksXQ+48sVUUEMiLcKatmpVc=
 github.com/opslevel/opslevel-go v0.3.0 h1:pO4O7VSgexBarp0MSrlK+dJxe1/Bvv0Vksm63CdxQ/E=
 github.com/opslevel/opslevel-go v0.3.0/go.mod h1:GCPZaU0dc/kYX1/b4oiRpy7Q6qZWNCg8dRGzsUNZB8c=
+github.com/opslevel/opslevel-go v0.3.2 h1:k9/kMrqecVueKnXVostnPPz1n8Nwkd5FWxQ2G5xDmRg=
+github.com/opslevel/opslevel-go v0.3.2/go.mod h1:iL19mXGd16cvYxv98hN6OrRXZb6cql7ttk/f+aUDRTk=
+github.com/opslevel/opslevel-go v0.3.3 h1:02l//2xfpqJkD+DI8p9x1am8Lt/S9EIzQQlUkLFIAuY=
+github.com/opslevel/opslevel-go v0.3.3/go.mod h1:iL19mXGd16cvYxv98hN6OrRXZb6cql7ttk/f+aUDRTk=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

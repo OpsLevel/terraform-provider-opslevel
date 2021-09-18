@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
 	github.com/kr/pretty v0.2.1
 	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/opslevel/opslevel-go v0.3.0
+	github.com/opslevel/opslevel-go v0.3.3
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
