@@ -40,7 +40,7 @@ func resourceCheckManual() *schema.Resource {
 							Description:  "The time scale type for the frequency.",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(opslevel.GetFrequencyTimeScales(), false),
+							ValidateFunc: validation.StringInSlice(opslevel.AllFrequencyTimeScale(), false),
 						},
 						"value": {
 							Type:        schema.TypeInt,

@@ -22,7 +22,7 @@ func resourceCheckServiceProperty() *schema.Resource {
 				Description:  "The property of the service that the check will verify.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.GetServicePropertyTypes(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllServicePropertyTypeEnum(), false),
 			},
 			"predicate": getPredicateInputSchema(false),
 		}),
@@ -33,7 +33,7 @@ func resourceCheckServicePropertyCreate(d *schema.ResourceData, client *opslevel
 	input := opslevel.CheckServicePropertyCreateInput{}
 	setCheckCreateInput(d, &input)
 
-	input.Property = opslevel.ServiceProperty(d.Get("property").(string))
+	input.Property = opslevel.ServicePropertyTypeEnum(d.Get("property").(string))
 	input.Predicate = expandPredicate(d, "predicate")
 
 	resource, err := client.CreateCheckServiceProperty(input)
@@ -71,7 +71,7 @@ func resourceCheckServicePropertyUpdate(d *schema.ResourceData, client *opslevel
 	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("property") {
-		input.Property = opslevel.ServiceProperty(d.Get("property").(string))
+		input.Property = opslevel.ServicePropertyTypeEnum(d.Get("property").(string))
 	}
 	if d.HasChange("predicate") {
 		input.Predicate = expandPredicate(d, "predicate")

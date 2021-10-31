@@ -164,7 +164,7 @@ func getPredicateInputSchema(required bool) *schema.Schema {
 					Description:  "The condition type used by the predicate.",
 					ForceNew:     false,
 					Required:     true,
-					ValidateFunc: validation.StringInSlice(opslevel.GetPredicateTypes(), false),
+					ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),
 				},
 				"value": {
 					Type:        schema.TypeString,
@@ -188,7 +188,7 @@ func expandPredicate(d *schema.ResourceData, key string) *opslevel.PredicateInpu
 		return nil
 	}
 	return &opslevel.PredicateInput{
-		Type:  opslevel.PredicateType(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
+		Type:  opslevel.PredicateTypeEnum(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
 		Value: d.Get(fmt.Sprintf("%s.0.value", key)).(string),
 	}
 }
@@ -209,7 +209,7 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 	for _, item := range d.Get("predicate").([]interface{}) {
 		data := item.(map[string]interface{})
 		output = append(output, opslevel.FilterPredicate{
-			Type:    opslevel.PredicateType(data["type"].(string)),
+			Type:    opslevel.PredicateTypeEnum(data["type"].(string)),
 			Value:   data["value"].(string),
 			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
 			KeyData: data["key_data"].(string),
@@ -222,14 +222,13 @@ func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]stri
 	output := []map[string]string{}
 	for _, predicate := range input {
 		output = append(output, map[string]string{
-			"key": predicate.Key,
+			"key":      string(predicate.Key),
 			"key_data": predicate.KeyData,
-			"type": predicate.Type,
-			"value": predicate.Value,
+			"type":     string(predicate.Type),
+			"value":    predicate.Value,
 		})
 	}
-
-	return
+	return output
 }
 
 func getDatasourceFilter(required bool, validFieldNames []string) *schema.Schema {

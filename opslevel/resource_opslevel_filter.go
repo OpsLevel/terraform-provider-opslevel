@@ -40,7 +40,7 @@ func resourceFilter() *schema.Resource {
 							Description:  "The condition type used by the predicate.",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(opslevel.GetPredicateTypes(), false),
+							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),
 						},
 						"value": {
 							Type:        schema.TypeString,
@@ -53,7 +53,7 @@ func resourceFilter() *schema.Resource {
 							Description:  "The condition key used by the predicate.",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(opslevel.GetPredicateKeyEnumTypes(), false),
+							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateKeyEnum(), false),
 						},
 						"key_data": {
 							Type:        schema.TypeString,
@@ -69,7 +69,7 @@ func resourceFilter() *schema.Resource {
 				Description:  "The logical operator to be used in conjunction with predicates.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(append(opslevel.GetConnectiveTypes(), ""), false),
+				ValidateFunc: validation.StringInSlice(append(opslevel.AllConnectiveEnum(), ""), false),
 			},
 		},
 	}
@@ -79,7 +79,7 @@ func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
 		Predicates: expandFilterPredicates(d),
-		Connective: opslevel.ConnectiveType(d.Get("connective").(string)),
+		Connective: opslevel.ConnectiveEnum(d.Get("connective").(string)),
 	}
 
 	resource, err := client.CreateFilter(input)
@@ -126,7 +126,7 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Predicates = expandFilterPredicates(d)
 	}
 	if d.HasChange("connective") {
-		input.Connective = opslevel.ConnectiveType(d.Get("connective").(string))
+		input.Connective = opslevel.ConnectiveEnum(d.Get("connective").(string))
 	}
 
 	_, err := client.UpdateFilter(input)

@@ -22,7 +22,7 @@ func resourceCheckToolUsage() *schema.Resource {
 				Description:  "The category that the tool belongs to.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.GetToolCategoryTypes(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory(), false),
 			},
 			"tool_name_predicate":   getPredicateInputSchema(false),
 			"environment_predicate": getPredicateInputSchema(false),
