@@ -3,7 +3,7 @@
 page_title: "opslevel_filter Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a team
+  Manages a filter
 ---
 
 # opslevel_filter (Resource)

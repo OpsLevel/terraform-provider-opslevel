@@ -8,7 +8,7 @@ import (
 
 func resourceFilter() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a team",
+		Description: "Manages a filter",
 		Create:      wrap(resourceFilterCreate),
 		Read:        wrap(resourceFilterRead),
 		Update:      wrap(resourceFilterUpdate),
