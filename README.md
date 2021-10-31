@@ -24,7 +24,7 @@ Terraform Provider for [OpsLevel](https://opslevel.com)
 
 ## Example
 
-```
+```hcl
 provider "opslevel" {
   api_token = "XXX" // or environment variable OPSLEVEL_API_TOKEN
 }
