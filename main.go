@@ -8,10 +8,6 @@ import (
 
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
-var (
-	version string = "dev"
-)
-
 func main() {
 	plugin.Serve(&plugin.ServeOpts{ProviderFunc: opslevel.Provider})
 }

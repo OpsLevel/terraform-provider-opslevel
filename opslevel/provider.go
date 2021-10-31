@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -71,7 +72,7 @@ func Provider() terraform.ResourceProvider {
 			url := d.Get("api_url").(string)
 			token := d.Get("api_token").(string)
 			log.Println("[INFO] Initializing OpsLevel client")
-			client := opslevel.NewClient(token, opslevel.SetURL(url))
+			client := opslevel.NewClient(token, opslevel.SetURL(url), opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 			return client, nil
 		},
 	}
