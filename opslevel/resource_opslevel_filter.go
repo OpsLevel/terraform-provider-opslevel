@@ -75,24 +75,10 @@ func resourceFilter() *schema.Resource {
 	}
 }
 
-func buildPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
-	output := make([]opslevel.FilterPredicate, 0)
-	for _, item := range d.Get("predicate").([]interface{}) {
-		data := item.(map[string]interface{})
-		output = append(output, opslevel.FilterPredicate{
-			Type:    opslevel.PredicateType(data["type"].(string)),
-			Value:   data["value"].(string),
-			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData: data["key_data"].(string),
-		})
-	}
-	return output
-}
-
 func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
-		Predicates: buildPredicates(d),
+		Predicates: expandFilterPredicates(d),
 		Connective: opslevel.ConnectiveType(d.Get("connective").(string)),
 	}
 
@@ -121,6 +107,10 @@ func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
+	if err := d.Set("predicate", flattenFilterPredicates(resource.Predicates)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -133,7 +123,7 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Name = d.Get("name").(string)
 	}
 	if d.HasChange("predicate") {
-		input.Predicates = buildPredicates(d)
+		input.Predicates = expandFilterPredicates(d)
 	}
 	if d.HasChange("connective") {
 		input.Connective = opslevel.ConnectiveType(d.Get("connective").(string))

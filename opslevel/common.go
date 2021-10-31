@@ -204,6 +204,34 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	return output
 }
 
+func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
+	output := make([]opslevel.FilterPredicate, 0)
+	for _, item := range d.Get("predicate").([]interface{}) {
+		data := item.(map[string]interface{})
+		output = append(output, opslevel.FilterPredicate{
+			Type:    opslevel.PredicateType(data["type"].(string)),
+			Value:   data["value"].(string),
+			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
+			KeyData: data["key_data"].(string),
+		})
+	}
+	return output
+}
+
+func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]string {
+	output := []map[string]string{}
+	for _, predicate := range input {
+		output = append(output, map[string]string{
+			"key": predicate.Key,
+			"key_data": predicate.KeyData,
+			"type": predicate.Type,
+			"value": predicate.Value,
+		})
+	}
+
+	return
+}
+
 func getDatasourceFilter(required bool, validFieldNames []string) *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
