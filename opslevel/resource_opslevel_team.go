@@ -25,6 +25,7 @@ func resourceTeam() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The human-friendly, unique identifier for the team.",
 				Computed:    true,
+				Deprecated:  "field 'alias' on team is no longer supported please use the 'aliases' field which is a list",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -44,8 +45,38 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"aliases": {
+				Type:        schema.TypeList,
+				Description: "A list of human-friendly, unique identifiers for the team.",
+				ForceNew:    false,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
+}
+
+func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
+	expectedAliases := getStringArray(d, "aliases")
+	existingAliases := team.Aliases
+	for _, existingAlias := range existingAliases {
+		if existingAlias == team.Alias { continue }
+		if stringInArray(existingAlias, expectedAliases) { continue }
+		// Delete
+		err := client.DeleteTeamAlias(existingAlias)
+		if err != nil {
+			return err
+		}
+	}
+	for _, expectedAlias := range expectedAliases {
+		if stringInArray(expectedAlias, existingAliases) { continue }
+		// Add
+		_, err := client.CreateAliases(team.Id, []string{expectedAlias})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
@@ -59,6 +90,11 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	d.SetId(resource.Id.(string))
+
+	aliasesErr := reconcileTeamAliases(d, resource, client)
+	if aliasesErr != nil {
+		return aliasesErr
+	}
 
 	return resourceTeamRead(d, client)
 }
@@ -83,6 +119,11 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
 	}
+	aliases := resource.Aliases
+	aliases = append(aliases, resource.Alias)
+	if err := d.Set("aliases", resource.Aliases); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -102,10 +143,18 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		input.Responsibilities = d.Get("responsibilities").(string)
 	}
 
-	_, err := client.UpdateTeam(input)
+	resource, err := client.UpdateTeam(input)
 	if err != nil {
 		return err
 	}
+
+	if d.HasChange("aliases") {
+		tagsErr := reconcileTeamAliases(d, resource, client)
+		if tagsErr != nil {
+			return tagsErr
+		}
+	}
+
 	d.Set("last_updated", timeLastUpdated())
 	return resourceTeamRead(d, client)
 }

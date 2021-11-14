@@ -73,8 +73,9 @@ func resourceService() *schema.Resource {
 			},
 			"aliases": {
 				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the service",
-				Computed:    true,
+				Description: "A list of human-friendly, unique identifiers for the service.",
+				ForceNew:    false,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": {
@@ -88,16 +89,30 @@ func resourceService() *schema.Resource {
 	}
 }
 
-func parseTags(d *schema.ResourceData) []string {
-	output := []string{}
-	for _, entry := range d.Get("tags").([]interface{}) {
-		output = append(output, entry.(string))
+func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
+	expectedAliases := getStringArray(d, "aliases")
+	existingAliases := service.Aliases
+	for _, existingAlias := range existingAliases {
+		if stringInArray(existingAlias, expectedAliases) { continue }
+		// Delete
+		err := client.DeleteServiceAlias(existingAlias)
+		if err != nil {
+			return err
+		}
 	}
-	return output
+	for _, expectedAlias := range expectedAliases {
+		if stringInArray(expectedAlias, existingAliases) { continue }
+		// Add
+		_, err := client.CreateAliases(service.Id, []string{expectedAlias})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
-	tags := parseTags(d)
+	tags := getStringArray(d, "tags")
 	existingTags := []string{}
 	for _, tag := range service.Tags.Nodes {
 		flattenedTag := flattenTag(tag)
@@ -147,20 +162,10 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 	d.SetId(resource.Id.(string))
 
-	// aliases := expandStringArray(d.Get("aliases").([]interface{}))
-	// if len(aliases) > 0 {
-	// 	for _, alias := range aliases {
-	// 		if resource.HasAlias(alias) == false {
-	// 			_, aliasErr := client.CreateAlias(opslevel.AliasCreateInput{
-	// 				OwnerId: resource.Id,
-	// 				Alias:   alias,
-	// 			})
-	// 			if aliasErr != nil {
-	// 				return aliasErr
-	// 			}
-	// 		}
-	// 	}
-	// }
+	aliasesErr := reconcileServiceAliases(d, resource, client)
+	if aliasesErr != nil {
+		return aliasesErr
+	}
 
 	tagsErr := reconcileTags(d, resource, client)
 	if tagsErr != nil {
@@ -250,49 +255,18 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 
-	// if d.HasChange("aliases") {
-	// 	aliases := expandStringArray(d.Get("aliases").([]interface{}))
-	// 	doAdd := func(v string) error {
-	// 		_, aliasErr := client.CreateAlias(opslevel.AliasCreateInput{
-	// 			OwnerId: resource.Id,
-	// 			Alias:   v,
-	// 		})
-	// 		if aliasErr != nil {
-	// 			return aliasErr
-	// 		}
-	// 		return nil
-	// 	}
-	// 	// TODO: DeleteAlias
-	// 	// doDelete := func(v string) error {
-	// 	// 	_, aliasErr := client.DeleteAlias(opslevel.AliasDeleteInput{
-	// 	// 		OwnerId: resource.Id,
-	// 	// 		Alias:   v,
-	// 	// 	})
-	// 	// 	if aliasErr != nil {
-	// 	// 		return aliasErr
-	// 	// 	}
-	// 	// 	return nil
-	// 	// }
-	// 	reconcileStringArray(aliases, resource.Aliases, doAdd, nil, nil) // doDelete
-	// }
+	if d.HasChange("aliases") {
+		tagsErr := reconcileServiceAliases(d, resource, client)
+		if tagsErr != nil {
+			return tagsErr
+		}
+	}
 
 	if d.HasChange("tags") {
 		tagsErr := reconcileTags(d, resource, client)
 		if tagsErr != nil {
 			return tagsErr
 		}
-	}
-
-	tags := map[string]string{}
-	for _, entry := range d.Get("tags").([]interface{}) {
-		parts := strings.Split(strings.TrimSpace(entry.(string)), ":")
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		tags[key] = value
-	}
-	_, tagsErr := client.AssignTagsForId(resource.Id, tags)
-	if tagsErr != nil {
-		return tagsErr
 	}
 
 	d.Set("last_updated", timeLastUpdated())
