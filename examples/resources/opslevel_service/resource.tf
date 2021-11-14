@@ -16,6 +16,7 @@ resource "opslevel_team" "foo" {
   name = "foo"
   manager_email = "john.doe@example.com"
   responsibilities = "Responsible for foo frontend and backend"
+  aliases = ["bar", "baz"]
 }
 
 resource "opslevel_service" "foo" {
@@ -28,6 +29,9 @@ resource "opslevel_service" "foo" {
   lifecycle_alias = data.opslevel_lifecycle.beta.alias
   tier_alias = data.opslevel_tier.tier3.alias
   owner_alias = opslevel_team.foo.alias
+
+  aliases = ["bar", "baz"]
+  tags = ["foo:bar"]
 }
 
 output "foo_aliases" {
