@@ -8,7 +8,7 @@ description: |-
 
 # opslevel_filter (Resource)
 
-Manages a team
+Manages a filter
 
 ## Example Usage
 
