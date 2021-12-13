@@ -37,7 +37,7 @@ func resourceFilter() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:         schema.TypeString,
-							Description:  "The condition type used by the predicate.",
+							Description:  "The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `satisfies_jq_expression`",
 							ForceNew:     false,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),
@@ -57,7 +57,7 @@ func resourceFilter() *schema.Resource {
 						},
 						"key_data": {
 							Type:        schema.TypeString,
-							Description: "Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set keyData = 'db' and value = 'mysql'.",
+							Description: "Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.",
 							ForceNew:    false,
 							Optional:    true,
 						},
