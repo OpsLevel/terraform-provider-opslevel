@@ -17,6 +17,7 @@ resource "opslevel_team" "example" {
   name = "foo"
   manager_email = "john.doe@example.com"
   responsibilities = "Responsible for foo frontend and backend"
+  aliases = ["bar", "baz"]
 }
 
 output "team" {
@@ -33,6 +34,7 @@ output "team" {
 
 ### Optional
 
+- **aliases** (List of String) A list of human-friendly, unique identifiers for the team.
 - **id** (String) The ID of this resource.
 - **last_updated** (String)
 - **manager_email** (String) The email of the user who manages the team.
@@ -40,7 +42,7 @@ output "team" {
 
 ### Read-Only
 
-- **alias** (String) The human-friendly, unique identifier for the team.
+- **alias** (String, Deprecated) The human-friendly, unique identifier for the team.
 
 ## Import
 
