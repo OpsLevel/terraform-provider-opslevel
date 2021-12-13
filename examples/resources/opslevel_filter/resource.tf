@@ -22,3 +22,12 @@ resource "opslevel_filter" "tier2_alpha" {
   }
   connective = "and"
 }
+
+resource "opslevel_filter" "tier3" {
+  name = "foo"
+  predicate {
+    key      = "tags"
+    type     = "does_not_exist"
+    key_data = "tier3"
+  }
+}
