@@ -5,8 +5,8 @@
         <img src="https://img.shields.io/github/go-mod/go-version/OpsLevel/terraform-provider-opslevel" /></a>
     <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/releases/" alt="Release">
         <img src="https://img.shields.io/github/v/release/OpsLevel/terraform-provider-opslevel?include_prereleases" /></a>  
-    <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/issues/" alt="Issues">
-        <img src="https://img.shields.io/github/issues/OpsLevel/terraform-provider-opslevel.svg" /></a>  
+    <a href="https://masterminds.github.io/stability/active.html" alt="Stability: Active">
+        <img src="https://masterminds.github.io/stability/active.svg" /></a>   
     <a href="https://github.com/OpsLevel/terraform-provider-opslevel/graphs/contributors" alt="Contributors">
         <img src="https://img.shields.io/github/contributors/OpsLevel/terraform-provider-opslevel" /></a>
     <a href="https://github.com/OpsLevel/terraform-provider-opslevel/pulse" alt="Activity">
