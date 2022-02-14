@@ -2,12 +2,17 @@ package opslevel
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go"
 )
+
+// Tag key names are stroed in OpsLevel as lowercase so we need to ensure the configuration is written as lowercase
+var TagKeyRegex = regexp.MustCompile(`\A[a-z][0-9a-z_\.\/\\-]*\z`)
+var TagKeyErrorMsg = "must start with a letter and be only lowercase alphanumerics, underscores, hyphens, periods, and slashes are allowed."
 
 func resourceServiceTag() *schema.Resource {
 	return &schema.Resource{
@@ -42,7 +47,7 @@ func resourceServiceTag() *schema.Resource {
 				Description:  "The tag's key.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringMatch(opslevel.TagKeyRegex, opslevel.TagKeyErrorMsg),
+				ValidateFunc: validation.StringMatch(TagKeyRegex, TagKeyErrorMsg),
 			},
 			"value": {
 				Type:        schema.TypeString,
