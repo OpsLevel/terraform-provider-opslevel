@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -79,14 +80,29 @@ func resourceService() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": {
-				Type:        schema.TypeList,
-				Description: "A list of tags applied to the service.",
-				ForceNew:    false,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:         schema.TypeList,
+				Description:  "A list of tags applied to the service.",
+				ForceNew:     false,
+				Optional:     true,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				ValidateFunc: validateServiceTags,
 			},
 		},
 	}
+}
+
+func validateServiceTags(i interface{}, k string) (warnings []string, errors []error) {
+	data, ok := i.([]string)
+	if !ok {
+		return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
+	}
+	for _, item := range data {
+		key := strings.TrimSpace(strings.Split(item, ":")[0])
+		if ok := TagKeyRegex.MatchString(key); !ok {
+			return nil, []error{fmt.Errorf("'%s' - %s", key, TagKeyErrorMsg)}
+		}
+	}
+	return nil, nil
 }
 
 func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
