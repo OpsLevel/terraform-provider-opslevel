@@ -1,0 +1,16 @@
+#! /bin/bash
+
+cat << EOF > ./workspace/backend.tf
+terraform {
+  required_providers {
+    opslevel = {
+      source  = "OpsLevel/opslevel"
+      version = "> 0.0.1"
+    }
+  }
+}
+
+provider "opslevel" {}
+EOF
+touch ./workspace/main.tf
+cd ./workspace && terraform init --upgrade

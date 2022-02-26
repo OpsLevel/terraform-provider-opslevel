@@ -40,3 +40,5 @@ website/vendor
 examples/.terraform.lock.hcl
 .terraform.lock.hcl
 main.tf
+!workspace/.gitkeep
+workspace/*
