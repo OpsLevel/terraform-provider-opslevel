@@ -42,7 +42,7 @@ If you are not a member of the `OpsLevel` GitHub organization, you can contribut
 2. clone your fork locally
 3. check out a new branch for your proposed changes
 4. push changes to your fork
-5. open a pull request against `dbt-labs/dbt` from your forked repository
+5. open a pull request from your forked repository
 
 ### OpsLevel contributors
 
