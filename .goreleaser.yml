@@ -10,10 +10,10 @@ builds:
     ldflags:
       - '-s -w -X opslevel.version={{.Version}}'
     goos:
-      - freebsd
       - windows
       - linux
       - darwin
+      - freebsd
     goarch:
       - amd64
       - '386'
