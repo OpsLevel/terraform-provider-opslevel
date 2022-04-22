@@ -33,27 +33,27 @@ data "opslevel_rubric_level" "gold" {
 
 ### Required
 
-- **filter** (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--filter))
+- `filter` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--filter))
 
 ### Optional
 
-- **id** (String) The ID of this resource.
+- `id` (String) The ID of this resource.
 
 ### Read-Only
 
-- **alias** (String)
-- **index** (Number)
-- **name** (String)
+- `alias` (String)
+- `index` (Number)
+- `name` (String)
 
 <a id="nestedblock--filter"></a>
 ### Nested Schema for `filter`
 
 Required:
 
-- **field** (String) The field of the target resource to filter upon.
+- `field` (String) The field of the target resource to filter upon.
 
 Optional:
 
-- **value** (String) The field value of the target resource to match.
+- `value` (String) The field value of the target resource to match.
 
 

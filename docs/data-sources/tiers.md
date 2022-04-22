@@ -26,13 +26,13 @@ output "found" {
 
 ### Optional
 
-- **id** (String) The ID of this resource.
+- `id` (String) The ID of this resource.
 
 ### Read-Only
 
-- **aliases** (List of String)
-- **ids** (List of String)
-- **indexes** (List of Number)
-- **names** (List of String)
+- `aliases` (List of String)
+- `ids` (List of String)
+- `indexes` (List of Number)
+- `names` (List of String)
 
 

@@ -43,14 +43,14 @@ resource "opslevel_service_repository" "bar" {
 
 ### Optional
 
-- **base_directory** (String) The directory in the repository containing opslevel.yml.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **name** (String) The name displayed in the UI for the service repository.
-- **repository** (String) The id of the service that this will be added to.
-- **repository_alias** (String) The alias of the service that this will be added to.
-- **service** (String) The id of the service that this will be added to.
-- **service_alias** (String) The alias of the service that this will be added to.
+- `base_directory` (String) The directory in the repository containing opslevel.yml.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `name` (String) The name displayed in the UI for the service repository.
+- `repository` (String) The id of the service that this will be added to.
+- `repository_alias` (String) The alias of the service that this will be added to.
+- `service` (String) The id of the service that this will be added to.
+- `service_alias` (String) The alias of the service that this will be added to.
 
 ## Import
 

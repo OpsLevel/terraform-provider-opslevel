@@ -44,24 +44,24 @@ output "tier2" {
 
 ### Optional
 
-- **filter** (Block List, Max: 1) (see [below for nested schema](#nestedblock--filter))
-- **id** (String) The ID of this resource.
+- `filter` (Block List, Max: 1) (see [below for nested schema](#nestedblock--filter))
+- `id` (String) The ID of this resource.
 
 ### Read-Only
 
-- **ids** (List of String)
-- **names** (List of String)
-- **urls** (List of String)
+- `ids` (List of String)
+- `names` (List of String)
+- `urls` (List of String)
 
 <a id="nestedblock--filter"></a>
 ### Nested Schema for `filter`
 
 Required:
 
-- **field** (String) The field of the target resource to filter upon.
+- `field` (String) The field of the target resource to filter upon.
 
 Optional:
 
-- **value** (String) The field value of the target resource to match.
+- `value` (String) The field value of the target resource to match.
 
 

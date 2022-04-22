@@ -73,22 +73,22 @@ resource "opslevel_check_custom_event" "example" {
 
 ### Required
 
-- **category** (String) The id of the category the check belongs to.
-- **integration** (String) The integration id this check will use.
-- **level** (String) The id of the level the check belongs to.
-- **name** (String) The display name of the check.
-- **service_selector** (String) A jq expression that will be ran against your payload. This will parse out the service identifier.
-- **success_condition** (String) A jq expression that will be ran against your payload. A truthy value will result in the check passing.
+- `category` (String) The id of the category the check belongs to.
+- `integration` (String) The integration id this check will use.
+- `level` (String) The id of the level the check belongs to.
+- `name` (String) The display name of the check.
+- `service_selector` (String) A jq expression that will be ran against your payload. This will parse out the service identifier.
+- `success_condition` (String) A jq expression that will be ran against your payload. A truthy value will result in the check passing.
 
 ### Optional
 
-- **enabled** (Boolean) Whether the check is enabled or not.
-- **filter** (String) The id of the filter of the check.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **message** (String) The check result message template. It is compiled with Liquid and formatted in Markdown.
-- **notes** (String) Additional information about the check.
-- **owner** (String) The id of the team that owns the check.
+- `enabled` (Boolean) Whether the check is enabled or not.
+- `filter` (String) The id of the filter of the check.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `message` (String) The check result message template. It is compiled with Liquid and formatted in Markdown.
+- `notes` (String) Additional information about the check.
+- `owner` (String) The id of the team that owns the check.
 
 ## Import
 

@@ -37,15 +37,15 @@ resource "opslevel_service_tool" "bar_environment" {
 
 ### Required
 
-- **key** (String) The tag's key.
-- **value** (String) The tag's value.
+- `key` (String) The tag's key.
+- `value` (String) The tag's value.
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **service** (String) The id of the service that this will be added to.
-- **service_alias** (String) The alias of the service that this will be added to.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `service` (String) The id of the service that this will be added to.
+- `service_alias` (String) The alias of the service that this will be added to.
 
 ## Import
 

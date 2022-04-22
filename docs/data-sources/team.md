@@ -27,11 +27,11 @@ data "opslevel_team" "devs" {
 
 ### Optional
 
-- **alias** (String) An alias of the team to find by.
-- **id** (String) The id of the team to find.
+- `alias` (String) An alias of the team to find by.
+- `id` (String) The id of the team to find.
 
 ### Read-Only
 
-- **name** (String)
+- `name` (String)
 
 

@@ -63,32 +63,32 @@ resource "opslevel_check_tool_usage" "example" {
 
 ### Required
 
-- **category** (String) The id of the category the check belongs to.
-- **level** (String) The id of the level the check belongs to.
-- **name** (String) The display name of the check.
-- **tool_category** (String) The category that the tool belongs to.
+- `category` (String) The id of the category the check belongs to.
+- `level` (String) The id of the level the check belongs to.
+- `name` (String) The display name of the check.
+- `tool_category` (String) The category that the tool belongs to.
 
 ### Optional
 
-- **enabled** (Boolean) Whether the check is enabled or not.
-- **environment_predicate** (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--environment_predicate))
-- **filter** (String) The id of the filter of the check.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **notes** (String) Additional information about the check.
-- **owner** (String) The id of the team that owns the check.
-- **tool_name_predicate** (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_name_predicate))
+- `enabled` (Boolean) Whether the check is enabled or not.
+- `environment_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--environment_predicate))
+- `filter` (String) The id of the filter of the check.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `notes` (String) Additional information about the check.
+- `owner` (String) The id of the team that owns the check.
+- `tool_name_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_name_predicate))
 
 <a id="nestedblock--environment_predicate"></a>
 ### Nested Schema for `environment_predicate`
 
 Required:
 
-- **type** (String) The condition type used by the predicate.
+- `type` (String) The condition type used by the predicate.
 
 Optional:
 
-- **value** (String) The condition value used by the predicate.
+- `value` (String) The condition value used by the predicate.
 
 
 <a id="nestedblock--tool_name_predicate"></a>
@@ -96,11 +96,11 @@ Optional:
 
 Required:
 
-- **type** (String) The condition type used by the predicate.
+- `type` (String) The condition type used by the predicate.
 
 Optional:
 
-- **value** (String) The condition value used by the predicate.
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 

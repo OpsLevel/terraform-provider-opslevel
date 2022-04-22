@@ -59,31 +59,31 @@ resource "opslevel_check_service_property" "example" {
 
 ### Required
 
-- **category** (String) The id of the category the check belongs to.
-- **level** (String) The id of the level the check belongs to.
-- **name** (String) The display name of the check.
-- **property** (String) The property of the service that the check will verify.
+- `category` (String) The id of the category the check belongs to.
+- `level` (String) The id of the level the check belongs to.
+- `name` (String) The display name of the check.
+- `property` (String) The property of the service that the check will verify.
 
 ### Optional
 
-- **enabled** (Boolean) Whether the check is enabled or not.
-- **filter** (String) The id of the filter of the check.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **notes** (String) Additional information about the check.
-- **owner** (String) The id of the team that owns the check.
-- **predicate** (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--predicate))
+- `enabled` (Boolean) Whether the check is enabled or not.
+- `filter` (String) The id of the filter of the check.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `notes` (String) Additional information about the check.
+- `owner` (String) The id of the team that owns the check.
+- `predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--predicate))
 
 <a id="nestedblock--predicate"></a>
 ### Nested Schema for `predicate`
 
 Required:
 
-- **type** (String) The condition type used by the predicate.
+- `type` (String) The condition type used by the predicate.
 
 Optional:
 
-- **value** (String) The condition value used by the predicate.
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 

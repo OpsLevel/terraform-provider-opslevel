@@ -41,17 +41,17 @@ resource "opslevel_service_tool" "bar_datadog" {
 
 ### Required
 
-- **category** (String) The category that the tool belongs to.
-- **name** (String) The display name of the tool.
-- **url** (String) The URL of the tool.
+- `category` (String) The category that the tool belongs to.
+- `name` (String) The display name of the tool.
+- `url` (String) The URL of the tool.
 
 ### Optional
 
-- **environment** (String) The environment that the tool belongs to.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **service** (String) The id of the service that this will be added to.
-- **service_alias** (String) The alias of the service that this will be added to.
+- `environment` (String) The environment that the tool belongs to.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `service` (String) The id of the service that this will be added to.
+- `service_alias` (String) The alias of the service that this will be added to.
 
 ## Import
 

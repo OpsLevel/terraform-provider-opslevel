@@ -28,12 +28,12 @@ output "category" {
 
 ### Required
 
-- **name** (String) The display name of the category.
+- `name` (String) The display name of the category.
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 ## Import
 

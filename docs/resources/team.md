@@ -30,19 +30,19 @@ output "team" {
 
 ### Required
 
-- **name** (String) The team's display name.
+- `name` (String) The team's display name.
 
 ### Optional
 
-- **aliases** (List of String) A list of human-friendly, unique identifiers for the team.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **manager_email** (String) The email of the user who manages the team.
-- **responsibilities** (String) A description of what the team is responsible for.
+- `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `manager_email` (String) The email of the user who manages the team.
+- `responsibilities` (String) A description of what the team is responsible for.
 
 ### Read-Only
 
-- **alias** (String, Deprecated) The human-friendly, unique identifier for the team.
+- `alias` (String, Deprecated) The human-friendly, unique identifier for the team.
 
 ## Import
 

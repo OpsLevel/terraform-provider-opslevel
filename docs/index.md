@@ -81,8 +81,8 @@ resource "opslevel_check_repository_integrated" "foo" {
 
 ### Optional
 
-- **api_token** (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.
-- **api_url** (String) The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.
+- `api_token` (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.
+- `api_url` (String) The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.
 
 ## Argument Reference
 

@@ -59,31 +59,31 @@ resource "opslevel_check_tag_defined" "example" {
 
 ### Required
 
-- **category** (String) The id of the category the check belongs to.
-- **level** (String) The id of the level the check belongs to.
-- **name** (String) The display name of the check.
-- **tag_key** (String) The tag key where the tag predicate should be applied.
+- `category` (String) The id of the category the check belongs to.
+- `level` (String) The id of the level the check belongs to.
+- `name` (String) The display name of the check.
+- `tag_key` (String) The tag key where the tag predicate should be applied.
 
 ### Optional
 
-- **enabled** (Boolean) Whether the check is enabled or not.
-- **filter** (String) The id of the filter of the check.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **notes** (String) Additional information about the check.
-- **owner** (String) The id of the team that owns the check.
-- **tag_predicate** (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
+- `enabled` (Boolean) Whether the check is enabled or not.
+- `filter` (String) The id of the filter of the check.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `notes` (String) Additional information about the check.
+- `owner` (String) The id of the team that owns the check.
+- `tag_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
 
 <a id="nestedblock--tag_predicate"></a>
 ### Nested Schema for `tag_predicate`
 
 Required:
 
-- **type** (String) The condition type used by the predicate.
+- `type` (String) The condition type used by the predicate.
 
 Optional:
 
-- **value** (String) The condition value used by the predicate.
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 

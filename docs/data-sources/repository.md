@@ -27,7 +27,7 @@ data "opslevel_repository" "bar" {
 
 ### Optional
 
-- **alias** (String) A human-friendly, unique identifier for the repository.
-- **id** (String) The id of the repository to find.
+- `alias` (String) A human-friendly, unique identifier for the repository.
+- `id` (String) The id of the repository to find.
 
 

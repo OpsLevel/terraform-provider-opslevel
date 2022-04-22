@@ -53,27 +53,27 @@ resource "opslevel_filter" "tier3" {
 
 ### Required
 
-- **name** (String) The team's display name.
+- `name` (String) The team's display name.
 
 ### Optional
 
-- **connective** (String) The logical operator to be used in conjunction with predicates.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **predicate** (Block List) The list of predicates used to select which services apply to the filter. (see [below for nested schema](#nestedblock--predicate))
+- `connective` (String) The logical operator to be used in conjunction with predicates.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `predicate` (Block List) The list of predicates used to select which services apply to the filter. (see [below for nested schema](#nestedblock--predicate))
 
 <a id="nestedblock--predicate"></a>
 ### Nested Schema for `predicate`
 
 Required:
 
-- **key** (String) The condition key used by the predicate.
-- **type** (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `satisfies_jq_expression`
+- `key` (String) The condition key used by the predicate.
+- `type` (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `satisfies_jq_expression`
 
 Optional:
 
-- **key_data** (String) Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.
-- **value** (String) The condition value used by the predicate.
+- `key_data` (String) Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 

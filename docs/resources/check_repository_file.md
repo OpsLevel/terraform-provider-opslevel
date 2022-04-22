@@ -60,32 +60,32 @@ resource "opslevel_check_repository_file" "example" {
 
 ### Required
 
-- **category** (String) The id of the category the check belongs to.
-- **filepaths** (List of String) Restrict the search to certain file paths.
-- **level** (String) The id of the level the check belongs to.
-- **name** (String) The display name of the check.
+- `category` (String) The id of the category the check belongs to.
+- `filepaths` (List of String) Restrict the search to certain file paths.
+- `level` (String) The id of the level the check belongs to.
+- `name` (String) The display name of the check.
 
 ### Optional
 
-- **directory_search** (Boolean) Whether the check looks for the existence of a directory instead of a file.
-- **enabled** (Boolean) Whether the check is enabled or not.
-- **file_contents_predicate** (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--file_contents_predicate))
-- **filter** (String) The id of the filter of the check.
-- **id** (String) The ID of this resource.
-- **last_updated** (String)
-- **notes** (String) Additional information about the check.
-- **owner** (String) The id of the team that owns the check.
+- `directory_search` (Boolean) Whether the check looks for the existence of a directory instead of a file.
+- `enabled` (Boolean) Whether the check is enabled or not.
+- `file_contents_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--file_contents_predicate))
+- `filter` (String) The id of the filter of the check.
+- `id` (String) The ID of this resource.
+- `last_updated` (String)
+- `notes` (String) Additional information about the check.
+- `owner` (String) The id of the team that owns the check.
 
 <a id="nestedblock--file_contents_predicate"></a>
 ### Nested Schema for `file_contents_predicate`
 
 Required:
 
-- **type** (String) The condition type used by the predicate.
+- `type` (String) The condition type used by the predicate.
 
 Optional:
 
-- **value** (String) The condition value used by the predicate.
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 
