@@ -80,12 +80,12 @@ func resourceService() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": {
-				Type:         schema.TypeList,
-				Description:  "A list of tags applied to the service.",
-				ForceNew:     false,
-				Optional:     true,
-				Elem:         &schema.Schema{Type: schema.TypeString},
-				ValidateFunc: validateServiceTags,
+				Type:        schema.TypeList,
+				Description: "A list of tags applied to the service.",
+				ForceNew:    false,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				// ValidateFunc: validateServiceTags, // TODO: Not Yet Supported
 			},
 		},
 	}
@@ -109,7 +109,9 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 	expectedAliases := getStringArray(d, "aliases")
 	existingAliases := service.Aliases
 	for _, existingAlias := range existingAliases {
-		if stringInArray(existingAlias, expectedAliases) { continue }
+		if stringInArray(existingAlias, expectedAliases) {
+			continue
+		}
 		// Delete
 		err := client.DeleteServiceAlias(existingAlias)
 		if err != nil {
@@ -117,7 +119,9 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 		}
 	}
 	for _, expectedAlias := range expectedAliases {
-		if stringInArray(expectedAlias, existingAliases) { continue }
+		if stringInArray(expectedAlias, existingAliases) {
+			continue
+		}
 		// Add
 		_, err := client.CreateAliases(service.Id, []string{expectedAlias})
 		if err != nil {
