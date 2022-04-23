@@ -35,3 +35,8 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           # GitHub sets this automatically
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report Release
+        uses: opslevel/report-deploy-github-actions@v0.1.0
+        with:
+          integration_url: ${{ secrets.DEPLOY_INTEGRATION_URL }}
+          service: "opslevel_terraform_provider"
