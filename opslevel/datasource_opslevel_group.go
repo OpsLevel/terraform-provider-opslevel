@@ -40,6 +40,18 @@ func datasourceGroup() *schema.Resource {
 					},
 				},
 			},
+			"members": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"email": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -65,10 +77,24 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 		}
 	}
 
+	members, err := resource.Members(client)
+	members_list := []map[string]string{}
+	if err != nil {
+		return err
+	}
+	if len(members) > 0 {
+		for _, member := range members {
+			members_list = append(members_list, map[string]string{
+				"email": member.Email,
+			})
+		}
+	}
+
 	d.SetId(resource.Id.(string))
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
 	d.Set("parent", parent)
+	d.Set("members", members_list)
 
 	return nil
 }
