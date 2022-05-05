@@ -26,7 +26,7 @@ func resourceCheckCustomEvent() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "True if this check should pass by default. Otherwise the default 'pending' state counts as a failure.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"service_selector": {
 				Type:        schema.TypeString,
