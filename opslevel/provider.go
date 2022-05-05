@@ -30,6 +30,7 @@ func Provider() terraform.ResourceProvider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"opslevel_filter":            datasourceFilter(),
 			"opslevel_filters":           datasourceFilters(),
+			"opslevel_group":             datasourceGroup(),
 			"opslevel_integration":       datasourceIntegration(),
 			"opslevel_integrations":      datasourceIntegrations(),
 			"opslevel_lifecycle":         datasourceLifecycle(),
