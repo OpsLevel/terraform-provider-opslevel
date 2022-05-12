@@ -1,0 +1,21 @@
+name: "Snyk"
+
+on: 
+  push:
+    branches: [ main ]
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Snyk Test
+      uses: snyk/actions/golang@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: "--prune-repeated-subdependencies --json --file=go.mod --json-file-output=./snyk_report.json"
+    - name: Report To OpsLevel
+      run: |
+        curl -X POST ${{ secrets.OL_SNYK_INTEGRATION_URL }} -H 'content-type: application/json' --data-binary @./snyk_report.json
