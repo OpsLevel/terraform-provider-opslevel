@@ -50,7 +50,11 @@ func Provider() terraform.ResourceProvider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"opslevel_check_custom_event":          resourceCheckCustomEvent(),
+<<<<<<< HEAD
 			"opslevel_has_recent_deploy":           resourceCheckHasRecentDeploy(),
+=======
+			"opslevel_check_git_branch_protection": resourceCheckGitBranchProtection(),
+>>>>>>> 257da0e (Add GitBranchProtection check)
 			"opslevel_check_manual":                resourceCheckManual(),
 			"opslevel_check_repository_file":       resourceCheckRepositoryFile(),
 			"opslevel_check_repository_integrated": resourceCheckRepositoryIntegrated(),
