@@ -280,6 +280,22 @@ func flattenTagArray(tags []opslevel.Tag) []string {
 	return output
 }
 
+func flattenMembersArray(members []opslevel.UserId) []string {
+	output := []string{}
+	for _, member := range members {
+		output = append(output, member.Email)
+	}
+	return output
+}
+
+func flattenTeamsArray(teams []opslevel.TeamId) []string {
+	output := []string{}
+	for _, team := range teams {
+		output = append(output, team.Alias)
+	}
+	return output
+}
+
 type reconcileStringArrayAdd func(v string) error
 type reconcileStringArrayUpdate func(o string, n string) error
 type reconcileStringArrayDelete func(v string) error
