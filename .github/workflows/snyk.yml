@@ -15,11 +15,11 @@ jobs:
         submodules: 'true'
     - name: Snyk Test
       uses: snyk/actions/golang@master
+      continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: "--prune-repeated-subdependencies --json --file=go.mod --json-file-output=./snyk_report.json"
     - name: Report To OpsLevel
-      if: always()
       run: |
         curl -X POST ${{ secrets.OL_SNYK_INTEGRATION_URL }} -H 'content-type: application/json' --data-binary @./snyk_report.json
