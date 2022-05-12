@@ -193,6 +193,16 @@ func expandPredicate(d *schema.ResourceData, key string) *opslevel.PredicateInpu
 	}
 }
 
+func expandPredicateUpdate(d *schema.ResourceData, key string) *opslevel.PredicateUpdateInput {
+	if _, ok := d.GetOk(key); !ok {
+		return nil
+	}
+	return &opslevel.PredicateUpdateInput{
+		Type:  opslevel.PredicateTypeEnum(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
+		Value: d.Get(fmt.Sprintf("%s.0.value", key)).(string),
+	}
+}
+
 func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	output := []map[string]string{}
 	if input != nil {

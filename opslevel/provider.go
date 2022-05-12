@@ -49,6 +49,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_tiers":             datasourceTiers(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"opslevel_check_alert_source_usage":    resourceCheckAlertSourceUsage(),
 			"opslevel_check_custom_event":          resourceCheckCustomEvent(),
 			"opslevel_check_git_branch_protection": resourceCheckGitBranchProtection(),
 			"opslevel_check_has_recent_deploy":     resourceCheckHasRecentDeploy(),
