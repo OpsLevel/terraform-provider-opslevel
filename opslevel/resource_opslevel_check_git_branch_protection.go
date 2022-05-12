@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go"
 )
 
@@ -16,17 +15,7 @@ func resourceCheckGitBranchProtection() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
-		Schema: getCheckSchema(map[string]*schema.Schema{
-			"tool_category": {
-				Type:         schema.TypeString,
-				Description:  "The category that the tool belongs to.",
-				ForceNew:     false,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory(), false),
-			},
-			"tool_name_predicate":   getPredicateInputSchema(false),
-			"environment_predicate": getPredicateInputSchema(false),
-		}),
+		Schema: getCheckSchema(map[string]*schema.Schema{}),
 	}
 }
 
