@@ -16,7 +16,7 @@ resource "opslevel_team_contact" "email" {
   value = "developers@example.com"
 }
 
-resource "opslevel_team_contact" "web" {
+resource "opslevel_team_contact" "example" {
   team  = opslevel_team.devs.alias
   type  = "web"
   name  = "Gitlab"
