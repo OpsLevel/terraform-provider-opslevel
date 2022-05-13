@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -70,6 +71,15 @@ func resourceTeamContactCreate(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
+
+	// Handle Import by spliting the ID into the 2 parts
+	parts := strings.SplitN(id, ":", 2)
+	if len(parts) == 2 {
+		d.Set("team", parts[0])
+		id = parts[1]
+		d.SetId(id)
+	}
+
 	identifier := d.Get("team").(string)
 	var err error
 	var team *opslevel.Team
