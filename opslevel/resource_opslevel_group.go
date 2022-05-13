@@ -3,7 +3,6 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go"
-	"github.com/shurcooL/graphql"
 )
 
 func resourceGroup() *schema.Resource {
@@ -71,19 +70,17 @@ func resourceGroupCreate(d *schema.ResourceData, client *opslevel.Client) error 
 
 	teams := []opslevel.IdentifierInput{}
 	for _, team := range getStringArray(d, "teams") {
-		if opslevel.IsID(team) {
-			teams = append(teams, opslevel.IdentifierInput{Id: team})
-		} else {
-			teams = append(teams, opslevel.IdentifierInput{Alias: graphql.String(team)})
-		}
+		teams = append(teams, *opslevel.NewIdentifier(team))
 	}
 
 	input := opslevel.GroupInput{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Parent:      opslevel.NewIdentifier(d.Get("parent").(string)),
 		Members:     &members,
 		Teams:       &teams,
+	}
+	if parent, ok := d.GetOk("parent"); ok {
+		input.Parent = opslevel.NewIdentifier(parent.(string))
 	}
 	resource, err := client.CreateGroup(input)
 	if err != nil {
@@ -108,11 +105,11 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	members := flattenMembersArray(groupMembers)
 
-	descendantTeams, err := resource.DescendantTeams(client)
+	childTeams, err := resource.ChildTeams(client)
 	if err != nil {
 		return err
 	}
-	teams := flattenTeamsArray(descendantTeams)
+	teams := flattenTeamsArray(childTeams)
 
 	if err := d.Set("alias", resource.Alias); err != nil {
 		return err
@@ -146,11 +143,7 @@ func resourceGroupUpdate(d *schema.ResourceData, client *opslevel.Client) error 
 
 	teams := []opslevel.IdentifierInput{}
 	for _, team := range getStringArray(d, "teams") {
-		if opslevel.IsID(team) {
-			teams = append(teams, opslevel.IdentifierInput{Id: team})
-		} else {
-			teams = append(teams, opslevel.IdentifierInput{Alias: graphql.String(team)})
-		}
+		teams = append(teams, *opslevel.NewIdentifier(team))
 	}
 
 	if d.HasChange("name") {
