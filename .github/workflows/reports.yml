@@ -1,0 +1,34 @@
+name: "Reports"
+
+# Every Monday at 1PM UTC (9AM EST)
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 13 * * 1"
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: 'true'
+    - name: Snyk Test
+      uses: snyk/actions/golang@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: "--prune-repeated-subdependencies --json --file=./go.mod --json-file-output=./snyk_report.json"
+    - name: Report To OpsLevel
+      run: |
+        curl -X POST ${{ secrets.OL_SNYK_INTEGRATION_URL }} -H 'content-type: application/json' --data-binary @./snyk_report.json
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Coverage To OpsLevel
+        run: |-
+          export DATA=$(curl -s -X GET -H "Authorization: ${CODECOV_TOKEN}" https://codecov.io/api/gh/${GITHUB_REPOSITORY}/branch/main)
+          echo ${DATA} | curl -s -X POST ${{ secrets.OL_COVERAGE_INTEGRATION_URL }} -H 'content-type: application/json' -d @-
