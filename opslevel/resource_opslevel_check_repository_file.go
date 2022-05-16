@@ -33,6 +33,12 @@ func resourceCheckRepositoryFile() *schema.Resource {
 				},
 			},
 			"file_contents_predicate": getPredicateInputSchema(false),
+			"use_absolute_root": {
+				Type:        schema.TypeBool,
+				Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
+				ForceNew:    false,
+				Optional:    true,
+			},
 		}),
 	}
 }
@@ -44,6 +50,7 @@ func resourceCheckRepositoryFileCreate(d *schema.ResourceData, client *opslevel.
 	input.DirectorySearch = d.Get("directory_search").(bool)
 	input.Filepaths = getStringArray(d, "filepaths")
 	input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+	input.UseAbsoluteRoot = opslevel.Bool(d.Get("use_absolute_root").(bool))
 
 	resource, err := client.CreateCheckRepositoryFile(input)
 	if err != nil {
@@ -74,7 +81,9 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 	if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryFileCheckFragment.FileContentsPredicate)); err != nil {
 		return err
 	}
-
+	if err := d.Set("use_absolute_root", resource.UseAbsoluteRoot); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -83,7 +92,7 @@ func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.
 	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("directory_search") {
-		input.DirectorySearch = d.Get("directory_search").(bool)
+		input.DirectorySearch = opslevel.Bool(d.Get("directory_search").(bool))
 	}
 
 	if d.HasChange("filepaths") {
@@ -92,6 +101,10 @@ func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.
 
 	if d.HasChange("file_contents_predicate") {
 		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+	}
+
+	if d.HasChange("use_absolute_root") {
+		input.UseAbsoluteRoot = opslevel.Bool(d.Get("use_absolute_root").(bool))
 	}
 
 	_, err := client.UpdateCheckRepositoryFile(input)
