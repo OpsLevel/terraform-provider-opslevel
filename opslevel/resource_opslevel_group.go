@@ -40,20 +40,20 @@ func resourceGroup() *schema.Resource {
 			},
 			"parent": {
 				Type:        schema.TypeString,
-				Description: "The parent of the group.",
+				Description: "The parent of the group. Accepts ID or Alias",
 				ForceNew:    false,
 				Optional:    true,
 			},
 			"members": {
 				Type:        schema.TypeList,
-				Description: "The users who are members of the group.",
+				Description: "List of users' email who are members of the group.",
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"teams": {
 				Type:        schema.TypeList,
-				Description: "The teams where this group is the direct parent.",
+				Description: "The teams where this group is the direct parent. Accepts ID or Alias",
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -120,7 +120,7 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("description", resource.Description); err != nil {
 		return err
 	}
-	if err := d.Set("parent", resource.Parent.Alias); err != nil {
+	if err := d.Set("parent", resource.Parent.Id); err != nil {
 		return err
 	}
 	if err := d.Set("members", members); err != nil {
@@ -153,7 +153,11 @@ func resourceGroupUpdate(d *schema.ResourceData, client *opslevel.Client) error 
 		input.Description = d.Get("description").(string)
 	}
 	if d.HasChange("parent") {
-		input.Parent = opslevel.NewIdentifier(d.Get("parent").(string))
+		if parent, ok := d.GetOk("parent"); ok {
+			input.Parent = opslevel.NewIdentifier(parent.(string))
+		} else {
+			input.Parent = nil
+		}
 	}
 	if d.HasChange("members") {
 		input.Members = &members
