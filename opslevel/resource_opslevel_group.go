@@ -40,7 +40,7 @@ func resourceGroup() *schema.Resource {
 			},
 			"parent": {
 				Type:        schema.TypeString,
-				Description: "The parent of the group. Accepts ID or Alias",
+				Description: "The parent of the group. Accepts only Alias",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -53,7 +53,7 @@ func resourceGroup() *schema.Resource {
 			},
 			"teams": {
 				Type:        schema.TypeList,
-				Description: "The teams where this group is the direct parent. Accepts ID or Alias",
+				Description: "The teams where this group is the direct parent. Accepts only Alias.",
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -120,7 +120,7 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("description", resource.Description); err != nil {
 		return err
 	}
-	if err := d.Set("parent", resource.Parent.Id); err != nil {
+	if err := d.Set("parent", resource.Parent.Alias); err != nil {
 		return err
 	}
 	if err := d.Set("members", members); err != nil {
