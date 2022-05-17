@@ -1,1 +1,1 @@
-terraform import opslevel_group.sre Z2lkOi8vb3BzbGV2ZWwvTmFtZXNwYWNlczo6R3JvdXAvNTI
+terraform import opslevel_group.example Z2lkOi8vb3BzbGV2ZWwvTmFtZXNwYWNlczo6R3JvdXAvNTI
