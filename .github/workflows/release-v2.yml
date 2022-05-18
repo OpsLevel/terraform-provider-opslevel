@@ -68,6 +68,3 @@ jobs:
         with:
           integration_url: ${{ secrets.DEPLOY_INTEGRATION_URL }}
           service: "opslevel_terraform_provider"
-        
-
-          
