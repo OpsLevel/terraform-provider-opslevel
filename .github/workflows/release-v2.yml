@@ -1,0 +1,73 @@
+name: "Release V2"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Fetch All Tags
+        run: git fetch --force --tags
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Set Release Version
+        run: |
+          echo "::set-output name=RELEASE_VERSION::$(date +v%Y.%m.%d)"
+      - name: Ensure Changelog
+        run: |
+          if test -f .changes/${RELEASE_VERSION}.md
+          then
+            echo "Skip Changie..."
+          else
+            go install github.com/miniscruff/changie@latest
+            changie batch ${RELEASE_VERSION}
+            changie merge
+          fi
+      - name: Generate Terraform Docs
+        run: |
+          go get https://github.com/hashicorp/terraform-plugin-docs
+          go generate
+      - name: Commit & Tag Release
+        run: |
+          git config user.name "OpsLevel Bots"
+          git config user.email "bots@opslevel.com"
+          git add .
+          git commit -m "Cut Release '${RELEASE_VERSION}'"
+          git tag -f ${RELEASE_VERSION} -m "Cut Release '${RELEASE_VERSION}'"
+          git push
+      - name: Ensure Release Does Not Exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete ${RELEASE_VERSION} || true
+      - name: Import GPG Key
+        id: import_gpg
+        uses: hashicorp/ghaction-import-gpg@v2.1.0
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2.7.0
+        with:
+          args: release --rm-dist --release-notes=./.changes/${RELEASE_VERSION}.md
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report Release To OpsLevel
+        uses: opslevel/report-deploy-github-action@v0.2.0
+        with:
+          integration_url: ${{ secrets.DEPLOY_INTEGRATION_URL }}
+          service: "opslevel_terraform_provider"
+        
+
+          
