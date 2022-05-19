@@ -105,12 +105,6 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	members := flattenMembersArray(groupMembers)
 
-	childTeams, err := resource.ChildTeams(client)
-	if err != nil {
-		return err
-	}
-	teams := flattenTeamsArray(childTeams)
-
 	if err := d.Set("alias", resource.Alias); err != nil {
 		return err
 	}
@@ -126,10 +120,16 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("members", members); err != nil {
 		return err
 	}
-	if err := d.Set("teams", teams); err != nil {
-		return err
+	if _, ok := d.GetOk("teams"); ok {
+		childTeams, err := resource.ChildTeams(client)
+		if err != nil {
+			return err
+		}
+		teams := flattenTeamsArray(childTeams)
+		if err := d.Set("teams", teams); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 

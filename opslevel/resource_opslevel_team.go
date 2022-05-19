@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"sort"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go"
 )
@@ -47,10 +49,16 @@ func resourceTeam() *schema.Resource {
 			},
 			"aliases": {
 				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the team.",
+				Description: "A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically",
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"group": {
+				Type:        schema.TypeString,
+				Description: "The group this team belongs to. Only accepts group's Alias",
+				ForceNew:    false,
+				Optional:    true,
 			},
 		},
 	}
@@ -60,8 +68,12 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	expectedAliases := getStringArray(d, "aliases")
 	existingAliases := team.Aliases
 	for _, existingAlias := range existingAliases {
-		if existingAlias == team.Alias { continue }
-		if stringInArray(existingAlias, expectedAliases) { continue }
+		if existingAlias == team.Alias {
+			continue
+		}
+		if stringInArray(existingAlias, expectedAliases) {
+			continue
+		}
 		// Delete
 		err := client.DeleteTeamAlias(existingAlias)
 		if err != nil {
@@ -69,7 +81,9 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 		}
 	}
 	for _, expectedAlias := range expectedAliases {
-		if stringInArray(expectedAlias, existingAliases) { continue }
+		if stringInArray(expectedAlias, existingAliases) {
+			continue
+		}
 		// Add
 		_, err := client.CreateAliases(team.Id, []string{expectedAlias})
 		if err != nil {
@@ -84,6 +98,9 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		Name:             d.Get("name").(string),
 		ManagerEmail:     d.Get("manager_email").(string),
 		Responsibilities: d.Get("responsibilities").(string),
+	}
+	if group, ok := d.GetOk("group"); ok {
+		input.Group = opslevel.NewIdentifier(group.(string))
 	}
 	resource, err := client.CreateTeam(input)
 	if err != nil {
@@ -119,10 +136,26 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
 	}
-	aliases := resource.Aliases
-	aliases = append(aliases, resource.Alias)
-	if err := d.Set("aliases", resource.Aliases); err != nil {
-		return err
+	if _, ok := d.GetOk("group"); ok {
+		if err := d.Set("group", resource.Group.Alias); err != nil {
+			return err
+		}
+	}
+	if _, ok := d.GetOk("aliases"); ok {
+		aliases := []string{}
+		for _, alias := range resource.Aliases {
+			if alias == resource.Alias {
+				// If user specifies the auto-generated alias in terraform config, don't skip it
+				if stringInArray(alias, getStringArray(d, "aliases")) != true {
+					continue
+				}
+			}
+			aliases = append(aliases, alias)
+		}
+		sort.Strings(aliases)
+		if err := d.Set("aliases", aliases); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -141,6 +174,13 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	if d.HasChange("responsibilities") {
 		input.Responsibilities = d.Get("responsibilities").(string)
+	}
+	if d.HasChange("group") {
+		if group, ok := d.GetOk("group"); ok {
+			input.Group = opslevel.NewIdentifier(group.(string))
+		} else {
+			input.Group = nil
+		}
 	}
 
 	resource, err := client.UpdateTeam(input)
