@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"sort"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go"
 )
@@ -47,7 +49,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"aliases": {
 				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the team.",
+				Description: "A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically",
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -96,7 +98,9 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		Name:             d.Get("name").(string),
 		ManagerEmail:     d.Get("manager_email").(string),
 		Responsibilities: d.Get("responsibilities").(string),
-		Group:            opslevel.NewIdentifier(d.Get("group").(string)),
+	}
+	if group, ok := d.GetOk("group"); ok {
+		input.Group = opslevel.NewIdentifier(group.(string))
 	}
 	resource, err := client.CreateTeam(input)
 	if err != nil {
@@ -132,13 +136,26 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
 	}
-	if err := d.Set("group", resource.Group.Alias); err != nil {
-		return err
+	if _, ok := d.GetOk("group"); ok {
+		if err := d.Set("group", resource.Group.Alias); err != nil {
+			return err
+		}
 	}
-	aliases := resource.Aliases
-	aliases = append(aliases, resource.Alias)
-	if err := d.Set("aliases", resource.Aliases); err != nil {
-		return err
+	if _, ok := d.GetOk("aliases"); ok {
+		aliases := []string{}
+		for _, alias := range resource.Aliases {
+			if alias == resource.Alias {
+				// If user specifies the auto-generated alias in terraform config, don't skip it
+				if stringInArray(alias, getStringArray(d, "aliases")) != true {
+					continue
+				}
+			}
+			aliases = append(aliases, alias)
+		}
+		sort.Strings(aliases)
+		if err := d.Set("aliases", aliases); err != nil {
+			return err
+		}
 	}
 
 	return nil
