@@ -25,48 +25,18 @@ func datasourceGroup() *schema.Resource {
 				Computed: true,
 			},
 			"parent": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"alias": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
 			},
 			"members": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"email": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"teams": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"alias": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -85,38 +55,30 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
-	parent := map[string]string{}
-	if resource.Parent.Id != nil {
-		parent = map[string]string{
-			"alias": resource.Parent.Alias,
-			"id":    resource.Parent.Id.(string),
-		}
+	var parent string
+	if resource.Parent.Alias != "" {
+		parent = resource.Parent.Alias
 	}
 
 	members, err := resource.Members(client)
-	members_list := []map[string]string{}
 	if err != nil {
 		return err
 	}
+	members_list := []string{}
 	if len(members) > 0 {
 		for _, member := range members {
-			members_list = append(members_list, map[string]string{
-				"email": member.Email,
-			})
+			members_list = append(members_list, member.Email)
 		}
 	}
 
 	childTeams, err := resource.ChildTeams(client)
-	teams := []map[string]string{}
 	if err != nil {
 		return err
 	}
+	teams := []string{}
 	if len(childTeams) > 0 {
 		for _, team := range childTeams {
-			teams = append(teams, map[string]string{
-				"alias": team.Alias,
-				"id":    team.Id.(string),
-			})
+			teams = append(teams, team.Alias)
 		}
 	}
 
