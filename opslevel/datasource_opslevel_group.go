@@ -60,33 +60,23 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 		parent = resource.Parent.Alias
 	}
 
-	members, err := resource.Members(client)
+	groupMembers, err := resource.Members(client)
 	if err != nil {
 		return err
 	}
-	members_list := []string{}
-	if len(members) > 0 {
-		for _, member := range members {
-			members_list = append(members_list, member.Email)
-		}
-	}
+	members := flattenMembersArray(groupMembers)
 
 	childTeams, err := resource.ChildTeams(client)
 	if err != nil {
 		return err
 	}
-	teams := []string{}
-	if len(childTeams) > 0 {
-		for _, team := range childTeams {
-			teams = append(teams, team.Alias)
-		}
-	}
+	teams := flattenTeamsArray(childTeams)
 
 	d.SetId(resource.Id.(string))
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
 	d.Set("parent", parent)
-	d.Set("members", members_list)
+	d.Set("members", members)
 	d.Set("teams", teams)
 
 	return nil
