@@ -26,7 +26,7 @@ func resourceCheckCustomEvent() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "True if this check should pass by default. Otherwise the default 'pending' state counts as a failure.",
 				ForceNew:    false,
-				Required:    true,
+				Optional:    true,
 			},
 			"service_selector": {
 				Type:        schema.TypeString,
@@ -55,7 +55,9 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 	setCheckCreateInput(d, &input)
 
 	input.Integration = getID(d, "integration")
-	input.PassPending = d.Get("pass_pending").(bool)
+	if passPending, ok := d.GetOk("pass_pending"); ok {
+		input.PassPending = opslevel.Bool(passPending.(bool))
+	}
 	input.ServiceSelector = d.Get("service_selector").(string)
 	input.SuccessCondition = d.Get("success_condition").(string)
 	input.Message = d.Get("message").(string)
@@ -84,8 +86,10 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 	if err := d.Set("integration", resource.Integration.Id.(string)); err != nil {
 		return err
 	}
-	if err := d.Set("pass_pending", resource.PassPending); err != nil {
-		return err
+	if _, ok := d.GetOk("pass_pending"); ok {
+		if err := d.Set("pass_pending", resource.PassPending); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
 		return err
@@ -108,7 +112,9 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 		input.Integration = getID(d, "integration")
 	}
 	if d.HasChange("pass_pending") {
-		input.PassPending = d.Get("pass_pending").(bool)
+		if passPending, ok := d.GetOk("pass_pending"); ok {
+			input.PassPending = opslevel.Bool(passPending.(bool))
+		}
 	}
 	if d.HasChange("service_selector") {
 		input.ServiceSelector = d.Get("service_selector").(string)
