@@ -23,13 +23,16 @@ func getCheckSchema(extras map[string]*schema.Schema) map[string]*schema.Schema 
 		},
 		"enabled": {
 			Type:        schema.TypeBool,
-			Description: "Whether the check is enabled or not.",
+			Description: `Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.`,
 			ForceNew:    false,
 			Optional:    true,
 		},
 		"enable_on": {
-			Type:         schema.TypeString,
-			Description:  "The date when the check will be automatically enabled.",
+			Type: schema.TypeString,
+			Description: `The date when the check will be automatically enabled.
+If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+See example in opslevel_check_manual for proper configuration.
+`,
 			ForceNew:     false,
 			Optional:     true,
 			ValidateFunc: validation.IsRFC3339Time,

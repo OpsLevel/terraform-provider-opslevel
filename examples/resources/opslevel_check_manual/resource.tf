@@ -26,19 +26,24 @@ data "opslevel_filter" "tier1" {
 resource "time_static" "initial" {}
 
 resource "opslevel_check_manual" "example" {
-  name = "foo"
-  enabled = true
-  # To set a future enable date remove field 'enabled' and use 'enable_on'
-  # enable_on = "2022-05-23T14:14:18.782000Z"
-  category = data.opslevel_rubric_category.security.id
-  level = data.opslevel_rubric_level.bronze.id
-  owner = data.opslevel_team.devs.id
-  filter = data.opslevel_filter.tier1.id
+  name      = "foo"
+  enable_on = "2022-05-23T14:14:18.782000Z"
+  category  = data.opslevel_rubric_category.security.id
+  level     = data.opslevel_rubric_level.bronze.id
+  owner     = data.opslevel_team.devs.id
+  filter    = data.opslevel_filter.tier1.id
   update_frequency {
     starting_data = time_static.initial.id
-    time_scale = "week"
-    value = 1
+    time_scale    = "week"
+    value         = 1
   }
   update_requires_comment = false
-  notes = "Optional additional info on why this check is run or how to fix it"
+  notes                   = "Optional additional info on why this check is run or how to fix it"
+
+  lifecycle {
+    ignore_changes = [
+      enabled,
+      enable_on
+    ]
+  }
 }
