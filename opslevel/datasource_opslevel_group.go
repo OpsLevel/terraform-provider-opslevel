@@ -17,40 +17,31 @@ func datasourceGroup() *schema.Resource {
 				Optional:    true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The name of the group.",
+				Computed:    true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The description of the group.",
+				Computed:    true,
 			},
 			"parent": {
-				Type:     schema.TypeMap,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"alias": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
+				Type:        schema.TypeString,
+				Description: "The parent alias of the group.",
+				Computed:    true,
 			},
 			"members": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"email": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
+				Type:        schema.TypeList,
+				Description: "The users' emails who are members of the group.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"teams": {
+				Type:        schema.TypeList,
+				Description: "The team aliases where this group is the direct parent.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -69,32 +60,29 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
-	parent := map[string]string{}
-	if resource.Parent.Id != nil {
-		parent = map[string]string{
-			"alias": resource.Parent.Alias,
-			"id":    resource.Parent.Id.(string),
-		}
+	var parent string
+	if resource.Parent.Alias != "" {
+		parent = resource.Parent.Alias
 	}
 
-	members, err := resource.Members(client)
-	members_list := []map[string]string{}
+	groupMembers, err := resource.Members(client)
 	if err != nil {
 		return err
 	}
-	if len(members) > 0 {
-		for _, member := range members {
-			members_list = append(members_list, map[string]string{
-				"email": member.Email,
-			})
-		}
+	members := flattenMembersArray(groupMembers)
+
+	childTeams, err := resource.ChildTeams(client)
+	if err != nil {
+		return err
 	}
+	teams := flattenTeamsArray(childTeams)
 
 	d.SetId(resource.Id.(string))
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
 	d.Set("parent", parent)
-	d.Set("members", members_list)
+	d.Set("members", members)
+	d.Set("teams", teams)
 
 	return nil
 }
