@@ -58,9 +58,12 @@ resource "opslevel_filter" "tier3" {
 ### Optional
 
 - `connective` (String) The logical operator to be used in conjunction with predicates.
-- `id` (String) The ID of this resource.
 - `last_updated` (String)
 - `predicate` (Block List) The list of predicates used to select which services apply to the filter. (see [below for nested schema](#nestedblock--predicate))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--predicate"></a>
 ### Nested Schema for `predicate`

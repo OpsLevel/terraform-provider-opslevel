@@ -35,12 +35,9 @@ data "opslevel_rubric_category" "Observability" {
 
 - `filter` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--filter))
 
-### Optional
-
-- `id` (String) The ID of this resource.
-
 ### Read-Only
 
+- `id` (String) The ID of this resource.
 - `name` (String)
 
 <a id="nestedblock--filter"></a>

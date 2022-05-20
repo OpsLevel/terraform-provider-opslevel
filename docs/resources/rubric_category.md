@@ -32,8 +32,11 @@ output "category" {
 
 ### Optional
 
-- `id` (String) The ID of this resource.
 - `last_updated` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 ## Import
 

@@ -45,10 +45,10 @@ output "tier2" {
 ### Optional
 
 - `filter` (Block List, Max: 1) (see [below for nested schema](#nestedblock--filter))
-- `id` (String) The ID of this resource.
 
 ### Read-Only
 
+- `id` (String) The ID of this resource.
 - `ids` (List of String)
 - `names` (List of String)
 - `urls` (List of String)

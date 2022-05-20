@@ -48,10 +48,13 @@ resource "opslevel_service_tool" "bar_datadog" {
 ### Optional
 
 - `environment` (String) The environment that the tool belongs to.
-- `id` (String) The ID of this resource.
 - `last_updated` (String)
 - `service` (String) The id of the service that this will be added to.
 - `service_alias` (String) The alias of the service that this will be added to.
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 ## Import
 

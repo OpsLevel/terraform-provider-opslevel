@@ -35,13 +35,10 @@ data "opslevel_lifecycle" "pre-alpha" {
 
 - `filter` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--filter))
 
-### Optional
-
-- `id` (String) The ID of this resource.
-
 ### Read-Only
 
 - `alias` (String)
+- `id` (String) The ID of this resource.
 - `index` (Number)
 - `name` (String)
 

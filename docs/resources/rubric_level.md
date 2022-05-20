@@ -34,9 +34,12 @@ output "level" {
 ### Optional
 
 - `description` (String) The description of the category.
-- `id` (String) The ID of this resource.
 - `index` (Number) An integer allowing this level to be inserted between others. Must be unique per Rubric.
 - `last_updated` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 ## Import
 

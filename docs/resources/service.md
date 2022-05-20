@@ -66,7 +66,6 @@ output "foo_aliases" {
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the service.
 - `description` (String) A brief description of the service.
 - `framework` (String) The primary software development framework that the service uses.
-- `id` (String) The ID of this resource.
 - `language` (String) The primary programming language that the service is written in.
 - `last_updated` (String)
 - `lifecycle_alias` (String) The lifecycle stage of the service.
@@ -74,6 +73,10 @@ output "foo_aliases" {
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 ## Import
 

@@ -41,6 +41,8 @@ data "opslevel_filter" "tier1" {
 resource "opslevel_check_tag_defined" "example" {
   name = "foo"
   enabled = true
+  # To set a future enable date remove field 'enabled' and use 'enable_on'
+  # enable_on = "2022-05-23T14:14:18.782000Z"
   category = data.opslevel_rubric_category.security.id
   level = data.opslevel_rubric_level.bronze.id
   owner = data.opslevel_team.devs.id
@@ -66,13 +68,19 @@ resource "opslevel_check_tag_defined" "example" {
 
 ### Optional
 
-- `enabled` (Boolean) Whether the check is enabled or not.
+- `enable_on` (String) The date when the check will be automatically enabled.
+If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
-- `id` (String) The ID of this resource.
 - `last_updated` (String)
 - `notes` (String) Additional information about the check.
 - `owner` (String) The id of the team that owns the check.
 - `tag_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--tag_predicate"></a>
 ### Nested Schema for `tag_predicate`
