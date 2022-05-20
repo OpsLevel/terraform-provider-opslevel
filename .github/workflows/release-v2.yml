@@ -5,7 +5,7 @@ on:
     inputs:
       release-version:
         required: true
-        description: The release version to use IE: v0.5.0
+        description: "The release version to use IE: v0.5.0"
 
 permissions:
   contents: write
