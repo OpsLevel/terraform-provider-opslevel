@@ -37,7 +37,7 @@ jobs:
           fi
       - name: Generate Terraform Docs
         run: |
-          go get https://github.com/hashicorp/terraform-plugin-docs
+          go get github.com/hashicorp/terraform-plugin-docs
           go generate
       - name: Commit & Tag Release
         run: |
