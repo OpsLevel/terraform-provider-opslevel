@@ -1,7 +1,10 @@
 package opslevel
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go"
 )
 
@@ -20,9 +23,19 @@ func getCheckSchema(extras map[string]*schema.Schema) map[string]*schema.Schema 
 		},
 		"enabled": {
 			Type:        schema.TypeBool,
-			Description: "Whether the check is enabled or not.",
+			Description: `Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.`,
 			ForceNew:    false,
 			Optional:    true,
+		},
+		"enable_on": {
+			Type: schema.TypeString,
+			Description: `The date when the check will be automatically enabled.
+If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+See example in opslevel_check_manual for proper configuration.
+`,
+			ForceNew:     false,
+			Optional:     true,
+			ValidateFunc: validation.IsRFC3339Time,
 		},
 		"category": {
 			Type:        schema.TypeString,
@@ -68,6 +81,11 @@ func setCheckData(d *schema.ResourceData, resource *opslevel.Check) error {
 	if err := d.Set("enabled", resource.Enabled); err != nil {
 		return err
 	}
+	if _, ok := d.GetOk("enable_on"); ok {
+		if err := d.Set("enable_on", resource.EnableOn.Format(time.RFC3339)); err != nil {
+			return err
+		}
+	}
 	if err := d.Set("category", resource.Category.Id); err != nil {
 		return err
 	}
@@ -90,6 +108,10 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 	input := p.GetCheckCreateInput()
 	input.Name = d.Get("name").(string)
 	input.Enabled = d.Get("enabled").(bool)
+	if value, ok := d.GetOk("enable_on"); ok {
+		enable_on := opslevel.NewISO8601Date(value.(string))
+		input.EnableOn = &enable_on
+	}
 	input.Category = getID(d, "category")
 	input.Level = getID(d, "level")
 	input.Owner = getID(d, "owner")
@@ -107,6 +129,10 @@ func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProv
 	if d.HasChange("enabled") {
 		value := d.Get("enabled").(bool)
 		input.Enabled = &value
+	}
+	if d.HasChange("enable_on") {
+		enable_on := opslevel.NewISO8601Date(d.Get("enable_on").(string))
+		input.EnableOn = &enable_on
 	}
 	if d.HasChange("category") {
 		input.Category = getID(d, "category")
