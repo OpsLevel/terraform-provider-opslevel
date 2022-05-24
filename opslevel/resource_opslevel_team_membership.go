@@ -17,7 +17,12 @@ func resourceTeamMembership() *schema.Resource {
 			State: resourceTeamMembershipImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"team_id": {
+			"last_updated": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"team_alias": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
@@ -25,6 +30,7 @@ func resourceTeamMembership() *schema.Resource {
 			"members": {
 				Type:     schema.TypeSet,
 				Required: true,
+				Description: "List of user emails that belong to the team.",
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
@@ -32,10 +38,10 @@ func resourceTeamMembership() *schema.Resource {
 }
 
 func resourceTeamMembershipCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	teamId := d.Get("team_id").(string)
+	teamAlias := d.Get("team_alias").(string)
 	members := expandStringArray(d.Get("members").(*schema.Set).List())
 
-	team, err := getTeamFromId(teamId, client)
+	team, err := getTeamFromAlias(teamAlias, client)
 	if err != nil {
 		return err
 	}
@@ -50,8 +56,8 @@ func resourceTeamMembershipCreate(d *schema.ResourceData, client *opslevel.Clien
 }
 
 func resourceTeamMembershipRead(d *schema.ResourceData, client *opslevel.Client) error {
-	teamId := d.Get("team_id").(string)
-	members, err := getCurrentMembersFromTeamId(teamId, client)
+	teamAlias := d.Get("team_alias").(string)
+	members, err := getCurrentMembersFromTeamAlias(teamAlias, client)
 	if err != nil {
 		return nil
 	}
@@ -63,7 +69,7 @@ func resourceTeamMembershipRead(d *schema.ResourceData, client *opslevel.Client)
 
 func resourceTeamMembershipUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	if d.HasChange("members") {
-		teamId := d.Get("team_id").(string)
+		teamAlias := d.Get("team_alias").(string)
 		o, n := d.GetChange("members")
 		if o == nil {
 			o = new(schema.Set)
@@ -78,7 +84,7 @@ func resourceTeamMembershipUpdate(d *schema.ResourceData, client *opslevel.Clien
 		removeSlice := expandStringArray(os.Difference(ns).List())
 		addSlice := expandStringArray(ns.Difference(os).List())
 
-		team, err := getTeamFromId(teamId, client)
+		team, err := getTeamFromAlias(teamAlias, client)
 		if err != nil {
 			return err
 		}
@@ -95,14 +101,16 @@ func resourceTeamMembershipUpdate(d *schema.ResourceData, client *opslevel.Clien
 			}
 		}
 	}
+	d.Set("last_updated", timeLastUpdated())
+
 	return resourceTeamMembershipRead(d, client)
 }
 
 func resourceTeamMembershipDelete(d *schema.ResourceData, client *opslevel.Client) error {
-	teamId := d.Get("team_id").(string)
+	teamAlias := d.Get("team_alias").(string)
 	members := expandStringArray(d.Get("members").(*schema.Set).List())
 
-	team, err := getTeamFromId(teamId, client)
+	team, err := getTeamFromAlias(teamAlias, client)
 	if err != nil {
 		return err
 	}
@@ -116,29 +124,29 @@ func resourceTeamMembershipDelete(d *schema.ResourceData, client *opslevel.Clien
 
 func resourceTeamMembershipImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*opslevel.Client)
-	teamId := d.Id()
-	currentMembers, err := getCurrentMembersFromTeamId(teamId, client)
+	teamAlias := d.Id()
+	currentMembers, err := getCurrentMembersFromTeamAlias(teamAlias, client)
 	if err != nil {
 		return nil, err
 	}
 
-	d.Set("team_id", teamId)
+	d.Set("team_alias", teamAlias)
 	d.Set("members", currentMembers)
 
 	d.SetId(resource.PrefixedUniqueId(""))
 	return []*schema.ResourceData{d}, nil
 }
 
-func getTeamFromId(teamId string, client *opslevel.Client) (*opslevel.Team, error) {
-	team, err := client.GetTeam(teamId)
+func getTeamFromAlias(teamAlias string, client *opslevel.Client) (*opslevel.Team, error) {
+	team, err := client.GetTeamWithAlias(teamAlias)
 	if err != nil {
 		return nil, err
 	}
 	return team, nil
 }
 
-func getCurrentMembersFromTeamId(teamId string, client *opslevel.Client) ([]string, error) {
-	team, err := getTeamFromId(teamId, client)
+func getCurrentMembersFromTeamAlias(getCurrentMembersFromTeamAlias string, client *opslevel.Client) ([]string, error) {
+	team, err := getTeamFromAlias(getCurrentMembersFromTeamAlias, client)
 	if err != nil {
 		return nil, err
 	}
@@ -151,10 +159,6 @@ func getCurrentMembersFromTeamId(teamId string, client *opslevel.Client) ([]stri
 }
 
 func collectMembersForTeam(team *opslevel.Team, client *opslevel.Client) ([]string, error) {
-	if err := team.Members.Hydrate(team.Id, client); err != nil {
-		return nil, err
-	}
-
 	memberEmails := make([]string, 0, len(team.Members.Nodes))
 
 	for _, user := range team.Members.Nodes {
