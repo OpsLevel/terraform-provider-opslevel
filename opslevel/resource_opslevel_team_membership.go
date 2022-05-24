@@ -8,7 +8,7 @@ import (
 
 func resourceTeamMembership() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manage a team user membership",
+		Description: "Manage a team's user membership",
 		Create:      wrap(resourceTeamMembershipCreate),
 		Read:        wrap(resourceTeamMembershipRead),
 		Update:      wrap(resourceTeamMembershipUpdate),
