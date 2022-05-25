@@ -60,6 +60,13 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"members": {
+				Type:     schema.TypeSet,
+				Description: "List of user emails that belong to the team.",
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				ForceNew: false,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -93,6 +100,61 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
+func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
+	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
+	existingMembers := collectMemberEmailsFromTeam(team)
+	membersToRemove := make([]string, 0)
+	membersToAdd := make([]string, 0)
+
+	for _, existingMember := range existingMembers {
+		if stringInArray(existingMember, expectedMembers) {
+			continue
+		}
+
+		membersToRemove = append(membersToRemove, existingMember)
+	}
+
+	for _, expectedMember := range expectedMembers {
+		if expectedMember == team.Manager.Email {
+			continue
+		}
+
+		if stringInArray(expectedMember, existingMembers) {
+			continue
+		}
+		membersToAdd = append(membersToAdd, expectedMember)
+	}
+
+	if len(membersToAdd) != 0 {
+		_, err := client.AddMembers(&team.TeamId, membersToAdd)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(membersToRemove) != 0 {
+		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func collectMemberEmailsFromTeam(team *opslevel.Team) []string {
+	memberEmails := make([]string, 0, len(team.Members.Nodes))
+
+	for _, user := range team.Members.Nodes {
+		// Team managers are members by default and should not be included as part of the members attribute
+		if user.Email == team.Manager.Email {
+			continue
+		}
+
+		memberEmails = append(memberEmails, user.Email)
+	}
+	return memberEmails
+}
+
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
@@ -111,6 +173,11 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	aliasesErr := reconcileTeamAliases(d, resource, client)
 	if aliasesErr != nil {
 		return aliasesErr
+	}
+
+	membersErr := reconcileTeamMembership(d, resource, client)
+	if membersErr != nil {
+		return membersErr
 	}
 
 	return resourceTeamRead(d, client)
@@ -134,6 +201,9 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
+		return err
+	}
+	if err := d.Set("members", collectMemberEmailsFromTeam(resource)); err != nil {
 		return err
 	}
 	if _, ok := d.GetOk("group"); ok {
@@ -192,6 +262,13 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		tagsErr := reconcileTeamAliases(d, resource, client)
 		if tagsErr != nil {
 			return tagsErr
+		}
+	}
+
+	if d.HasChange("members") {
+		membershipErr := reconcileTeamMembership(d, resource, client)
+		if membershipErr != nil {
+			return membershipErr
 		}
 	}
 
