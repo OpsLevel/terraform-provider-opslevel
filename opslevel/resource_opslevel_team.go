@@ -103,11 +103,15 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
 	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
 	existingMembers := collectMemberEmailsFromTeam(team)
-	membersToRemove := make([]string, 0)
-	membersToAdd := make([]string, 0)
+	membersToRemove := []string{}
+	membersToAdd := []string{}
 
 	for _, existingMember := range existingMembers {
 		if stringInArray(existingMember, expectedMembers) {
+			continue
+		}
+
+		if existingMember == team.Manager.Email {
 			continue
 		}
 
@@ -115,9 +119,6 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 	}
 
 	for _, expectedMember := range expectedMembers {
-		if expectedMember == team.Manager.Email {
-			continue
-		}
 
 		if stringInArray(expectedMember, existingMembers) {
 			continue
@@ -145,11 +146,6 @@ func collectMemberEmailsFromTeam(team *opslevel.Team) []string {
 	memberEmails := make([]string, 0, len(team.Members.Nodes))
 
 	for _, user := range team.Members.Nodes {
-		// Team managers are members by default and should not be included as part of the members attribute
-		if user.Email == team.Manager.Email {
-			continue
-		}
-
 		memberEmails = append(memberEmails, user.Email)
 	}
 	return memberEmails
