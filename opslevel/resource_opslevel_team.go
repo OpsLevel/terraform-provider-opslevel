@@ -203,9 +203,6 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
 	}
-	if err := d.Set("members", collectMemberEmailsFromTeam(resource)); err != nil {
-		return err
-	}
 	if _, ok := d.GetOk("group"); ok {
 		if err := d.Set("group", resource.Group.Alias); err != nil {
 			return err
@@ -224,6 +221,12 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 		sort.Strings(aliases)
 		if err := d.Set("aliases", aliases); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := d.GetOk("members"); ok {
+		if err := d.Set("members", collectMemberEmailsFromTeam(resource)); err != nil {
 			return err
 		}
 	}
