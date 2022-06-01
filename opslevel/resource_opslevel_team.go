@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -100,18 +101,24 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
+func collectMembersFromTeam(team *opslevel.Team) []string {
+	members := []string{}
+
+	for _, user := range team.Members.Nodes {
+		members = append(members, user.Email)
+	}
+	return members
+}
+
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
 	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
-	existingMembers := collectMemberEmailsFromTeam(team)
+	existingMembers := collectMembersFromTeam(team)
+
 	membersToRemove := []string{}
 	membersToAdd := []string{}
 
 	for _, existingMember := range existingMembers {
 		if stringInArray(existingMember, expectedMembers) {
-			continue
-		}
-
-		if existingMember == team.Manager.Email {
 			continue
 		}
 
@@ -142,13 +149,16 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 	return nil
 }
 
-func collectMemberEmailsFromTeam(team *opslevel.Team) []string {
-	memberEmails := make([]string, 0, len(team.Members.Nodes))
-
-	for _, user := range team.Members.Nodes {
-		memberEmails = append(memberEmails, user.Email)
+func validateMembershipState(d *schema.ResourceData) error {
+	if membersSet, ok := d.GetOk("members"); ok {
+		if managerEmail, ok := d.GetOk("manager_email"); ok {
+			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
+			if !stringInArray(managerEmail.(string), memberEmails) {
+				return errors.New("The `manager_email` value is required as a member")
+			}
+		}
 	}
-	return memberEmails
+	return nil
 }
 
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
@@ -160,6 +170,12 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if group, ok := d.GetOk("group"); ok {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
+
+	memberValidationErr := validateMembershipState(d);
+	if memberValidationErr != nil {
+		return memberValidationErr
+	}
+
 	resource, err := client.CreateTeam(input)
 	if err != nil {
 		return err
@@ -222,7 +238,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	if _, ok := d.GetOk("members"); ok {
-		if err := d.Set("members", collectMemberEmailsFromTeam(resource)); err != nil {
+		if err := d.Set("members", collectMembersFromTeam(resource)); err != nil {
 			return err
 		}
 	}
@@ -233,6 +249,11 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamUpdateInput{
 		Id: d.Id(),
+	}
+
+	membersErr := validateMembershipState(d);
+	if membersErr != nil {
+		return membersErr
 	}
 
 	if d.HasChange("name") {
