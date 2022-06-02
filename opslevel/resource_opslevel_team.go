@@ -63,7 +63,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"members": {
 				Type:     schema.TypeSet,
-				Description: "List of user emails that belong to the team.",
+				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				ForceNew: false,
 				Optional: true,
@@ -154,7 +154,7 @@ func validateMembershipState(d *schema.ResourceData) error {
 		if managerEmail, ok := d.GetOk("manager_email"); ok {
 			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
 			if !stringInArray(managerEmail.(string), memberEmails) {
-				return errors.New("The `manager_email` value is required as a member")
+				return errors.New("The 'manager_email' value is required as a member")
 			}
 		}
 	}
@@ -171,9 +171,9 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
 
-	memberValidationErr := validateMembershipState(d);
-	if memberValidationErr != nil {
-		return memberValidationErr
+	membershipValidationErr := validateMembershipState(d);
+	if membershipValidationErr != nil {
+		return membershipValidationErr
 	}
 
 	resource, err := client.CreateTeam(input)
@@ -187,9 +187,11 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		return aliasesErr
 	}
 
-	membersErr := reconcileTeamMembership(d, resource, client)
-	if membersErr != nil {
-		return membersErr
+	if _, ok := d.GetOk("members"); ok {
+		membersErr := reconcileTeamMembership(d, resource, client)
+		if membersErr != nil {
+			return membersErr
+		}
 	}
 
 	return resourceTeamRead(d, client)
@@ -251,9 +253,9 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		Id: d.Id(),
 	}
 
-	membersErr := validateMembershipState(d);
-	if membersErr != nil {
-		return membersErr
+	membershipValidationErr := validateMembershipState(d);
+	if membershipValidationErr != nil {
+		return membershipValidationErr
 	}
 
 	if d.HasChange("name") {
@@ -286,9 +288,9 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	if d.HasChange("members") {
-		membershipErr := reconcileTeamMembership(d, resource, client)
-		if membershipErr != nil {
-			return membershipErr
+		membersErr := reconcileTeamMembership(d, resource, client)
+		if membersErr != nil {
+			return membersErr
 		}
 	}
 
