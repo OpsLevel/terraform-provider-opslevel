@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -60,6 +61,13 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"members": {
+				Type:     schema.TypeSet,
+				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				ForceNew: false,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -93,6 +101,66 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
+func collectMembersFromTeam(team *opslevel.Team) []string {
+	members := []string{}
+
+	for _, user := range team.Members.Nodes {
+		members = append(members, user.Email)
+	}
+	return members
+}
+
+func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
+	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
+	existingMembers := collectMembersFromTeam(team)
+
+	membersToRemove := []string{}
+	membersToAdd := []string{}
+
+	for _, existingMember := range existingMembers {
+		if stringInArray(existingMember, expectedMembers) {
+			continue
+		}
+
+		membersToRemove = append(membersToRemove, existingMember)
+	}
+
+	for _, expectedMember := range expectedMembers {
+
+		if stringInArray(expectedMember, existingMembers) {
+			continue
+		}
+		membersToAdd = append(membersToAdd, expectedMember)
+	}
+
+	if len(membersToAdd) != 0 {
+		_, err := client.AddMembers(&team.TeamId, membersToAdd)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(membersToRemove) != 0 {
+		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateMembershipState(d *schema.ResourceData) error {
+	if membersSet, ok := d.GetOk("members"); ok {
+		if managerEmail, ok := d.GetOk("manager_email"); ok {
+			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
+			if !stringInArray(managerEmail.(string), memberEmails) {
+				return errors.New("The 'manager_email' value is required as a member")
+			}
+		}
+	}
+	return nil
+}
+
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
@@ -102,6 +170,12 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if group, ok := d.GetOk("group"); ok {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
+
+	membershipValidationErr := validateMembershipState(d);
+	if membershipValidationErr != nil {
+		return membershipValidationErr
+	}
+
 	resource, err := client.CreateTeam(input)
 	if err != nil {
 		return err
@@ -111,6 +185,13 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	aliasesErr := reconcileTeamAliases(d, resource, client)
 	if aliasesErr != nil {
 		return aliasesErr
+	}
+
+	if _, ok := d.GetOk("members"); ok {
+		membersErr := reconcileTeamMembership(d, resource, client)
+		if membersErr != nil {
+			return membersErr
+		}
 	}
 
 	return resourceTeamRead(d, client)
@@ -158,12 +239,23 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
+	if _, ok := d.GetOk("members"); ok {
+		if err := d.Set("members", collectMembersFromTeam(resource)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamUpdateInput{
 		Id: d.Id(),
+	}
+
+	membershipValidationErr := validateMembershipState(d);
+	if membershipValidationErr != nil {
+		return membershipValidationErr
 	}
 
 	if d.HasChange("name") {
@@ -192,6 +284,13 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		tagsErr := reconcileTeamAliases(d, resource, client)
 		if tagsErr != nil {
 			return tagsErr
+		}
+	}
+
+	if d.HasChange("members") {
+		membersErr := reconcileTeamMembership(d, resource, client)
+		if membersErr != nil {
+			return membersErr
 		}
 	}
 
