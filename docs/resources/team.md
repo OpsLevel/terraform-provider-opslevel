@@ -20,6 +20,7 @@ data "opslevel_group" "foo" {
 resource "opslevel_team" "example" {
   name = "foo"
   manager_email = "john.doe@example.com"
+  members = ["john.doe@example.com", "jane.doe@example.com"]
   responsibilities = "Responsible for foo frontend and backend"
   aliases = ["bar", "baz"]
   group = data.opslevel_group.foo.alias
@@ -43,6 +44,7 @@ output "team" {
 - `group` (String) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
 - `manager_email` (String) The email of the user who manages the team.
+- `members` (Set of String) List of user emails that belong to the team. This list must contain the 'manager_email' value.
 - `responsibilities` (String) A description of what the team is responsible for.
 
 ### Read-Only
