@@ -72,6 +72,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_service_tool":                resourceServiceTool(),
 			"opslevel_team_contact":                resourceTeamContact(),
 			"opslevel_team":                        resourceTeam(),
+			"opslevel_user":                        resourceUser(),
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
