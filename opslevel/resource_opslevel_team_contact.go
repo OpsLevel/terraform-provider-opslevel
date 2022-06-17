@@ -103,7 +103,7 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 		}
 	}
 	if resource == nil {
-		return fmt.Errorf("unable to find contact with id '%s' on team '%s'", id, team.Aliases[0])
+		return fmt.Errorf("unable to find contact with id '%s' on team '%s'", id, identifier)
 	}
 
 	if err := d.Set("type", resource.Type); err != nil {
