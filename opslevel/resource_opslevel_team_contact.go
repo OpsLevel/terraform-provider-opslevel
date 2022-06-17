@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -103,7 +102,8 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 		}
 	}
 	if resource == nil {
-		return fmt.Errorf("unable to find contact with id '%s' on team '%s'", id, identifier)
+		d.SetId("")
+		return nil
 	}
 
 	if err := d.Set("type", resource.Type); err != nil {
