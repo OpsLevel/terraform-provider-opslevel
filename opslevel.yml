@@ -6,5 +6,5 @@ service:
   lifecycle: generally_available
   tier: tier_2
   owner: platform
-  language: go
-  framework: terraform
+  language: Go
+  framework: Terraform
