@@ -31,6 +31,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_filter":            datasourceFilter(),
 			"opslevel_filters":           datasourceFilters(),
 			"opslevel_group":             datasourceGroup(),
+			"opslevel_groups":            datasourceGroups(),
 			"opslevel_integration":       datasourceIntegration(),
 			"opslevel_integrations":      datasourceIntegrations(),
 			"opslevel_lifecycle":         datasourceLifecycle(),
