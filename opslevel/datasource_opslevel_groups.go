@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/opslevel/opslevel-go"
 )
 
 func datasourceGroups() *schema.Resource {
@@ -31,7 +32,7 @@ func datasourceGroupsRead(d *schema.ResourceData, client *opslevel.Client) error
 	var groups []opslevel.Group
 	var err error
 
-	groopsleveups, err = client.ListGroups()
+	groups, err = client.ListGroups()
 	if err != nil {
 		return err
 	}
