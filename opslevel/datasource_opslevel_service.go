@@ -57,6 +57,11 @@ func datasourceService() *schema.Resource {
 				Description: "The team that owns the service.",
 				Computed:    true,
 			},
+			"owner_id": {
+				Type:        schema.TypeString,
+				Description: "The team ID that owns the service.",
+				Computed:    true,
+			},
 			"lifecycle_alias": {
 				Type:        schema.TypeString,
 				Description: "The lifecycle stage of the service.",
@@ -104,6 +109,9 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
+		return err
+	}
+	if err := d.Set("owner_id", resource.Owner.Id); err != nil {
 		return err
 	}
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
