@@ -87,6 +87,16 @@ To `terraform apply`
 
 Feel free to investigate the scripts to see what they are doing if you need to use some other terraform commands or adjust
 
+### Changie (Change log generation)
+
+Before submitting the pull request, you need add a change entry via Changie so that your contribution changes can be tracked for our next release.
+
+To install Changie, follow the directions [here](https://changie.dev/guide/installation/).
+
+Next, to create a new change entry, in the root of the repository run: `changie new`
+
+Fill in a brief comment and follow the rest of the prompts to create your change entry.  Changie registers the change in a .yaml file, and that file must be included in your pull request before we can release.
+
 ## Submitting a Pull Request
 
 OpsLevel provides a CI environment to test changes through Github Actions. For example, if you submit a pull request to the repo, GitHub will trigger automated code checks and tests upon approval from an OpsLevel maintainer.
