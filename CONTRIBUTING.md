@@ -66,7 +66,7 @@ First make sure you have working [golang development environment](https://learn.
 
 We have a `workspace` folder in the repository that can be used as a place to play around with terraform.
 
-After any code change you can just run the following in the `workspace` directory to build and pull in the latest provider code
+After any code change you can just run the following to build and pull in the latest provider code
 
 ```sh
 ./build
