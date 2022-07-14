@@ -26,6 +26,16 @@ func datasourceTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"group_alias": {
+				Type:        schema.TypeString,
+				Description: "The name of the group the team belongs to.",
+				Computed:    true,
+			},
+			"group_id": {
+				Type:        schema.TypeString,
+				Description: "The id of the group the team belongs to.",
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -39,6 +49,12 @@ func datasourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	d.SetId(resource.Id.(string))
 	d.Set("alias", resource.Alias)
 	d.Set("name", resource.Name)
+	if err := d.Set("group_alias", resource.Group.Alias); err != nil {
+		return err
+	}
+	if err := d.Set("group_id", resource.Group.Id); err != nil {
+		return err
+	}
 
 	return nil
 }
