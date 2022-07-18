@@ -15,7 +15,7 @@ func Provider() terraform.ResourceProvider {
 			"api_url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_URL", "https://api.opslevel.com/graphql"),
+				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_URL", "https://api.opslevel.com/"),
 				Description: "The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.",
 			},
 			"api_token": {
@@ -80,7 +80,7 @@ func Provider() terraform.ResourceProvider {
 			url := d.Get("api_url").(string)
 			token := d.Get("api_token").(string)
 			log.Println("[INFO] Initializing OpsLevel client")
-			client := opslevel.NewClient(token, opslevel.SetURL(url), opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
+			client := opslevel.NewGQLClient(opslevel.SetAPIToken(token), opslevel.SetURL(url), opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 			return client, nil
 		},
 	}
