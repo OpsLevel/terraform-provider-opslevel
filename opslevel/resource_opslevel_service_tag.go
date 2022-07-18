@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go"
+	"github.com/opslevel/opslevel-go/v2022"
 )
 
 // Tag key names are stored in OpsLevel as lowercase so we need to ensure the configuration is written as lowercase

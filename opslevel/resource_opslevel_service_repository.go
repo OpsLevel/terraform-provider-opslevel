@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go"
+	"github.com/opslevel/opslevel-go/v2022"
 )
 
 func resourceServiceRepository() *schema.Resource {

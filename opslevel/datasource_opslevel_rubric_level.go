@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/opslevel/opslevel-go"
+	"github.com/opslevel/opslevel-go/v2022"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )

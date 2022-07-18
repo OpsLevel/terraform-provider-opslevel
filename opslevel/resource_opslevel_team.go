@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go"
+	"github.com/opslevel/opslevel-go/v2022"
 )
 
 func resourceTeam() *schema.Resource {
@@ -62,11 +62,11 @@ func resourceTeam() *schema.Resource {
 				Optional:    true,
 			},
 			"members": {
-				Type:     schema.TypeSet,
+				Type:        schema.TypeSet,
 				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				ForceNew: false,
-				Optional: true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    false,
+				Optional:    true,
 			},
 		},
 	}
@@ -171,7 +171,7 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
 
-	membershipValidationErr := validateMembershipState(d);
+	membershipValidationErr := validateMembershipState(d)
 	if membershipValidationErr != nil {
 		return membershipValidationErr
 	}
@@ -253,7 +253,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		Id: d.Id(),
 	}
 
-	membershipValidationErr := validateMembershipState(d);
+	membershipValidationErr := validateMembershipState(d)
 	if membershipValidationErr != nil {
 		return membershipValidationErr
 	}

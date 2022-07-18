@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/opslevel/opslevel-go v0.4.5-0.20220421184629-b79d62d1dba4
+	github.com/opslevel/opslevel-go/v2022 v2022.7.15
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 )
 
@@ -24,6 +24,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
@@ -39,6 +40,7 @@ require (
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.4 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.5.0 // indirect
@@ -86,4 +88,4 @@ require (
 )
 
 // Uncomment for local development
-replace github.com/opslevel/opslevel-go => ./submodules/opslevel-go/
+//replace github.com/opslevel/opslevel-go => ./submodules/opslevel-go/
