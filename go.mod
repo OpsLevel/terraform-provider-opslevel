@@ -1,6 +1,6 @@
 module github.com/opslevel/terraform-provider-opslevel
 
-go 1.17
+go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
