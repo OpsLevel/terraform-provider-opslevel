@@ -82,6 +82,10 @@ provider "opslevel" {
 }
 ```
 
+## Download latest changes to go.mod
+
+If you've made changes to any packages in `go.mod` and want to pull the latest versions, run `go mod download`. Its the equivalent of running `bundle install` in Rails or `yarn install` for any front-end projects managed by `yarn`.
+
 Now you may make changes in your local git submodule of `opslevel-go`.
 
 ## Cleaning up your go.mod
