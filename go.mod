@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/opslevel/opslevel-go/v2022 v2022.7.15
+	github.com/opslevel/opslevel-go/v2022 v2022.7.21-0.20220722020835-ea98e9aa020c
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 )
 
@@ -88,4 +88,5 @@ require (
 )
 
 // Uncomment for local development
-//replace github.com/opslevel/opslevel-go => ./submodules/opslevel-go/
+//replace github.com/opslevel/opslevel-go/v2022 => ./submodules/opslevel-go/
+

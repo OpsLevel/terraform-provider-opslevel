@@ -94,11 +94,9 @@ func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opsleve
 		contactMethod := opslevel.ServiceOwnershipCheckContactType(d.Get("contact_method").(string))
 
 		if contactMethod == "" {
-			defaultServiceOwnershipCheckContactType := opslevel.ServiceOwnershipCheckContactType("ANY")
-			input.ContactMethod = &defaultServiceOwnershipCheckContactType
-		} else {
-			input.ContactMethod = &contactMethod
+			contactMethod = opslevel.ServiceOwnershipCheckContactType("ANY")
 		}
+		input.ContactMethod = &contactMethod
 	}
 
 	_, err := client.UpdateCheckServiceOwnership(input)

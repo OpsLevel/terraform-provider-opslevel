@@ -68,7 +68,18 @@ In `go.mod` uncomment (remove the //) the line at the bottom of the file:
 
 ```
 // Uncomment for local development
-//replace github.com/opslevel/opslevel-go => ./submodules/opslevel-go/
+//replace github.com/opslevel/opslevel-go/v2022 => ./submodules/opslevel-go/
+```
+
+## Pointinig Terraform to local OpsLevel running on your machine
+
+In your `backend.tf` the `provider` block should look something like:
+
+```
+provider "opslevel" {
+  api_token = "my-api-token"
+  api_url = "http://opslevel.local:5000"
+}
 ```
 
 Now you may make changes in your local git submodule of `opslevel-go`.
