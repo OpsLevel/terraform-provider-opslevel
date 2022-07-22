@@ -62,6 +62,36 @@ There are some tools that will be helpful to you in developing locally. While th
 
 First make sure you have working [golang development environment](https://learn.gopherguides.com/courses/preparing-your-environment-for-go-development) setup. Also make sure you have the latest version of `terraform` [installed.](https://learn.hashicorp.com/tutorials/terraform/install-cli)
 
+## Using a local version of opslevel-go
+
+In `go.mod` uncomment (remove the //) the line at the bottom of the file:
+
+```
+// Uncomment for local development
+//replace github.com/opslevel/opslevel-go/v2022 => ./submodules/opslevel-go/
+```
+
+## Pointinig Terraform to local OpsLevel running on your machine
+
+In your `backend.tf` the `provider` block should look something like:
+
+```
+provider "opslevel" {
+  api_token = "my-api-token"
+  api_url = "http://opslevel.local:5000"
+}
+```
+
+## Download latest changes to go.mod
+
+If you've made changes to any packages in `go.mod` and want to pull the latest versions, run `go mod download`. Its the equivalent of running `bundle install` in Rails or `yarn install` for any front-end projects managed by `yarn`.
+
+Now you may make changes in your local git submodule of `opslevel-go`.
+
+## Cleaning up your go.mod
+
+If you local go.mod gets into a strange state, you can run `go mod tidy` which ensures that the go.mod file matches the source code in the module
+
 ### Setup a Terraform workspace
 
 We have a `workspace` folder in the repository that can be used as a place to play around with terraform.
@@ -85,7 +115,7 @@ To `terraform apply`
 ./apply
 ```
 
-Feel free to investigate the scripts to see what they are doing if you need to use some other terraform commands or adjust
+Feel free to investigate the scripts to see what they are doing if you need to use some other terraform commands or adjust.
 
 ### Changie (Change log generation)
 

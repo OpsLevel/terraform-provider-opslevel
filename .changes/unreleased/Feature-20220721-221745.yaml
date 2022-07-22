@@ -1,0 +1,4 @@
+kind: Feature
+body: Adding require_contact_method and contact_method args to service_ownership_check
+  struct
+time: 2022-07-21T22:17:45.98028-04:00
