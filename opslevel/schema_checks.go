@@ -116,7 +116,8 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 	input.Level = getID(d, "level")
 	input.Owner = getID(d, "owner")
 	input.Filter = getID(d, "filter")
-	input.Notes = d.Get("notes").(string)
+	notes := d.Get("notes").(string)
+	input.Notes = &notes
 }
 
 func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProvider) {
@@ -147,7 +148,8 @@ func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProv
 		input.Filter = getID(d, "filter")
 	}
 	if d.HasChange("notes") {
-		input.Notes = d.Get("notes").(string)
+		notes := d.Get("notes").(string)
+		input.Notes = &notes
 	}
 }
 
