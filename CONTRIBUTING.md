@@ -71,6 +71,12 @@ In `go.mod` uncomment (remove the //) the line at the bottom of the file:
 //replace github.com/opslevel/opslevel-go/v2022 => ./submodules/opslevel-go/
 ```
 
+If you have trouble checking out your branch in the opslevel-go submodule, you may first need to run:
+```sh
+git submodule init
+git submodule update
+```
+
 ## Pointinig Terraform to local OpsLevel running on your machine
 
 In your `backend.tf` the `provider` block should look something like:
