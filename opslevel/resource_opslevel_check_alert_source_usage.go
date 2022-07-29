@@ -8,7 +8,7 @@ import (
 
 func resourceCheckAlertSourceUsage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a tool usage check",
+		Description: "Manages an alert source usage check",
 		Create:      wrap(resourceCheckAlertSourceUsageCreate),
 		Read:        wrap(resourceCheckAlertSourceUsageRead),
 		Update:      wrap(resourceCheckAlertSourceUsageUpdate),

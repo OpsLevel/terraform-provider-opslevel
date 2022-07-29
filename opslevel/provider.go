@@ -58,6 +58,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_check_repository_file":       resourceCheckRepositoryFile(),
 			"opslevel_check_repository_integrated": resourceCheckRepositoryIntegrated(),
 			"opslevel_check_repository_search":     resourceCheckRepositorySearch(),
+			"opslevel_check_service_dependency":    resourceCheckServiceDependency(),
 			"opslevel_check_service_configuration": resourceCheckServiceConfiguration(),
 			"opslevel_check_service_ownership":     resourceCheckServiceOwnership(),
 			"opslevel_check_service_property":      resourceCheckServiceProperty(),
