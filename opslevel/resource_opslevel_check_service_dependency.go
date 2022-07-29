@@ -7,7 +7,7 @@ import (
 
 func resourceCheckServiceDependency() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a tool usage check",
+		Description: "Manages a service dependency check",
 		Create:      wrap(resourceCheckServiceDependencyCreate),
 		Read:        wrap(resourceCheckServiceDependencyRead),
 		Update:      wrap(resourceCheckServiceDependencyUpdate),

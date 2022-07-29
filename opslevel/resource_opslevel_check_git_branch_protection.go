@@ -7,7 +7,7 @@ import (
 
 func resourceCheckGitBranchProtection() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a tool usage check",
+		Description: "Manages a git branch protection check",
 		Create:      wrap(resourceCheckGitBranchProtectionCreate),
 		Read:        wrap(resourceCheckGitBranchProtectionRead),
 		Update:      wrap(resourceCheckGitBranchProtectionUpdate),

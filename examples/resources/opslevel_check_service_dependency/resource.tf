@@ -33,6 +33,4 @@ resource "opslevel_check_service_dependency" "example" {
   owner    = data.opslevel_team.devs.id
   filter   = data.opslevel_filter.tier1.id
   notes    = "Optional additional info on why this check is run or how to fix it"
-
-  days = 5
 }
