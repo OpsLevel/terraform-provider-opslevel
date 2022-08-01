@@ -53,7 +53,7 @@ jobs:
             git push origin HEAD
           fi
           git tag -f ${{ github.event.inputs.release-version }} -m "Cut Release '${{ github.event.inputs.release-version }}'"
-          git push origin refs/tags/${{ github.event.inputs.release-version }}
+          git push -f origin refs/tags/${{ github.event.inputs.release-version }}
       - name: Ensure Release Does Not Exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
