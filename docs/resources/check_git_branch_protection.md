@@ -3,12 +3,12 @@
 page_title: "opslevel_check_git_branch_protection Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a tool usage check
+  Manages a git branch protection check
 ---
 
 # opslevel_check_git_branch_protection (Resource)
 
-Manages a tool usage check
+Manages a git branch protection check
 
 ## Example Usage
 

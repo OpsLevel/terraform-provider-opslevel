@@ -39,6 +39,7 @@ data "opslevel_service" "bar" {
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `name` (String) The display name of the service.
 - `owner_alias` (String) The team that owns the service.
+- `owner_id` (String) The team ID that owns the service.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.

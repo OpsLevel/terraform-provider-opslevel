@@ -32,6 +32,8 @@ data "opslevel_team" "devs" {
 
 ### Read-Only
 
+- `group_alias` (String) The name of the group the team belongs to.
+- `group_id` (String) The id of the group the team belongs to.
 - `name` (String)
 
 

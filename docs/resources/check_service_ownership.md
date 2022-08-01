@@ -62,6 +62,7 @@ resource "opslevel_check_service_ownership" "example" {
 
 ### Optional
 
+- `contact_method` (String) The type of contact method that is required.
 - `enable_on` (String) The date when the check will be automatically enabled.
 If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
 See example in opslevel_check_manual for proper configuration.
@@ -70,6 +71,7 @@ See example in opslevel_check_manual for proper configuration.
 - `last_updated` (String)
 - `notes` (String) Additional information about the check.
 - `owner` (String) The id of the team that owns the check.
+- `require_contact_method` (Boolean) True if a service's owner must have a contact method, False otherwise.
 
 ### Read-Only
 
