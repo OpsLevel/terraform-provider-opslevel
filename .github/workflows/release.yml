@@ -44,10 +44,15 @@ jobs:
         run: |
           git config user.name "OpsLevel Bots"
           git config user.email "bots@opslevel.com"
-          git add .
-          git commit -m "Cut Release '${{ github.event.inputs.release-version }}'"
+          if test -f ./.changes/${{ steps.version.outputs.RELEASE_VERSION }}.md
+          then
+            echo "Skip commit"
+          else
+            git add .
+            git commit -m "Cut Release '${{ github.event.inputs.release-version }}'"
+            git push origin HEAD
+          fi
           git tag -f ${{ github.event.inputs.release-version }} -m "Cut Release '${{ github.event.inputs.release-version }}'"
-          git push origin HEAD
           git push origin refs/tags/${{ github.event.inputs.release-version }}
       - name: Ensure Release Does Not Exist
         env:
