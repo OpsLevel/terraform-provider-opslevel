@@ -44,7 +44,7 @@ jobs:
         run: |
           git config user.name "OpsLevel Bots"
           git config user.email "bots@opslevel.com"
-          if test -f ./.changes/${{ steps.version.outputs.RELEASE_VERSION }}.md
+          if test -f ./.changes/${{ github.event.inputs.release-version }}.md
           then
             echo "Skip commit"
           else
