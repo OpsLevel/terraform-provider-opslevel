@@ -397,10 +397,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLA
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/run v1.1.0 h1:GEenZ1cK0+q0+wsJew9qUg/DyD8k3JzYsZAi5gYi2mA=
 github.com/oklog/run v1.1.0/go.mod h1:sVPdnTZT1zYwAJeCMu2Th4T21pA3FPOQRfWjQlk7DVU=
-github.com/opslevel/opslevel-go/v2022 v2022.7.15 h1:fmdwgEha02cI3h6GTYfiaJD4AZOfY0Oij81jfni7W18=
-github.com/opslevel/opslevel-go/v2022 v2022.7.15/go.mod h1:2/cWgSTLK/6n7XlXe4kqG7IeHlNyjpP+BJ+YbKj28JM=
-github.com/opslevel/opslevel-go/v2022 v2022.7.21-0.20220722020835-ea98e9aa020c h1:ky8/QQw+cxkg2Tk9xfq35X+6UOc1yO3Qi76dNnXG0b8=
-github.com/opslevel/opslevel-go/v2022 v2022.7.21-0.20220722020835-ea98e9aa020c/go.mod h1:2/cWgSTLK/6n7XlXe4kqG7IeHlNyjpP+BJ+YbKj28JM=
+github.com/opslevel/opslevel-go/v2022 v2022.8.1 h1:KK2MMVMYVtD5V0hK2j4ok9OBhzMzEKnvkgdXVTIfCeg=
+github.com/opslevel/opslevel-go/v2022 v2022.8.1/go.mod h1:2/cWgSTLK/6n7XlXe4kqG7IeHlNyjpP+BJ+YbKj28JM=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
