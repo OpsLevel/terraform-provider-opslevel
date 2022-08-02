@@ -67,6 +67,8 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: Set GPG_TTY
         run: echo GPG_TTY=$(tty) >> $GITHUB_ENV
+      - name: Echo GPG_TTY
+        run: echo ${{ env.GPG_TTY }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2.7.0
         with:
@@ -74,7 +76,6 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_TTY: ${{ env.GPG_TTY }}
       - name: Report Release To OpsLevel
         uses: opslevel/report-deploy-github-action@v0.2.0
         with:
