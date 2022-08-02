@@ -65,12 +65,7 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Set GPG_TTY
-        run: echo GPG_TTY=$(tty) >> $GITHUB_ENV
-      - name: Echo GPG_TTY
-        run: echo ${{ env.GPG_TTY }}
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2.7.0
+        uses: goreleaser/goreleaser-action@v3.0.0
         with:
           args: release --rm-dist --release-notes=./.changes/${{ github.event.inputs.release-version }}.md
         env:
