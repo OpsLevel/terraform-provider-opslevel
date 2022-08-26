@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/opslevel/opslevel-go/v2022 v2022.8.1
+	github.com/opslevel/opslevel-go/v2022 v2022.8.25
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 )
 
