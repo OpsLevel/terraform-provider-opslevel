@@ -88,4 +88,4 @@ resource "opslevel_check_repository_integrated" "foo" {
 
 The following arguments are supported:
 
-* `token` - (Required) The API authorization token. It can also be sourced from the OPSLEVEL_APITOKEN environment variable.
+* `token` - (Required) The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.
