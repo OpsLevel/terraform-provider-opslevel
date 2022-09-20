@@ -93,7 +93,13 @@ func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) 
 		input.Name = *opslevel.NewString(d.Get("name").(string))
 	}
 	if d.HasChange("description") {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		description := d.Get("description").(string)
+		// TODO: this is really shitty and its because of how `opslevel.NewString` makes a nil if input is == ""
+		if description == "" {
+			input.Description = opslevel.NewEmptyString()
+		} else {
+			input.Description = opslevel.NewString(description)
+		}
 	}
 
 	_, err := client.UpdateLevel(input)
