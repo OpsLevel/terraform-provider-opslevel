@@ -1,0 +1,3 @@
+kind: Bugfix
+body: name and description fields on a level resource were not working as expected
+time: 2022-09-19T20:25:06.970936-05:00
