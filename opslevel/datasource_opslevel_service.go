@@ -67,6 +67,16 @@ func datasourceService() *schema.Resource {
 				Description: "The lifecycle stage of the service.",
 				Computed:    true,
 			},
+			"api_document_path": {
+				Type:        schema.TypeString,
+				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
+				Computed:    true,
+			},
+			"preferred_api_document_source": {
+				Type:        schema.TypeString,
+				Description: "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
+				Computed:    true,
+			},
 			"aliases": {
 				Type:        schema.TypeList,
 				Description: "A list of human-friendly, unique identifiers for the service",
@@ -122,6 +132,13 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
+		return err
+	}
+
+	if err := d.Set("api_document_path", resource.ApiDocumentPath); err != nil {
+		return err
+	}
+	if err := d.Set("preferred_api_document_source", string(*resource.PreferredApiDocumentSource)); err != nil {
 		return err
 	}
 

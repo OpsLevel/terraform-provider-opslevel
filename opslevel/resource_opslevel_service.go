@@ -2,6 +2,8 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/rs/zerolog/log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -71,6 +73,19 @@ func resourceService() *schema.Resource {
 				Description: "The lifecycle stage of the service.",
 				ForceNew:    false,
 				Optional:    true,
+			},
+			"api_document_path": {
+				Type:        schema.TypeString,
+				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"preferred_api_document_source": {
+				Type:         schema.TypeString,
+				Description:  "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
+				ForceNew:     false,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(opslevel.AllApiDocumentSourceEnum(), false),
 			},
 			"aliases": {
 				Type:        schema.TypeList,
@@ -182,14 +197,28 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 	d.SetId(resource.Id.(string))
 
-	aliasesErr := reconcileServiceAliases(d, resource, client)
-	if aliasesErr != nil {
-		return aliasesErr
+	err = reconcileServiceAliases(d, resource, client)
+	if err != nil {
+		return err
 	}
 
-	tagsErr := reconcileTags(d, resource, client)
-	if tagsErr != nil {
-		return tagsErr
+	err = reconcileTags(d, resource, client)
+	if err != nil {
+		return err
+	}
+
+	docPath, ok1 := d.GetOk("api_document_path")
+	docSource, ok2 := d.GetOk("preferred_api_document_source")
+	if ok1 || ok2 {
+		var source *opslevel.ApiDocumentSourceEnum = nil
+		if ok2 {
+			s := opslevel.ApiDocumentSourceEnum(docSource.(string))
+			source = &s
+		}
+		_, err := client.ServiceApiDocSettingsUpdate(resource.Id.(string), docPath.(string), source)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
+		}
 	}
 
 	return resourceServiceRead(d, client)
@@ -232,6 +261,13 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
+		return err
+	}
+
+	if err := d.Set("api_document_path", resource.ApiDocumentPath); err != nil {
+		return err
+	}
+	if err := d.Set("preferred_api_document_source", resource.PreferredApiDocumentSource); err != nil {
 		return err
 	}
 
@@ -286,6 +322,26 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		tagsErr := reconcileTags(d, resource, client)
 		if tagsErr != nil {
 			return tagsErr
+		}
+	}
+
+	if d.HasChange("api_document_path") || d.HasChange("preferred_api_document_source") {
+		var docPath string
+		var docSource *opslevel.ApiDocumentSourceEnum
+		if value, ok := d.GetOk("api_document_path"); ok {
+			docPath = value.(string)
+		} else {
+			docPath = ""
+		}
+		if value, ok := d.GetOk("preferred_api_document_source"); ok {
+			s := opslevel.ApiDocumentSourceEnum(value.(string))
+			docSource = &s
+		} else {
+			docSource = nil
+		}
+		_, err := client.ServiceApiDocSettingsUpdate(resource.Id.(string), docPath, docSource)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
 		}
 	}
 
