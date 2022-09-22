@@ -92,20 +92,12 @@ func Provider() terraform.ResourceProvider {
 
 			opts := make([]opslevel.Option, 0)
 
-			if token != "" {
-				opts = append(opts, opslevel.SetAPIToken(token))
-			}
-
-			if url != "" {
-				opts = append(opts, opslevel.SetURL(url))
-			}
+			opts = append(opts, opslevel.SetAPIToken(token))
+			opts = append(opts, opslevel.SetURL(url))
+			opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 
 			if timeout > 0 {
 				opts = append(opts, opslevel.SetTimeout(time.Duration(timeout)))
-			}
-
-			if version != "" {
-				opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 			}
 
 			client := opslevel.NewGQLClient(opts...)
