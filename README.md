@@ -15,6 +15,8 @@
         <img src="https://img.shields.io/github/downloads/OpsLevel/terraform-provider-opslevel/total" /></a>
 </p>
 
+[![Overall](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fapp.opslevel.com%2Fapi%2Fservice_level%2FOYbJw2HuOqY7Np42eBzMn_RCwWebqaywVSJAQczStEY)](https://app.opslevel.com/services/opslevel_terraform_provider/maturity-report)
+
 Terraform Provider for [OpsLevel](https://opslevel.com)
 ===============================
 
