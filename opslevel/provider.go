@@ -2,11 +2,11 @@ package opslevel
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/opslevel/opslevel-go/v2022"
+	"log"
+	"time"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -24,6 +24,12 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_TOKEN", ""),
 				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.",
 				Sensitive:   true,
+			},
+			"client_timeout": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Value to set the timeout of client calls to OpsLevel GraphQl endpoint",
+				Sensitive:   false,
 			},
 		},
 
@@ -81,8 +87,29 @@ func Provider() terraform.ResourceProvider {
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
 			url := d.Get("api_url").(string)
 			token := d.Get("api_token").(string)
+			timeout := d.Get("client_timeout").(int)
 			log.Println("[INFO] Initializing OpsLevel client")
-			client := opslevel.NewGQLClient(opslevel.SetAPIToken(token), opslevel.SetURL(url), opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
+
+			opts := make([]opslevel.Option, 0)
+
+			if token != "" {
+				opts = append(opts, opslevel.SetAPIToken(token))
+			}
+
+			if url != "" {
+				opts = append(opts, opslevel.SetURL(url))
+			}
+
+			if timeout > 0 {
+				opts = append(opts, opslevel.SetTimeout(time.Duration(timeout)))
+			}
+
+			if version != "" {
+				opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
+			}
+
+			client := opslevel.NewGQLClient(opts...)
+
 			return client, nil
 		},
 	}
