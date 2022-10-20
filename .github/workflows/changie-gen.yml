@@ -25,7 +25,7 @@ jobs:
       id: bot_changelog
       uses: emmyoop/changie_bot@v1.0.1
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
         commit_author_name: "Github Build Bot"
         commit_author_email: "<bots@opslevel.com>"
         commit_message: "Add automated changelog yaml from template for bot PR"
