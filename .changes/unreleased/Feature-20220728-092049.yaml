@@ -1,0 +1,4 @@
+kind: Feature
+body: Add new fields `api_document_path` and `preferred_api_document_source` to service
+  resource and datasource
+time: 2022-07-28T09:20:49.403138-05:00
