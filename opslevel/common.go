@@ -220,9 +220,9 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 		data := item.(map[string]interface{})
 		output = append(output, opslevel.FilterPredicate{
 			Type:    opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:   data["value"].(string),
+			Value:   strings.TrimSpace(data["value"].(string)),
 			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData: data["key_data"].(string),
+			KeyData: strings.TrimSpace(data["key_data"].(string)),
 		})
 	}
 	return output
