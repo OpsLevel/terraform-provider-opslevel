@@ -35,7 +35,7 @@ resource "opslevel_check_alert_source_usage" "example" {
   notes    = "Optional additional info on why this check is run or how to fix it"
 
   alert_type = "pagerduty" # one of: "pagerduty", "datadog", "opsgenie"
-  alert_name_predicate = {
+  alert_name_predicate {
     type  = "contains"
     value = "dev"
   }

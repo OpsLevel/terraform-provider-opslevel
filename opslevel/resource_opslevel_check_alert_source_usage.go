@@ -59,10 +59,11 @@ func resourceCheckAlertSourceUsageRead(d *schema.ResourceData, client *opslevel.
 	if err := d.Set("alert_type", string(resource.AlertSourceType)); err != nil {
 		return err
 	}
-	if err := d.Set("alert_name_predicate", flattenPredicate(&resource.AlertSourceNamePredicate)); err != nil {
-		return err
+	if _, ok := d.GetOk("alert_name_predicate"); ok {
+		if err := d.Set("alert_name_predicate", flattenPredicate(&resource.AlertSourceNamePredicate)); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
