@@ -102,7 +102,7 @@ func Provider() terraform.ResourceProvider {
 
 			client := opslevel.NewGQLClient(opts...)
 
-			return client, nil
+			return client, client.Validate()
 		},
 	}
 }
