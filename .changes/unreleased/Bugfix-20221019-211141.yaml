@@ -1,4 +1,4 @@
 kind: Bugfix
-body: Fix erronious whitespace around predicate values when multiline heredoc used
+body: Fix erroneous whitespace around predicate values when multiline heredoc used
   for value
 time: 2022-10-19T21:11:41.812673-05:00
