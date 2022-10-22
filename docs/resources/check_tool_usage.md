@@ -82,6 +82,7 @@ See example in opslevel_check_manual for proper configuration.
 - `notes` (String) Additional information about the check.
 - `owner` (String) The id of the team that owns the check.
 - `tool_name_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_name_predicate))
+- `tool_url_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_url_predicate))
 
 ### Read-Only
 
@@ -101,6 +102,18 @@ Optional:
 
 <a id="nestedblock--tool_name_predicate"></a>
 ### Nested Schema for `tool_name_predicate`
+
+Required:
+
+- `type` (String) The condition type used by the predicate.
+
+Optional:
+
+- `value` (String) The condition value used by the predicate.
+
+
+<a id="nestedblock--tool_url_predicate"></a>
+### Nested Schema for `tool_url_predicate`
 
 Required:
 

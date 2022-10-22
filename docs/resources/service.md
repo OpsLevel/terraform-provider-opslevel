@@ -45,6 +45,9 @@ resource "opslevel_service" "foo" {
   tier_alias = data.opslevel_tier.tier3.alias
   owner_alias = opslevel_team.foo.alias
 
+  api_document_path = "/swagger.json"
+  preferred_api_document_source = "PULL" //or "PUSH"
+
   aliases = ["bar", "baz"]
   tags = ["foo:bar"]
 }
@@ -64,12 +67,14 @@ output "foo_aliases" {
 ### Optional
 
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the service.
+- `api_document_path` (String) The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.
 - `description` (String) A brief description of the service.
 - `framework` (String) The primary software development framework that the service uses.
 - `language` (String) The primary programming language that the service is written in.
 - `last_updated` (String)
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `owner_alias` (String) The team that owns the service.
+- `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.

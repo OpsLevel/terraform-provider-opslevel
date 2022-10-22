@@ -15,7 +15,6 @@ Manages a rubric category
 ```terraform
 resource "opslevel_rubric_category" "example" {
   name = "foo"
-  description = "foo category"
 }
 
 output "category" {

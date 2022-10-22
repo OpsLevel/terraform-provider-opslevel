@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix issue with AlertSource check's alert_name_predicate not reconciling properly
-time: 2022-10-19T22:16:44.325902-05:00
