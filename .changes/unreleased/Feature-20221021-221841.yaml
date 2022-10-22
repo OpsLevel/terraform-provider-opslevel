@@ -1,0 +1,3 @@
+kind: Feature
+body: add support for `tool_url_predicate` on `opslevel_check_tool_usage`
+time: 2022-10-21T22:18:41.320679-05:00

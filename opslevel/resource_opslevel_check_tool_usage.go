@@ -25,6 +25,7 @@ func resourceCheckToolUsage() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory(), false),
 			},
 			"tool_name_predicate":   getPredicateInputSchema(false),
+			"tool_url_predicate":    getPredicateInputSchema(false),
 			"environment_predicate": getPredicateInputSchema(false),
 		}),
 	}
@@ -36,6 +37,7 @@ func resourceCheckToolUsageCreate(d *schema.ResourceData, client *opslevel.Clien
 
 	input.ToolCategory = opslevel.ToolCategory(d.Get("tool_category").(string))
 	input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
+	input.ToolUrlPredicate = expandPredicate(d, "tool_url_predicate")
 	input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
 
 	resource, err := client.CreateCheckToolUsage(input)
@@ -64,6 +66,9 @@ func resourceCheckToolUsageRead(d *schema.ResourceData, client *opslevel.Client)
 	if err := d.Set("tool_name_predicate", flattenPredicate(resource.ToolNamePredicate)); err != nil {
 		return err
 	}
+	if err := d.Set("tool_url_predicate", flattenPredicate(resource.ToolUrlPredicate)); err != nil {
+		return err
+	}
 	if err := d.Set("environment_predicate", flattenPredicate(resource.EnvironmentPredicate)); err != nil {
 		return err
 	}
@@ -80,6 +85,9 @@ func resourceCheckToolUsageUpdate(d *schema.ResourceData, client *opslevel.Clien
 	}
 	if d.HasChange("tool_name_predicate") {
 		input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
+	}
+	if d.HasChange("tool_url_predicate") {
+		input.ToolUrlPredicate = expandPredicate(d, "tool_url_predicate")
 	}
 	if d.HasChange("environment_predicate") {
 		input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
