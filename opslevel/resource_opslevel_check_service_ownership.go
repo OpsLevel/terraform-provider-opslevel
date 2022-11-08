@@ -30,6 +30,13 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllServiceOwnershipCheckContactType(), true),
 			},
+			"tag_key": {
+				Type:        schema.TypeString,
+				Description: "The tag key where the tag predicate should be applied.",
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"tag_predicate": getPredicateInputSchema(false),
 		}),
 	}
 }
@@ -45,6 +52,11 @@ func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opsleve
 		contactMethod := opslevel.ServiceOwnershipCheckContactType(value.(string))
 		input.ContactMethod = &contactMethod
 	}
+	if tagKey, ok := d.GetOk("tag_key"); ok {
+		input.TeamTagKey = tagKey.(string)
+	}
+
+	input.TeamTagPredicate = expandPredicate(d, "tag_predicate")
 
 	resource, err := client.CreateCheckServiceOwnership(input)
 	if err != nil {
@@ -79,6 +91,17 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 		}
 	}
 
+	if _, ok := d.GetOk("tag_key"); ok {
+		if err := d.Set("tag_key", resource.TeamTagKey); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := d.GetOk("tag_predicate"); ok {
+		if err := d.Set("tag_predicate", flattenPredicate(resource.TeamTagPredicate)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -97,6 +120,14 @@ func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opsleve
 			contactMethod = opslevel.ServiceOwnershipCheckContactType("ANY")
 		}
 		input.ContactMethod = &contactMethod
+	}
+
+	if d.HasChange("tag_key") {
+		input.TeamTagKey = d.Get("tag_key").(string)
+	}
+
+	if d.HasChange("tag_predicate") {
+		input.TeamTagPredicate = expandPredicateUpdate(d, "tag_predicate")
 	}
 
 	_, err := client.UpdateCheckServiceOwnership(input)
