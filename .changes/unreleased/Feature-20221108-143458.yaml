@@ -1,0 +1,4 @@
+kind: Feature
+body: Add support for adding expected tag key and tag value predicate to service ownership
+  checks as well as create tags on teams
+time: 2022-11-08T14:34:58.765551-05:00
