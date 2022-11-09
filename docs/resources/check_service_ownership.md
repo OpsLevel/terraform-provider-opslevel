@@ -72,8 +72,6 @@ See example in opslevel_check_manual for proper configuration.
 - `notes` (String) Additional information about the check.
 - `owner` (String) The id of the team that owns the check.
 - `require_contact_method` (Boolean) True if a service's owner must have a contact method, False otherwise.
-- `tag_key` (String) The tag key that is required on the service's owner.
-- `tag_predicate` (Block List, Max: 1) A condition of the tag value that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
 
 ### Read-Only
 

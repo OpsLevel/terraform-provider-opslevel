@@ -33,4 +33,11 @@ resource "opslevel_check_service_ownership" "example" {
   owner = data.opslevel_team.devs.id
   filter = data.opslevel_filter.tier1.id
   notes = "Optional additional info on why this check is run or how to fix it"
+  require_contact_method = true
+  contact_method = "ANY"
+  tag_key = "team"
+  tag_predicate {
+    type = "equals"
+    value = "frontend"
+  }
 }
