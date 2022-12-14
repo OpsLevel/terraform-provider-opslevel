@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/opslevel/opslevel-go/v2022"
+	opslevel "github.com/opslevel/opslevel-go/v2022"
 	"log"
 	"time"
 )
@@ -63,6 +63,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_check_has_recent_deploy":     resourceCheckHasRecentDeploy(),
 			"opslevel_check_manual":                resourceCheckManual(),
 			"opslevel_check_repository_file":       resourceCheckRepositoryFile(),
+			"opslevel_check_repository_grep":       resourceCheckRepositoryGrep(),
 			"opslevel_check_repository_integrated": resourceCheckRepositoryIntegrated(),
 			"opslevel_check_repository_search":     resourceCheckRepositorySearch(),
 			"opslevel_check_service_dependency":    resourceCheckServiceDependency(),

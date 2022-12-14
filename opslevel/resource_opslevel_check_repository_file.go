@@ -2,7 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	opslevel "github.com/opslevel/opslevel-go/v2022"
 )
 
 func resourceCheckRepositoryFile() *schema.Resource {
@@ -72,10 +72,10 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 	if err := setCheckData(d, resource); err != nil {
 		return err
 	}
-	if err := d.Set("directory_search", resource.DirectorySearch); err != nil {
+	if err := d.Set("directory_search", resource.RepositoryFileCheckFragment.DirectorySearch); err != nil {
 		return err
 	}
-	if err := d.Set("filepaths", resource.Filepaths); err != nil {
+	if err := d.Set("filepaths", resource.RepositoryFileCheckFragment.Filepaths); err != nil {
 		return err
 	}
 	if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryFileCheckFragment.FileContentsPredicate)); err != nil {
