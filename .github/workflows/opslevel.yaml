@@ -19,4 +19,5 @@ jobs:
       - name: Run
         run: |-
           ls -al
-          echo ${{ github.event }}
+          echo ${{ github.event.event_type }}
+          echo ${{ github.event.client_payload }}
