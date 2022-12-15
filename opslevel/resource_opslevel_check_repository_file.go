@@ -32,7 +32,7 @@ func resourceCheckRepositoryFile() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"file_contents_predicate": getPredicateInputSchema(false, ""),
+			"file_contents_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 			"use_absolute_root": {
 				Type:        schema.TypeBool,
 				Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
