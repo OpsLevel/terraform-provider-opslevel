@@ -19,4 +19,4 @@ jobs:
       - name: Run
         run: |-
           ls -al
-          echo ${{ github.event.json }}
+          echo ${{ toJSON(github.event) }}
