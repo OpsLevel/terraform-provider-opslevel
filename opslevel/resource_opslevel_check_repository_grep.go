@@ -99,15 +99,9 @@ func resourceCheckRepositoryGrepUpdate(d *schema.ResourceData, client *opslevel.
 	if d.HasChange("filepaths") {
 		input.Filepaths = getStringArray(d, "filepaths")
 	}
-	//if expandPredicate(d, "file_contents_predicate") != nil {
 	if d.HasChange("file_contents_predicate") {
 		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
 	}
-	//} else {
-	//	input.FileContentsPredicate = &opslevel.PredicateInput{
-	//		Type: opslevel.PredicateTypeEnum("exists"),
-	//	}
-	//}
 
 	_, err := client.UpdateCheckRepositoryGrep(input)
 	if err != nil {
