@@ -2,7 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	opslevel "github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2022"
 )
 
 func resourceCheckRepositoryGrep() *schema.Resource {

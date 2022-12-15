@@ -4,12 +4,10 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	//github.com/opslevel/opslevel-go/v2022 v2022.10.22
+	github.com/opslevel/opslevel-go/v2022 v2022.10.22
 	github.com/rs/zerolog v1.28.0
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 )
-
-require github.com/opslevel/opslevel-go/v2022 v2022.0.0-00010101000000-000000000000
 
 require (
 	cloud.google.com/go v0.102.1 // indirect
