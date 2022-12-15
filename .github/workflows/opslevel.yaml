@@ -19,4 +19,4 @@ jobs:
       - name: Run
         run: |-
           ls -al
-          echo ${{ github.event.client_payload.key }}
+          echo ${{ toJson(github.event) }}
