@@ -32,7 +32,7 @@ func resourceCheckRepositoryGrep() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"file_contents_predicate": getPredicateInputSchema(false),
+			"file_contents_predicate": getPredicateInputSchema(false, "A condition that should be satisfied. Defaults to `exists` condition"),
 		}),
 	}
 }
@@ -44,6 +44,11 @@ func resourceCheckRepositoryGrepCreate(d *schema.ResourceData, client *opslevel.
 	input.DirectorySearch = d.Get("directory_search").(bool)
 	input.Filepaths = getStringArray(d, "filepaths")
 	input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+	if input.FileContentsPredicate == nil {
+		input.FileContentsPredicate = &opslevel.PredicateInput{
+			Type: opslevel.PredicateTypeEnum("exists"),
+		}
+	}
 
 	resource, err := client.CreateCheckRepositoryGrep(input)
 	if err != nil {
@@ -71,8 +76,14 @@ func resourceCheckRepositoryGrepRead(d *schema.ResourceData, client *opslevel.Cl
 	if err := d.Set("filepaths", resource.RepositoryGrepCheckFragment.Filepaths); err != nil {
 		return err
 	}
-	if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryGrepCheckFragment.FileContentsPredicate)); err != nil {
-		return err
+	if _, ok := d.GetOk("file_contents_predicate"); !ok {
+		if err := d.Set("file_contents_predicate", nil); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryGrepCheckFragment.FileContentsPredicate)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -88,10 +99,15 @@ func resourceCheckRepositoryGrepUpdate(d *schema.ResourceData, client *opslevel.
 	if d.HasChange("filepaths") {
 		input.Filepaths = getStringArray(d, "filepaths")
 	}
-
+	//if expandPredicate(d, "file_contents_predicate") != nil {
 	if d.HasChange("file_contents_predicate") {
 		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
 	}
+	//} else {
+	//	input.FileContentsPredicate = &opslevel.PredicateInput{
+	//		Type: opslevel.PredicateTypeEnum("exists"),
+	//	}
+	//}
 
 	_, err := client.UpdateCheckRepositoryGrep(input)
 	if err != nil {

@@ -26,7 +26,7 @@ func resourceCheckRepositorySearch() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"file_contents_predicate": getPredicateInputSchema(true),
+			"file_contents_predicate": getPredicateInputSchema(true, DefaultPredicateDescription),
 		}),
 	}
 }

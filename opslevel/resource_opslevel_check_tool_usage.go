@@ -24,9 +24,9 @@ func resourceCheckToolUsage() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory(), false),
 			},
-			"tool_name_predicate":   getPredicateInputSchema(false),
-			"tool_url_predicate":    getPredicateInputSchema(false),
-			"environment_predicate": getPredicateInputSchema(false),
+			"tool_name_predicate":   getPredicateInputSchema(false, DefaultPredicateDescription),
+			"tool_url_predicate":    getPredicateInputSchema(false, DefaultPredicateDescription),
+			"environment_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 		}),
 	}
 }

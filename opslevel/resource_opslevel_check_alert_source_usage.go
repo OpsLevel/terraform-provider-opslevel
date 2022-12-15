@@ -24,7 +24,7 @@ func resourceCheckAlertSourceUsage() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllAlertSourceTypeEnum(), false),
 			},
-			"alert_name_predicate": getPredicateInputSchema(false),
+			"alert_name_predicate": getPredicateInputSchema(false, ""),
 		}),
 	}
 }

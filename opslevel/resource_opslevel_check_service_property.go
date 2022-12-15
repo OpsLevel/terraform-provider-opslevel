@@ -24,7 +24,7 @@ func resourceCheckServiceProperty() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllServicePropertyTypeEnum(), false),
 			},
-			"predicate": getPredicateInputSchema(false),
+			"predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 		}),
 	}
 }
