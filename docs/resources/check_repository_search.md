@@ -87,7 +87,7 @@ See example in opslevel_check_manual for proper configuration.
 
 Required:
 
-- `type` (String) The condition type used by the predicate.
+- `type` (String) A condition that should be satisfied.
 
 Optional:
 

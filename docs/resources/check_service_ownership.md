@@ -48,6 +48,13 @@ resource "opslevel_check_service_ownership" "example" {
   owner = data.opslevel_team.devs.id
   filter = data.opslevel_filter.tier1.id
   notes = "Optional additional info on why this check is run or how to fix it"
+  require_contact_method = true
+  contact_method = "ANY"
+  tag_key = "team"
+  tag_predicate {
+    type = "equals"
+    value = "frontend"
+  }
 }
 ```
 
@@ -72,10 +79,23 @@ See example in opslevel_check_manual for proper configuration.
 - `notes` (String) Additional information about the check.
 - `owner` (String) The id of the team that owns the check.
 - `require_contact_method` (Boolean) True if a service's owner must have a contact method, False otherwise.
+- `tag_key` (String) The tag key where the tag predicate should be applied.
+- `tag_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--tag_predicate"></a>
+### Nested Schema for `tag_predicate`
+
+Required:
+
+- `type` (String) A condition that should be satisfied.
+
+Optional:
+
+- `value` (String) The condition value used by the predicate.
 
 ## Import
 
