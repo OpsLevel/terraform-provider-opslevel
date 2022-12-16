@@ -35,12 +35,12 @@ jobs:
           go-version: 1.18
       - name: Ensure Changelog
         run: |
-          if test -f ./.changes/${{ steps.next_version.outputs.version }}.md
+          if test -f ./.changes/${{ steps.next_version.outputs.version_tag }}.md
           then
             echo "Skip Changie..."
           else
             go install github.com/miniscruff/changie@latest
-            changie batch ${{ steps.next_version.outputs.version }}
+            changie batch ${{ steps.next_version.outputs.version_tag }}
             changie merge
           fi
       - name: Generate Terraform Docs
@@ -55,18 +55,18 @@ jobs:
           if [[ $(git diff --stat) != '' ]];
           then
             git add .
-            git commit -m "Cut Release '${{ steps.next_version.outputs.version }}'"
+            git commit -m "Cut Release '${{ steps.next_version.outputs.version_tag }}'"
             git push origin HEAD
           else
             echo "Skip commit"
           fi
-          git tag -f ${{ steps.next_version.outputs.version }} -m "Cut Release '${{ steps.next_version.outputs.version }}'"
-          git push -f origin refs/tags/${{ steps.next_version.outputs.version }}
+          git tag -f ${{ steps.next_version.outputs.version_tag }} -m "Cut Release '${{ steps.next_version.outputs.version_tag }}'"
+          git push -f origin refs/tags/${{ steps.next_version.outputs.version_tag }}
       - name: Ensure Release Does Not Exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete ${{ steps.next_version.outputs.version }} || true
+          gh release delete ${{ steps.next_version.outputs.version_tag }} || true
       - name: Import GPG key
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v5
@@ -76,7 +76,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2.7.0
         with:
-          args: release --rm-dist --release-notes=./.changes/${{ steps.next_version.outputs.version }}.md
+          args: release --rm-dist --release-notes=./.changes/${{ steps.next_version.outputs.version_tag }}.md
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
