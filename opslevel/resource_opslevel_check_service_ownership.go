@@ -36,7 +36,7 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"tag_predicate": getPredicateInputSchema(false),
+			"tag_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 		}),
 	}
 }

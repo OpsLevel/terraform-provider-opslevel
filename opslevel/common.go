@@ -13,6 +13,8 @@ import (
 	"github.com/shurcooL/graphql"
 )
 
+var DefaultPredicateDescription = "A condition that should be satisfied."
+
 func timeID() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
@@ -150,7 +152,7 @@ func findTeam(aliasKey string, idKey string, d *schema.ResourceData, client *ops
 	return resource, nil
 }
 
-func getPredicateInputSchema(required bool) *schema.Schema {
+func getPredicateInputSchema(required bool, description string) *schema.Schema {
 	output := &schema.Schema{
 		Type:        schema.TypeList,
 		MaxItems:    1,
@@ -161,7 +163,7 @@ func getPredicateInputSchema(required bool) *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				"type": {
 					Type:         schema.TypeString,
-					Description:  "The condition type used by the predicate.",
+					Description:  description,
 					ForceNew:     false,
 					Required:     true,
 					ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),

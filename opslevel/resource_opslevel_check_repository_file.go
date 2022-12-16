@@ -32,7 +32,7 @@ func resourceCheckRepositoryFile() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"file_contents_predicate": getPredicateInputSchema(false),
+			"file_contents_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 			"use_absolute_root": {
 				Type:        schema.TypeBool,
 				Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
@@ -72,10 +72,10 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 	if err := setCheckData(d, resource); err != nil {
 		return err
 	}
-	if err := d.Set("directory_search", resource.DirectorySearch); err != nil {
+	if err := d.Set("directory_search", resource.RepositoryFileCheckFragment.DirectorySearch); err != nil {
 		return err
 	}
-	if err := d.Set("filepaths", resource.Filepaths); err != nil {
+	if err := d.Set("filepaths", resource.RepositoryFileCheckFragment.Filepaths); err != nil {
 		return err
 	}
 	if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryFileCheckFragment.FileContentsPredicate)); err != nil {

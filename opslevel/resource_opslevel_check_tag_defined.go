@@ -22,7 +22,7 @@ func resourceCheckTagDefined() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
-			"tag_predicate": getPredicateInputSchema(false),
+			"tag_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 		}),
 	}
 }
