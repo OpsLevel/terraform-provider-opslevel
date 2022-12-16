@@ -1,11 +1,10 @@
 name: "Release"
 
 on:
-  workflow_dispatch:
-    inputs:
-      release-version:
-        required: true
-        description: "The release version to use - do not use CalVer IE: v0.5.0"
+  workflow_dispatch: {}
+  repository_dispatch:
+    types:
+      - release
 
 permissions:
   contents: write
@@ -22,18 +21,26 @@ jobs:
           token: ${{ secrets.ORG_GITHUB_TOKEN }}
       - name: Fetch All Tags
         run: git fetch --force --tags
+      - name: Determine Next Version
+        id: next_version
+        uses: zwaldowski/semver-release-action@v3
+        with:
+          dry_run: true
+          bump: "patch"
+          prefix: "v"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.18
       - name: Ensure Changelog
         run: |
-          if test -f ./.changes/${{ github.event.inputs.release-version }}.md
+          if test -f ./.changes/${{ steps.next_version.outputs.version }}.md
           then
             echo "Skip Changie..."
           else
             go install github.com/miniscruff/changie@latest
-            changie batch ${{ github.event.inputs.release-version }}
+            changie batch ${{ steps.next_version.outputs.version }}
             changie merge
           fi
       - name: Generate Terraform Docs
@@ -48,18 +55,18 @@ jobs:
           if [[ $(git diff --stat) != '' ]];
           then
             git add .
-            git commit -m "Cut Release '${{ github.event.inputs.release-version }}'"
+            git commit -m "Cut Release '${{ steps.next_version.outputs.version }}'"
             git push origin HEAD
           else
             echo "Skip commit"
           fi
-          git tag -f ${{ github.event.inputs.release-version }} -m "Cut Release '${{ github.event.inputs.release-version }}'"
-          git push -f origin refs/tags/${{ github.event.inputs.release-version }}
+          git tag -f ${{ steps.next_version.outputs.version }} -m "Cut Release '${{ steps.next_version.outputs.version }}'"
+          git push -f origin refs/tags/${{ steps.next_version.outputs.version }}
       - name: Ensure Release Does Not Exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete ${{ github.event.inputs.release-version }} || true
+          gh release delete ${{ steps.next_version.outputs.version }} || true
       - name: Import GPG key
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v5
@@ -69,7 +76,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2.7.0
         with:
-          args: release --rm-dist --release-notes=./.changes/${{ github.event.inputs.release-version }}.md
+          args: release --rm-dist --release-notes=./.changes/${{ steps.next_version.outputs.version }}.md
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
