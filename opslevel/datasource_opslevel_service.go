@@ -138,7 +138,7 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 	if err := d.Set("api_document_path", resource.ApiDocumentPath); err != nil {
 		return err
 	}
-	if err := d.Set("preferred_api_document_source", string(*resource.PreferredApiDocumentSource)); err != nil {
+	if err := d.Set("preferred_api_document_source", resource.PreferredApiDocumentSource); err != nil {
 		return err
 	}
 
