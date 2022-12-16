@@ -14,10 +14,12 @@ jobs:
           submodules: 'true'
       - name: Fetch all tags
         run: git fetch --force --tags
-      - name: Get next version
-        id: get_next_version
-        uses: thenativeweb/get-next-version@main
+      - name: Get Next Version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.token }}
+          branch: main
       - name: Show the next version
         run: |
-          echo ${{ steps.get_next_version.outputs.version }}
-          echo ${{ steps.get_next_version.outputs.hasNextVersion }}  
+          echo ${{ steps.semver.outputs.next }}
