@@ -14,12 +14,12 @@ jobs:
           submodules: 'true'
       - name: Fetch all tags
         run: git fetch --force --tags
-      - name: Get Next Version
-        id: semver
-        uses: ietf-tools/semver-action@v1
+      - id: next_version
+        uses: zwaldowski/semver-release-action@v3
         with:
-          token: ${{ github.token }}
-          branch: main
+          dry_run: true
+          bump: ${{ … }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Show the next version
         run: |
-          echo ${{ steps.semver.outputs.next }}
+          echo ${{ steps.next_version.outputs.version }}
