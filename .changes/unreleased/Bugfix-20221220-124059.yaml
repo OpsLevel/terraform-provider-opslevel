@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Use seconds for client_timeout configuration and explictly call this out in
+  the documentation
+time: 2022-12-20T12:40:59.170925-06:00

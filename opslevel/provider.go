@@ -28,7 +28,7 @@ func Provider() terraform.ResourceProvider {
 			"client_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Value to set the timeout of client calls to OpsLevel GraphQl endpoint",
+				Description: "Value (in seconds) to use for the timeout of GraphQL calls made",
 				Sensitive:   false,
 			},
 		},
@@ -99,7 +99,7 @@ func Provider() terraform.ResourceProvider {
 			opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 
 			if timeout > 0 {
-				opts = append(opts, opslevel.SetTimeout(time.Duration(timeout)))
+				opts = append(opts, opslevel.SetTimeout(time.Second*time.Duration(timeout)))
 			}
 
 			client := opslevel.NewGQLClient(opts...)
