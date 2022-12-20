@@ -28,7 +28,7 @@ func Provider() terraform.ResourceProvider {
 			"client_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Value (in seconds) to use for the timeout of GraphQL calls made",
+				Description: "Value (in seconds) to use for the timeout of API calls made",
 				Sensitive:   false,
 			},
 		},
