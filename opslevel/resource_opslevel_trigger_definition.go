@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2022"
 )
@@ -22,6 +23,12 @@ func resourceTriggerDefinition() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Description: "The description of what the trigger definition will do.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"owner": {
 				Type:        schema.TypeString,
 				Description: "The owner of the Trigger Definition",
@@ -32,6 +39,12 @@ func resourceTriggerDefinition() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The action that will be triggered by the Trigger Definition",
 				ForceNew:    false,
+				Required:    true,
+			},
+			"filter_id": {
+				Type:        schema.TypeString,
+				Description: "A filter defining which services this trigger definition applies to.",
+				ForceNew:    false,
 				Optional:    true,
 			},
 		},
@@ -40,14 +53,16 @@ func resourceTriggerDefinition() *schema.Resource {
 
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
-		Name:   d.Get("name").(string),
-		Owner:  *opslevel.NewID(d.Get("owner").(string)),
-		Action: opslevel.NewID(d.Get("action_id").(string)),
+		Name:        d.Get("name").(string),
+		Description: opslevel.NewString(d.Get("description").(string)),
+		Owner:       *opslevel.NewID(d.Get("owner").(string)),
+		Action:      opslevel.NewID(d.Get("action_id").(string)),
+		Filter:      opslevel.NewID(d.Get("filter_id").(string)),
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 	d.SetId(resource.Id.(string))
 
@@ -66,11 +81,19 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 		return err
 	}
 
+	if err := d.Set("description", resource.Description); err != nil {
+		return err
+	}
+
 	if err := d.Set("owner", resource.Owner.Id.(string)); err != nil {
 		return err
 	}
 
 	if err := d.Set("action_id", resource.Action.Id.(string)); err != nil {
+		return err
+	}
+
+	if err := d.Set("filter_id", resource.Filter.Id.(string)); err != nil {
 		return err
 	}
 
@@ -85,16 +108,22 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	if d.HasChange("name") {
 		input.Name = opslevel.NewString(d.Get("name").(string))
 	}
+	if d.HasChange("description") {
+		input.Description = opslevel.NewString(d.Get("description").(string))
+	}
 	if d.HasChange("owner") {
 		input.Owner = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("action_id") {
 		input.Action = opslevel.NewID(d.Get("action_id").(string))
 	}
+	if d.HasChange("action_id") {
+		input.Filter = opslevel.NewID(d.Get("filter_id").(string))
+	}
 
 	_, err := client.UpdateTriggerDefinition(input)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	return resourceTriggerDefinitionRead(d, client)

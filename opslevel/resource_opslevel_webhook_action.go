@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2022"
@@ -19,13 +20,19 @@ func resourceWebhookAction() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Description: "The name of the external action.",
+				Description: "The name of the webhook action.",
 				ForceNew:    false,
 				Required:    true,
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Description: "The description of the webhook action.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"liquid_template": {
 				Type:        schema.TypeString,
-				Description: "Template that can be used to generate a Webhook payload.",
+				Description: "Template that can be used to generate a webhook payload.",
 				ForceNew:    false,
 				Required:    true,
 			},
@@ -44,7 +51,7 @@ func resourceWebhookAction() *schema.Resource {
 			},
 			"headers": {
 				Type:        schema.TypeMap,
-				Description: "HTTP headers to be passed along with your Webhook when triggered.",
+				Description: "HTTP headers to be passed along with your webhook when triggered.",
 				ForceNew:    false,
 				Optional:    true,
 				Elem: &schema.Schema{
@@ -59,6 +66,7 @@ func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client
 
 	input := opslevel.CustomActionsWebhookActionCreateInput{
 		Name:           d.Get("name").(string),
+		Description:    opslevel.NewString(d.Get("description").(string)),
 		LiquidTemplate: d.Get("liquid_template").(string),
 		WebhookURL:     d.Get("webhook_url").(string),
 		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string)),
@@ -76,7 +84,7 @@ func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client
 
 func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	//id := d.Id()
-
+	//
 	//resource, err := client.GetWebhookAction(*opslevel.NewIdentifier(id))
 	//if err != nil {
 	//	return err
@@ -84,6 +92,16 @@ func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) 
 	//
 	//if err := d.Set("name", resource.Name); err != nil {
 	//	return err
+	//}
+	//
+	//if _, ok := d.GetOk("description"); !ok {
+	//	if err := d.Set("description", nil); err != nil {
+	//		return err
+	//	}
+	//} else {
+	//	if err := d.Set("description", resource.Description); err != nil {
+	//		return err
+	//	}
 	//}
 	//
 	//if err := d.Set("liquid_template", resource.LiquidTemplate); err != nil {
@@ -97,6 +115,18 @@ func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) 
 	//if err := d.Set("http_method", string(resource.HTTPMethod)); err != nil {
 	//	return err
 	//}
+	//
+	//if _, ok := d.GetOk("headers"); !ok {
+	//	if err := d.Set("headers", nil); err != nil {
+	//		return err
+	//	}
+	//} else {
+	//	// Not sure how this will work exactly, thinking I will have to convert back to map[string]interface{}
+	//	// so Terraform won't try to change it if it doesn't match
+	//	if err := d.Set("headers", resource.Headers); err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }
@@ -108,6 +138,9 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 
 	if d.HasChange("name") {
 		input.Name = opslevel.NewString(d.Get("name").(string))
+	}
+	if d.HasChange("description") {
+		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 	if d.HasChange("liquid_template") {
 		input.WebhookURL = opslevel.NewString(d.Get("liquid_template").(string))
@@ -124,7 +157,7 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 
 	_, err := client.UpdateWebhookAction(input)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	return nil
