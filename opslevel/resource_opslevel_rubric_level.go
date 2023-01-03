@@ -96,7 +96,7 @@ func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) 
 		description := d.Get("description").(string)
 		// TODO: this is really shitty and its because of how `opslevel.NewString` makes a nil if input is == ""
 		if description == "" {
-			input.Description = opslevel.NewEmptyString()
+			input.Description = opslevel.NullString()
 		} else {
 			input.Description = opslevel.NewString(description)
 		}

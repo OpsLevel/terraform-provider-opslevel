@@ -397,3 +397,12 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 	}
 	return nil
 }
+
+// Handles conversion from Terraform's interface{} struct to OpsLevel's JSON struct
+func convertHeadersMap(headers interface{}) opslevel.JSON {
+	output := opslevel.JSON{}
+	for k, v := range headers.(map[string]interface{}) {
+		output[k] = v.(string)
+	}
+	return output
+}

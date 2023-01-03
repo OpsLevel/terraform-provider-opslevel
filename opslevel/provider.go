@@ -84,7 +84,9 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_team_contact":                resourceTeamContact(),
 			"opslevel_team_tag":                    resourceTeamTag(),
 			"opslevel_team":                        resourceTeam(),
+			"opslevel_trigger_definition":          resourceTriggerDefinition(),
 			"opslevel_user":                        resourceUser(),
+			"opslevel_webhook_action":              resourceWebhookAction(),
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
