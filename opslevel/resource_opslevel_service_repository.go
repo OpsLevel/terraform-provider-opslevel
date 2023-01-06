@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceServiceRepository() *schema.Resource {
@@ -85,7 +85,7 @@ func resourceServiceRepositoryCreate(d *schema.ResourceData, client *opslevel.Cl
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	if err := d.Set("name", resource.DisplayName); err != nil {
 		return err
@@ -116,7 +116,7 @@ func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Clie
 	var resource *opslevel.ServiceRepository
 	for _, edge := range service.Repositories.Edges {
 		for _, repository := range edge.ServiceRepositories {
-			if repository.Id == id {
+			if string(repository.Id) == id {
 				resource = &repository
 				break
 			}
@@ -132,7 +132,7 @@ func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("name", resource.DisplayName); err != nil {
 		return err
 	}
-	if err := d.Set("repository", resource.Repository.Id.(string)); err != nil {
+	if err := d.Set("repository", resource.Repository.Id); err != nil {
 		return err
 	}
 	if err := d.Set("base_directory", resource.BaseDirectory); err != nil {
@@ -144,7 +144,7 @@ func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Clie
 
 func resourceServiceRepositoryUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.ServiceRepositoryUpdateInput{
-		Id: d.Id(),
+		Id: *opslevel.NewID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -171,7 +171,7 @@ func resourceServiceRepositoryUpdate(d *schema.ResourceData, client *opslevel.Cl
 
 func resourceServiceRepositoryDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteServiceRepository(id)
+	err := client.DeleteServiceRepository(*opslevel.NewID(id))
 	if err != nil {
 		return err
 	}

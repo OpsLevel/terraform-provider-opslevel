@@ -2,7 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func datasourceGroups() *schema.Resource {
@@ -43,7 +43,7 @@ func datasourceGroupsRead(d *schema.ResourceData, client *opslevel.Client) error
 	names := make([]string, count)
 	for i, item := range groups {
 		aliases[i] = item.Alias
-		ids[i] = item.Id.(string)
+		ids[i] = string(item.Id)
 		names[i] = item.Name
 	}
 

@@ -3,7 +3,7 @@ package opslevel
 import (
 	"fmt"
 
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -31,7 +31,7 @@ func filterRubricCategories(levels []opslevel.Category, field string, value stri
 	for _, item := range levels {
 		switch field {
 		case "id":
-			if item.Id.(string) == value {
+			if string(item.Id) == value {
 				output = item
 				found = true
 			}
@@ -66,7 +66,7 @@ func datasourceRubricCategoryRead(d *schema.ResourceData, client *opslevel.Clien
 		return itemErr
 	}
 
-	d.SetId(item.Id.(string))
+	d.SetId(string(item.Id))
 	d.Set("name", item.Name)
 
 	return nil

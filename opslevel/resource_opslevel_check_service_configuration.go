@@ -2,7 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceCheckServiceConfiguration() *schema.Resource {
@@ -27,7 +28,7 @@ func resourceCheckServiceConfigurationCreate(d *schema.ResourceData, client *ops
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceCheckServiceConfigurationRead(d, client)
 }
@@ -35,7 +36,7 @@ func resourceCheckServiceConfigurationCreate(d *schema.ResourceData, client *ops
 func resourceCheckServiceConfigurationRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCheck(id)
+	resource, err := client.GetCheck(graphql.ID(id))
 	if err != nil {
 		return err
 	}

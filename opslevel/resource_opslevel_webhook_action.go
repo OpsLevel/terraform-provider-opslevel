@@ -4,8 +4,17 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
+
+// Handles conversion from Terraform's interface{} struct to OpsLevel's JSON struct
+func expandHeaders(headers interface{}) opslevel.JSON {
+	output := opslevel.JSON{}
+	for k, v := range headers.(map[string]interface{}) {
+		output[k] = v.(string)
+	}
+	return output
+}
 
 func resourceWebhookAction() *schema.Resource {
 	return &schema.Resource{
@@ -63,21 +72,20 @@ func resourceWebhookAction() *schema.Resource {
 }
 
 func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client) error {
-
 	input := opslevel.CustomActionsWebhookActionCreateInput{
 		Name:           d.Get("name").(string),
 		Description:    opslevel.NewString(d.Get("description").(string)),
 		LiquidTemplate: d.Get("liquid_template").(string),
 		WebhookURL:     d.Get("webhook_url").(string),
 		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string)),
-		Headers:        convertHeadersMap(d.Get("headers")),
+		Headers:        expandHeaders(d.Get("headers")),
 	}
 
-	resource, _ := client.CreateWebhookAction(input)
-	//if err != nil {
-	//	return err
-	//}
-	d.SetId(resource.Id.(string))
+	resource, err := client.CreateWebhookAction(input)
+	if err != nil {
+		return err
+	}
+	d.SetId(string(resource.Id))
 
 	return nil
 }
@@ -85,7 +93,7 @@ func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client
 func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	//id := d.Id()
 	//
-	//resource, err := client.GetWebhookAction(*opslevel.NewIdentifier(id))
+	//resource, err := client.GetCustomAction(*opslevel.NewIdentifier(id))
 	//if err != nil {
 	//	return err
 	//}
@@ -121,8 +129,6 @@ func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) 
 	//		return err
 	//	}
 	//} else {
-	//	// Not sure how this will work exactly, thinking I will have to convert back to map[string]interface{}
-	//	// so Terraform won't try to change it if it doesn't match
 	//	if err := d.Set("headers", resource.Headers); err != nil {
 	//		return err
 	//	}
@@ -133,7 +139,7 @@ func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsWebhookActionUpdateInput{
-		Id: d.Id(),
+		Id: *opslevel.NewID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -152,7 +158,7 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 		input.HTTPMethod = opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string))
 	}
 	if d.HasChange("headers") {
-		input.Headers = convertHeadersMap(d.Get("headers"))
+		input.Headers = expandHeaders(d.Get("headers"))
 	}
 
 	_, err := client.UpdateWebhookAction(input)

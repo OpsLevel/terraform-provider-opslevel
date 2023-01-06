@@ -2,7 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceTriggerDefinition() *schema.Resource {
@@ -34,13 +35,13 @@ func resourceTriggerDefinition() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
-			"action_id": {
+			"action": {
 				Type:        schema.TypeString,
 				Description: "The action that will be triggered by the Trigger Definition",
 				ForceNew:    false,
 				Required:    true,
 			},
-			"filter_id": {
+			"filter": {
 				Type:        schema.TypeString,
 				Description: "A filter defining which services this trigger definition applies to.",
 				ForceNew:    false,
@@ -54,7 +55,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		Name:   d.Get("name").(string),
 		Owner:  *opslevel.NewID(d.Get("owner").(string)),
-		Action: opslevel.NewID(d.Get("action_id").(string)),
+		Action: opslevel.NewID(d.Get("action").(string)),
 	}
 
 	if _, ok := d.GetOk("description"); !ok {
@@ -63,17 +64,17 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 
-	if _, ok := d.GetOk("filter_id"); !ok {
+	if _, ok := d.GetOk("filter"); !ok {
 		input.Filter = nil
 	} else {
-		input.Filter = opslevel.NewID(d.Get("filter_id").(string))
+		input.Filter = opslevel.NewID(d.Get("filter").(string))
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceTriggerDefinitionRead(d, client)
 }
@@ -89,41 +90,26 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
-
-	if _, ok := d.GetOk("description"); ok {
-		if err := d.Set("description", resource.Description); err != nil {
-			return err
-		}
-	} else {
-		if err := d.Set("description", nil); err != nil {
-			return err
-		}
-	}
-
-	if err := d.Set("owner", resource.Owner.Id.(string)); err != nil {
+	if err := d.Set("description", resource.Description); err != nil {
 		return err
 	}
-
-	if err := d.Set("action_id", resource.Action.Id.(string)); err != nil {
+	if err := d.Set("owner", resource.Owner.Id); err != nil {
 		return err
 	}
-
-	if _, ok := d.GetOk("filter_id"); ok {
-		if err := d.Set("filter_id", resource.Filter.Id.(string)); err != nil {
-			return err
-		}
-	} else {
-		if err := d.Set("filter_id", nil); err != nil {
-			return err
-		}
+	if err := d.Set("action", resource.Action.Id); err != nil {
+		return err
+	}
+	if err := d.Set("filter", resource.Filter.Id); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
 	input := opslevel.CustomActionsTriggerDefinitionUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(id),
 	}
 
 	if d.HasChange("name") {
@@ -133,13 +119,19 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 	if d.HasChange("owner") {
-		input.Owner = opslevel.NewID(d.Get("owner").(string))
+		input.Owner = opslevel.NewString(d.Get("owner").(string))
 	}
-	if d.HasChange("action_id") {
-		input.Action = opslevel.NewID(d.Get("action_id").(string))
+	if d.HasChange("action") {
+		input.Action = opslevel.NewString(d.Get("action").(string))
 	}
-	if d.HasChange("filter_id") {
-		input.Filter = opslevel.NewID(d.Get("filter_id").(string))
+
+	if d.HasChange("filter") {
+		filter, ok := d.GetOk("filter")
+		if ok {
+			input.Filter = opslevel.NewString(filter.(string))
+		} else {
+			input.Filter = opslevel.NullString()
+		}
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)

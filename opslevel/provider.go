@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 	"log"
 	"time"
 )
@@ -99,6 +99,7 @@ func Provider() terraform.ResourceProvider {
 
 			opts = append(opts, opslevel.SetAPIToken(token))
 			opts = append(opts, opslevel.SetURL(url))
+			opts = append(opts, opslevel.SetAPIVisibility("internal"))
 			opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 
 			if timeout > 0 {

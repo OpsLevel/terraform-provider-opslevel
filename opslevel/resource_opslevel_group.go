@@ -2,7 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceGroup() *schema.Resource {
@@ -86,7 +87,7 @@ func resourceGroupCreate(d *schema.ResourceData, client *opslevel.Client) error 
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceGroupRead(d, client)
 }
@@ -94,7 +95,7 @@ func resourceGroupCreate(d *schema.ResourceData, client *opslevel.Client) error 
 func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetGroup(id)
+	resource, err := client.GetGroup(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -177,7 +178,7 @@ func resourceGroupUpdate(d *schema.ResourceData, client *opslevel.Client) error 
 
 func resourceGroupDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteGroup(id)
+	err := client.DeleteGroup(graphql.ID(id))
 	if err != nil {
 		return err
 	}

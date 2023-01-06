@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -52,7 +52,7 @@ func datasourceTeamsRead(d *schema.ResourceData, client *opslevel.Client) error 
 	names := make([]string, count)
 	for i, item := range teams {
 		aliases[i] = item.Alias
-		ids[i] = item.Id.(string)
+		ids[i] = string(item.Id)
 		names[i] = item.Name
 	}
 

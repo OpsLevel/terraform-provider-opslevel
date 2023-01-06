@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 // Tag key names are stored in OpsLevel as lowercase so we need to ensure the configuration is written as lowercase
@@ -75,7 +75,7 @@ func resourceServiceTagCreate(d *schema.ResourceData, client *opslevel.Client) e
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	if err := d.Set("key", resource.Key); err != nil {
 		return err
@@ -105,7 +105,7 @@ func resourceServiceTagRead(d *schema.ResourceData, client *opslevel.Client) err
 
 	var resource *opslevel.Tag
 	for _, t := range service.Tags.Nodes {
-		if t.Id == id {
+		if string(t.Id) == id {
 			resource = &t
 			break
 		}
@@ -126,7 +126,7 @@ func resourceServiceTagRead(d *schema.ResourceData, client *opslevel.Client) err
 
 func resourceServiceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TagUpdateInput{
-		Id: d.Id(),
+		Id: *opslevel.NewID(d.Id()),
 	}
 
 	if d.HasChange("key") {
@@ -153,7 +153,7 @@ func resourceServiceTagUpdate(d *schema.ResourceData, client *opslevel.Client) e
 
 func resourceServiceTagDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTag(id)
+	err := client.DeleteTag(*opslevel.NewID(id))
 	if err != nil {
 		return err
 	}

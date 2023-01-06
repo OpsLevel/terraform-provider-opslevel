@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -46,7 +46,7 @@ func datasourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 	d.Set("alias", resource.Alias)
 	d.Set("name", resource.Name)
 	if err := d.Set("group_alias", resource.Group.Alias); err != nil {

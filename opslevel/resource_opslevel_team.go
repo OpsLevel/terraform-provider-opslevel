@@ -2,10 +2,11 @@ package opslevel
 
 import (
 	"errors"
+	"github.com/hasura/go-graphql-client"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceTeam() *schema.Resource {
@@ -180,7 +181,7 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	aliasesErr := reconcileTeamAliases(d, resource, client)
 	if aliasesErr != nil {
@@ -200,7 +201,7 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetTeam(id)
+	resource, err := client.GetTeam(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -249,8 +250,9 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 }
 
 func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
 	input := opslevel.TeamUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(id),
 	}
 
 	membershipValidationErr := validateMembershipState(d)
@@ -300,7 +302,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceTeamDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTeam(id)
+	err := client.DeleteTeam(graphql.ID(id))
 	if err != nil {
 		return err
 	}

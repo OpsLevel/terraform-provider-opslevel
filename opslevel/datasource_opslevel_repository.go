@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -32,7 +32,7 @@ func datasourceRepositoryRead(d *schema.ResourceData, client *opslevel.Client) e
 		return err
 	}
 
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return nil
 }
