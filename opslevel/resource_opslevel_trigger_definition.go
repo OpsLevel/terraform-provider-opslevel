@@ -59,12 +59,12 @@ func resourceTriggerDefinition() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"visibility": {
+			"access_control": {
 				Type:         schema.TypeString,
 				Description:  "The set of users that should be able to use the trigger definition",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerVisibilityEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum(), false),
 			},
 		},
 	}
@@ -72,10 +72,10 @@ func resourceTriggerDefinition() *schema.Resource {
 
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
-		Name:       d.Get("name").(string),
-		Owner:      *opslevel.NewID(d.Get("owner").(string)),
-		Action:     opslevel.NewID(d.Get("action").(string)),
-		Visibility: opslevel.CustomActionsTriggerVisibilityEnum(d.Get("visibility").(string)),
+		Name:          d.Get("name").(string),
+		Owner:         *opslevel.NewID(d.Get("owner").(string)),
+		Action:        opslevel.NewID(d.Get("action").(string)),
+		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("visibility").(string)),
 	}
 
 	if _, ok := d.GetOk("description"); ok {
@@ -134,7 +134,7 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("published", resource.Published); err != nil {
 		return err
 	}
-	if err := d.Set("visibility", string(resource.Visibility)); err != nil {
+	if err := d.Set("access_control", string(resource.AccessControl)); err != nil {
 		return err
 	}
 
@@ -182,7 +182,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if d.HasChange("visibility") {
-		input.Visibility = opslevel.CustomActionsTriggerVisibilityEnum(d.Get("http_method").(string))
+		input.AccessControl = opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("http_method").(string))
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)
