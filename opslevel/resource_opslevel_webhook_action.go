@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
@@ -74,11 +73,14 @@ func resourceWebhookAction() *schema.Resource {
 func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsWebhookActionCreateInput{
 		Name:           d.Get("name").(string),
-		Description:    opslevel.NewString(d.Get("description").(string)),
 		LiquidTemplate: d.Get("liquid_template").(string),
 		WebhookURL:     d.Get("webhook_url").(string),
 		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string)),
 		Headers:        expandHeaders(d.Get("headers")),
+	}
+
+	if _, ok := d.GetOk("description"); ok {
+		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 
 	resource, err := client.CreateWebhookAction(input)
@@ -87,52 +89,40 @@ func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client
 	}
 	d.SetId(string(resource.Id))
 
-	return nil
+	return resourceWebhookActionRead(d, client)
 }
 
 func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) error {
-	//id := d.Id()
-	//
-	//resource, err := client.GetCustomAction(*opslevel.NewIdentifier(id))
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if err := d.Set("name", resource.Name); err != nil {
-	//	return err
-	//}
-	//
-	//if _, ok := d.GetOk("description"); !ok {
-	//	if err := d.Set("description", nil); err != nil {
-	//		return err
-	//	}
-	//} else {
-	//	if err := d.Set("description", resource.Description); err != nil {
-	//		return err
-	//	}
-	//}
-	//
-	//if err := d.Set("liquid_template", resource.LiquidTemplate); err != nil {
-	//	return err
-	//}
-	//
-	//if err := d.Set("webhook_url", resource.WebhookURL); err != nil {
-	//	return err
-	//}
-	//
-	//if err := d.Set("http_method", string(resource.HTTPMethod)); err != nil {
-	//	return err
-	//}
-	//
-	//if _, ok := d.GetOk("headers"); !ok {
-	//	if err := d.Set("headers", nil); err != nil {
-	//		return err
-	//	}
-	//} else {
-	//	if err := d.Set("headers", resource.Headers); err != nil {
-	//		return err
-	//	}
-	//}
+	id := d.Id()
+
+	resource, err := client.GetCustomAction(*opslevel.NewIdentifier(id))
+	if err != nil {
+		return err
+	}
+
+	if err := d.Set("name", resource.Name); err != nil {
+		return err
+	}
+
+	if err := d.Set("description", resource.Description); err != nil {
+		return err
+	}
+
+	if err := d.Set("liquid_template", resource.LiquidTemplate); err != nil {
+		return err
+	}
+
+	if err := d.Set("webhook_url", resource.WebhookURL); err != nil {
+		return err
+	}
+
+	if err := d.Set("http_method", string(resource.HTTPMethod)); err != nil {
+		return err
+	}
+
+	if err := d.Set("headers", resource.Headers); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -158,15 +148,16 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 		input.HTTPMethod = opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string))
 	}
 	if d.HasChange("headers") {
-		input.Headers = expandHeaders(d.Get("headers"))
+		headers := expandHeaders(d.Get("headers"))
+		input.Headers = &headers
 	}
 
 	_, err := client.UpdateWebhookAction(input)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
-	return nil
+	return resourceWebhookActionRead(d, client)
 }
 
 func resourceWebhookActionDelete(d *schema.ResourceData, client *opslevel.Client) error {

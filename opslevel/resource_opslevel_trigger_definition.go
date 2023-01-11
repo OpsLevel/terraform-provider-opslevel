@@ -2,7 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hasura/go-graphql-client"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
 )
 
@@ -47,27 +47,53 @@ func resourceTriggerDefinition() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"manual_inputs_definition": {
+				Type:        schema.TypeString,
+				Description: "The YAML definition of any custom inputs for this trigger definition.",
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"published": {
+				Type:        schema.TypeBool,
+				Description: "The published state of the action; true if the definition is ready for use; false if it is a draft. Defaults to false",
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"visibility": {
+				Type:         schema.TypeString,
+				Description:  "The set of users that should be able to use the trigger definition",
+				ForceNew:     false,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerVisibilityEnum(), false),
+			},
 		},
 	}
 }
 
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
-		Name:   d.Get("name").(string),
-		Owner:  *opslevel.NewID(d.Get("owner").(string)),
-		Action: opslevel.NewID(d.Get("action").(string)),
+		Name:       d.Get("name").(string),
+		Owner:      *opslevel.NewID(d.Get("owner").(string)),
+		Action:     opslevel.NewID(d.Get("action").(string)),
+		Visibility: opslevel.CustomActionsTriggerVisibilityEnum(d.Get("visibility").(string)),
 	}
 
-	if _, ok := d.GetOk("description"); !ok {
-		input.Description = nil
-	} else {
+	if _, ok := d.GetOk("description"); ok {
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 
-	if _, ok := d.GetOk("filter"); !ok {
-		input.Filter = nil
-	} else {
+	if _, ok := d.GetOk("filter"); ok {
 		input.Filter = opslevel.NewID(d.Get("filter").(string))
+	}
+
+	if _, ok := d.GetOk("manual_inputs_definition"); ok {
+		input.ManualInputsDefinition = opslevel.NewString(d.Get("manual_inputs_definition").(string))
+	}
+
+	if published, ok := d.GetOk("published"); ok {
+		input.Published = opslevel.Bool(published.(bool))
+	} else {
+		input.Published = opslevel.Bool(false)
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
@@ -102,6 +128,15 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("filter", resource.Filter.Id); err != nil {
 		return err
 	}
+	if err := d.Set("manual_inputs_definition", resource.ManualInputsDefinition); err != nil {
+		return err
+	}
+	if err := d.Set("published", resource.Published); err != nil {
+		return err
+	}
+	if err := d.Set("visibility", string(resource.Visibility)); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -109,7 +144,7 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	input := opslevel.CustomActionsTriggerDefinitionUpdateInput{
-		Id: graphql.ID(id),
+		Id: *opslevel.NewID(id),
 	}
 
 	if d.HasChange("name") {
@@ -124,6 +159,9 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	if d.HasChange("action") {
 		input.Action = opslevel.NewString(d.Get("action").(string))
 	}
+	if d.HasChange("manual_inputs_definition") {
+		input.ManualInputsDefinition = opslevel.NewString(d.Get("manual_inputs_definition").(string))
+	}
 
 	if d.HasChange("filter") {
 		filter, ok := d.GetOk("filter")
@@ -132,6 +170,19 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		} else {
 			input.Filter = opslevel.NullString()
 		}
+	}
+
+	if d.HasChange("published") {
+		published, ok := d.GetOk("published")
+		if ok {
+			input.Published = opslevel.Bool(published.(bool))
+		} else {
+			input.Published = opslevel.Bool(false)
+		}
+	}
+
+	if d.HasChange("visibility") {
+		input.Visibility = opslevel.CustomActionsTriggerVisibilityEnum(d.Get("http_method").(string))
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)
