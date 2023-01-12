@@ -28,13 +28,13 @@ func resourceWebhookAction() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Description: "The name of the webhook action.",
+				Description: "The name of the Webhook Action.",
 				ForceNew:    false,
 				Required:    true,
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Description: "The description of the webhook action.",
+				Description: "The description of the Webhook Action.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -46,13 +46,13 @@ func resourceWebhookAction() *schema.Resource {
 			},
 			"webhook_url": {
 				Type:        schema.TypeString,
-				Description: "The URL of the webhook action.",
+				Description: "The URL of the Webhook Action.",
 				ForceNew:    false,
 				Required:    true,
 			},
 			"http_method": {
 				Type:         schema.TypeString,
-				Description:  "The http method used to call the webhook action.",
+				Description:  "The http method used to call the Webhook Action.",
 				ForceNew:     false,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsHttpMethodEnum(), false),

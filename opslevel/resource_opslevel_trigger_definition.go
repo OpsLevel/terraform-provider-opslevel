@@ -25,46 +25,53 @@ func resourceTriggerDefinition() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Description: "The description of what the trigger definition will do.",
+				Description: "The description of what the Trigger Definition will do.",
 				ForceNew:    false,
 				Optional:    true,
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The owner of the Trigger Definition",
+				Description: "The owner of the Trigger Definition.",
 				ForceNew:    false,
 				Required:    true,
 			},
 			"action": {
 				Type:        schema.TypeString,
-				Description: "The action that will be triggered by the Trigger Definition",
+				Description: "The action that will be triggered by the Trigger Definition.",
 				ForceNew:    false,
 				Required:    true,
 			},
 			"filter": {
 				Type:        schema.TypeString,
-				Description: "A filter defining which services this trigger definition applies to.",
+				Description: "A filter defining which services this Trigger Definition applies to.",
 				ForceNew:    false,
 				Optional:    true,
 			},
 			"manual_inputs_definition": {
 				Type:        schema.TypeString,
-				Description: "The YAML definition of any custom inputs for this trigger definition.",
+				Description: "The YAML definition of any custom inputs for this Trigger Definition.",
 				ForceNew:    false,
 				Optional:    true,
 			},
 			"published": {
 				Type:        schema.TypeBool,
-				Description: "The published state of the action; true if the definition is ready for use; false if it is a draft. Defaults to false",
+				Description: "The published state of the Custom Action; true if the Trigger Definition is ready for use; false if it is a draft. Defaults to false.",
+				Default:     false,
 				ForceNew:    false,
 				Optional:    true,
 			},
 			"access_control": {
 				Type:         schema.TypeString,
-				Description:  "The set of users that should be able to use the trigger definition",
+				Description:  "The set of users that should be able to use the Trigger Definition. Requires a value of `everyone`, `admins`, or `service_owners`.",
 				ForceNew:     false,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum(), false),
+			},
+			"response_template": {
+				Type:        schema.TypeString,
+				Description: "The liquid template used to parse the response from the Webhook Action.",
+				ForceNew:    false,
+				Optional:    true,
 			},
 		},
 	}
@@ -75,7 +82,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 		Name:          d.Get("name").(string),
 		Owner:         *opslevel.NewID(d.Get("owner").(string)),
 		Action:        opslevel.NewID(d.Get("action").(string)),
-		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("visibility").(string)),
+		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
 	}
 
 	if _, ok := d.GetOk("description"); ok {
@@ -87,13 +94,17 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if _, ok := d.GetOk("manual_inputs_definition"); ok {
-		input.ManualInputsDefinition = opslevel.NewString(d.Get("manual_inputs_definition").(string))
+		manualInputsDefinition := d.Get("manual_inputs_definition").(string)
+		input.ManualInputsDefinition = manualInputsDefinition
+	}
+
+	if _, ok := d.GetOk("response_template"); ok {
+		responseTemplate := d.Get("response_template").(string)
+		input.ResponseTemplate = responseTemplate
 	}
 
 	if published, ok := d.GetOk("published"); ok {
 		input.Published = opslevel.Bool(published.(bool))
-	} else {
-		input.Published = opslevel.Bool(false)
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
@@ -137,6 +148,9 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("access_control", string(resource.AccessControl)); err != nil {
 		return err
 	}
+	if err := d.Set("response_template", resource.ResponseTemplate); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -160,7 +174,8 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		input.Action = opslevel.NewString(d.Get("action").(string))
 	}
 	if d.HasChange("manual_inputs_definition") {
-		input.ManualInputsDefinition = opslevel.NewString(d.Get("manual_inputs_definition").(string))
+		manualInputsDefinition := d.Get("manual_inputs_definition").(string)
+		input.ManualInputsDefinition = &manualInputsDefinition
 	}
 
 	if d.HasChange("filter") {
@@ -181,8 +196,13 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		}
 	}
 
-	if d.HasChange("visibility") {
-		input.AccessControl = opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("http_method").(string))
+	if d.HasChange("access_control") {
+		input.AccessControl = opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string))
+	}
+
+	if d.HasChange("response_template") {
+		responseTemplate := d.Get("response_template").(string)
+		input.ResponseTemplate = &responseTemplate
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)
