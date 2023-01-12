@@ -1,0 +1,3 @@
+kind: Bugfix
+body: Fixes bug where check notes were being deleted on updates
+time: 2023-01-12T15:42:23.606857-06:00
