@@ -47,7 +47,7 @@ func datasourceUsersRead(d *schema.ResourceData, client *opslevel.Client) error 
 	emails := make([]string, count)
 	roles := make([]string, count)
 	for i, item := range result {
-		ids[i] = item.Id.(string)
+		ids[i] = string(item.Id)
 		names[i] = item.Name
 		emails[i] = item.Email
 		roles[i] = string(item.Role)
