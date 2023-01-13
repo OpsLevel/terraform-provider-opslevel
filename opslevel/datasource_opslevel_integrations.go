@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -34,7 +34,7 @@ func datasourceIntegrationsRead(d *schema.ResourceData, client *opslevel.Client)
 	ids := make([]string, count)
 	names := make([]string, count)
 	for i, item := range result {
-		ids[i] = item.Id.(string)
+		ids[i] = string(item.Id)
 		names[i] = item.Name
 	}
 

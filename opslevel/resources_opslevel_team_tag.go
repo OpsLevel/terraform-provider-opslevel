@@ -2,11 +2,12 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/hasura/go-graphql-client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceTeamTag() *schema.Resource {
@@ -70,7 +71,7 @@ func resourceTeamTagCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	if err := d.Set("key", resource.Key); err != nil {
 		return err
@@ -100,7 +101,7 @@ func resourceTeamTagRead(d *schema.ResourceData, client *opslevel.Client) error 
 
 	var resource *opslevel.Tag
 	for _, t := range team.Tags.Nodes {
-		if t.Id == id {
+		if string(t.Id) == id {
 			resource = &t
 			break
 		}
@@ -120,8 +121,9 @@ func resourceTeamTagRead(d *schema.ResourceData, client *opslevel.Client) error 
 }
 
 func resourceTeamTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
 	input := opslevel.TagUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(id),
 	}
 
 	if d.HasChange("key") {
@@ -148,7 +150,7 @@ func resourceTeamTagUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 
 func resourceTeamTagDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTag(id)
+	err := client.DeleteTag(graphql.ID(id))
 	if err != nil {
 		return err
 	}

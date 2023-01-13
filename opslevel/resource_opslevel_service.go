@@ -3,11 +3,12 @@ package opslevel
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hasura/go-graphql-client"
 	"github.com/rs/zerolog/log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceService() *schema.Resource {
@@ -195,7 +196,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	err = reconcileServiceAliases(d, resource, client)
 	if err != nil {
@@ -215,7 +216,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 			s := opslevel.ApiDocumentSourceEnum(docSource.(string))
 			source = &s
 		}
-		_, err := client.ServiceApiDocSettingsUpdate(resource.Id.(string), docPath.(string), source)
+		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath.(string), source)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
 		}
@@ -227,7 +228,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetService(id)
+	resource, err := client.GetService(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -278,7 +279,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	id := d.Id()
 
 	input := opslevel.ServiceUpdateInput{
-		Id: id,
+		Id: graphql.ID(id),
 	}
 
 	if d.HasChange("name") {
@@ -339,7 +340,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		} else {
 			docSource = nil
 		}
-		_, err := client.ServiceApiDocSettingsUpdate(resource.Id.(string), docPath, docSource)
+		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath, docSource)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
 		}
@@ -352,7 +353,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 func resourceServiceDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	err := client.DeleteService(opslevel.ServiceDeleteInput{
-		Id: id,
+		Id: graphql.ID(id),
 	})
 	if err != nil {
 		return err

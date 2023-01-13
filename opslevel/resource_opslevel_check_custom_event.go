@@ -2,7 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceCheckCustomEvent() *schema.Resource {
@@ -54,7 +55,7 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 	input := opslevel.CheckCustomEventCreateInput{}
 	setCheckCreateInput(d, &input)
 
-	input.Integration = getID(d, "integration")
+	input.Integration = *getID(d, "integration")
 	if passPending, ok := d.GetOk("pass_pending"); ok {
 		input.PassPending = opslevel.Bool(passPending.(bool))
 	}
@@ -66,7 +67,7 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceCheckCustomEventRead(d, client)
 }
@@ -74,7 +75,7 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCheck(id)
+	resource, err := client.GetCheck(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 		return err
 	}
 
-	if err := d.Set("integration", resource.Integration.Id.(string)); err != nil {
+	if err := d.Set("integration", resource.Integration.Id); err != nil {
 		return err
 	}
 	if _, ok := d.GetOk("pass_pending"); ok {

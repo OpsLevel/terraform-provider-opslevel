@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 	"log"
 	"time"
 )
@@ -84,7 +84,9 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_team_contact":                resourceTeamContact(),
 			"opslevel_team_tag":                    resourceTeamTag(),
 			"opslevel_team":                        resourceTeam(),
+			"opslevel_trigger_definition":          resourceTriggerDefinition(),
 			"opslevel_user":                        resourceUser(),
+			"opslevel_webhook_action":              resourceWebhookAction(),
 		},
 
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {

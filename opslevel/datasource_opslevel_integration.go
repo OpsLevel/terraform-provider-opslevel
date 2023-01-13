@@ -3,7 +3,7 @@ package opslevel
 import (
 	"fmt"
 
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -31,7 +31,7 @@ func filterIntegrations(data []opslevel.Integration, field string, value string)
 	for _, item := range data {
 		switch field {
 		case "id":
-			if item.Id.(string) == value {
+			if string(item.Id) == value {
 				output = item
 				found = true
 			}
@@ -66,7 +66,7 @@ func datasourceIntegrationRead(d *schema.ResourceData, client *opslevel.Client) 
 		return itemErr
 	}
 
-	d.SetId(item.Id.(string))
+	d.SetId(string(item.Id))
 	d.Set("names", item.Name)
 
 	return nil

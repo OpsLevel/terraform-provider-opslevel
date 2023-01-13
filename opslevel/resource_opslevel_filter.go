@@ -3,7 +3,7 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceFilter() *schema.Resource {
@@ -86,15 +86,15 @@ func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceFilterRead(d, client)
 }
 
 func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
+	id := opslevel.NewID(d.Id())
 
-	resource, err := client.GetFilter(id)
+	resource, err := client.GetFilter(*id)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterUpdateInput{
-		Id: d.Id(),
+		Id: *opslevel.NewID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -138,8 +138,8 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 }
 
 func resourceFilterDelete(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
-	err := client.DeleteFilter(id)
+	id := opslevel.NewID(d.Id())
+	err := client.DeleteFilter(*id)
 	if err != nil {
 		return err
 	}

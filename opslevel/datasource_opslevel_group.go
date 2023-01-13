@@ -1,7 +1,8 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -52,7 +53,7 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 	var resource *opslevel.Group
 	var err error
 	if opslevel.IsID(identifier) {
-		resource, err = client.GetGroup(identifier)
+		resource, err = client.GetGroup(graphql.ID(identifier))
 	} else {
 		resource, err = client.GetGroupWithAlias(identifier)
 	}
@@ -77,7 +78,7 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 	}
 	teams := flattenTeamsArray(childTeams)
 
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
 	d.Set("parent", parent)

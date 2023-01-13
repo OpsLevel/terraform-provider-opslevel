@@ -2,11 +2,12 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/hasura/go-graphql-client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceServiceTool() *schema.Resource {
@@ -86,7 +87,7 @@ func resourceServiceToolCreate(d *schema.ResourceData, client *opslevel.Client) 
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	if err := d.Set("name", resource.DisplayName); err != nil {
 		return err
@@ -122,7 +123,7 @@ func resourceServiceToolRead(d *schema.ResourceData, client *opslevel.Client) er
 
 	var resource *opslevel.Tool
 	for _, t := range service.Tools.Nodes {
-		if t.Id == id {
+		if string(t.Id) == id {
 			resource = &t
 			break
 		}
@@ -149,7 +150,7 @@ func resourceServiceToolRead(d *schema.ResourceData, client *opslevel.Client) er
 
 func resourceServiceToolUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.ToolUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -188,7 +189,7 @@ func resourceServiceToolUpdate(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceServiceToolDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTool(id)
+	err := client.DeleteTool(graphql.ID(id))
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -49,7 +49,7 @@ func datasourceTiersRead(d *schema.ResourceData, client *opslevel.Client) error 
 	for _, item := range result {
 		i := item.Index - 1
 		aliases[i] = item.Alias
-		ids[i] = item.Id.(string)
+		ids[i] = string(item.Id)
 		indexes[i] = item.Index
 		names[i] = item.Name
 	}

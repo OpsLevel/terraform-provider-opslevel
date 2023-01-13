@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -45,7 +45,7 @@ func filterTiers(levels []opslevel.Tier, field string, value string) (*opslevel.
 				found = true
 			}
 		case "id":
-			if item.Id.(string) == value {
+			if string(item.Id) == value {
 				output = item
 				found = true
 			}
@@ -85,7 +85,7 @@ func datasourceTierRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return itemErr
 	}
 
-	d.SetId(item.Id.(string))
+	d.SetId(string(item.Id))
 	d.Set("alias", item.Alias)
 	d.Set("index", item.Index)
 	d.Set("name", item.Name)

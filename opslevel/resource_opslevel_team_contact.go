@@ -1,11 +1,12 @@
 package opslevel
 
 import (
+	"github.com/hasura/go-graphql-client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceTeamContact() *schema.Resource {
@@ -63,7 +64,7 @@ func resourceTeamContactCreate(d *schema.ResourceData, client *opslevel.Client) 
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceTeamContactRead(d, client)
 }
@@ -83,7 +84,7 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 	var err error
 	var team *opslevel.Team
 	if opslevel.IsID(identifier) {
-		team, err = client.GetTeam(opslevel.NewID(identifier))
+		team, err = client.GetTeam(*opslevel.NewID(identifier))
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 
 	var resource *opslevel.Contact
 	for _, t := range team.Contacts {
-		if t.Id == id {
+		if string(t.Id) == id {
 			resource = &t
 			break
 		}
@@ -120,6 +121,7 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 }
 
 func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) error {
+	id := d.Id()
 	input := opslevel.ContactInput{}
 
 	if d.HasChange("type") {
@@ -132,7 +134,7 @@ func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) 
 		input.Address = d.Get("value").(string)
 	}
 
-	_, err := client.UpdateContact(d.Id(), input)
+	_, err := client.UpdateContact(graphql.ID(id), input)
 	if err != nil {
 		return err
 	}
@@ -143,7 +145,7 @@ func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceTeamContactDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.RemoveContact(id)
+	err := client.RemoveContact(graphql.ID(id))
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/hasura/go-graphql-client"
 	"sort"
 	"strconv"
 	"strings"
@@ -9,8 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
-	"github.com/shurcooL/graphql"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -88,13 +88,13 @@ func findService(aliasKey string, idKey string, d *schema.ResourceData, client *
 		}
 		resource = found
 	} else {
-		found, err := client.GetService(id.(string))
+		found, err := client.GetService(*opslevel.NewID(id.(string)))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	}
-	if resource.Id == nil {
+	if resource.Id == "" {
 		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
@@ -114,13 +114,13 @@ func findRepository(aliasKey string, idKey string, d *schema.ResourceData, clien
 		}
 		resource = found
 	} else {
-		found, err := client.GetRepository(id.(string))
+		found, err := client.GetRepository(*opslevel.NewID(id.(string)))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	}
-	if resource.Id == nil {
+	if resource.Id == "" {
 		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
@@ -140,13 +140,13 @@ func findTeam(aliasKey string, idKey string, d *schema.ResourceData, client *ops
 		}
 		resource = found
 	} else {
-		found, err := client.GetTeam(id.(string))
+		found, err := client.GetTeam(*opslevel.NewID(id.(string)))
 		if err != nil {
 			return nil, err
 		}
 		resource = found
 	}
-	if resource.Id == nil {
+	if resource.Id == "" {
 		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil

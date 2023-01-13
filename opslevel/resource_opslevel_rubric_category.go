@@ -2,7 +2,8 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceRubricCategory() *schema.Resource {
@@ -39,7 +40,7 @@ func resourceRubricCategoryCreate(d *schema.ResourceData, client *opslevel.Clien
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceRubricCategoryRead(d, client)
 }
@@ -47,7 +48,7 @@ func resourceRubricCategoryCreate(d *schema.ResourceData, client *opslevel.Clien
 func resourceRubricCategoryRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCategory(id)
+	resource, err := client.GetCategory(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func resourceRubricCategoryRead(d *schema.ResourceData, client *opslevel.Client)
 
 func resourceRubricCategoryUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CategoryUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -78,7 +79,7 @@ func resourceRubricCategoryUpdate(d *schema.ResourceData, client *opslevel.Clien
 
 func resourceRubricCategoryDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteCategory(id)
+	err := client.DeleteCategory(graphql.ID(id))
 	if err != nil {
 		return err
 	}

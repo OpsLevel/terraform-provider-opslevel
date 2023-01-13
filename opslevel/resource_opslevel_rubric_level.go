@@ -3,7 +3,8 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/hasura/go-graphql-client"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func resourceRubricLevel() *schema.Resource {
@@ -58,7 +59,7 @@ func resourceRubricLevelCreate(d *schema.ResourceData, client *opslevel.Client) 
 	if err != nil {
 		return err
 	}
-	d.SetId(resource.Id.(string))
+	d.SetId(string(resource.Id))
 
 	return resourceRubricLevelRead(d, client)
 }
@@ -66,7 +67,7 @@ func resourceRubricLevelCreate(d *schema.ResourceData, client *opslevel.Client) 
 func resourceRubricLevelRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetLevel(id)
+	resource, err := client.GetLevel(graphql.ID(id))
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func resourceRubricLevelRead(d *schema.ResourceData, client *opslevel.Client) er
 
 func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.LevelUpdateInput{
-		Id: d.Id(),
+		Id: graphql.ID(d.Id()),
 	}
 
 	if d.HasChange("name") {
@@ -96,7 +97,7 @@ func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) 
 		description := d.Get("description").(string)
 		// TODO: this is really shitty and its because of how `opslevel.NewString` makes a nil if input is == ""
 		if description == "" {
-			input.Description = opslevel.NewEmptyString()
+			input.Description = opslevel.NullString()
 		} else {
 			input.Description = opslevel.NewString(description)
 		}
@@ -112,7 +113,7 @@ func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceRubricLevelDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteLevel(id)
+	err := client.DeleteLevel(graphql.ID(id))
 	if err != nil {
 		return err
 	}

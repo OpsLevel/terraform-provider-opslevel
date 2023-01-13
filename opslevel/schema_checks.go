@@ -1,11 +1,12 @@
 package opslevel
 
 import (
+	"github.com/hasura/go-graphql-client"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 )
 
 func getCheckSchema(extras map[string]*schema.Schema) map[string]*schema.Schema {
@@ -112,8 +113,8 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 		enable_on := opslevel.NewISO8601Date(value.(string))
 		input.EnableOn = &enable_on
 	}
-	input.Category = getID(d, "category")
-	input.Level = getID(d, "level")
+	input.Category = *getID(d, "category")
+	input.Level = *getID(d, "level")
 	input.Owner = getID(d, "owner")
 	input.Filter = getID(d, "filter")
 	input.Notes = d.Get("notes").(string)
@@ -121,7 +122,7 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 
 func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProvider) {
 	input := p.GetCheckUpdateInput()
-	input.Id = d.Id()
+	input.Id = graphql.ID(d.Id())
 
 	if d.HasChange("name") {
 		input.Name = d.Get("name").(string)
@@ -153,7 +154,7 @@ func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProv
 
 func resourceCheckDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteCheck(id)
+	err := client.DeleteCheck(graphql.ID(id))
 	if err != nil {
 		return err
 	}
