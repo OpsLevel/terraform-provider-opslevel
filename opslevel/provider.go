@@ -99,7 +99,6 @@ func Provider() terraform.ResourceProvider {
 
 			opts = append(opts, opslevel.SetAPIToken(token))
 			opts = append(opts, opslevel.SetURL(url))
-			opts = append(opts, opslevel.SetAPIVisibility("internal"))
 			opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
 
 			if timeout > 0 {

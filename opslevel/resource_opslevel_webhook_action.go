@@ -38,19 +38,19 @@ func resourceWebhookAction() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"liquid_template": {
+			"payload": {
 				Type:        schema.TypeString,
 				Description: "Template that can be used to generate a webhook payload.",
 				ForceNew:    false,
 				Required:    true,
 			},
-			"webhook_url": {
+			"url": {
 				Type:        schema.TypeString,
 				Description: "The URL of the Webhook Action.",
 				ForceNew:    false,
 				Required:    true,
 			},
-			"http_method": {
+			"method": {
 				Type:         schema.TypeString,
 				Description:  "The http method used to call the Webhook Action.",
 				ForceNew:     false,
@@ -73,9 +73,9 @@ func resourceWebhookAction() *schema.Resource {
 func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsWebhookActionCreateInput{
 		Name:           d.Get("name").(string),
-		LiquidTemplate: d.Get("liquid_template").(string),
-		WebhookURL:     d.Get("webhook_url").(string),
-		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string)),
+		LiquidTemplate: d.Get("payload").(string),
+		WebhookURL:     d.Get("url").(string),
+		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string)),
 		Headers:        expandHeaders(d.Get("headers")),
 	}
 
@@ -108,15 +108,15 @@ func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) 
 		return err
 	}
 
-	if err := d.Set("liquid_template", resource.LiquidTemplate); err != nil {
+	if err := d.Set("payload", resource.LiquidTemplate); err != nil {
 		return err
 	}
 
-	if err := d.Set("webhook_url", resource.WebhookURL); err != nil {
+	if err := d.Set("url", resource.WebhookURL); err != nil {
 		return err
 	}
 
-	if err := d.Set("http_method", string(resource.HTTPMethod)); err != nil {
+	if err := d.Set("method", string(resource.HTTPMethod)); err != nil {
 		return err
 	}
 
@@ -138,14 +138,14 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 	if d.HasChange("description") {
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
-	if d.HasChange("liquid_template") {
-		input.WebhookURL = opslevel.NewString(d.Get("liquid_template").(string))
+	if d.HasChange("payload") {
+		input.WebhookURL = opslevel.NewString(d.Get("payload").(string))
 	}
-	if d.HasChange("webhook_url") {
-		input.WebhookURL = opslevel.NewString(d.Get("webhook_url").(string))
+	if d.HasChange("url") {
+		input.WebhookURL = opslevel.NewString(d.Get("url").(string))
 	}
-	if d.HasChange("http_method") {
-		input.HTTPMethod = opslevel.CustomActionsHttpMethodEnum(d.Get("http_method").(string))
+	if d.HasChange("method") {
+		input.HTTPMethod = opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string))
 	}
 	if d.HasChange("headers") {
 		headers := expandHeaders(d.Get("headers"))
