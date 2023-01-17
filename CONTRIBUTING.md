@@ -68,7 +68,7 @@ In `go.mod` uncomment (remove the //) the line at the bottom of the file:
 
 ```
 // Uncomment for local development
-//replace github.com/opslevel/opslevel-go/v2022 => ./submodules/opslevel-go/
+//replace github.com/opslevel/opslevel-go/v2023 => ./submodules/opslevel-go/
 ```
 
 If you have trouble checking out your branch in the opslevel-go submodule, you may first need to run:

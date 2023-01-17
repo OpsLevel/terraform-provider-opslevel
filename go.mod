@@ -4,8 +4,9 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
+	github.com/hasura/go-graphql-client v0.8.1
+	github.com/opslevel/opslevel-go/v2023 v2023.0.0-20221216124507-20aa962e3859
 	github.com/rs/zerolog v1.28.0
-	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 )
 
 require (
@@ -55,7 +56,6 @@ require (
 	github.com/hashicorp/terraform-plugin-test/v2 v2.2.1 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
-	github.com/hasura/go-graphql-client v0.8.1 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -71,7 +71,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
-	github.com/opslevel/opslevel-go/v2023 v2023.0.0-20221216124507-20aa962e3859 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/relvacode/iso8601 v1.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect

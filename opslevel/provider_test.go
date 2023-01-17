@@ -3,7 +3,7 @@ package opslevel
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/opslevel/opslevel-go/v2022"
+	"github.com/opslevel/opslevel-go/v2023"
 	"io/ioutil"
 	"os"
 	"regexp"
