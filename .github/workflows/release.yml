@@ -81,7 +81,7 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report Release To OpsLevel
-        uses: opslevel/report-deploy-github-action@v0.2.0
+        uses: opslevel/report-deploy-github-action@v0.5.0
         with:
           integration_url: ${{ secrets.DEPLOY_INTEGRATION_URL }}
           service: "opslevel_terraform_provider"
