@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"github.com/hasura/go-graphql-client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -134,7 +133,7 @@ func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) 
 		input.Address = d.Get("value").(string)
 	}
 
-	_, err := client.UpdateContact(graphql.ID(id), input)
+	_, err := client.UpdateContact(opslevel.ID(id), input)
 	if err != nil {
 		return err
 	}
@@ -145,7 +144,7 @@ func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) 
 
 func resourceTeamContactDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.RemoveContact(graphql.ID(id))
+	err := client.RemoveContact(opslevel.ID(id))
 	if err != nil {
 		return err
 	}

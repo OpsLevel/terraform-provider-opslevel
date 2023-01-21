@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/hasura/go-graphql-client"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,7 +54,7 @@ func expandStringMap(m map[string]interface{}) map[string]string {
 	return result
 }
 
-func getID(d *schema.ResourceData, key string) *graphql.ID {
+func getID(d *schema.ResourceData, key string) *opslevel.ID {
 	if _, ok := d.GetOk(key); !ok {
 		return nil
 	}

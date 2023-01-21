@@ -3,7 +3,6 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hasura/go-graphql-client"
 	"github.com/opslevel/opslevel-go/v2023"
 )
 
@@ -64,7 +63,7 @@ func resourceUserCreate(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceUserRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetUser(graphql.ID(id))
+	resource, err := client.GetUser(id)
 	if err != nil {
 		return err
 	}

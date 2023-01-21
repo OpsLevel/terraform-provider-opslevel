@@ -35,12 +35,11 @@ func datasourceUsers() *schema.Resource {
 }
 
 func datasourceUsersRead(d *schema.ResourceData, client *opslevel.Client) error {
-
-	result, err := client.ListUsers()
+	resp, err := client.ListUsers(nil)
 	if err != nil {
 		return err
 	}
-
+	result := resp.Nodes
 	count := len(result)
 	ids := make([]string, count)
 	names := make([]string, count)

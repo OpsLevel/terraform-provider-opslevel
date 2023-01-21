@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hasura/go-graphql-client"
 	"github.com/opslevel/opslevel-go/v2023"
 )
 
@@ -36,7 +35,7 @@ func resourceCheckGitBranchProtectionCreate(d *schema.ResourceData, client *opsl
 func resourceCheckGitBranchProtectionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCheck(graphql.ID(id))
+	resource, err := client.GetCheck(opslevel.ID(id))
 	if err != nil {
 		return err
 	}

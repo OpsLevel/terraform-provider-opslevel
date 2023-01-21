@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/hasura/go-graphql-client"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -104,7 +103,7 @@ func resourceCheckManualCreate(d *schema.ResourceData, client *opslevel.Client) 
 func resourceCheckManualRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCheck(graphql.ID(id))
+	resource, err := client.GetCheck(opslevel.ID(id))
 	if err != nil {
 		return err
 	}
