@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -126,7 +125,8 @@ func resourceServiceRepositoryRead(d *schema.ResourceData, client *opslevel.Clie
 		}
 	}
 	if resource == nil {
-		return fmt.Errorf("unable to find service repository with id '%s' on service '%s'", id, service.Aliases[0])
+		d.SetId("")
+		return nil
 	}
 
 	if err := d.Set("name", resource.DisplayName); err != nil {
