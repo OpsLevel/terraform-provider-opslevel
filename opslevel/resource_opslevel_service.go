@@ -3,7 +3,6 @@ package opslevel
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hasura/go-graphql-client"
 	"github.com/rs/zerolog/log"
 	"strings"
 
@@ -228,7 +227,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetService(graphql.ID(id))
+	resource, err := client.GetService(opslevel.ID(id))
 	if err != nil {
 		return err
 	}
@@ -279,7 +278,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	id := d.Id()
 
 	input := opslevel.ServiceUpdateInput{
-		Id: graphql.ID(id),
+		Id: opslevel.ID(id),
 	}
 
 	if d.HasChange("name") {
@@ -353,7 +352,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 func resourceServiceDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	err := client.DeleteService(opslevel.ServiceDeleteInput{
-		Id: graphql.ID(id),
+		Id: opslevel.ID(id),
 	})
 	if err != nil {
 		return err

@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
 	github.com/hasura/go-graphql-client v0.8.1
-	github.com/opslevel/opslevel-go/v2023 v2023.0.0-20221216124507-20aa962e3859
+	github.com/opslevel/opslevel-go/v2023 v2023.1.21
 	github.com/rs/zerolog v1.28.0
 )
 
@@ -43,7 +43,7 @@ require (
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.4 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
-	github.com/relvacode/iso8601 v1.1.0 // indirect
+	github.com/relvacode/iso8601 v1.3.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/afero v1.4.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

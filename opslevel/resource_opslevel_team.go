@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"errors"
-	"github.com/hasura/go-graphql-client"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -201,7 +200,7 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetTeam(graphql.ID(id))
+	resource, err := client.GetTeam(opslevel.ID(id))
 	if err != nil {
 		return err
 	}
@@ -252,7 +251,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	input := opslevel.TeamUpdateInput{
-		Id: graphql.ID(id),
+		Id: opslevel.ID(id),
 	}
 
 	membershipValidationErr := validateMembershipState(d)
@@ -302,7 +301,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceTeamDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTeam(graphql.ID(id))
+	err := client.DeleteTeam(opslevel.ID(id))
 	if err != nil {
 		return err
 	}

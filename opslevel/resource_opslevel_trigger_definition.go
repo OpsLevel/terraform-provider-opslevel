@@ -81,7 +81,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		Name:          d.Get("name").(string),
 		Owner:         *opslevel.NewID(d.Get("owner").(string)),
-		Action:        opslevel.NewID(d.Get("action").(string)),
+		Action:        *opslevel.NewID(d.Get("action").(string)),
 		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
 	}
 
@@ -168,10 +168,10 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 	if d.HasChange("owner") {
-		input.Owner = opslevel.NewString(d.Get("owner").(string))
+		input.Owner = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("action") {
-		input.Action = opslevel.NewString(d.Get("action").(string))
+		input.Action = opslevel.NewID(d.Get("action").(string))
 	}
 	if d.HasChange("manual_inputs_definition") {
 		manualInputsDefinition := d.Get("manual_inputs_definition").(string)
@@ -179,12 +179,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if d.HasChange("filter") {
-		filter, ok := d.GetOk("filter")
-		if ok {
-			input.Filter = opslevel.NewString(filter.(string))
-		} else {
-			input.Filter = opslevel.NullString()
-		}
+		input.Filter = opslevel.NewID(d.Get("filter").(string))
 	}
 
 	if d.HasChange("published") {

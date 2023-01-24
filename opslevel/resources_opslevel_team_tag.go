@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/hasura/go-graphql-client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -123,7 +122,7 @@ func resourceTeamTagRead(d *schema.ResourceData, client *opslevel.Client) error 
 func resourceTeamTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	input := opslevel.TagUpdateInput{
-		Id: graphql.ID(id),
+		Id: opslevel.ID(id),
 	}
 
 	if d.HasChange("key") {
@@ -150,7 +149,7 @@ func resourceTeamTagUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 
 func resourceTeamTagDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTag(graphql.ID(id))
+	err := client.DeleteTag(opslevel.ID(id))
 	if err != nil {
 		return err
 	}
