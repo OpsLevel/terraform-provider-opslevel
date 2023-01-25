@@ -25,7 +25,8 @@ func datasourceFilters() *schema.Resource {
 }
 
 func datasourceFiltersRead(d *schema.ResourceData, client *opslevel.Client) error {
-	result, err := client.ListFilters()
+	resp, err := client.ListFilters(nil)
+	result := resp.Nodes
 	if err != nil {
 		return err
 	}
