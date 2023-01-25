@@ -25,7 +25,7 @@ func Provider() terraform.ResourceProvider {
 				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.",
 				Sensitive:   true,
 			},
-			"client_timeout": {
+			"api_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Value (in seconds) to use for the timeout of API calls made",
@@ -92,7 +92,7 @@ func Provider() terraform.ResourceProvider {
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
 			url := d.Get("api_url").(string)
 			token := d.Get("api_token").(string)
-			timeout := d.Get("client_timeout").(int)
+			timeout := d.Get("api_timeout").(int)
 			log.Println("[INFO] Initializing OpsLevel client")
 
 			opts := make([]opslevel.Option, 0)

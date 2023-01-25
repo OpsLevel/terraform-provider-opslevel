@@ -86,19 +86,26 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 	if err := d.Set("integration", resource.Integration.Id); err != nil {
 		return err
 	}
+
 	if _, ok := d.GetOk("pass_pending"); ok {
 		if err := d.Set("pass_pending", resource.PassPending); err != nil {
 			return err
 		}
 	}
-	if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
-		return err
+	if _, ok := d.GetOk("service_selector"); ok {
+		if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("success_condition", resource.SuccessCondition); err != nil {
-		return err
+	if _, ok := d.GetOk("success_condition"); ok {
+		if err := d.Set("success_condition", resource.SuccessCondition); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("message", resource.ResultMessage); err != nil {
-		return err
+	if _, ok := d.GetOk("message"); ok {
+		if err := d.Set("message", resource.ResultMessage); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -117,13 +124,16 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 		}
 	}
 	if d.HasChange("service_selector") {
-		input.ServiceSelector = d.Get("service_selector").(string)
+		serviceSelector := d.Get("service_selector").(string)
+		input.ServiceSelector = &serviceSelector
 	}
 	if d.HasChange("success_condition") {
-		input.SuccessCondition = d.Get("success_condition").(string)
+		successCondition := d.Get("success_condition").(string)
+		input.SuccessCondition = &successCondition
 	}
 	if d.HasChange("message") {
-		input.Message = d.Get("message").(string)
+		message := d.Get("message").(string)
+		input.Message = &message
 	}
 
 	_, err := client.UpdateCheckCustomEvent(input)

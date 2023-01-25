@@ -55,8 +55,8 @@ func datasourceUsersRead(d *schema.ResourceData, client *opslevel.Client) error 
 	d.SetId(timeID())
 	d.Set("ids", ids)
 	d.Set("names", names)
-	d.Set("emails", names)
-	d.Set("roles", names)
+	d.Set("emails", emails)
+	d.Set("roles", roles)
 
 	return nil
 }
