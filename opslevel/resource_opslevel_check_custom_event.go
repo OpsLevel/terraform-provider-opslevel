@@ -124,12 +124,10 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 		}
 	}
 	if d.HasChange("service_selector") {
-		serviceSelector := d.Get("service_selector").(string)
-		input.ServiceSelector = &serviceSelector
+		input.ServiceSelector = d.Get("service_selector").(string)
 	}
 	if d.HasChange("success_condition") {
-		successCondition := d.Get("success_condition").(string)
-		input.SuccessCondition = &successCondition
+		input.SuccessCondition = d.Get("success_condition").(string)
 	}
 	if d.HasChange("message") {
 		message := d.Get("message").(string)
