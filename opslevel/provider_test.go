@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/opslevel/opslevel-go/v2023"
 	"io/ioutil"
 	"os"
@@ -25,15 +24,6 @@ func testAccPreCheck(t *testing.T) func() {
 			t.Fatal("OPSLEVEL_API_TOKEN must be set for acceptance tests")
 		}
 	}
-}
-
-func newTestAcc(t *testing.T, checkDestroy resource.TestCheckFunc, steps ...resource.TestStep) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     testAccPreCheck(t),
-		Providers:    testAccProviders,
-		CheckDestroy: checkDestroy,
-		Steps:        steps,
-	})
 }
 
 func init() {

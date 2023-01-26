@@ -81,9 +81,9 @@ resource "opslevel_check_repository_integrated" "foo" {
 
 ### Optional
 
+- `api_timeout` (Number) Value (in seconds) to use for the timeout of API calls made
 - `api_token` (String, Sensitive) The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.
 - `api_url` (String) The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.
-- `client_timeout` (Number) Value (in seconds) to use for the timeout of API calls made
 
 ## Argument Reference
 
