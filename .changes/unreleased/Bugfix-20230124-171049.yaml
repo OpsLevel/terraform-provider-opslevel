@@ -1,0 +1,5 @@
+kind: Bugfix
+body: Fixes a bug where when you manage a `service_repository` but the underlying
+  repo is archived from the git forge and OpsLevel removes the entry from the service
+  `terraform plan` fails to reconcile
+time: 2023-01-24T17:10:49.915944-06:00
