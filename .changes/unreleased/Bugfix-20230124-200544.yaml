@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix a bug with custom event checks being unable to unset message field
-time: 2023-01-24T20:05:44.855363-06:00
