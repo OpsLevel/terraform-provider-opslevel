@@ -54,13 +54,6 @@ func expandStringMap(m map[string]interface{}) map[string]string {
 	return result
 }
 
-func getID(d *schema.ResourceData, key string) *opslevel.ID {
-	if _, ok := d.GetOk(key); !ok {
-		return nil
-	}
-	return opslevel.NewID(d.Get(key).(string))
-}
-
 func getStringArray(d *schema.ResourceData, key string) []string {
 	output := make([]string, 0)
 	data, ok := d.GetOk(key)

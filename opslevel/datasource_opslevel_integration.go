@@ -53,7 +53,8 @@ func filterIntegrations(data []opslevel.Integration, field string, value string)
 }
 
 func datasourceIntegrationRead(d *schema.ResourceData, client *opslevel.Client) error {
-	results, err := client.ListIntegrations()
+	resp, err := client.ListIntegrations(nil)
+	results := resp.Nodes
 	if err != nil {
 		return err
 	}

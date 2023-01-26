@@ -25,7 +25,8 @@ func datasourceIntegrations() *schema.Resource {
 }
 
 func datasourceIntegrationsRead(d *schema.ResourceData, client *opslevel.Client) error {
-	result, err := client.ListIntegrations()
+	resp, err := client.ListIntegrations(nil)
+	result := resp.Nodes
 	if err != nil {
 		return err
 	}

@@ -112,10 +112,10 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 		enable_on := opslevel.NewISO8601Date(value.(string))
 		input.EnableOn = &enable_on
 	}
-	input.Category = *getID(d, "category")
-	input.Level = *getID(d, "level")
-	input.Owner = getID(d, "owner")
-	input.Filter = getID(d, "filter")
+	input.Category = *opslevel.NewID(d.Get("category").(string))
+	input.Level = *opslevel.NewID(d.Get("level").(string))
+	input.Owner = opslevel.NewID(d.Get("owner").(string))
+	input.Filter = opslevel.NewID(d.Get("filter").(string))
 	input.Notes = d.Get("notes").(string)
 }
 
@@ -135,16 +135,16 @@ func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProv
 		input.EnableOn = &enable_on
 	}
 	if d.HasChange("category") {
-		input.Category = *getID(d, "category")
+		input.Category = *opslevel.NewID(d.Get("category").(string))
 	}
 	if d.HasChange("level") {
-		input.Level = *getID(d, "level")
+		input.Level = *opslevel.NewID(d.Get("level").(string))
 	}
 	if d.HasChange("owner") {
-		input.Owner = getID(d, "owner")
+		input.Owner = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("filter") {
-		input.Filter = getID(d, "filter")
+		input.Filter = opslevel.NewID(d.Get("filter").(string))
 	}
 	if d.HasChange("notes") {
 		notes := d.Get("notes").(string)

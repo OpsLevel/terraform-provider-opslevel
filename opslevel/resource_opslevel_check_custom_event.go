@@ -54,7 +54,7 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 	input := opslevel.CheckCustomEventCreateInput{}
 	setCheckCreateInput(d, &input)
 
-	input.Integration = *getID(d, "integration")
+	input.Integration = *opslevel.NewID(d.Get("integration").(string))
 	if passPending, ok := d.GetOk("pass_pending"); ok {
 		input.PassPending = opslevel.Bool(passPending.(bool))
 	}
@@ -86,19 +86,26 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 	if err := d.Set("integration", resource.Integration.Id); err != nil {
 		return err
 	}
+
 	if _, ok := d.GetOk("pass_pending"); ok {
 		if err := d.Set("pass_pending", resource.PassPending); err != nil {
 			return err
 		}
 	}
-	if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
-		return err
+	if _, ok := d.GetOk("service_selector"); ok {
+		if err := d.Set("service_selector", resource.ServiceSelector); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("success_condition", resource.SuccessCondition); err != nil {
-		return err
+	if _, ok := d.GetOk("success_condition"); ok {
+		if err := d.Set("success_condition", resource.SuccessCondition); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("message", resource.ResultMessage); err != nil {
-		return err
+	if _, ok := d.GetOk("message"); ok {
+		if err := d.Set("message", resource.ResultMessage); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -109,7 +116,7 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("integration") {
-		input.Integration = getID(d, "integration")
+		input.Integration = opslevel.NewID(d.Get("integration").(string))
 	}
 	if d.HasChange("pass_pending") {
 		if passPending, ok := d.GetOk("pass_pending"); ok {
@@ -123,7 +130,8 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 		input.SuccessCondition = d.Get("success_condition").(string)
 	}
 	if d.HasChange("message") {
-		input.Message = d.Get("message").(string)
+		message := d.Get("message").(string)
+		input.Message = &message
 	}
 
 	_, err := client.UpdateCheckCustomEvent(input)

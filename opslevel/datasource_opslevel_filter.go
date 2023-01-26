@@ -53,7 +53,8 @@ func filterFilters(data []opslevel.Filter, field string, value string) (*opsleve
 }
 
 func datasourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
-	results, err := client.ListFilters()
+	resp, err := client.ListFilters(nil)
+	results := resp.Nodes
 	if err != nil {
 		return err
 	}
