@@ -68,8 +68,8 @@ inputs:
 ## Congratulations!
 Your request for {{ service.name }} has succeeded. See the incident here: {{response.body.incident.html_url}}
 {% else %}
-## Oops something went wrong
-Talk to the team that owns this action for more details.
+## Oops something went wrong!
+Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 {% endif %}
   EOT
 }
