@@ -1,0 +1,4 @@
+kind: "Dependency"
+body: "Bump github.com/hashicorp/go-getter from 1.5.3 to 1.7.0"
+time: 2023-02-22T14:52:11.00000Z
+
