@@ -1,0 +1,4 @@
+kind: "Dependency"
+body: "Bump golang.org/x/text from 0.3.7 to 0.3.8"
+time: 2023-03-03T03:25:48.00000Z
+
