@@ -158,7 +158,7 @@ func getPredicateInputSchema(required bool, description string) *schema.Schema {
 					Description:  description,
 					ForceNew:     false,
 					Required:     true,
-					ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),
+					ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum, false),
 				},
 				"value": {
 					Type:        schema.TypeString,
@@ -274,17 +274,17 @@ func flattenTagArray(tags []opslevel.Tag) []string {
 	return output
 }
 
-func flattenMembersArray(members []opslevel.UserId) []string {
+func flattenMembersArray(members *opslevel.UserConnection) []string {
 	output := []string{}
-	for _, member := range members {
+	for _, member := range members.Nodes {
 		output = append(output, member.Email)
 	}
 	return output
 }
 
-func flattenTeamsArray(teams []opslevel.TeamId) []string {
+func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	output := []string{}
-	for _, team := range teams {
+	for _, team := range teams.Nodes {
 		output = append(output, team.Alias)
 	}
 	return output

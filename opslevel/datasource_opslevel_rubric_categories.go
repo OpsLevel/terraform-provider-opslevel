@@ -26,17 +26,17 @@ func datasourceRubricCategories() *schema.Resource {
 
 func datasourceRubricCategoriesRead(d *schema.ResourceData, client *opslevel.Client) error {
 
-	result, err := client.ListCategories()
+	result, err := client.ListCategories(nil)
 	if err != nil {
 		return err
 	}
 
-	count := len(result)
+	count := result.TotalCount
 	aliases := make([]string, count)
 	ids := make([]string, count)
 	indexes := make([]int, count)
 	names := make([]string, count)
-	for i, item := range result {
+	for i, item := range result.Nodes {
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 	}

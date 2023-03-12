@@ -21,14 +21,14 @@ func datasourceRubricCategory() *schema.Resource {
 	}
 }
 
-func filterRubricCategories(levels []opslevel.Category, field string, value string) (*opslevel.Category, error) {
+func filterRubricCategories(levels *opslevel.CategoryConnection, field string, value string) (*opslevel.Category, error) {
 	if value == "" {
 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Category
 	found := false
-	for _, item := range levels {
+	for _, item := range levels.Nodes {
 		switch field {
 		case "id":
 			if string(item.Id) == value {
@@ -53,7 +53,7 @@ func filterRubricCategories(levels []opslevel.Category, field string, value stri
 }
 
 func datasourceRubricCategoryRead(d *schema.ResourceData, client *opslevel.Client) error {
-	results, err := client.ListCategories()
+	results, err := client.ListCategories(nil)
 	if err != nil {
 		return err
 	}

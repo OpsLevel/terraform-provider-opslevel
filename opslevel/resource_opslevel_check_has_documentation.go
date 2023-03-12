@@ -22,14 +22,14 @@ func resourceCheckHasDocumentation() *schema.Resource {
 				Description:  "The type of the document.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllHasDocumentationTypeEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllHasDocumentationTypeEnum, false),
 			},
 			"document_subtype": {
 				Type:         schema.TypeString,
 				Description:  "The subtype of the document.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllHasDocumentationSubtypeEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllHasDocumentationSubtypeEnum, false),
 			},
 		}),
 	}

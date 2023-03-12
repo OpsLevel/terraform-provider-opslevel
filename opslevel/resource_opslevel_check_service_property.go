@@ -22,7 +22,7 @@ func resourceCheckServiceProperty() *schema.Resource {
 				Description:  "The property of the service that the check will verify.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllServicePropertyTypeEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllServicePropertyTypeEnum, false),
 			},
 			"predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
 		}),

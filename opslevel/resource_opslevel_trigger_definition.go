@@ -65,7 +65,7 @@ func resourceTriggerDefinition() *schema.Resource {
 				Description:  "The set of users that should be able to use the Trigger Definition. Requires a value of `everyone`, `admins`, or `service_owners`.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum, false),
 			},
 			"response_template": {
 				Type:        schema.TypeString,

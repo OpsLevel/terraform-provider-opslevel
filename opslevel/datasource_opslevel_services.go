@@ -34,36 +34,36 @@ func datasourceServicesRead(d *schema.ResourceData, client *opslevel.Client) err
 	field := d.Get("filter.0.field").(string)
 	value := d.Get("filter.0.value").(string)
 
-	var services []opslevel.Service
+	var services opslevel.ServiceConnection
 	var err error
 
 	switch field {
 	case "framework":
-		services, err = client.ListServicesWithFramework(value)
+		services, err = client.ListServicesWithFramework(value, nil)
 	case "language":
-		services, err = client.ListServicesWithLanguage(value)
+		services, err = client.ListServicesWithLanguage(value, nil)
 	case "lifecycle":
-		services, err = client.ListServicesWithLifecycle(value)
+		services, err = client.ListServicesWithLifecycle(value, nil)
 	case "owner":
-		services, err = client.ListServicesWithOwner(value)
+		services, err = client.ListServicesWithOwner(value, nil)
 	case "product":
-		services, err = client.ListServicesWithProduct(value)
+		services, err = client.ListServicesWithProduct(value, nil)
 	case "tag":
-		services, err = client.ListServicesWithTag(opslevel.NewTagArgs(value))
+		services, err = client.ListServicesWithTag(opslevel.NewTagArgs(value), nil)
 	case "tier":
-		services, err = client.ListServicesWithTier(value)
+		services, err = client.ListServicesWithTier(value, nil)
 	default:
-		services, err = client.ListServices()
+		services, err = client.ListServices(nil)
 	}
 	if err != nil {
 		return err
 	}
 
-	count := len(services)
+	count := services.TotalCount
 	ids := make([]string, count)
 	names := make([]string, count)
 	urls := make([]string, count)
-	for i, item := range services {
+	for i, item := range services.Nodes {
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 		urls[i] = item.HtmlURL

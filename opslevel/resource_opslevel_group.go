@@ -99,7 +99,7 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	groupMembers, err := resource.Members(client)
+	groupMembers, err := resource.Members(client, nil)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if _, ok := d.GetOk("teams"); ok {
-		childTeams, err := resource.ChildTeams(client)
+		childTeams, err := resource.ChildTeams(client, nil)
 		if err != nil {
 			return err
 		}

@@ -85,7 +85,7 @@ func resourceService() *schema.Resource {
 				Description:  "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllApiDocumentSourceEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllApiDocumentSourceEnum, false),
 			},
 			"aliases": {
 				Type:        schema.TypeList,
@@ -162,17 +162,13 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 			return err
 		}
 	}
-	tagInput := []opslevel.TagInput{}
+	tagInput := map[string]string{}
 	for _, tag := range tags {
-		tagInput = append(tagInput, opslevel.TagInput{
-			Key:   strings.TrimSpace(strings.Split(tag, ":")[0]),
-			Value: strings.TrimSpace(strings.Split(tag, ":")[1]),
-		})
+		key := strings.TrimSpace(strings.Split(tag, ":")[0])
+		value := strings.TrimSpace(strings.Split(tag, ":")[1])
+		tagInput[key] = value
 	}
-	_, err := client.AssignTags(opslevel.TagAssignInput{
-		Id:   service.Id,
-		Tags: tagInput,
-	})
+	_, err := client.AssignTags(string(service.Id), tagInput)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func resourceWebhookAction() *schema.Resource {
 				Description:  "The http method used to call the Webhook Action.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsHttpMethodEnum(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsHttpMethodEnum, false),
 			},
 			"headers": {
 				Type:        schema.TypeMap,
