@@ -48,7 +48,7 @@ func resourceServiceTool() *schema.Resource {
 				Description:  "The category that the tool belongs to.",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory, false),
 			},
 			"url": {
 				Type:        schema.TypeString,

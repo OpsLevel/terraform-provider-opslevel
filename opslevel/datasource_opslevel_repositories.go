@@ -34,23 +34,23 @@ func datasourceRepositoriesRead(d *schema.ResourceData, client *opslevel.Client)
 	field := d.Get("filter.0.field").(string)
 	value := d.Get("filter.0.value").(string)
 
-	var teams []opslevel.Repository
+	var teams *opslevel.RepositoryConnection
 	var err error
 	switch field {
 	case "tier":
-		teams, err = client.ListRepositoriesWithTier(value)
+		teams, err = client.ListRepositoriesWithTier(value, nil)
 	default:
-		teams, err = client.ListRepositories()
+		teams, err = client.ListRepositories(nil)
 	}
 	if err != nil {
 		return err
 	}
 
-	count := len(teams)
+	count := teams.TotalCount
 	ids := make([]string, count)
 	names := make([]string, count)
 	urls := make([]string, count)
-	for i, item := range teams {
+	for i, item := range teams.Nodes {
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 		urls[i] = item.Url

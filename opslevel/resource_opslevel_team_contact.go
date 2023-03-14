@@ -35,7 +35,7 @@ func resourceTeamContact() *schema.Resource {
 				Description:  "The method of contact [email, slack, slack_handle, web].",
 				ForceNew:     false,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllContactType(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllContactType, false),
 			},
 			"name": {
 				Type:        schema.TypeString,

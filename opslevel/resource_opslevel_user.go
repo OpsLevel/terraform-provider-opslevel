@@ -39,7 +39,7 @@ func resourceUser() *schema.Resource {
 				Description:  "The access role (e.g. user vs admin) of the user.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllUserRole(), false),
+				ValidateFunc: validation.StringInSlice(opslevel.AllUserRole, false),
 			},
 		},
 	}

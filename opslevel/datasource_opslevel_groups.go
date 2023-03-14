@@ -29,19 +29,16 @@ func datasourceGroups() *schema.Resource {
 }
 
 func datasourceGroupsRead(d *schema.ResourceData, client *opslevel.Client) error {
-	var groups []opslevel.Group
-	var err error
-
-	groups, err = client.ListGroups()
+	groups, err := client.ListGroups(nil)
 	if err != nil {
 		return err
 	}
 
-	count := len(groups)
+	count := groups.TotalCount
 	aliases := make([]string, count)
 	ids := make([]string, count)
 	names := make([]string, count)
-	for i, item := range groups {
+	for i, item := range groups.Nodes {
 		aliases[i] = item.Alias
 		ids[i] = string(item.Id)
 		names[i] = item.Name

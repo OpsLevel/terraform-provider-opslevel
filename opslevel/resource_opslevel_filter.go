@@ -40,7 +40,7 @@ func resourceFilter() *schema.Resource {
 							Description:  "The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `satisfies_jq_expression`",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum(), false),
+							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateTypeEnum, false),
 						},
 						"value": {
 							Type:        schema.TypeString,
@@ -53,7 +53,7 @@ func resourceFilter() *schema.Resource {
 							Description:  "The condition key used by the predicate.",
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateKeyEnum(), false),
+							ValidateFunc: validation.StringInSlice(opslevel.AllPredicateKeyEnum, false),
 						},
 						"key_data": {
 							Type:        schema.TypeString,
@@ -69,7 +69,7 @@ func resourceFilter() *schema.Resource {
 				Description:  "The logical operator to be used in conjunction with predicates.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(append(opslevel.AllConnectiveEnum(), ""), false),
+				ValidateFunc: validation.StringInSlice(append(opslevel.AllConnectiveEnum, ""), false),
 			},
 		},
 	}

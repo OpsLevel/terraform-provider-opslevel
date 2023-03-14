@@ -65,13 +65,13 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 		parent = resource.Parent.Alias
 	}
 
-	groupMembers, err := resource.Members(client)
+	groupMembers, err := resource.Members(client, nil)
 	if err != nil {
 		return err
 	}
 	members := flattenMembersArray(groupMembers)
 
-	childTeams, err := resource.ChildTeams(client)
+	childTeams, err := resource.ChildTeams(client, nil)
 	if err != nil {
 		return err
 	}
