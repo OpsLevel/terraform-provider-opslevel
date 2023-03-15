@@ -34,7 +34,7 @@ func datasourceGroupsRead(d *schema.ResourceData, client *opslevel.Client) error
 		return err
 	}
 
-	count := groups.TotalCount
+	count := len(groups.Nodes)
 	aliases := make([]string, count)
 	ids := make([]string, count)
 	names := make([]string, count)

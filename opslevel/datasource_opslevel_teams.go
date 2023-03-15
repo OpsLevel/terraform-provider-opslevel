@@ -46,7 +46,7 @@ func datasourceTeamsRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
-	count := teams.TotalCount
+	count := len(teams.Nodes)
 	aliases := make([]string, count)
 	ids := make([]string, count)
 	names := make([]string, count)

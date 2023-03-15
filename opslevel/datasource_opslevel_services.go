@@ -59,7 +59,7 @@ func datasourceServicesRead(d *schema.ResourceData, client *opslevel.Client) err
 		return err
 	}
 
-	count := services.TotalCount
+	count := len(services.Nodes)
 	ids := make([]string, count)
 	names := make([]string, count)
 	urls := make([]string, count)

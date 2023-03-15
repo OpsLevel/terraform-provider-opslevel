@@ -46,7 +46,7 @@ func datasourceRepositoriesRead(d *schema.ResourceData, client *opslevel.Client)
 		return err
 	}
 
-	count := teams.TotalCount
+	count := len(teams.Nodes)
 	ids := make([]string, count)
 	names := make([]string, count)
 	urls := make([]string, count)
