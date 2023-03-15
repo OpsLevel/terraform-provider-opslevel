@@ -1,4 +1,0 @@
-kind: Bugfix
-body: With the recent pagination fixes there is inconsistantices with `totalCount`
-  in the API so falling back to len() so we don't create empty arrays of tons of objects.
-time: 2023-03-15T13:20:34.837945-05:00
