@@ -31,7 +31,7 @@ func datasourceRubricCategoriesRead(d *schema.ResourceData, client *opslevel.Cli
 		return err
 	}
 
-	count := result.TotalCount
+	count := len(result.Nodes)
 	aliases := make([]string, count)
 	ids := make([]string, count)
 	indexes := make([]int, count)
