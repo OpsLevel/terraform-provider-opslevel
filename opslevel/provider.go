@@ -34,6 +34,8 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
+			"opslevel_domain":            datasourceDomain(),
+			"opslevel_domains":           datasourceDomains(),
 			"opslevel_filter":            datasourceFilter(),
 			"opslevel_filters":           datasourceFilters(),
 			"opslevel_group":             datasourceGroup(),
@@ -50,6 +52,8 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_rubric_levels":     datasourceRubricLevels(),
 			"opslevel_service":           datasourceService(),
 			"opslevel_services":          datasourceServices(),
+			"opslevel_system":            datasourceSystem(),
+			"opslevel_systems":           datasourceSystems(),
 			"opslevel_team":              datasourceTeam(),
 			"opslevel_teams":             datasourceTeams(),
 			"opslevel_tier":              datasourceTier(),
@@ -73,6 +77,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_check_service_property":      resourceCheckServiceProperty(),
 			"opslevel_check_tag_defined":           resourceCheckTagDefined(),
 			"opslevel_check_tool_usage":            resourceCheckToolUsage(),
+			"opslevel_domain":                      resourceDomain(),
 			"opslevel_filter":                      resourceFilter(),
 			"opslevel_group":                       resourceGroup(),
 			"opslevel_rubric_level":                resourceRubricLevel(),
@@ -81,6 +86,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_service_repository":          resourceServiceRepository(),
 			"opslevel_service_tag":                 resourceServiceTag(),
 			"opslevel_service_tool":                resourceServiceTool(),
+			"opslevel_system":                      resourceSystem(),
 			"opslevel_team_contact":                resourceTeamContact(),
 			"opslevel_team_tag":                    resourceTeamTag(),
 			"opslevel_team":                        resourceTeam(),
