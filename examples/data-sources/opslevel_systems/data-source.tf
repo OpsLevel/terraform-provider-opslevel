@@ -2,5 +2,5 @@ data "opslevel_systems" "all" {
 }
 
 output "found" {
-  value = data.opslevel_systems.all.id[0]
+  value = data.opslevel_systems.all
 }
