@@ -60,7 +60,7 @@ func resourceSystemCreate(d *schema.ResourceData, client *opslevel.Client) error
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Owner:       opslevel.NewID(d.Get("owner").(string)),
-		Domain:      opslevel.NewID(d.Get("domain").(string)),
+		Parent:      opslevel.NewIdentifier(d.Get("domain").(string)),
 		Note:        d.Get("note").(string),
 	})
 	if err != nil {
@@ -111,13 +111,13 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Owner = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("domain") {
-		input.Domain = opslevel.NewID(d.Get("domain").(string))
+		input.Parent = opslevel.NewIdentifier(d.Get("domain").(string))
 	}
 	if d.HasChange("note") {
 		input.Note = d.Get("note").(string)
 	}
 
-	_, err := client.UpdateDomain(id, input)
+	_, err := client.UpdateSystem(id, input)
 	if err != nil {
 		return err
 	}
