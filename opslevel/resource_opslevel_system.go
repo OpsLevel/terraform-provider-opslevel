@@ -21,6 +21,12 @@ func resourceSystem() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"aliases": {
+				Type:        schema.TypeList,
+				Description: "The aliases of the system.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name for the system.",
@@ -78,6 +84,9 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
+	if err := d.Set("aliases", resource.Aliases); err != nil {
+		return err
+	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
@@ -90,7 +99,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("domain", resource.Parent.Id); err != nil {
 		return err
 	}
-	if err := d.Set("notes", resource.Note); err != nil {
+	if err := d.Set("note", resource.Note); err != nil {
 		return err
 	}
 	return nil
