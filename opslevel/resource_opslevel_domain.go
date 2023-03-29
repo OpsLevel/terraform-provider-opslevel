@@ -21,6 +21,12 @@ func resourceDomain() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"aliases": {
+				Type:        schema.TypeList,
+				Description: "The aliases of the domain.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name for the domain.",
@@ -71,6 +77,9 @@ func resourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
+	if err := d.Set("aliases", resource.Aliases); err != nil {
+		return err
+	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
@@ -80,7 +89,7 @@ func resourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("owner", resource.Owner.Id()); err != nil {
 		return err
 	}
-	if err := d.Set("notes", resource.Note); err != nil {
+	if err := d.Set("note", resource.Note); err != nil {
 		return err
 	}
 
