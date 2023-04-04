@@ -90,7 +90,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("domain", resource.Parent.Id); err != nil {
 		return err
 	}
-	if err := d.Set("notes", resource.Note); err != nil {
+	if err := d.Set("note", resource.Note); err != nil {
 		return err
 	}
 	return nil

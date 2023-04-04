@@ -15,11 +15,6 @@ func datasourceDomain() *schema.Resource {
 				ForceNew:    true,
 				Optional:    true,
 			},
-			"aliases": {
-				Type:        schema.TypeList,
-				Description: "The aliases of the domain.",
-				Computed:    true,
-			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the domain.",
@@ -47,7 +42,6 @@ func datasourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error
 	}
 
 	d.SetId(string(resource.Id))
-	d.Set("aliases", resource.Aliases)
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
 	d.Set("owner", resource.Owner.Id())
