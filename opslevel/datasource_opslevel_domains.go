@@ -51,7 +51,7 @@ func datasourceDomainsRead(d *schema.ResourceData, client *opslevel.Client) erro
 	descriptions := make([]string, count)
 	owners := make([]string, count)
 	for i, item := range resp.Nodes {
-		if len(aliases) > 0 {
+		if len(item.Aliases) > 0 {
 			aliases[i] = item.Aliases[0]
 		}
 		ids[i] = string(item.Id)
