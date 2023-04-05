@@ -12,11 +12,7 @@ func datasourceSystems() *schema.Resource {
 			"aliases": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Elem: &schema.Schema{
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
-				},
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"ids": {
 				Type:     schema.TypeList,
@@ -54,14 +50,16 @@ func datasourceSystemsRead(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 
 	count := len(resp.Nodes)
-	aliases := make([][]string, count)
+	aliases := make([]string, count)
 	ids := make([]string, count)
 	names := make([]string, count)
 	descriptions := make([]string, count)
 	owners := make([]string, count)
 	domains := make([]string, count)
 	for i, item := range resp.Nodes {
-		aliases[i] = item.Aliases
+		if len(item.Aliases) > 0 {
+			aliases[i] = item.Aliases[0]
+		}
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 		descriptions[i] = item.Description
