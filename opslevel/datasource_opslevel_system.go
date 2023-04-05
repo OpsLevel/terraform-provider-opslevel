@@ -19,7 +19,7 @@ func datasourceSystem() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "The aliases of the system.",
 				Computed:    true,
-				Elem:        schema.TypeString,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"name": {
 				Type:        schema.TypeString,
