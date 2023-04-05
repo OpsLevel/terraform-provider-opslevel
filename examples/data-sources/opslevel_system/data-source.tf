@@ -1,3 +1,3 @@
 data "opslevel_system" "example" {
-  alias = "example"
+  identifier = "example"
 }
