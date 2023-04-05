@@ -19,6 +19,7 @@ func datasourceDomain() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "The aliases of the domain.",
 				Computed:    true,
+				Elem:        schema.TypeString,
 			},
 			"name": {
 				Type:        schema.TypeString,
