@@ -47,7 +47,7 @@ func resourceSystem() *schema.Resource {
 			},
 			"domain": {
 				Type:        schema.TypeString,
-				Description: "The id of the domain this system is a child for.",
+				Description: "The id or alias of the domain this system is a child for.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -62,12 +62,12 @@ func resourceSystem() *schema.Resource {
 }
 
 func resourceSystemCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	resource, err := client.CreateSystem(opslevel.SystemCreateInput{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+	resource, err := client.CreateSystem(opslevel.SystemInput{
+		Name:        GetString(d, "name"),
+		Description: GetString(d, "description"),
 		Owner:       opslevel.NewID(d.Get("owner").(string)),
 		Parent:      opslevel.NewIdentifier(d.Get("domain").(string)),
-		Note:        d.Get("note").(string),
+		Note:        GetString(d, "note"),
 	})
 	if err != nil {
 		return err
@@ -108,13 +108,13 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	input := opslevel.SystemUpdateInput{}
+	input := opslevel.SystemInput{}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = GetString(d, "name")
 	}
 	if d.HasChange("description") {
-		input.Description = d.Get("description").(string)
+		input.Description = GetString(d, "description")
 	}
 	if d.HasChange("owner") {
 		input.Owner = opslevel.NewID(d.Get("owner").(string))
@@ -123,7 +123,7 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Parent = opslevel.NewIdentifier(d.Get("domain").(string))
 	}
 	if d.HasChange("note") {
-		input.Note = d.Get("note").(string)
+		input.Note = GetString(d, "note")
 	}
 
 	_, err := client.UpdateSystem(id, input)

@@ -56,11 +56,11 @@ func resourceDomain() *schema.Resource {
 }
 
 func resourceDomainCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	resource, err := client.CreateDomain(opslevel.DomainCreateInput{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+	resource, err := client.CreateDomain(opslevel.DomainInput{
+		Name:        GetString(d, "name"),
+		Description: GetString(d, "description"),
 		Owner:       opslevel.NewID(d.Get("owner").(string)),
-		Note:        d.Get("note").(string),
+		Note:        GetString(d, "note"),
 	})
 	if err != nil {
 		return err
@@ -99,19 +99,19 @@ func resourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceDomainUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	input := opslevel.DomainUpdateInput{}
+	input := opslevel.DomainInput{}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = GetString(d, "name")
 	}
 	if d.HasChange("description") {
-		input.Description = d.Get("description").(string)
+		input.Description = GetString(d, "description")
 	}
 	if d.HasChange("owner") {
 		input.Owner = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("note") {
-		input.Note = d.Get("note").(string)
+		input.Note = GetString(d, "note")
 	}
 
 	_, err := client.UpdateDomain(id, input)

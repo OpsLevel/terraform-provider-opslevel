@@ -117,3 +117,8 @@ func Provider() terraform.ResourceProvider {
 		},
 	}
 }
+
+func GetString(d *schema.ResourceData, key string) *string {
+	value := d.Get(key).(string)
+	return &value
+}
