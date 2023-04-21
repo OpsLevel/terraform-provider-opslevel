@@ -50,7 +50,7 @@ func resourceCheckRepositoryFileCreate(d *schema.ResourceData, client *opslevel.
 	input.DirectorySearch = d.Get("directory_search").(bool)
 	input.Filepaths = getStringArray(d, "filepaths")
 	input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
-	input.UseAbsoluteRoot = opslevel.Bool(d.Get("use_absolute_root").(bool))
+	input.UseAbsoluteRoot = d.Get("use_absolute_root").(bool)
 
 	resource, err := client.CreateCheckRepositoryFile(input)
 	if err != nil {
@@ -88,12 +88,11 @@ func resourceCheckRepositoryFileRead(d *schema.ResourceData, client *opslevel.Cl
 }
 
 func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryFileUpdateInput{}
-	setCheckUpdateInput(d, &input)
-
-	if d.HasChange("directory_search") {
-		input.DirectorySearch = opslevel.Bool(d.Get("directory_search").(bool))
+	input := opslevel.CheckRepositoryFileUpdateInput{
+		DirectorySearch: d.Get("directory_search").(bool),
+		UseAbsoluteRoot: d.Get("use_absolute_root").(bool),
 	}
+	setCheckUpdateInput(d, &input)
 
 	if d.HasChange("filepaths") {
 		input.Filepaths = getStringArray(d, "filepaths")
@@ -101,10 +100,6 @@ func resourceCheckRepositoryFileUpdate(d *schema.ResourceData, client *opslevel.
 
 	if d.HasChange("file_contents_predicate") {
 		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
-	}
-
-	if d.HasChange("use_absolute_root") {
-		input.UseAbsoluteRoot = opslevel.Bool(d.Get("use_absolute_root").(bool))
 	}
 
 	_, err := client.UpdateCheckRepositoryFile(input)
