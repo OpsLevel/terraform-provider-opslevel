@@ -90,6 +90,7 @@ resource "aws_iam_role" "opslevel" {
 }
 
 resource "opslevel_integration_aws" "dev" {
+  name = "dev"
   iam_role = aws_iam_role.opslevel.arn
   external_id = random_string.external_id.result
   ownership_tag_overrides = true
