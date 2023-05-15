@@ -73,6 +73,13 @@ func resourceTriggerDefinition() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"entity_type": {
+				Type:         schema.TypeString,
+				Description:  "The entity type to associate with the Trigger Definition.",
+				ForceNew:     false,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsEntityTypeEnum, false),
+			},
 		},
 	}
 }
@@ -105,6 +112,11 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 
 	if published, ok := d.GetOk("published"); ok {
 		input.Published = opslevel.Bool(published.(bool))
+	}
+
+	if _, ok := d.GetOk("entity_type"); ok {
+		entityType := d.Get("entity_type").(string)
+		input.EntityType = opslevel.CustomActionsEntityTypeEnum(entityType)
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
@@ -149,6 +161,9 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 		return err
 	}
 	if err := d.Set("response_template", resource.ResponseTemplate); err != nil {
+		return err
+	}
+	if err := d.Set("entity_type", resource.EntityType); err != nil {
 		return err
 	}
 
@@ -198,6 +213,11 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	if d.HasChange("response_template") {
 		responseTemplate := d.Get("response_template").(string)
 		input.ResponseTemplate = &responseTemplate
+	}
+
+	if d.HasChange("entity_type") {
+		entityType := d.Get("entity_type").(string)
+		input.EntityType = opslevel.CustomActionsEntityTypeEnum(entityType)
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)
