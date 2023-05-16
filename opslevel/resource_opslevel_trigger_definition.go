@@ -163,8 +163,10 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 	if err := d.Set("response_template", resource.ResponseTemplate); err != nil {
 		return err
 	}
-	if err := d.Set("entity_type", resource.EntityType); err != nil {
-		return err
+	if _, ok := d.GetOk("entity_type"); ok {
+		if err := d.Set("entity_type", resource.EntityType); err != nil {
+			return err
+		}
 	}
 
 	return nil
