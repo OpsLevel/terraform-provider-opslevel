@@ -41,6 +41,13 @@ func resourceUser() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllUserRole, false),
 			},
+			"skip_welcome_email": {
+				Type:        schema.TypeBool,
+				Description: "Don't send an email welcoming the user to OpsLevel.",
+				Default:     false,
+				ForceNew:    false,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -48,8 +55,9 @@ func resourceUser() *schema.Resource {
 func resourceUserCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	email := d.Get("email").(string)
 	input := opslevel.UserInput{
-		Name: d.Get("name").(string),
-		Role: opslevel.UserRole(d.Get("role").(string)),
+		Name:             d.Get("name").(string),
+		Role:             opslevel.UserRole(d.Get("role").(string)),
+		SkipWelcomeEmail: d.Get("skip_welcome_email").(bool),
 	}
 	resource, err := client.InviteUser(email, input)
 	if err != nil {
