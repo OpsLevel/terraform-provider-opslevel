@@ -152,13 +152,13 @@ func resourceGroupUpdate(d *schema.ResourceData, client *opslevel.Client) error 
 	if d.HasChange("description") {
 		input.Description = d.Get("description").(string)
 	}
-	if d.HasChange("parent") {
-		if parent, ok := d.GetOk("parent"); ok {
-			input.Parent = opslevel.NewIdentifier(parent.(string))
-		} else {
-			input.Parent = nil
-		}
+
+	if parent, ok := d.GetOk("parent"); ok {
+		input.Parent = opslevel.NewIdentifier(parent.(string))
+	} else {
+		input.Parent = nil
 	}
+
 	if d.HasChange("members") {
 		input.Members = &members
 	}
