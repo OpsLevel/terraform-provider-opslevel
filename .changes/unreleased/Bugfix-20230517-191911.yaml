@@ -1,3 +1,0 @@
-kind: Bugfix
-body: 'Fixes #84 - modifying opslevel_group without changing the parent causes the parent to reset to null'
-time: 2023-05-17T19:19:11.833914-05:00

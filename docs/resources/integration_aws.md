@@ -60,6 +60,8 @@ resource "aws_iam_policy" "opslevel" {
           "s3:List*",
           "s3:GetBucketLocation",
           "s3:GetBucketTagging",
+          "s3:GetBucketPolicyStatus",
+          "s3:GetBucketVersioning",
           "sns:Get*",
           "sns:List*",
           "storagegateway:List*",
