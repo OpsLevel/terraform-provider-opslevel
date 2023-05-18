@@ -81,6 +81,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_filter":                      resourceFilter(),
 			"opslevel_group":                       resourceGroup(),
 			"opslevel_integration_aws":             resourceIntegrationAWS(),
+			"opslevel_repository":                  resourceRepository(),
 			"opslevel_rubric_level":                resourceRubricLevel(),
 			"opslevel_rubric_category":             resourceRubricCategory(),
 			"opslevel_service":                     resourceService(),
