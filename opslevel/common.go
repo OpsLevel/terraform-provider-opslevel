@@ -113,7 +113,7 @@ func findRepository(aliasKey string, idKey string, d *schema.ResourceData, clien
 		resource = found
 	}
 	if resource.Id == "" {
-		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
+		return nil, fmt.Errorf("unable to find repository with alias=`%s` or id=`%s`", alias, id.(string))
 	}
 	return resource, nil
 }
