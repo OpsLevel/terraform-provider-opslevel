@@ -1,4 +1,0 @@
-kind: Bugfix
-body: Fix bug where updates WebhookAction payload would inadvertantly map to the url
-  field
-time: 2023-05-24T20:14:31.332551-05:00
