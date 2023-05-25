@@ -139,7 +139,7 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 		input.Description = opslevel.NewString(d.Get("description").(string))
 	}
 	if d.HasChange("payload") {
-		input.WebhookURL = opslevel.NewString(d.Get("payload").(string))
+		input.LiquidTemplate = opslevel.NewString(d.Get("payload").(string))
 	}
 	if d.HasChange("url") {
 		input.WebhookURL = opslevel.NewString(d.Get("url").(string))
