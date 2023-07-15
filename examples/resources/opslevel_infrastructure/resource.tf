@@ -2,22 +2,43 @@ data "opslevel_group" "foo" {
     identifier = "foo"
 }
 
-resource "opslevel_infrastructure" "example" {
-    type = "BigQuery"
+// Minimum example
+resource "opslevel_infrastructure" "example_1" {
     schema = "Database"
-    owner = data.opslevel_group.foo.id
     provider_data {
-        account_name = "dev"
-        external_url = "https://console.cloud.google.com/..."
-        provider_name = "google cloud"
+        account = "dev"
     }
     data = jsonencode({
-        region = "us-east-1"
+        name = "my-database"
+    })
+}
+
+// Detailed example
+resource "opslevel_infrastructure" "example_2" {
+    schema = "Database"
+    owner = data.opslevel_group.devs.id
+    provider_data {
+        account = "dev"
+        name = "google cloud"
+        type = "BigQuery"
+        url = "https://console.cloud.google.com/..."
+    }
+    data = jsonencode({
+        name = "big-query"
+        zone = "us-east-1"
         engine = "bigquery"
         engine_version = "1.28.0"
         endpoint = "https://console.cloud.google.com/..."
         replica = false
-        storage_size = "300 GB"
         publicly_accessible = false
+        storage_size = {
+            unit = "GB"
+            value = 700
+        }
+        storage_type = "gp3"
+        storage_iops = {
+            unit = "per second"
+            value = 12000
+        }
     })
 }
