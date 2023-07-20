@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/opslevel/opslevel-go/v2023 v2023.5.18
+	github.com/opslevel/opslevel-go/v2023 v2023.7.17
 	github.com/rs/zerolog v1.29.1
 )
 
@@ -92,4 +92,4 @@ require (
 )
 
 // Uncomment for local development
-replace github.com/opslevel/opslevel-go/v2023 => ./submodules/opslevel-go/
+//replace github.com/opslevel/opslevel-go/v2023 => ./submodules/opslevel-go/

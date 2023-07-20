@@ -17,6 +17,7 @@ func Provider() terraform.ResourceProvider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_URL", "https://api.opslevel.com/"),
 				Description: "The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.",
+				Sensitive:   false,
 			},
 			"api_token": {
 				Type:        schema.TypeString,
@@ -28,6 +29,7 @@ func Provider() terraform.ResourceProvider {
 			"api_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OPSLEVEL_API_TIMEOUT", "30"),
 				Description: "Value (in seconds) to use for the timeout of API calls made",
 				Sensitive:   false,
 			},
@@ -103,6 +105,9 @@ func Provider() terraform.ResourceProvider {
 			url := d.Get("api_url").(string)
 			token := d.Get("api_token").(string)
 			timeout := d.Get("api_timeout").(int)
+			if timeout <= 0 {
+				timeout = 10
+			}
 			log.Println("[INFO] Initializing OpsLevel client")
 
 			opts := make([]opslevel.Option, 0)
@@ -110,10 +115,7 @@ func Provider() terraform.ResourceProvider {
 			opts = append(opts, opslevel.SetAPIToken(token))
 			opts = append(opts, opslevel.SetURL(url))
 			opts = append(opts, opslevel.SetUserAgentExtra(fmt.Sprintf("terraform-provider-%s", version)))
-
-			if timeout > 0 {
-				opts = append(opts, opslevel.SetTimeout(time.Second*time.Duration(timeout)))
-			}
+			opts = append(opts, opslevel.SetTimeout(time.Second*time.Duration(timeout)))
 
 			client := opslevel.NewGQLClient(opts...)
 
