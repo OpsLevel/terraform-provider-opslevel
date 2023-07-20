@@ -1,4 +1,0 @@
-kind: Refactor
-body: Set API client timeout default to 30s and allow configuration via environment
-  variables "OPSLEVEL_API_TIMEOUT"
-time: 2023-07-20T06:24:06.507035-05:00
