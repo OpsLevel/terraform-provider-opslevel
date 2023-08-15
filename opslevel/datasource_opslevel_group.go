@@ -26,6 +26,11 @@ func datasourceGroup() *schema.Resource {
 				Description: "The description of the group.",
 				Computed:    true,
 			},
+			"alias": {
+				Type:        schema.TypeString,
+				Description: "The alias of the group.",
+				Computed:    true,
+			},
 			"parent": {
 				Type:        schema.TypeString,
 				Description: "The parent alias of the group.",
@@ -79,6 +84,7 @@ func datasourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error 
 
 	d.SetId(string(resource.Id))
 	d.Set("name", resource.Name)
+	d.Set("alias", resource.Alias)
 	d.Set("description", resource.Description)
 	d.Set("parent", parent)
 	d.Set("members", members)
