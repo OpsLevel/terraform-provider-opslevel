@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix missing 'alias' field on datasource opslevel_group
-time: 2023-08-14T20:52:39.813115-05:00

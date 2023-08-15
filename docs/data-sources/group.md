@@ -31,6 +31,7 @@ data "opslevel_group" "bar" {
 
 ### Read-Only
 
+- `alias` (String) The alias of the group.
 - `description` (String) The description of the group.
 - `id` (String) The ID of this resource.
 - `members` (List of String) The users' emails who are members of the group.

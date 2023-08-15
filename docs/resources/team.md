@@ -14,7 +14,7 @@ Manages a team
 
 ```terraform
 data "opslevel_group" "foo" {
-  identifer = "foo"
+  identifier = "foo"
 }
 
 resource "opslevel_team" "example" {
