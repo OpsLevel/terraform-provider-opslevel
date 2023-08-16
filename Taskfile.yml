@@ -1,0 +1,163 @@
+# https://taskfile.dev/
+
+version: '3'
+
+vars:
+  BINARY_PATH: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
+  OPSLEVEL_DIR: "{{.ROOT_DIR}}/opslevel"
+  VERSION_DYNAMIC:
+    sh: echo "$(git describe --tags --abbrev=0 | tr -d 'v')$(date +%s)"
+  WORKSPACE_DIR: "{{.ROOT_DIR}}/workspace"
+
+tasks:
+
+  install-changie:
+    desc: Install changie
+    aliases: [get-changie, get-changie]
+    cmds:
+      - echo "Installing changie..."
+      - task: install-changie-mac-os
+      - echo -e "\nSuccess! 'terraform' installed."
+
+  install-changie-mac-os:
+    internal: true
+    platforms: [darwin]
+    cmds:
+      - brew tap miniscruff/changie https://github.com/miniscruff/changie
+      - brew install changie
+    preconditions:
+      - sh: 'which brew'
+        msg: '"brew" needed to install changie - see https://brew.sh'
+
+  install-terraform:
+    desc: Install terraform
+    aliases: [get-tf, get-terraform]
+    cmds:
+      - echo "Installing terraform..."
+      - task: install-terraform-mac-os
+      - echo -e "\nSuccess! 'terraform' installed."
+    silent: true
+
+  install-terraform-mac-os:
+    internal: true
+    platforms: [darwin]
+    cmds:
+      - brew tap hashicorp/tap
+      - brew install hashicorp/tap/terraform
+    preconditions:
+      - sh: 'which brew'
+        msg: '"brew" needed to install terraform - see https://brew.sh'
+
+  lint:
+    desc: Formatting and linting go code
+    dir: "{{.OPSLEVEL_DIR}}"
+    cmds:
+      - gofmt -d .
+      - go vet ./...
+      - golangci-lint run
+
+  lintfix:
+    desc: Fix formatting and linting
+    dir: "{{.OPSLEVEL_DIR}}"
+    env:
+      TF_ACC: true
+    cmds:
+      - gofmt -w .
+      - go mod tidy
+      - golangci-lint run --fix
+
+  terraform-apply:
+    desc: Run terraform apply
+    aliases: [tf-apply]
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds: [terraform apply]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  terraform-build:
+    desc: Build terraform
+    aliases: [tf-build]
+    platforms: [darwin]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+      VERSION:
+        sh: echo "{{.BINARY}} | cut -d '_' -f 2"
+    cmds:
+      - go build -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - mkdir -p {{.BINARY_PATH}}
+      - mv {{.BINARY}} {{.BINARY_PATH}}
+      - cmd: echo "Built terraform provider at:"
+        silent: true
+      - cmd: echo -e "  {{.BINARY_PATH}}/{{.BINARY}}"
+        silent: true
+
+  terraform-clean:
+    desc: Clean up workspace
+    aliases: [tf-clean]
+    cmds:
+      - rm -rf {{.BINARY-PATH}}
+
+  terraform-init:
+    desc: Run terraform init
+    aliases: [tf-init]
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds:
+      - |
+          cat << EOF > backend.tf
+          terraform {
+            required_providers {
+              opslevel = {
+                source  = "OpsLevel/opslevel"
+                version = "> 0.0.1"
+              }
+            }
+          }
+
+          provider "opslevel" {}
+          EOF
+      - touch main.tf
+      - terraform init --upgrade
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  terraform-workspace-init:
+    desc: Init and build terraform workspace
+    aliases: [tf-ws-init, tf-workspace-init]
+    cmds:
+      - task: terraform-init
+      - task: terraform-build
+
+  terraform-plan:
+    desc: Run terraform plan
+    aliases: [tf-plan]
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds: [terraform plan]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  test:
+    desc: Run tests
+    dir: "{{.OPSLEVEL_DIR}}"
+    env:
+      TF_ACC: true
+    cmds:
+      - go test -v ./... {{ .CLI_ARGS }}
+
+  testcov:
+    desc: Run tests with code coverage output
+    dir: "{{.OPSLEVEL_DIR}}"
+    cmds:
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+
+  workspace:
+    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    cmds:
+      - git submodule update --init
+        # The ":" is a no-op that keeps things rolling
+      - go work init || ":"
+      - go work use . submodules/opslevel-go
+      - echo "Workspace ready!"
