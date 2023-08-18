@@ -122,7 +122,6 @@ Before submitting the pull request, you need add a change entry via Changie so t
 To install Changie, follow the directions [here](https://changie.dev/guide/installation/), or run:
 
 ```sh
-# Mac OS only so far
 task install-changie
 ```
 
