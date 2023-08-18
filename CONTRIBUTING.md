@@ -64,24 +64,18 @@ First make sure you have working [golang development environment](https://learn.
 
 ## Using a local version of opslevel-go
 
-In `go.mod` uncomment (remove the //) the line at the bottom of the file:
+Ensure [task](https://taskfile.dev/) is installed then run:
 
-```
-// Uncomment for local development
-//replace github.com/opslevel/opslevel-go/v2023 => ./submodules/opslevel-go/
-```
-
-If you have trouble checking out your branch in the opslevel-go submodule, you may first need to run:
 ```sh
-git submodule init
-git submodule update
+# Sets up opslevel-go submodule then sets up src/go.work
+task workspace
 ```
 
-## Pointinig Terraform to local OpsLevel running on your machine
+## Pointing Terraform to local OpsLevel running on your machine
 
 In your `backend.tf` the `provider` block should look something like:
 
-```
+```terraform
 provider "opslevel" {
   api_token = "my-api-token"
   api_url = "http://opslevel.local:5000"
@@ -105,29 +99,31 @@ We have a `workspace` folder in the repository that can be used as a place to pl
 After any code change you can just run the following to build and pull in the latest provider code
 
 ```sh
-./build
-./init
+# Runs 'task terraform-init' and 'task terraform-build'
+task terraform-workspace-init
 ```
 
-To `terraform plan`
+See other terraform tasks with `task --list`:
 
 ```sh
-./plan
+# Run `terraform plan` with:
+task terraform-plan
+
+# Run `terraform apply` with:
+task terraform-apply
 ```
 
-To `terraform apply`
-
-```sh
-./apply
-```
-
-Feel free to investigate the scripts to see what they are doing if you need to use some other terraform commands or adjust.
+Feel free to investigate the [Taskfile.yml](./Taskfile.yml) for details.
 
 ### Changie (Change log generation)
 
 Before submitting the pull request, you need add a change entry via Changie so that your contribution changes can be tracked for our next release.
 
-To install Changie, follow the directions [here](https://changie.dev/guide/installation/).
+To install Changie, follow the directions [here](https://changie.dev/guide/installation/), or run:
+
+```sh
+task install-changie
+```
 
 Next, to create a new change entry, in the root of the repository run: `changie new`
 

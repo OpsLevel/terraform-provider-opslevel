@@ -1,3 +1,0 @@
-#! /bin/bash
-
-TF_ACC=true go test -v ./...

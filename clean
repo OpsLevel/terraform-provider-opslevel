@@ -1,7 +1,0 @@
-#! /bin/bash
-HOSTNAME=registry.terraform.io
-NAMESPACE=opslevel
-NAME=opslevel
-PROVIDER_PATH="${HOME}/.terraform.d/plugins"
-
-rm -rf ${PROVIDER_PATH}/${HOSTNAME}/${NAMESPACE}/${NAME}
