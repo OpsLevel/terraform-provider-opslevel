@@ -46,7 +46,7 @@ func filterFilters(data []opslevel.Filter, field string, value string) (*opsleve
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find filter with: %s==%s", field, value)
 	}
 	return &output, nil

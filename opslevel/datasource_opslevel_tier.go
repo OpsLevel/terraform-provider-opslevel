@@ -65,7 +65,7 @@ func filterTiers(levels []opslevel.Tier, field string, value string) (*opslevel.
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find tier with: %s==%s", field, value)
 	}
 	return &output, nil

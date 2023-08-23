@@ -2,18 +2,20 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/opslevel/opslevel-go/v2023"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
+
+	"github.com/opslevel/opslevel-go/v2023"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-var testAccProviders map[string]terraform.ResourceProvider
-var testAccProvider *schema.Provider
+var (
+	testAccProviders map[string]terraform.ResourceProvider
+	testAccProvider  *schema.Provider
+)
 
 func testAccPreCheck(t *testing.T) func() {
 	return func() {
@@ -69,7 +71,7 @@ func testAccCheckDestroy(typeName string, errRegex string, callback OpsLevelChec
 }
 
 func readFixture(path string) string {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}

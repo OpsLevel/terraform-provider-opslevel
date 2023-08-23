@@ -67,10 +67,7 @@ func resourceIntegrationAWSCreate(d *schema.ResourceData, client *opslevel.Clien
 		casted := value.(bool)
 		input.OwnershipTagOverride = &casted
 	}
-	input.OwnershipTagKeys = []string{}
-	for _, tag := range getStringArray(d, "ownership_tag_keys") {
-		input.OwnershipTagKeys = append(input.OwnershipTagKeys, tag)
-	}
+	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
 
 	resource, err := client.CreateIntegrationAWS(input)
 	if err != nil {
@@ -120,10 +117,7 @@ func resourceIntegrationAWSUpdate(d *schema.ResourceData, client *opslevel.Clien
 		casted := value.(bool)
 		input.OwnershipTagOverride = &casted
 	}
-	input.OwnershipTagKeys = []string{}
-	for _, tag := range getStringArray(d, "ownership_tag_keys") {
-		input.OwnershipTagKeys = append(input.OwnershipTagKeys, tag)
-	}
+	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
 
 	_, err := client.UpdateIntegrationAWS(d.Id(), input)
 	if err != nil {
