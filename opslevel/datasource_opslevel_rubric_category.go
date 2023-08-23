@@ -46,7 +46,7 @@ func filterRubricCategories(levels *opslevel.CategoryConnection, field string, v
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find category with: %s==%s", field, value)
 	}
 	return &output, nil

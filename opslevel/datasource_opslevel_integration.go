@@ -46,7 +46,7 @@ func filterIntegrations(data []opslevel.Integration, field string, value string)
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find integration with: %s==%s", field, value)
 	}
 	return &output, nil

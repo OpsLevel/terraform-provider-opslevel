@@ -65,7 +65,7 @@ func filterLifecycles(data []opslevel.Lifecycle, field string, value string) (*o
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find lifecycle with: %s==%s", field, value)
 	}
 	return &output, nil

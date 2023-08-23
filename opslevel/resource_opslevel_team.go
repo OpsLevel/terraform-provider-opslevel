@@ -227,7 +227,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		for _, alias := range resource.Aliases {
 			if alias == resource.Alias {
 				// If user specifies the auto-generated alias in terraform config, don't skip it
-				if stringInArray(alias, getStringArray(d, "aliases")) != true {
+				if !stringInArray(alias, getStringArray(d, "aliases")) {
 					continue
 				}
 			}

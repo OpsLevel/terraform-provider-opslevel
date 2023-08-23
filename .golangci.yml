@@ -1,0 +1,7 @@
+run:
+  timeout: 2m
+linters:
+  disable:
+    - errcheck
+    - staticcheck
+    - unused

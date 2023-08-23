@@ -65,14 +65,13 @@ func filterRubricLevels(levels []opslevel.Level, field string, value string) (*o
 		}
 	}
 
-	if found == false {
+	if !found {
 		return nil, fmt.Errorf("Unable to find level with: %s==%s", field, value)
 	}
 	return &output, nil
 }
 
 func datasourceRubricLevelRead(d *schema.ResourceData, client *opslevel.Client) error {
-
 	results, err := client.ListLevels()
 	if err != nil {
 		return err
