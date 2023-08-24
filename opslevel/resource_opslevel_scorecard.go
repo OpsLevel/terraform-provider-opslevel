@@ -47,28 +47,18 @@ func resourceScorecard() *schema.Resource {
 				Description: "The scorecard's aliases.",
 				Computed:    true,
 			},
-			"filter": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's filter.",
-				Computed:    true,
-			},
-			"owner": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's owner.",
-				Computed:    true,
-			},
 			"passingChecks": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Description: "The scorecard's number of checks that are passing.",
 				Computed:    true,
 			},
 			"serviceCount": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Description: "The scorecard's number of services matched.",
 				Computed:    true,
 			},
 			"totalChecks": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Description: "The scorecard's total number of checks.",
 				Computed:    true,
 			},
@@ -131,27 +121,21 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 }
 
 func resourceScorecardUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.ScorecardInput{}
+	ownerId := opslevel.NewID(d.Get("ownerId").(string))
+	filterId := opslevel.NewID(d.Get("filterId").(string))
 
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("description") {
-		input.Description = d.Get("description").(*string)
-	}
-	if d.HasChange("ownerId") {
-		ownerId := opslevel.NewID(d.Get("ownerId").(string))
-		input.OwnerId = *ownerId
-	}
-	if d.HasChange("filterId") {
-		filterId := opslevel.NewID(d.Get("filterId").(string))
-		input.FilterId = filterId
+	input := opslevel.ScorecardInput{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(*string),
+		OwnerId:     *ownerId,
+		FilterId:    filterId,
 	}
 
 	_, err := client.UpdateScorecard(d.Id(), input)
 	if err != nil {
 		return err
 	}
+
 	return resourceScorecardRead(d, client)
 }
 
