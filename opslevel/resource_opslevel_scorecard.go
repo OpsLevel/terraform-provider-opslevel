@@ -5,6 +5,20 @@ import (
 	"github.com/opslevel/opslevel-go/v2023"
 )
 
+func handleInput(d *schema.ResourceData) opslevel.ScorecardInput {
+	// optional fields
+	description := d.Get("description").(string)
+
+	input := opslevel.ScorecardInput{
+		Name:        d.Get("name").(string),
+		OwnerId:     *opslevel.NewID(d.Get("owner_id").(string)),
+		Description: &description,
+		FilterId:    opslevel.NewID(d.Get("filter_id").(string)),
+	}
+
+	return input
+}
+
 func resourceScorecard() *schema.Resource {
 	return &schema.Resource{
 		Description: "Manages a scorecard",
@@ -68,15 +82,7 @@ func resourceScorecard() *schema.Resource {
 }
 
 func resourceScorecardCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	ownerId := opslevel.NewID(d.Get("owner_id").(string))
-	filterId := opslevel.NewID(d.Get("filter_id").(string))
-
-	input := opslevel.ScorecardInput{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(*string),
-		OwnerId:     *ownerId,
-		FilterId:    filterId,
-	}
+	input := handleInput(d)
 
 	resource, err := client.CreateScorecard(input)
 	if err != nil {
@@ -99,13 +105,13 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 	if err := d.Set("description", resource.Description); err != nil {
 		return err
 	}
-	if err := d.Set("filter", resource.Filter); err != nil {
+	if err := d.Set("filter_id", resource.Filter.Id); err != nil {
 		return err
 	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
-	if err := d.Set("owner", resource.Owner); err != nil {
+	if err := d.Set("owner_id", resource.Owner.Id()); err != nil {
 		return err
 	}
 	if err := d.Set("passing_checks", resource.PassingChecks); err != nil {
@@ -122,15 +128,7 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 }
 
 func resourceScorecardUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	ownerId := opslevel.NewID(d.Get("owner_id").(string))
-	filterId := opslevel.NewID(d.Get("filter_id").(string))
-
-	input := opslevel.ScorecardInput{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(*string),
-		OwnerId:     *ownerId,
-		FilterId:    filterId,
-	}
+	input := handleInput(d)
 
 	_, err := client.UpdateScorecard(d.Id(), input)
 	if err != nil {

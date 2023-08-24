@@ -104,6 +104,8 @@ tasks:
       FILES_TO_DELETE:
         sh: ls -1 "{{.WORKSPACE_DIR}}" | grep -v -e 'main.tf' -e 'backend.tf'
     cmds:
+      # TODO: this is broken because of line spaces! (the \n character)
+      # task: "Remove 'whatever.tf\nterraform.tfstate\nterraform.tfstate.backup' from ...
       - for: { var: FILES_TO_DELETE }
         cmd: rm -rf {{ .ITEM }}
 
