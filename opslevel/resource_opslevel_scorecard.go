@@ -22,7 +22,7 @@ func resourceScorecard() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
-			"ownerId": {
+			"owner_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's owner.",
 				ForceNew:    false,
@@ -34,7 +34,7 @@ func resourceScorecard() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"filterId": {
+			"filter_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's filter.",
 				ForceNew:    false,
@@ -48,17 +48,17 @@ func resourceScorecard() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"passingChecks": {
+			"passing_checks": {
 				Type:        schema.TypeInt,
 				Description: "The scorecard's number of checks that are passing.",
 				Computed:    true,
 			},
-			"serviceCount": {
+			"service_count": {
 				Type:        schema.TypeInt,
 				Description: "The scorecard's number of services matched.",
 				Computed:    true,
 			},
-			"totalChecks": {
+			"total_checks": {
 				Type:        schema.TypeInt,
 				Description: "The scorecard's total number of checks.",
 				Computed:    true,
@@ -68,8 +68,8 @@ func resourceScorecard() *schema.Resource {
 }
 
 func resourceScorecardCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	ownerId := opslevel.NewID(d.Get("ownerId").(string))
-	filterId := opslevel.NewID(d.Get("filterId").(string))
+	ownerId := opslevel.NewID(d.Get("owner_id").(string))
+	filterId := opslevel.NewID(d.Get("filter_id").(string))
 
 	input := opslevel.ScorecardInput{
 		Name:        d.Get("name").(string),
@@ -108,13 +108,13 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 	if err := d.Set("owner", resource.Owner); err != nil {
 		return err
 	}
-	if err := d.Set("passingChecks", resource.PassingChecks); err != nil {
+	if err := d.Set("passing_checks", resource.PassingChecks); err != nil {
 		return err
 	}
-	if err := d.Set("serviceCount", resource.ServiceCount); err != nil {
+	if err := d.Set("service_count", resource.ServiceCount); err != nil {
 		return err
 	}
-	if err := d.Set("totalChecks", resource.ChecksCount); err != nil {
+	if err := d.Set("total_checks", resource.ChecksCount); err != nil {
 		return err
 	}
 
@@ -122,8 +122,8 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 }
 
 func resourceScorecardUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	ownerId := opslevel.NewID(d.Get("ownerId").(string))
-	filterId := opslevel.NewID(d.Get("filterId").(string))
+	ownerId := opslevel.NewID(d.Get("owner_id").(string))
+	filterId := opslevel.NewID(d.Get("filter_id").(string))
 
 	input := opslevel.ScorecardInput{
 		Name:        d.Get("name").(string),
