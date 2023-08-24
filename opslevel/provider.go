@@ -2,11 +2,12 @@ package opslevel
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/opslevel/opslevel-go/v2023"
-	"log"
-	"time"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -87,6 +88,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_repository":                  resourceRepository(),
 			"opslevel_rubric_level":                resourceRubricLevel(),
 			"opslevel_rubric_category":             resourceRubricCategory(),
+			"opslevel_scorecard":                   resourceScorecard(),
 			"opslevel_service":                     resourceService(),
 			"opslevel_service_dependency":          resourceServiceDependency(),
 			"opslevel_service_repository":          resourceServiceRepository(),

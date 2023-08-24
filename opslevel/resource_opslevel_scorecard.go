@@ -40,6 +40,38 @@ func resourceScorecard() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+
+			// computed fields
+			"aliases": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's aliases.",
+				Computed:    true,
+			},
+			"filter": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's filter.",
+				Computed:    true,
+			},
+			"owner": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's owner.",
+				Computed:    true,
+			},
+			"passingChecks": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's number of checks that are passing.",
+				Computed:    true,
+			},
+			"serviceCount": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's number of services matched.",
+				Computed:    true,
+			},
+			"totalChecks": {
+				Type:        schema.TypeString,
+				Description: "The scorecard's total number of checks.",
+				Computed:    true,
+			},
 		},
 	}
 }
