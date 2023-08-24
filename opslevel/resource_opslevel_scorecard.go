@@ -43,9 +43,10 @@ func resourceScorecard() *schema.Resource {
 
 			// computed fields
 			"aliases": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Description: "The scorecard's aliases.",
 				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"passingChecks": {
 				Type:        schema.TypeInt,
