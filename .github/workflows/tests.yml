@@ -28,7 +28,7 @@ jobs:
       - name: Run Tests
         run: |-
           task workspace
-          task testcov
+          task test
       - name: Upload Coverage
         run: |-
           bash <(curl -s https://codecov.io/bash)
