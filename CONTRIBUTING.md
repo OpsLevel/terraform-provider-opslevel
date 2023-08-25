@@ -66,10 +66,19 @@ First make sure you have working [golang development environment](https://learn.
 
 Ensure [task](https://taskfile.dev/) is installed then run:
 
+To test local code against a feature branch in the `opslevel-go` repository, run:
+
 ```sh
-# Sets up opslevel-go submodule then sets up src/go.work
+# initializes opslevel-go submodule then sets up src/go.work
 task workspace
+
+# git checkouts my-feature-branch in the src/submodules/opslevel-go directory
+git -C ./src/submodules/opslevel-go checkout --track origin/my-feature-branch
 ```
+
+Code imported from `github.com/opslevel/opslevel-go` will now be sourced from the
+local `my-feature-branch`.
+
 
 ## Pointing Terraform to local OpsLevel running on your machine
 
