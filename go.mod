@@ -90,6 +90,3 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-
-// Uncomment for local development
-//replace github.com/opslevel/opslevel-go/v2023 => ./submodules/opslevel-go/
