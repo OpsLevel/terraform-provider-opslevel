@@ -138,14 +138,18 @@ tasks:
     env:
       TF_ACC: true
     cmds:
-      - go test -v -cover -race ./... {{ .CLI_ARGS }}
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
     cmds:
       - git submodule update --init
-        # The ":" is a no-op that keeps things rolling
-      - go work init || ":"
+      - go work init || exit 0
       - go work use . submodules/opslevel-go
-      - task: terraform-build-init
       - echo "Workspace ready!"
+
+  workspace-all:
+    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    cmds:
+      - task: workspace
+      - task: terraform-build-init
