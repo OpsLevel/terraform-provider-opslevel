@@ -69,11 +69,11 @@ Ensure [task](https://taskfile.dev/) is installed then run:
 To test local code against a feature branch in the `opslevel-go` repository, run:
 
 ```sh
-# initializes opslevel-go submodule then sets up src/go.work
+# initializes opslevel-go submodule then sets up go.work
 task workspace
 
-# git checkouts my-feature-branch in the src/submodules/opslevel-go directory
-git -C ./src/submodules/opslevel-go checkout --track origin/my-feature-branch
+# git checkouts my-feature-branch in the submodules/opslevel-go directory
+git -C ./submodules/opslevel-go checkout --track origin/my-feature-branch
 ```
 
 Code imported from `github.com/opslevel/opslevel-go` will now be sourced from the
