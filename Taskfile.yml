@@ -104,6 +104,8 @@ tasks:
       FILES_TO_DELETE:
         sh: ls -1 "{{.WORKSPACE_DIR}}" | grep -v -e 'main.tf' -e 'backend.tf'
     cmds:
+      # TODO: this is broken because of line spaces! (the \n character)
+      # task: "Remove 'whatever.tf\nterraform.tfstate\nterraform.tfstate.backup' from ...
       - for: { var: FILES_TO_DELETE }
         cmd: rm -rf {{ .ITEM }}
 
@@ -136,14 +138,18 @@ tasks:
     env:
       TF_ACC: true
     cmds:
-      - go test -v -cover -race ./... {{ .CLI_ARGS }}
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
     cmds:
       - git submodule update --init
-        # The ":" is a no-op that keeps things rolling
-      - go work init || ":"
+      - go work init || exit 0
       - go work use . submodules/opslevel-go
-      - task: terraform-build-init
       - echo "Workspace ready!"
+
+  workspace-all:
+    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    cmds:
+      - task: workspace
+      - task: terraform-build-init
