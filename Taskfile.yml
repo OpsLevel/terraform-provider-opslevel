@@ -136,7 +136,7 @@ tasks:
     env:
       TF_ACC: true
     cmds:
-      - go test -v -cover -race ./... {{ .CLI_ARGS }}
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
