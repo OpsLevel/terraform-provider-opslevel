@@ -140,6 +140,12 @@ tasks:
     cmds:
       - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
+  update-opslevel-go:
+    desc: Update opslevel-go version to latest release
+    cmds:
+      - go get -u github.com/opslevel/opslevel-go/v2023
+      - go mod tidy
+
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
     cmds:
