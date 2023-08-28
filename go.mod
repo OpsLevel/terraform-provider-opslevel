@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/opslevel/opslevel-go/v2023 v2023.8.14
+	github.com/opslevel/opslevel-go/v2023 v2023.8.28
 	github.com/rs/zerolog v1.30.0
 )
 
