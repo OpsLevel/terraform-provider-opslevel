@@ -87,11 +87,11 @@ func resourceSecretRead(d *schema.ResourceData, client *opslevel.Client) error {
 			return err
 		}
 	}
-	created_at := resource.Timestamps.CreatedAt.Format(time.RFC850)
+	created_at := resource.Timestamps.CreatedAt.Local().Format(time.RFC850)
 	if err := d.Set("created_at", created_at); err != nil {
 		return err
 	}
-	updated_at := resource.Timestamps.UpdatedAt.Format(time.RFC850)
+	updated_at := resource.Timestamps.UpdatedAt.Local().Format(time.RFC850)
 	if err := d.Set("updated_at", updated_at); err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func resourceSecretUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		return err
 	}
 
-	updated_at := resource.Timestamps.UpdatedAt.Format(time.RFC850)
+	updated_at := resource.Timestamps.UpdatedAt.Local().Format(time.RFC850)
 	if err := d.Set("updated_at", updated_at); err != nil {
 		return err
 	}
