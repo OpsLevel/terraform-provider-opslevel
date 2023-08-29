@@ -109,6 +109,15 @@ tasks:
       - for: { var: FILES_TO_DELETE }
         cmd: rm -rf {{ .ITEM }}
 
+  terraform-destroy:
+    desc: Run terraform destroy
+    aliases: [tf-destroy]
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds: [terraform destroy]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
   terraform-init:
     desc: Run terraform init
     aliases: [tf-init]
@@ -147,7 +156,7 @@ tasks:
       - go mod tidy
 
   workspace:
-    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    desc: Setup workspace opslevel-go development
     cmds:
       - git submodule update --init
       - go work init || exit 0
