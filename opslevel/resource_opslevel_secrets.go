@@ -38,6 +38,7 @@ func resourceSecret() *schema.Resource {
 			"value": {
 				Type:        schema.TypeString,
 				Description: "A sensitive value.",
+				Sensitive:   true,
 				ForceNew:    false,
 				Required:    true,
 			},
