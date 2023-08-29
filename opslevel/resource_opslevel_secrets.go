@@ -26,7 +26,7 @@ func resourceSecret() *schema.Resource {
 			"alias": {
 				Type:        schema.TypeString,
 				Description: "The alias for this secret.",
-				ForceNew:    false,
+				ForceNew:    true,
 				Required:    true,
 			},
 			"owner": {
@@ -100,19 +100,13 @@ func resourceSecretRead(d *schema.ResourceData, client *opslevel.Client) error {
 }
 
 func resourceSecretUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	alias := d.Get("alias").(string)
 	input := opslevel.SecretInput{
 		Owner: *opslevel.NewIdentifier(d.Get("owner").(string)),
 		Value: d.Get("value").(string),
 	}
 
-	resource, err := client.UpdateSecret(alias, input)
+	_, err := client.UpdateSecret(d.Id(), input)
 	if err != nil {
-		return err
-	}
-
-	updated_at := resource.Timestamps.UpdatedAt.Local().Format(time.RFC850)
-	if err := d.Set("updated_at", updated_at); err != nil {
 		return err
 	}
 
