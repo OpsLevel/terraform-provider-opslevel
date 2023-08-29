@@ -111,7 +111,7 @@ tasks:
 
   terraform-destroy:
     desc: Run terraform destroy
-    aliases: [tf-destory]
+    aliases: [tf-destroy]
     dir: "{{.WORKSPACE_DIR}}"
     cmds: [terraform destroy]
     preconditions:
