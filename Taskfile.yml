@@ -147,7 +147,7 @@ tasks:
       - go mod tidy
 
   workspace:
-    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    desc: Setup workspace opslevel-go development
     cmds:
       - git submodule update --init
       - go work init || exit 0
