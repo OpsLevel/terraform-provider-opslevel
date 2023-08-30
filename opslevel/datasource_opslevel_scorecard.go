@@ -12,32 +12,27 @@ func datasourceScorecard() *schema.Resource {
 			"identifier": {
 				Type:        schema.TypeString,
 				Description: "The id or alias of the scorecard to find.",
-				ForceNew:    true,
-				Optional:    true,
+				Required:    true,
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's name.",
-				ForceNew:    false,
-				Required:    true,
+				Computed:    true,
 			},
 			"owner_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's owner.",
-				ForceNew:    false,
-				Required:    true,
+				Computed:    true,
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's description.",
-				ForceNew:    false,
-				Optional:    true,
+				Computed:    true,
 			},
 			"filter_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's filter.",
-				ForceNew:    false,
-				Optional:    true,
+				Computed:    true,
 			},
 
 			// computed fields
@@ -77,7 +72,7 @@ func datasourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) er
 	d.Set("name", resource.Name)
 	d.Set("owner_id", resource.Id)
 	d.Set("description", resource.Description)
-	d.Set("filter_id", resource.Filter.FilterId)
+	d.Set("filter_id", resource.Filter.Id)
 	d.Set("aliases", resource.Aliases)
 	d.Set("passing_checks", resource.PassingChecks)
 	d.Set("service_count", resource.ServiceCount)

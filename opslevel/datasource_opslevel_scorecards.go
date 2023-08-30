@@ -19,17 +19,17 @@ func datasourceScorecards() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"owner_id": {
+			"owner_ids": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"description": {
+			"descriptions": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"filter_id": {
+			"filter_ids": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -72,13 +72,14 @@ func datasourceScorecardsRead(d *schema.ResourceData, client *opslevel.Client) e
 	ownerIds := make([]string, count)
 	descriptions := make([]string, count)
 	filterIds := make([]string, count)
-	aliases := make([]string, count)
+	aliases := make([][]string, count)
 	passingChecks := make([]int, count)
 	serviceCounts := make([]int, count)
 	totalChecks := make([]int, count)
 	for i, item := range resp.Nodes {
 		if len(item.Aliases) > 0 {
-			aliases[i] = item.Aliases[0]
+			aliases[i] = make([]string, 1)
+			aliases[i][0] = item.Aliases[0]
 		}
 		ids[i] = string(item.Id)
 		names[i] = item.Name
