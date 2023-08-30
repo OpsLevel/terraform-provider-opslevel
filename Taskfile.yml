@@ -13,6 +13,7 @@ tasks:
 
   install-changie:
     desc: Install changie
+    aliases: [get-changie]
     cmds:
       - cmd: echo "Installing changie..."
         silent: true
@@ -41,7 +42,6 @@ tasks:
 
   test:
     desc: Run tests
-    dir: "opslevel"
     env:
       TF_ACC: true
     cmds:
