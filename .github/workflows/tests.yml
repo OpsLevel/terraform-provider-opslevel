@@ -27,8 +27,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run Tests
         run: |-
-          task workspace
-          task test
+          task go:setup-opslevel-go
+          task go:test
       - name: Upload Coverage
         run: |-
           bash <(curl -s https://codecov.io/bash)

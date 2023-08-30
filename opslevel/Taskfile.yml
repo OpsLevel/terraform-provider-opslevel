@@ -1,0 +1,76 @@
+# https://taskfile.dev/
+
+version: '3'
+
+tasks:
+
+  lint:
+    desc: Check formatting and linting of go code
+    deps: [install-gofumpt]
+    cmds:
+      - gofumpt -d .
+      - go vet ./...
+      - golangci-lint run
+
+  lintfix:
+    desc: Fix formatting and linting of go code
+    deps: [install-gofumpt]
+    cmds:
+      - gofumpt -w .
+      - go mod tidy
+      - golangci-lint run --fix
+
+  setup:
+    desc: Setup go linter, formatter, and opslevel-go submodule
+    cmds:
+      - task: install-gofumpt
+      - task: install-golangci-lint
+      - task: setup-opslevel-go
+
+  setup-opslevel-go:
+    desc: Setup go workspace to import opslevel-go
+    cmds:
+      - git submodule update --init
+      - go work init || true
+      - go work use . submodules/opslevel-go
+      - echo "Workspace ready!"
+
+  test:
+    desc: Run go tests
+    cmds:
+      - go test -race -coverprofile=coverage.out -covermode=atomic -v ./... {{ .CLI_ARGS }}
+      - grep -v "/enum.go" coverage.out > coverage.txt
+    silent: true
+
+  ########################################
+  # internal (not directly called) tasks #
+  ########################################
+
+  install-go-tool:
+    internal: true
+    silent: true
+    vars:
+      IS_TOOL_INSTALLED:
+        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
+    cmds:
+      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
+      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
+      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
+    requires:
+      vars: [GO_TOOL, GO_TOOL_PATH]
+
+  install-gofumpt:
+    desc: go install "gofumpt" and set GOBIN if not set
+    internal: true
+    silent: true
+    cmds:
+      - task: install-go-tool
+        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
+
+  install-golangci-lint:
+    desc: go install "golangci-lint" and set GOBIN if not set
+    internal: true
+    silent: true
+    cmds:
+      - task: install-go-tool
+        vars: { GO_TOOL: "golangci-lint", GO_TOOL_PATH: "github.com/golangci/golangci-lint/cmd/golangci-lint@latest" }

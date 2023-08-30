@@ -46,39 +46,49 @@ If you are not a member of the `OpsLevel` GitHub organization, you can contribut
 
 ### OpsLevel contributors
 
-If you are a member of the `OpsLevel` GitHub organization, you will have push access to the repo. Rather than forking to make your changes, just clone the repository, check out a new branch, and push directly to that branch.
+If you are a member of the `OpsLevel` GitHub organization, you will have push
+access to the repo. Rather than forking to make your changes, just clone the
+repository, check out a new branch, and push directly to that branch.
 
-## Setting up an environment
+## Setting up an environment for local development
 
-There are some tools that will be helpful to you in developing locally. While this is the list relevant for development in this repository, many of these tools are used commonly across open-source python projects.
+1. Make sure you have a working
+[golang development environment](https://learn.gopherguides.com/courses/preparing-your-environment-for-go-development)
+setup.
+2. Ensure [task](https://taskfile.dev/) is installed then run:
 
-### Tools
+```sh
+# Run `task setup --dry` to see what will be installed before running
+task setup
+```
 
-- []
+`task setup` will:
+- Install `gofumpt` and `golangci-lint` for formatting and linting.
+- Install the [opslevel-go](https://github.com/opslevel/opslevel-go/) submodule.
+- Set up `go.work` to include the `opslevel-go` submodule for development in this repo.
+- Install `terraform` if not already installed.
+- Set up a Terraform workspace in the "workspace" directory.
+- Install `changie` if not already installed.
 
-## Local Development
+### Tools We Use
 
-### Installation
-
-First make sure you have working [golang development environment](https://learn.gopherguides.com/courses/preparing-your-environment-for-go-development) setup. Also make sure you have the latest version of `terraform` [installed.](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+- [changie](https://changie.dev/) - Automated changelog tool
+- [golangci-lint](https://golangci-lint.run/) - Go linters aggregator
+- [gofumpt](https://pkg.go.dev/mvdan.cc/gofumpt) - Stricter formatter than `gofmt`
+- [task](https://taskfile.dev/) - Task runner written in Go
+- [terraform cli](https://developer.hashicorp.com/terraform/cli) - Terraform command line tool
 
 ## Using a local version of opslevel-go
-
-Ensure [task](https://taskfile.dev/) is installed then run:
 
 To test local code against a feature branch in the `opslevel-go` repository, run:
 
 ```sh
-# initializes opslevel-go submodule then sets up go.work
-task workspace
-
 # git checkouts my-feature-branch in the submodules/opslevel-go directory
 git -C ./submodules/opslevel-go checkout --track origin/my-feature-branch
 ```
 
 Code imported from `github.com/opslevel/opslevel-go` will now be sourced from the
 local `my-feature-branch`.
-
 
 ## Pointing Terraform to local OpsLevel running on your machine
 
@@ -108,18 +118,21 @@ We have a `workspace` folder in the repository that can be used as a place to pl
 After any code change you can just run the following to build and pull in the latest provider code
 
 ```sh
-# Runs 'task terraform-init' and 'task terraform-build'
-task terraform-workspace-init
+# Build and initialize terraform workspace
+task terraform:setup
 ```
 
 See other terraform tasks with `task --list`:
 
 ```sh
-# Run `terraform plan` with:
-task terraform-plan
+# Run `terraform plan` in the "workspace" directory with:
+task terraform:plan
 
-# Run `terraform apply` with:
-task terraform-apply
+# Run `terraform apply` in the "workspace" directory with:
+task terraform:apply
+
+# Run `terraform destroy` in the "workspace" directory with:
+task terraform:destroy
 ```
 
 Feel free to investigate the [Taskfile.yml](./Taskfile.yml) for details.
