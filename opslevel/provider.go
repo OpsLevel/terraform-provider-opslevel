@@ -53,6 +53,8 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_rubric_categories": datasourceRubricCategories(),
 			"opslevel_rubric_level":      datasourceRubricLevel(),
 			"opslevel_rubric_levels":     datasourceRubricLevels(),
+			"opslevel_scorecard":         datasourceScorecard(),
+			"opslevel_scorecards":        datasourceScorecards(),
 			"opslevel_service":           datasourceService(),
 			"opslevel_services":          datasourceServices(),
 			"opslevel_system":            datasourceSystem(),
