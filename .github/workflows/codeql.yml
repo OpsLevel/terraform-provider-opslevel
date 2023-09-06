@@ -1,0 +1,16 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: CodeQL analyze Go code
+        uses: opslevel/actions/codeql-go@main
