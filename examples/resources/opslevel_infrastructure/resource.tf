@@ -16,7 +16,7 @@ resource "opslevel_infrastructure" "example_1" {
 // Detailed example
 resource "opslevel_infrastructure" "example_2" {
     schema = "Database"
-    owner = data.opslevel_group.devs.id
+    owner = data.opslevel_group.foo.id
     provider_data {
         account = "dev"
         name = "google cloud"
@@ -25,6 +25,7 @@ resource "opslevel_infrastructure" "example_2" {
     }
     data = jsonencode({
         name = "big-query"
+        external_id = "example_2_1234"
         zone = "us-east-1"
         engine = "bigquery"
         engine_version = "1.28.0"
