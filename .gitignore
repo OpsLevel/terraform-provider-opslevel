@@ -6,6 +6,8 @@ examples/terraform.tfstate.backup
 *.dll
 *.exe
 .DS_Store
+/coverage.out
+/coverage.txt
 example.tf
 terraform.tfplan
 terraform.tfstate
@@ -40,5 +42,4 @@ website/vendor
 examples/.terraform.lock.hcl
 .terraform.lock.hcl
 main.tf
-!workspace/.gitkeep
-workspace/*
+workspace/*.tf*
