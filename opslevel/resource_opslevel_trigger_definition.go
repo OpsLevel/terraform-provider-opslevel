@@ -80,16 +80,29 @@ func resourceTriggerDefinition() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllCustomActionsEntityTypeEnum, false),
 			},
+			"extended_team_access": {
+				Type:        schema.TypeList,
+				Description: "The set of additional teams who can invoke this Trigger Definition.",
+				ForceNew:    false,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
 
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	extended_teams := []opslevel.IdentifierInput{}
+	for _, team := range getStringArray(d, "extended_team_access") {
+		extended_teams = append(extended_teams, *opslevel.NewIdentifier(team))
+	}
+
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
-		Name:          d.Get("name").(string),
-		Owner:         *opslevel.NewID(d.Get("owner").(string)),
-		Action:        *opslevel.NewID(d.Get("action").(string)),
-		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
+		Name:               d.Get("name").(string),
+		Owner:              *opslevel.NewID(d.Get("owner").(string)),
+		Action:             *opslevel.NewID(d.Get("action").(string)),
+		AccessControl:      opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
+		ExtendedTeamAccess: &extended_teams,
 	}
 
 	if _, ok := d.GetOk("description"); ok {
@@ -168,6 +181,16 @@ func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Clie
 			return err
 		}
 	}
+	if _, ok := d.GetOk("extended_team_access"); ok {
+		extendedTeamAccess, err := resource.ExtendedTeamAccess(client, nil)
+		if err != nil {
+			return err
+		}
+		teams := flattenTeamsArray(extendedTeamAccess)
+		if err := d.Set("extended_team_access", teams); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -220,6 +243,14 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	if d.HasChange("entity_type") {
 		entityType := d.Get("entity_type").(string)
 		input.EntityType = opslevel.CustomActionsEntityTypeEnum(entityType)
+	}
+
+	extended_teams := []opslevel.IdentifierInput{}
+	for _, team := range getStringArray(d, "extended_team_access") {
+		extended_teams = append(extended_teams, *opslevel.NewIdentifier(team))
+	}
+	if d.HasChange("extended_team_access") {
+		input.ExtendedTeamAccess = &extended_teams
 	}
 
 	_, err := client.UpdateTriggerDefinition(input)

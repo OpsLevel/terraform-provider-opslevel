@@ -46,6 +46,7 @@ resource "opslevel_trigger_definition" "example" {
   filter = data.opslevel_filter.tier_1.id
   action = opslevel_webhook_action.example.id
   access_control = "everyone"
+  extended_team_access = ["team_1", "team_2"]
   manual_inputs_definition = <<EOT
 ---
 version: 1
