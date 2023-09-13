@@ -92,23 +92,19 @@ func resourceTriggerDefinition() *schema.Resource {
 }
 
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	var extended_teams *[]opslevel.IdentifierInput
-
-	extendedTeamAccessArray := getStringArray(d, "extended_team_access")
-	if len(extendedTeamAccessArray) > 0 {
-		my_teams := []opslevel.IdentifierInput{}
-		for _, team := range extendedTeamAccessArray {
-			my_teams = append(my_teams, *opslevel.NewIdentifier(team))
-		}
-		extended_teams = &my_teams
+	extended_teams := []opslevel.IdentifierInput{}
+	for _, team := range getStringArray(d, "extended_team_access") {
+		extended_teams = append(extended_teams, *opslevel.NewIdentifier(team))
 	}
 
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
-		Name:               d.Get("name").(string),
-		Owner:              *opslevel.NewID(d.Get("owner").(string)),
-		Action:             *opslevel.NewID(d.Get("action").(string)),
-		AccessControl:      opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
-		ExtendedTeamAccess: extended_teams,
+		Name:          d.Get("name").(string),
+		Owner:         *opslevel.NewID(d.Get("owner").(string)),
+		Action:        *opslevel.NewID(d.Get("action").(string)),
+		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
+	}
+	if len(extended_teams) > 0 {
+		input.ExtendedTeamAccess = &extended_teams
 	}
 
 	if _, ok := d.GetOk("description"); ok {
