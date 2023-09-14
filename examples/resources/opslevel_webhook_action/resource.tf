@@ -1,13 +1,13 @@
 resource "opslevel_webhook_action" "example" {
-  name = "Page The On Call"
+  name        = "Page The On Call"
   description = "Pages the On Call"
-  url = "https://api.pagerduty.com/incidents"
-  method = "POST"
+  url         = "https://api.pagerduty.com/incidents"
+  method      = "POST"
   headers = {
-    content-type = "application/json"
-    accept = "application/vnd.pagerduty+json;version=2"
+    content-type  = "application/json"
+    accept        = "application/vnd.pagerduty+json;version=2"
     authorization = "Token token=XXXXXXXXXXXXXX"
-    from = "john@opslevel.com"
+    from          = "john@opslevel.com"
   }
   payload = <<EOT
 {

@@ -1,8 +1,8 @@
 data "opslevel_tier" "tier1" {
-    filter {
-        field = "alias"
-        value = "tier_1"
-    }
+  filter {
+    field = "alias"
+    value = "tier_1"
+  }
 }
 
 data "opslevel_services" "all" {
