@@ -1,8 +1,8 @@
 data "opslevel_team" "devs" {
-    alias = "developers"
+  alias = "developers"
 }
 
 resource "opslevel_repository" "repo" {
-    identifier = "github.com:rocktavious/autopilot"
-    owner = data.opslevel_team.devs.id
+  identifier = "github.com:rocktavious/autopilot"
+  owner      = data.opslevel_team.devs.id
 }

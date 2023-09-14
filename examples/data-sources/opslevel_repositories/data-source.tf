@@ -1,8 +1,8 @@
 data "opslevel_tier" "tier2" {
-    filter {
-        field = "alias"
-        value = "tier_2"
-    }
+  filter {
+    field = "alias"
+    value = "tier_2"
+  }
 }
 
 data "opslevel_repositories" "all" {

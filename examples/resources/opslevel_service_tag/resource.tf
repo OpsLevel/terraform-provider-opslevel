@@ -5,13 +5,13 @@ data "opslevel_service" "foo" {
 resource "opslevel_service_tag" "foo_environment" {
   service = data.opslevel_service.foo.id
 
-  key = "environment"
+  key   = "environment"
   value = "production"
 }
 
 resource "opslevel_service_tool" "bar_environment" {
   service_alias = "bar"
 
-  key = "environment"
+  key   = "environment"
   value = "production"
 }

@@ -1,7 +1,7 @@
 resource "opslevel_rubric_level" "example" {
-  name = "foo"
+  name        = "foo"
   description = "foo level"
-  index = 2
+  index       = 2
 }
 
 output "level" {

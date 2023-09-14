@@ -7,17 +7,17 @@ data "opslevel_repository" "foo" {
 }
 
 resource "opslevel_service_repository" "foo" {
-  service = data.opslevel_service.foo.id
+  service    = data.opslevel_service.foo.id
   repository = data.opslevel_repository.foo.id
 
-  name = "Foo"
+  name           = "Foo"
   base_directory = "/"
 }
 
 resource "opslevel_service_repository" "bar" {
-  service_alias = "bar"
+  service_alias    = "bar"
   repository_alias = "github.com:example/bar"
 
-  name = "Bar"
+  name           = "Bar"
   base_directory = "/"
 }

@@ -1,5 +1,5 @@
 data "opslevel_team" "platform" {
-    alias = "platform"
+  alias = "platform"
 }
 
 data "opslevel_filter" "tier_1" {
@@ -10,15 +10,15 @@ data "opslevel_filter" "tier_1" {
 }
 
 resource "opslevel_webhook_action" "example" {
-  name = "Page The On Call"
+  name        = "Page The On Call"
   description = "Pages the On Call"
-  url = "https://api.pagerduty.com/incidents"
-  method = "POST"
+  url         = "https://api.pagerduty.com/incidents"
+  method      = "POST"
   headers = {
-    content-type = "application/json"
-    accept = "application/vnd.pagerduty+json;version=2"
+    content-type  = "application/json"
+    accept        = "application/vnd.pagerduty+json;version=2"
     authorization = "Token token=XXXXXXXXXXXXX"
-    from = "john@opslevel.com"
+    from          = "john@opslevel.com"
   }
   payload = <<EOT
 {
@@ -40,13 +40,13 @@ resource "opslevel_webhook_action" "example" {
 }
 
 resource "opslevel_trigger_definition" "example" {
-  name = "Page The On Call"
-  description = "Pages the On Call"
-  owner = data.opslevel_team.platform.id
-  filter = data.opslevel_filter.tier_1.id
-  action = opslevel_webhook_action.example.id
-  access_control = "everyone"
-  extended_team_access = ["team_1", "team_2"]
+  name                     = "Page The On Call"
+  description              = "Pages the On Call"
+  owner                    = data.opslevel_team.platform.id
+  filter                   = data.opslevel_filter.tier_1.id
+  action                   = opslevel_webhook_action.example.id
+  access_control           = "everyone"
+  extended_team_access     = ["team_1", "team_2"]
   manual_inputs_definition = <<EOT
 ---
 version: 1
@@ -64,7 +64,7 @@ inputs:
     type: text_area
     required: true
   EOT
-  response_template = <<EOT
+  response_template        = <<EOT
 {% if response.status >= 200 and response.status < 300 %}
 ## Congratulations!
 Your request for {{ service.name }} has succeeded. See the incident here: {{response.body.incident.html_url}}
