@@ -14,17 +14,17 @@ description: |-
 
 ```terraform
 data "opslevel_lifecycle" "beta" {
-    filter {
-        field = "alias"
-        value = "beta"
-    }
+  filter {
+    field = "alias"
+    value = "beta"
+  }
 }
 
 data "opslevel_lifecycle" "pre-alpha" {
-    filter {
-        field = "index"
-        value = "0"
-    }
+  filter {
+    field = "index"
+    value = "0"
+  }
 }
 ```
 

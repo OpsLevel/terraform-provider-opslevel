@@ -39,18 +39,18 @@ data "opslevel_filter" "tier1" {
 }
 
 resource "opslevel_check_service_property" "example" {
-  name = "foo"
+  name    = "foo"
   enabled = true
   # To set a future enable date remove field 'enabled' and use 'enable_on'
   # enable_on = "2022-05-23T14:14:18.782000Z"
   category = data.opslevel_rubric_category.security.id
-  level = data.opslevel_rubric_level.bronze.id
-  owner = data.opslevel_team.devs.id
-  filter = data.opslevel_filter.tier1.id
+  level    = data.opslevel_rubric_level.bronze.id
+  owner    = data.opslevel_team.devs.id
+  filter   = data.opslevel_filter.tier1.id
   property = "language"
   predicate {
-      type = "equals"
-      value = "python"
+    type  = "equals"
+    value = "python"
   }
   notes = "Optional additional info on why this check is run or how to fix it"
 }

@@ -14,12 +14,12 @@ Manages the ownership of a repository but does not create or delete the reposito
 
 ```terraform
 data "opslevel_team" "devs" {
-    alias = "developers"
+  alias = "developers"
 }
 
 resource "opslevel_repository" "repo" {
-    identifier = "github.com:rocktavious/autopilot"
-    owner = data.opslevel_team.devs.id
+  identifier = "github.com:rocktavious/autopilot"
+  owner      = data.opslevel_team.devs.id
 }
 ```
 

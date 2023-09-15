@@ -14,11 +14,11 @@ description: |-
 
 ```terraform
 data "opslevel_team" "devs" {
-    alias = "developers"
+  alias = "developers"
 }
 
 data "opslevel_team" "devs" {
-    id = "Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS83NzQ0"
+  id = "Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS83NzQ0"
 }
 ```
 

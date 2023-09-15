@@ -20,8 +20,8 @@ provider "opslevel" {
 }
 
 resource "opslevel_team" "foo" {
-  name = "foo"
-  manager_email = "foo@example.com"
+  name             = "foo"
+  manager_email    = "foo@example.com"
   responsibilities = "Responsible for foo frontend and backend"
 }
 
@@ -33,8 +33,8 @@ resource "opslevel_service" "foo-frontend" {
   language    = "ruby"
 
   lifecycle_alias = "beta"
-  tier_alias = "tier_3"
-  owner_alias = opslevel_team.foo.alias
+  tier_alias      = "tier_3"
+  owner_alias     = opslevel_team.foo.alias
 
   tags = [
     "environment:production",
@@ -58,21 +58,21 @@ data "opslevel_rubric_level" "bronze" {
 resource "opslevel_filter" "filter" {
   name = "foo"
   predicate {
-    key = "tier_index"
-    type = "equals"
+    key   = "tier_index"
+    type  = "equals"
     value = "tier_3"
   }
   connective = "and"
 }
 
 resource "opslevel_check_repository_integrated" "foo" {
-  name = "foo"
-  enabled = true
+  name     = "foo"
+  enabled  = true
   category = data.opslevel_rubric_category.security.id
-  level = data.opslevel_rubric_level.bronze.id
-  owner = opslevel_team.foo.id
-  filter = opslevel_filter.filter.id
-  notes = "Optional additional info on why this check is run or how to fix it"
+  level    = data.opslevel_rubric_level.bronze.id
+  owner    = opslevel_team.foo.id
+  filter   = opslevel_filter.filter.id
+  notes    = "Optional additional info on why this check is run or how to fix it"
 }
 ```
 

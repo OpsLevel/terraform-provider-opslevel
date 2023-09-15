@@ -14,8 +14,8 @@ Manages a AWS Integration
 
 ```terraform
 resource "random_string" "external_id" {
-  length           = 16
-  special          = false
+  length  = 16
+  special = false
 }
 
 resource "aws_iam_policy" "opslevel" {
@@ -25,7 +25,7 @@ resource "aws_iam_policy" "opslevel" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = [
+        Action = [
           "autoscaling:Describe*",
           "cloudfront:GetDistribution",
           "cloudfront:ListDistributions",
@@ -94,7 +94,7 @@ resource "aws_iam_role" "opslevel" {
         Sid    = ""
         Principal = {
           Service = "ec2.amazonaws.com",
-          AWS = "arn:aws:iam::746108190720:user/opslevel-integration",
+          AWS     = "arn:aws:iam::746108190720:user/opslevel-integration",
         }
         Condition = {
           StringEquals = {
@@ -107,11 +107,11 @@ resource "aws_iam_role" "opslevel" {
 }
 
 resource "opslevel_integration_aws" "dev" {
-  name = "dev"
-  iam_role = aws_iam_role.opslevel.arn
-  external_id = random_string.external_id.result
+  name                    = "dev"
+  iam_role                = aws_iam_role.opslevel.arn
+  external_id             = random_string.external_id.result
   ownership_tag_overrides = true
-  ownership_tag_keys = ["owner", "team", "group"]
+  ownership_tag_keys      = ["owner", "team", "group"]
 }
 ```
 

@@ -14,24 +14,24 @@ Manages a service
 
 ```terraform
 data "opslevel_lifecycle" "beta" {
-    filter {
-        field = "alias"
-        value = "beta"
-    }
+  filter {
+    field = "alias"
+    value = "beta"
+  }
 }
 
 data "opslevel_tier" "tier3" {
-    filter {
-        field = "index"
-        value = "3"
-    }
+  filter {
+    field = "index"
+    value = "3"
+  }
 }
 
 resource "opslevel_team" "foo" {
-  name = "foo"
-  manager_email = "john.doe@example.com"
+  name             = "foo"
+  manager_email    = "john.doe@example.com"
   responsibilities = "Responsible for foo frontend and backend"
-  aliases = ["bar", "baz"]
+  aliases          = ["bar", "baz"]
 }
 
 resource "opslevel_service" "foo" {
@@ -42,14 +42,14 @@ resource "opslevel_service" "foo" {
   language    = "ruby"
 
   lifecycle_alias = data.opslevel_lifecycle.beta.alias
-  tier_alias = data.opslevel_tier.tier3.alias
-  owner_alias = opslevel_team.foo.alias
+  tier_alias      = data.opslevel_tier.tier3.alias
+  owner_alias     = opslevel_team.foo.alias
 
-  api_document_path = "/swagger.json"
+  api_document_path             = "/swagger.json"
   preferred_api_document_source = "PULL" //or "PUSH"
 
   aliases = ["bar", "baz"]
-  tags = ["foo:bar"]
+  tags    = ["foo:bar"]
 }
 
 output "foo_aliases" {
