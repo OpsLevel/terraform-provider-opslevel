@@ -98,6 +98,7 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_service_tag":                 resourceServiceTag(),
 			"opslevel_service_tool":                resourceServiceTool(),
 			"opslevel_system":                      resourceSystem(),
+			"opslevel_tag":                         resourceTag(),
 			"opslevel_team_contact":                resourceTeamContact(),
 			"opslevel_team_tag":                    resourceTeamTag(),
 			"opslevel_team":                        resourceTeam(),
