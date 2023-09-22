@@ -2,16 +2,18 @@ data "opslevel_service" "foo" {
   alias = "foo"
 }
 
-resource "opslevel_service_tag" "foo_environment" {
-  service = data.opslevel_service.foo.id
+resource "opslevel_tag" "foo" {
+  type = "Service"
+  identifier = data.opslevel_service.foo.id
 
   key   = "environment"
-  value = "production"
+  value = "foo"
 }
 
-resource "opslevel_service_tool" "bar_environment" {
-  service_alias = "bar"
+resource "opslevel_tag" "bar" {
+  type = "Service"
+  identifier = data.opslevel_service.foo.id
 
   key   = "environment"
-  value = "production"
+  value = "bar"
 }
