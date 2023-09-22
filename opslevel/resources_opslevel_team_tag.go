@@ -11,11 +11,12 @@ import (
 
 func resourceTeamTag() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a team tag",
-		Create:      wrap(resourceTeamTagCreate),
-		Read:        wrap(resourceTeamTagRead),
-		Update:      wrap(resourceTeamTagUpdate),
-		Delete:      wrap(resourceTeamTagDelete),
+		Description:        "Manages a team tag",
+		DeprecationMessage: "This resource is deprecated. Please use `opslevel_tag` instead.",
+		Create:             wrap(resourceTeamTagCreate),
+		Read:               wrap(resourceTeamTagRead),
+		Update:             wrap(resourceTeamTagUpdate),
+		Delete:             wrap(resourceTeamTagDelete),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
