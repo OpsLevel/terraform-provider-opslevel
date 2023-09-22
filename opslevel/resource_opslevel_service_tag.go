@@ -16,11 +16,12 @@ var TagKeyErrorMsg = "tag key name must start with a letter and be only lowercas
 
 func resourceServiceTag() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a service tag",
-		Create:      wrap(resourceServiceTagCreate),
-		Read:        wrap(resourceServiceTagRead),
-		Update:      wrap(resourceServiceTagUpdate),
-		Delete:      wrap(resourceServiceTagDelete),
+		Description:        "Manages a service tag",
+		DeprecationMessage: "This resource is deprecated. Please use `opslevel_tag` instead.",
+		Create:             wrap(resourceServiceTagCreate),
+		Read:               wrap(resourceServiceTagRead),
+		Update:             wrap(resourceServiceTagUpdate),
+		Delete:             wrap(resourceServiceTagDelete),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
