@@ -10,7 +10,7 @@ import (
 
 func resourceTag() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a tag. Only uses 'tag create' API due to reasons",
+		Description: "Manages a tag. Only uses API's 'tag create', not 'tag assign'.",
 		Create:      wrap(resourceTagCreate),
 		Read:        wrap(resourceTagRead),
 		Update:      wrap(resourceTagUpdate),
@@ -55,7 +55,12 @@ func resourceTag() *schema.Resource {
 }
 
 func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	resourceId := d.Get("resource_id").(string)
 	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
+	resource, err := getResource(resourceType, resourceId, client)
+	if err != nil {
+		return err
+	}
 
 	tagCreateInput := opslevel.TagCreateInput{
 		Key:   d.Get("key").(string),
@@ -63,18 +68,12 @@ func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		Type:  resourceType,
 	}
 
-	resourceId := d.Get("resource_id").(string)
 	if opslevel.IsID(resourceId) {
 		tagCreateInput.Id = opslevel.ID(resourceId)
 	} else {
 		tagCreateInput.Alias = resourceId
 	}
 	newTag, err := client.CreateTag(tagCreateInput)
-	if err != nil {
-		return err
-	}
-
-	resource, err := getResource(resourceType, resourceId, client)
 	if err != nil {
 		return err
 	}
@@ -95,13 +94,14 @@ func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	id := d.Id()
-	tag := resource.GetTag(*opslevel.NewID(id), client)
-	if tag == nil {
+	tag, err := resource.GetTag(client, *opslevel.NewID(id))
+	if err != nil || tag == nil {
 		return fmt.Errorf(
-			"Tag '%s' for resource with id: '%s' of type '%s' not found",
+			"Tag '%s' for type %s with id '%s' not found. %s",
 			id,
-			resource.ResourceId(),
 			resource.ResourceType(),
+			resource.ResourceId(),
+			err,
 		)
 	}
 
@@ -139,7 +139,6 @@ func resourceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		Key:   d.Get("key").(string),
 		Value: d.Get("value").(string),
 	}
-
 	if _, err := client.UpdateTag(input); err != nil {
 		return err
 	}

@@ -1,19 +1,19 @@
 data "opslevel_repository" "foo" {
-    alias = "github.com:organization/example"
+  alias = "github.com:organization/example"
 }
 
 resource "opslevel_tag" "foo" {
-  type = "Repository"
-  identifier = data.opslevel_repository.foo.id
+  resource_type = "Repository"
+  resource_id   = data.opslevel_repository.foo.id
 
-  key = "type"
+  key   = "type"
   value = "frontend"
 }
 
 resource "opslevel_tag" "bar" {
-  type = "Repository"
-  identifier = "github.com:organization/example"
+  resource_type = "Repository"
+  resource_id   = "github.com:organization/example-2"
 
-  key = "type"
+  key   = "type"
   value = "backend"
 }
