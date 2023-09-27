@@ -57,7 +57,7 @@ func resourceTag() *schema.Resource {
 func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	resourceId := d.Get("resource_id").(string)
 	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
-	resource, err := getResource(resourceType, resourceId, client)
+	resource, err := client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
 		return err
 	}
@@ -88,13 +88,17 @@ func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 	resourceId := d.Get("returned_resource").(string)
 	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
-	resource, err := getResource(resourceType, resourceId, client)
+	resource, err := client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
 		return err
 	}
 
 	id := d.Id()
-	tag, err := resource.GetTag(client, *opslevel.NewID(id))
+	tags, err := resource.GetTags(client, nil)
+	if err != nil {
+		return fmt.Errorf("Unable to get tags from '%s' with id '%s'", resourceType, resourceId)
+	}
+	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil || tag == nil {
 		return fmt.Errorf(
 			"Tag '%s' for type %s with id '%s' not found. %s",
@@ -129,7 +133,7 @@ func resourceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 	resourceId := d.Get("resource_id").(string)
 	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
-	resource, err := getResource(resourceType, resourceId, client)
+	resource, err := client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
 		return err
 	}
@@ -155,39 +159,4 @@ func resourceTagDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	d.SetId("")
 	return nil
-}
-
-func getResource(validResourceType opslevel.TaggableResource, identifier string, client *opslevel.Client) (opslevel.TaggableResourceInterface, error) {
-	var err error
-	var taggableResource opslevel.TaggableResourceInterface
-
-	switch validResourceType {
-	case opslevel.TaggableResourceService:
-		if opslevel.IsID(identifier) {
-			taggableResource, err = client.GetService(opslevel.ID(identifier))
-		} else {
-			taggableResource, err = client.GetServiceWithAlias(identifier)
-		}
-	case opslevel.TaggableResourceRepository:
-		if opslevel.IsID(identifier) {
-			taggableResource, err = client.GetRepository(opslevel.ID(identifier))
-		} else {
-			taggableResource, err = client.GetRepositoryWithAlias(identifier)
-		}
-	case opslevel.TaggableResourceTeam:
-		if opslevel.IsID(identifier) {
-			taggableResource, err = client.GetTeam(opslevel.ID(identifier))
-		} else {
-			taggableResource, err = client.GetTeamWithAlias(identifier)
-		}
-	case opslevel.TaggableResourceDomain:
-		taggableResource, err = client.GetDomain(identifier)
-	case opslevel.TaggableResourceSystem:
-		taggableResource, err = client.GetSystem(identifier)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return taggableResource, nil
 }
