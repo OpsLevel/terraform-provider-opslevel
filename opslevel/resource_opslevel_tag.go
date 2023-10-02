@@ -21,30 +21,30 @@ func resourceTag() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"resource_id": {
+			"resource_identifier": {
 				Type:        schema.TypeString,
 				Description: "The id or human-friendly, unique identifier of the resource this tag belongs to.",
 				ForceNew:    true,
-				Optional:    true,
+				Required:    true,
 			},
 			"resource_type": {
 				Type:         schema.TypeString,
 				Description:  "The resource type that the tag applies to.",
 				ForceNew:     true,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllTaggableResource, false),
 			},
 			"key": {
 				Type:        schema.TypeString,
 				Description: "The key of the tag.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"value": {
 				Type:        schema.TypeString,
 				Description: "The value of the tag.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"returned_resource": {
 				Type:     schema.TypeString,
@@ -55,7 +55,7 @@ func resourceTag() *schema.Resource {
 }
 
 func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	resourceId := d.Get("resource_id").(string)
+	resourceId := d.Get("resource_identifier").(string)
 	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
 	resource, err := client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
@@ -93,11 +93,11 @@ func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	id := d.Id()
 	tags, err := resource.GetTags(client, nil)
 	if err != nil {
 		return fmt.Errorf("Unable to get tags from '%s' with id '%s'", resourceType, resourceId)
 	}
+	id := d.Id()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil || tag == nil {
 		return fmt.Errorf(
@@ -109,7 +109,7 @@ func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 		)
 	}
 
-	if err := d.Set("resource_id", d.Get("resource_id").(string)); err != nil {
+	if err := d.Set("resource_identifier", d.Get("resource_identifier").(string)); err != nil {
 		return err
 	}
 
@@ -131,13 +131,6 @@ func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resourceId := d.Get("resource_id").(string)
-	resourceType := opslevel.TaggableResource(d.Get("resource_type").(string))
-	resource, err := client.GetTaggableResource(resourceType, resourceId)
-	if err != nil {
-		return err
-	}
-
 	input := opslevel.TagUpdateInput{
 		Id:    opslevel.ID(id),
 		Key:   d.Get("key").(string),
@@ -147,7 +140,6 @@ func resourceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	d.Set("returned_resource", resource.ResourceId())
 	d.Set("last_updated", timeLastUpdated())
 	return resourceTagRead(d, client)
 }
