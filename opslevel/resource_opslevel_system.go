@@ -7,7 +7,7 @@ import (
 
 func resourceSystem() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a domain",
+		Description: "Manages a system",
 		Create:      wrap(resourceSystemCreate),
 		Read:        wrap(resourceSystemRead),
 		Update:      wrap(resourceSystemUpdate),
