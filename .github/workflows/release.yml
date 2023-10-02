@@ -74,7 +74,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4.6.0
+        uses: goreleaser/goreleaser-action@v5.0.0
         with:
           args: release --rm-dist --release-notes=./.changes/${{ steps.next_version.outputs.version_tag }}.md
         env:
