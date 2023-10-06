@@ -61,6 +61,12 @@ func resourceFilter() *schema.Resource {
 							ForceNew:    false,
 							Optional:    true,
 						},
+						"case_sensitive": {
+							Type:        schema.TypeBool,
+							Description: "Option for determining whether to compare strings case-sensitively.\n\n",
+							ForceNew:    false,
+							Optional:    true,
+						},
 					},
 				},
 			},
