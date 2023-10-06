@@ -28,7 +28,7 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				Description:  "The type of contact method that is required.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllServiceOwnershipCheckContactType, true),
+				ValidateFunc: validation.StringInSlice(opslevel.AllContactType, true),
 			},
 			"tag_key": {
 				Type:        schema.TypeString,
@@ -49,7 +49,7 @@ func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opsleve
 		input.RequireContactMethod = opslevel.Bool(requireContactMethod.(bool))
 	}
 	if value, ok := d.GetOk("contact_method"); ok {
-		contactMethod := opslevel.ServiceOwnershipCheckContactType(value.(string))
+		contactMethod := opslevel.ContactType(value.(string))
 		input.ContactMethod = &contactMethod
 	}
 	if tagKey, ok := d.GetOk("tag_key"); ok {
@@ -114,11 +114,7 @@ func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opsleve
 	}
 
 	if d.HasChange("contact_method") {
-		contactMethod := opslevel.ServiceOwnershipCheckContactType(d.Get("contact_method").(string))
-
-		if contactMethod == "" {
-			contactMethod = opslevel.ServiceOwnershipCheckContactType("ANY")
-		}
+		contactMethod := opslevel.ContactType(d.Get("contact_method").(string))
 		input.ContactMethod = &contactMethod
 	}
 

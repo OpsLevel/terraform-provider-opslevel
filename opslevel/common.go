@@ -213,23 +213,25 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 	for _, item := range d.Get("predicate").([]interface{}) {
 		data := item.(map[string]interface{})
 		output = append(output, opslevel.FilterPredicate{
-			Type:    opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:   strings.TrimSpace(data["value"].(string)),
-			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData: strings.TrimSpace(data["key_data"].(string)),
+			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
+			Value:         strings.TrimSpace(data["value"].(string)),
+			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
+			KeyData:       strings.TrimSpace(data["key_data"].(string)),
+			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
 		})
 	}
 	return output
 }
 
-func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]string {
-	output := []map[string]string{}
+func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any {
+	output := make([]map[string]any, 0, len(input))
 	for _, predicate := range input {
-		output = append(output, map[string]string{
-			"key":      string(predicate.Key),
-			"key_data": predicate.KeyData,
-			"type":     string(predicate.Type),
-			"value":    predicate.Value,
+		output = append(output, map[string]any{
+			"key":            string(predicate.Key),
+			"key_data":       predicate.KeyData,
+			"type":           string(predicate.Type),
+			"value":          predicate.Value,
+			"case_sensitive": predicate.CaseSensitive,
 		})
 	}
 	return output
