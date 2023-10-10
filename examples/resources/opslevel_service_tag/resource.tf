@@ -3,7 +3,7 @@ data "opslevel_service" "foo" {
 }
 
 resource "opslevel_tag" "foo" {
-  type = "Service"
+  type       = "Service"
   identifier = data.opslevel_service.foo.id
 
   key   = "environment"
@@ -11,7 +11,7 @@ resource "opslevel_tag" "foo" {
 }
 
 resource "opslevel_tag" "bar" {
-  type = "Service"
+  type       = "Service"
   identifier = data.opslevel_service.foo.id
 
   key   = "environment"
