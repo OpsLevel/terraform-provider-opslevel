@@ -3,12 +3,12 @@
 page_title: "opslevel_system Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a domain
+  Manages a system
 ---
 
 # opslevel_system (Resource)
 
-Manages a domain
+Manages a system
 
 ## Example Usage
 
