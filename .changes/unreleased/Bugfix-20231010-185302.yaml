@@ -1,0 +1,3 @@
+kind: Bugfix
+body: Fix bug with creating AWS Integration resources
+time: 2023-10-10T18:53:02.103171-05:00
