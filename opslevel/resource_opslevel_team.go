@@ -58,7 +58,7 @@ func resourceTeam() *schema.Resource {
 			"group": {
 				Type:        schema.TypeString,
 				Description: "The group this team belongs to. Only accepts group's Alias",
-				Deprecated:  "field 'group' on team is no longer supported please use the 'parent_team' field.",
+				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -69,9 +69,9 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"parent_team": {
+			"parent": {
 				Type:        schema.TypeString,
-				Description: "The parent team.",
+				Description: "The parent team. Only accepts team's Alias",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -177,7 +177,7 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if group, ok := d.GetOk("group"); ok {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
-	if parentTeam, ok := d.GetOk("parent_team"); ok {
+	if parentTeam, ok := d.GetOk("parent"); ok {
 		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
 	}
 
@@ -232,8 +232,8 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 			return err
 		}
 	}
-	if _, ok := d.GetOk("parent_team"); ok {
-		if err := d.Set("parent_team", resource.ParentTeam.Alias); err != nil {
+	if _, ok := d.GetOk("parent"); ok {
+		if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
 			return err
 		}
 	}
@@ -290,8 +290,8 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 			input.Group = nil
 		}
 	}
-	if d.HasChange("parent_team") {
-		if parentTeam, ok := d.GetOk("parent_team"); ok {
+	if d.HasChange("parent") {
+		if parentTeam, ok := d.GetOk("parent"); ok {
 			input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
 		} else {
 			input.ParentTeam = nil
