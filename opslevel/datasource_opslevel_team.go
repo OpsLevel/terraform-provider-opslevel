@@ -26,15 +26,27 @@ func datasourceTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"parent_alias": {
+				Type:        schema.TypeString,
+				Description: "The alias of the parent team.",
+				Computed:    true,
+			},
+			"parent_id": {
+				Type:        schema.TypeString,
+				Description: "The id of the parent team.",
+				Computed:    true,
+			},
 			"group_alias": {
 				Type:        schema.TypeString,
 				Description: "The name of the group the team belongs to.",
 				Computed:    true,
+				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
 			},
 			"group_id": {
 				Type:        schema.TypeString,
 				Description: "The id of the group the team belongs to.",
 				Computed:    true,
+				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
 			},
 		},
 	}
@@ -53,6 +65,12 @@ func datasourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if err := d.Set("group_id", resource.Group.Id); err != nil {
+		return err
+	}
+	if err := d.Set("parent_alias", resource.ParentTeam.Alias); err != nil {
+		return err
+	}
+	if err := d.Set("parent_id", resource.ParentTeam.Id); err != nil {
 		return err
 	}
 

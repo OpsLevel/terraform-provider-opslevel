@@ -58,6 +58,7 @@ func resourceTeam() *schema.Resource {
 			"group": {
 				Type:        schema.TypeString,
 				Description: "The group this team belongs to. Only accepts group's Alias",
+				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -65,6 +66,12 @@ func resourceTeam() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"parent": {
+				Type:        schema.TypeString,
+				Description: "The parent team. Only accepts team's Alias",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -170,6 +177,9 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if group, ok := d.GetOk("group"); ok {
 		input.Group = opslevel.NewIdentifier(group.(string))
 	}
+	if parentTeam, ok := d.GetOk("parent"); ok {
+		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
+	}
 
 	membershipValidationErr := validateMembershipState(d)
 	if membershipValidationErr != nil {
@@ -219,6 +229,11 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	if _, ok := d.GetOk("group"); ok {
 		if err := d.Set("group", resource.Group.Alias); err != nil {
+			return err
+		}
+	}
+	if _, ok := d.GetOk("parent"); ok {
+		if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
 			return err
 		}
 	}
@@ -273,6 +288,13 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 			input.Group = opslevel.NewIdentifier(group.(string))
 		} else {
 			input.Group = nil
+		}
+	}
+	if d.HasChange("parent") {
+		if parentTeam, ok := d.GetOk("parent"); ok {
+			input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
+		} else {
+			input.ParentTeam = nil
 		}
 	}
 
