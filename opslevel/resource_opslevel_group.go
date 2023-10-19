@@ -7,11 +7,12 @@ import (
 
 func resourceGroup() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages a group",
-		Create:      wrap(resourceGroupCreate),
-		Read:        wrap(resourceGroupRead),
-		Update:      wrap(resourceGroupUpdate),
-		Delete:      wrap(resourceGroupDelete),
+		Description:        "Manages a group",
+		DeprecationMessage: "Groups are being deprecated. Please replace Groups with Teams.",
+		Create:             wrap(resourceGroupCreate),
+		Read:               wrap(resourceGroupRead),
+		Update:             wrap(resourceGroupUpdate),
+		Delete:             wrap(resourceGroupDelete),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
