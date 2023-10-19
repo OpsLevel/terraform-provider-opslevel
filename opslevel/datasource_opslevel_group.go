@@ -8,7 +8,8 @@ import (
 
 func datasourceGroup() *schema.Resource {
 	return &schema.Resource{
-		Read: wrap(datasourceGroupRead),
+		Read:               wrap(datasourceGroupRead),
+		DeprecationMessage: "Groups are being deprecated. Please replace Groups with Teams. See https://docs.opslevel.com/docs/groups",
 		Schema: map[string]*schema.Schema{
 			"identifier": {
 				Type:        schema.TypeString,
