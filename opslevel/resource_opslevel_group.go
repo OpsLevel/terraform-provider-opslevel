@@ -8,7 +8,7 @@ import (
 func resourceGroup() *schema.Resource {
 	return &schema.Resource{
 		Description:        "Manages a group",
-		DeprecationMessage: "Groups are being deprecated. Please replace Groups with Teams.",
+		DeprecationMessage: "Groups are being deprecated. Please replace Groups with Teams. See https://docs.opslevel.com/docs/groups",
 		Create:             wrap(resourceGroupCreate),
 		Read:               wrap(resourceGroupRead),
 		Update:             wrap(resourceGroupUpdate),
