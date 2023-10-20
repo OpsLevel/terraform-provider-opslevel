@@ -13,8 +13,8 @@ Manages a team
 ## Example Usage
 
 ```terraform
-data "opslevel_group" "foo" {
-  identifier = "foo"
+data "opslevel_team" "parent" {
+  alias = "platform"
 }
 
 resource "opslevel_team" "example" {
@@ -23,7 +23,7 @@ resource "opslevel_team" "example" {
   members          = ["john.doe@example.com", "jane.doe@example.com"]
   responsibilities = "Responsible for foo frontend and backend"
   aliases          = ["bar", "baz"]
-  group            = data.opslevel_group.foo.alias
+  parent           = data.opslevel_team.parent.id
 }
 
 output "team" {
@@ -41,10 +41,11 @@ output "team" {
 ### Optional
 
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically
-- `group` (String) The group this team belongs to. Only accepts group's Alias
+- `group` (String, Deprecated) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
 - `manager_email` (String) The email of the user who manages the team.
 - `members` (Set of String) List of user emails that belong to the team. This list must contain the 'manager_email' value.
+- `parent` (String) The parent team. Only accepts team's Alias
 - `responsibilities` (String) A description of what the team is responsible for.
 
 ### Read-Only

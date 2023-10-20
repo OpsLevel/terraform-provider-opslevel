@@ -53,7 +53,7 @@ resource "opslevel_service" "foo" {
 }
 
 output "foo_aliases" {
-  value = opslevel_service.example.aliases
+  value = opslevel_service.foo.aliases
 }
 ```
 

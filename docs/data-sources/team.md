@@ -32,8 +32,10 @@ data "opslevel_team" "devs" {
 
 ### Read-Only
 
-- `group_alias` (String) The name of the group the team belongs to.
-- `group_id` (String) The id of the group the team belongs to.
+- `group_alias` (String, Deprecated) The name of the group the team belongs to.
+- `group_id` (String, Deprecated) The id of the group the team belongs to.
 - `name` (String)
+- `parent_alias` (String) The alias of the parent team.
+- `parent_id` (String) The id of the parent team.
 
 
