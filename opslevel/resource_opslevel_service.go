@@ -2,9 +2,10 @@ package opslevel
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/rs/zerolog/log"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
@@ -184,7 +185,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Language:    d.Get("language").(string),
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
-		Owner:       d.Get("owner_alias").(string),
+		Owner:       opslevel.NewIdentifier(d.Get("owner_alias").(string)),
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	resource, err := client.CreateService(input)
@@ -296,7 +297,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		input.Tier = d.Get("tier_alias").(string)
 	}
 	if d.HasChange("owner_alias") {
-		input.Owner = d.Get("owner_alias").(string)
+		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
 	}
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
