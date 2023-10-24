@@ -63,11 +63,18 @@ func resourceService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"owner": {
+				Type:        schema.TypeString,
+				Description: "The team that owns the service.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"owner_alias": {
 				Type:        schema.TypeString,
 				Description: "The team that owns the service.",
 				ForceNew:    false,
 				Optional:    true,
+				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
 			},
 			"lifecycle_alias": {
 				Type:        schema.TypeString,
@@ -185,7 +192,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Language:    d.Get("language").(string),
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
-		Owner:       opslevel.NewIdentifier(d.Get("owner_alias").(string)),
+		Owner:       opslevel.NewIdentifier(d.Get("owner").(string)),
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	resource, err := client.CreateService(input)
@@ -247,7 +254,7 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
-	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
+	if err := d.Set("owner", resource.Owner.Alias); err != nil {
 		return err
 	}
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
@@ -296,8 +303,8 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
-	if d.HasChange("owner_alias") {
-		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
+	if d.HasChange("owner") {
+		input.Owner = opslevel.NewIdentifier(d.Get("owner").(string))
 	}
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)

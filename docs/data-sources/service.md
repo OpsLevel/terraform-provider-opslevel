@@ -39,7 +39,7 @@ data "opslevel_service" "bar" {
 - `language` (String) The primary programming language that the service is written in.
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `name` (String) The display name of the service.
-- `owner_alias` (String) The team that owns the service.
+- `owner` (String) The team that owns the service.
 - `owner_id` (String) The team ID that owns the service.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.

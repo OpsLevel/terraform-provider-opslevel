@@ -34,7 +34,7 @@ resource "opslevel_service" "foo-frontend" {
 
   lifecycle_alias = "beta"
   tier_alias      = "tier_3"
-  owner_alias     = opslevel_team.foo.alias
+  owner           = opslevel_team.foo.alias
 
   tags = [
     "environment:production",
