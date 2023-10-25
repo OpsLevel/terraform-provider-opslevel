@@ -1,10 +1,12 @@
 package opslevel
 
 import (
+	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/rs/zerolog/log"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
@@ -62,11 +64,18 @@ func resourceService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
+			"owner": {
+				Type:        schema.TypeString,
+				Description: "The team that owns the service. ID or Alias my be used.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"owner_alias": {
 				Type:        schema.TypeString,
 				Description: "The team that owns the service.",
 				ForceNew:    false,
 				Optional:    true,
+				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
 			},
 			"lifecycle_alias": {
 				Type:        schema.TypeString,
@@ -177,6 +186,18 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 }
 
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	// owner_alias is deprecated, allow user to use one or the other but not both.
+	var ownerField *opslevel.IdentifierInput
+	owner, ownerUsed := d.GetOk("owner")
+	ownerAlias, ownerAliasUsed := d.GetOk("owner_alias")
+	if ownerUsed && ownerAliasUsed {
+		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
+	} else if ownerUsed {
+		ownerField = opslevel.NewIdentifier(owner.(string))
+	} else if ownerAliasUsed {
+		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
+	}
+
 	input := opslevel.ServiceCreateInput{
 		Name:        d.Get("name").(string),
 		Product:     d.Get("product").(string),
@@ -184,7 +205,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Language:    d.Get("language").(string),
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
-		Owner:       d.Get("owner_alias").(string),
+		Owner:       ownerField,
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	resource, err := client.CreateService(input)
@@ -246,6 +267,9 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
+	if err := d.Set("owner", resource.Owner.Alias); err != nil {
+		return err
+	}
 	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
 		return err
 	}
@@ -295,8 +319,14 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
-	if d.HasChange("owner_alias") {
-		input.Owner = d.Get("owner_alias").(string)
+	ownerUsed := d.HasChange("owner")
+	ownerAliasUsed := d.HasChange("owner_alias")
+	if ownerUsed && ownerAliasUsed {
+		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
+	} else if ownerUsed {
+		input.Owner = opslevel.NewIdentifier(d.Get("owner").(string))
+	} else if ownerAliasUsed {
+		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
 	}
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
