@@ -10,10 +10,11 @@ func handleInput(d *schema.ResourceData) opslevel.ScorecardInput {
 	description := d.Get("description").(string)
 
 	input := opslevel.ScorecardInput{
-		Name:        d.Get("name").(string),
-		OwnerId:     *opslevel.NewID(d.Get("owner_id").(string)),
-		Description: &description,
-		FilterId:    opslevel.NewID(d.Get("filter_id").(string)),
+		Name:                        d.Get("name").(string),
+		OwnerId:                     *opslevel.NewID(d.Get("owner_id").(string)),
+		Description:                 &description,
+		FilterId:                    opslevel.NewID(d.Get("filter_id").(string)),
+		AffectsOverallServiceLevels: opslevel.Bool(d.Get("affects_overall_service_levels").(bool)),
 	}
 
 	return input
@@ -51,6 +52,12 @@ func resourceScorecard() *schema.Resource {
 			"filter_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's filter.",
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"affects_overall_service_levels": {
+				Type:        schema.TypeBool,
+				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -106,6 +113,9 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("filter_id", resource.Filter.Id); err != nil {
+		return err
+	}
+	if err := d.Set("affects_overall_service_levels", resource.AffectsOverallServiceLevels); err != nil {
 		return err
 	}
 	if err := d.Set("name", resource.Name); err != nil {

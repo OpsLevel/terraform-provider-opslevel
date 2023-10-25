@@ -34,6 +34,11 @@ func datasourceScorecard() *schema.Resource {
 				Description: "The scorecard's filter.",
 				Computed:    true,
 			},
+			"affects_overall_service_levels": {
+				Type:        schema.TypeBool,
+				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
+				Computed:    true,
+			},
 
 			// computed fields
 			"aliases": {
@@ -73,6 +78,7 @@ func datasourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) er
 	d.Set("owner_id", resource.Id)
 	d.Set("description", resource.Description)
 	d.Set("filter_id", resource.Filter.Id)
+	d.Set("affects_overall_service_levels", resource.AffectsOverallServiceLevels)
 	d.Set("aliases", resource.Aliases)
 	d.Set("passing_checks", resource.PassingChecks)
 	d.Set("service_count", resource.ServiceCount)

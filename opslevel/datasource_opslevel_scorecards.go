@@ -34,6 +34,11 @@ func datasourceScorecards() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"affects_overall_service_levels": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeBool},
+			},
 
 			// computed fields
 			"aliases": {
@@ -72,6 +77,7 @@ func datasourceScorecardsRead(d *schema.ResourceData, client *opslevel.Client) e
 	ownerIds := make([]string, count)
 	descriptions := make([]string, count)
 	filterIds := make([]string, count)
+	affectsOverallServiceLevels := make([]bool, count)
 	aliases := make([][]string, count)
 	passingChecks := make([]int, count)
 	serviceCounts := make([]int, count)
@@ -97,6 +103,7 @@ func datasourceScorecardsRead(d *schema.ResourceData, client *opslevel.Client) e
 	d.Set("owner_ids", ownerIds)
 	d.Set("descriptions", descriptions)
 	d.Set("filter_ids", filterIds)
+	d.Set("affects_overall_service_levels", affectsOverallServiceLevels)
 	d.Set("aliases", aliases)
 	d.Set("passing_checks", passingChecks)
 	d.Set("service_counts", serviceCounts)
