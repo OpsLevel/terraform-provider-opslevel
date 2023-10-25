@@ -319,10 +319,13 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
-	if d.HasChange("owner") {
+	ownerUsed := d.HasChange("owner")
+	ownerAliasUsed := d.HasChange("owner_alias")
+	if ownerUsed && ownerAliasUsed {
+		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
+	} else if ownerUsed {
 		input.Owner = opslevel.NewIdentifier(d.Get("owner").(string))
-	}
-	if d.HasChange("owner_alias") {
+	} else if ownerAliasUsed {
 		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
 	}
 	if d.HasChange("lifecycle_alias") {
