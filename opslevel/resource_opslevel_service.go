@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -185,6 +186,16 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 }
 
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	// owner_alias is deprecated, allow user to use one or the other but not both.
+	var ownerField *opslevel.IdentifierInput
+	if d.Get("owner").(string) != "" && d.Get("owner_alias").(string) != "" {
+		return errors.New("can pass only one of: owner owner_alias")
+	} else if d.Get("owner").(string) != "" {
+		ownerField = opslevel.NewIdentifier(d.Get("owner").(string))
+	} else if d.Get("owner_alias").(string) != "" {
+		ownerField = opslevel.NewIdentifier(d.Get("owner_alias").(string))
+	}
+
 	input := opslevel.ServiceCreateInput{
 		Name:        d.Get("name").(string),
 		Product:     d.Get("product").(string),
@@ -192,7 +203,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Language:    d.Get("language").(string),
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
-		Owner:       opslevel.NewIdentifier(d.Get("owner").(string)),
+		Owner:       ownerField,
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	resource, err := client.CreateService(input)
@@ -257,6 +268,9 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("owner", resource.Owner.Alias); err != nil {
 		return err
 	}
+	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
+		return err
+	}
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
 		return err
 	}
@@ -305,6 +319,9 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 	if d.HasChange("owner") {
 		input.Owner = opslevel.NewIdentifier(d.Get("owner").(string))
+	}
+	if d.HasChange("owner_alias") {
+		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
 	}
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
