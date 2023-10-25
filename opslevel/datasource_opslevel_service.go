@@ -57,6 +57,12 @@ func datasourceService() *schema.Resource {
 				Description: "The team that owns the service.",
 				Computed:    true,
 			},
+			"owner_alias": {
+				Type:        schema.TypeString,
+				Description: "The team that owns the service.",
+				Computed:    true,
+				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
+			},
 			"owner_id": {
 				Type:        schema.TypeString,
 				Description: "The team ID that owns the service.",
@@ -119,6 +125,9 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("owner", resource.Owner.Alias); err != nil {
+		return err
+	}
+	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
 		return err
 	}
 	if err := d.Set("owner_id", resource.Owner.Id); err != nil {
