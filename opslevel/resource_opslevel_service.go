@@ -66,7 +66,7 @@ func resourceService() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
+				Description: "The team that owns the service. ID or Alias my be used.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -188,12 +188,14 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	// owner_alias is deprecated, allow user to use one or the other but not both.
 	var ownerField *opslevel.IdentifierInput
-	if d.Get("owner").(string) != "" && d.Get("owner_alias").(string) != "" {
-		return errors.New("can pass only one of: owner owner_alias")
-	} else if d.Get("owner").(string) != "" {
-		ownerField = opslevel.NewIdentifier(d.Get("owner").(string))
-	} else if d.Get("owner_alias").(string) != "" {
-		ownerField = opslevel.NewIdentifier(d.Get("owner_alias").(string))
+	owner, ownerUsed := d.GetOk("owner")
+	ownerAlias, ownerAliasUsed := d.GetOk("owner_alias")
+	if ownerUsed && ownerAliasUsed {
+		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
+	} else if ownerUsed {
+		ownerField = opslevel.NewIdentifier(owner.(string))
+	} else if ownerAliasUsed {
+		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
 	}
 
 	input := opslevel.ServiceCreateInput{
