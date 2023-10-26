@@ -37,6 +37,12 @@ func resourceScorecard() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
+			"affects_overall_service_levels": {
+				Type:        schema.TypeBool,
+				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
+				ForceNew:    false,
+				Required:    true,
+			},
 			"owner_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's owner.",
@@ -52,12 +58,6 @@ func resourceScorecard() *schema.Resource {
 			"filter_id": {
 				Type:        schema.TypeString,
 				Description: "The scorecard's filter.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"affects_overall_service_levels": {
-				Type:        schema.TypeBool,
-				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
 				ForceNew:    false,
 				Optional:    true,
 			},
