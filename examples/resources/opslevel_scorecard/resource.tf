@@ -17,10 +17,11 @@ data "opslevel_filter" "tier_1" {
 }
 
 resource "opslevel_scorecard" "my_scorecard" {
-  name        = "My Scorecard"
-  description = "This is my example scorecard"
-  owner_id    = data.opslevel_team.devs.id
-  filter_id   = data.opslevel_filter.tier_1.id
+  name                           = "My Scorecard"
+  affects_overall_service_levels = true
+  description                    = "This is my example scorecard"
+  owner_id                       = data.opslevel_team.devs.id
+  filter_id                      = data.opslevel_filter.tier_1.id
 }
 
 // Example of how to assign a check to a scorecard
