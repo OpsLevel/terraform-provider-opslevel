@@ -43,3 +43,4 @@ examples/.terraform.lock.hcl
 .terraform.lock.hcl
 main.tf
 workspace/*.tf*
+workspace/.terraform.d/

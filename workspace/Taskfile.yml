@@ -2,11 +2,6 @@
 
 version: '3'
 
-vars:
-  # 'VERSION_DYNAMIC' needs to run in this scope before tasks begin
-  VERSION_DYNAMIC:
-    sh: echo "$(git describe --tags --abbrev=0 | tr -d 'v')$(date +%s)"
-
 tasks:
 
   apply:
@@ -15,31 +10,11 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: "apply", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
-  build:
-    desc: Build terraform
-    platforms: [darwin]
-    vars:
-      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      BINARY_PATH_BEFORE_VERSION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
-      OS_ARCH:
-        sh: echo $(go env GOOS)_$(go env GOARCH)
-      VERSION_FROM_BINARY:
-        sh: echo {{.BINARY}} | cut -d '_' -f 2
-    cmds:
-      - go build -o {{.BINARY}} || exit 1
-      - chmod +x {{.BINARY}}
-      - mkdir -p {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
-      - mv {{.BINARY}} {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
-      - cmd: echo "Built terraform provider at:"
-        silent: true
-      - cmd: echo -e "  {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}/{{.BINARY}}"
-        silent: true
-
   clean:
     desc: Clean up terraform files from "workspace"
-    prompt: Remove '*.tf' files from 'workspace' directory?
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/** .terraform/**' from 'workspace' directory?
     cmds:
-      - cmd: rm *.tf *.tfstate
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/ .terraform/
         ignore_error: true
 
   destroy:
@@ -79,10 +54,9 @@ tasks:
         vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   setup:
-    desc: Build and initialize terraform workspace
+    desc: Initialize terraform workspace
     cmds:
       - task: install-terraform
-      - task: build
       - task: init
 
   ########################################

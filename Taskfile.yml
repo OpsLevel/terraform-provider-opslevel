@@ -2,6 +2,11 @@
 
 version: '3'
 
+vars:
+  # 'VERSION_DYNAMIC' needs to run in this scope before 'task build' begins
+  VERSION_DYNAMIC:
+    sh: echo "$(git describe --tags --abbrev=0 | tr -d 'v')$(date +%s)"
+
 includes:
   go:
     taskfile: "./opslevel/Taskfile.yml"
@@ -11,6 +16,26 @@ includes:
     aliases: [tf]
 
 tasks:
+
+  build:
+    desc: Build local opslevel terraform provider
+    platforms: [darwin]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+      BINARY_PATH_BEFORE_VERSION: "workspace/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
+      OS_ARCH:
+        sh: echo $(go env GOOS)_$(go env GOARCH)
+      VERSION_FROM_BINARY:
+        sh: echo {{.BINARY}} | cut -d '_' -f 2
+    cmds:
+      - go build -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - mkdir -p {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
+      - mv {{.BINARY}} {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
+      - cmd: echo "Built terraform provider at:"
+        silent: true
+      - cmd: echo "{{.ROOT_DIR}}/{{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}/{{.BINARY}}"
+        silent: true
 
   install-changie:
     desc: Install changie
@@ -37,9 +62,10 @@ tasks:
   setup:
     desc: Setup env and tools
     cmds:
-      - task: go:setup
-      - task: terraform:setup
       - task: install-changie
+      - task: go:setup
+      - task: build
+      - task: terraform:setup
 
   test:
     desc: Run tests
