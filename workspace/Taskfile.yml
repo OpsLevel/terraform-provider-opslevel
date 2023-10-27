@@ -131,7 +131,7 @@ tasks:
         msg: '"terraform" needed - run "brew install terraform"'
 
   validate:
-    # internal: true
+    internal: true
     desc: Run "terraform validate" in current directory
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
