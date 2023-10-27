@@ -55,7 +55,8 @@ tasks:
     cmds:
       - './make_backend_tf.sh'
       - touch main.tf
-      - terraform init -upgrade
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
     preconditions:
       - sh: 'which terraform'
         msg: '"terraform" needed - run "brew install terraform"'
