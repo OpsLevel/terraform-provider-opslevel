@@ -135,7 +135,5 @@ tasks:
     desc: Run "terraform validate" in current directory
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - echo $PWD
-      - echo {{.TASKFILE_DIR}}
       - task: terraform-command
         vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.USER_WORKING_DIR}}" }
