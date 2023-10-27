@@ -123,7 +123,7 @@ tasks:
 
   terraform-command:
     internal: true
-    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}}"]
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
     requires:
       vars: [TF_COMMAND, TF_CMD_DIR]
     preconditions:
