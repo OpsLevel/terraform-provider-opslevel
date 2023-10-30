@@ -28,7 +28,7 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				Description:  "The type of contact method that is required.",
 				ForceNew:     false,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllContactType, true),
+				ValidateFunc: validation.StringInSlice(append(opslevel.AllContactType, "ANY"), true),
 			},
 			"tag_key": {
 				Type:        schema.TypeString,

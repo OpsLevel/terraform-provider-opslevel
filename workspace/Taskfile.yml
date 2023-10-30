@@ -12,9 +12,9 @@ tasks:
 
   clean:
     desc: Clean up terraform files from "workspace"
-    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/** .terraform/**' from 'workspace' directory?
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from 'workspace' directory?
     cmds:
-      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/ .terraform/
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
         ignore_error: true
 
   destroy:
@@ -24,17 +24,13 @@ tasks:
         vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   init:
-    desc: Run "terraform init" in "workspace"
-    env:
-      OPSLEVEL_TERRAFORM_SOURCE_VERSION: "0.8.7"
+    desc: Initialize terraform workspace
     cmds:
+      - task: install-terraform
       - './make_backend_tf.sh'
       - touch main.tf
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
-    preconditions:
-      - sh: 'which terraform'
-        msg: '"terraform" needed - run "brew install terraform"'
 
   lint:
     desc: Validate and check format of terraform files in current directory
@@ -52,12 +48,6 @@ tasks:
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
-
-  setup:
-    desc: Initialize terraform workspace
-    cmds:
-      - task: install-terraform
-      - task: init
 
   ########################################
   # internal (not directly called) tasks #
