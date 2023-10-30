@@ -22,7 +22,7 @@ tasks:
     platforms: [darwin]
     vars:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      BINARY_PATH_BEFORE_VERSION: "workspace/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
+      BINARY_PATH_BEFORE_VERSION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
       OS_ARCH:
         sh: echo $(go env GOOS)_$(go env GOARCH)
       VERSION_FROM_BINARY:
@@ -65,7 +65,7 @@ tasks:
       - task: install-changie
       - task: go:setup
       - task: build
-      - task: terraform:setup
+      - task: terraform:init
 
   test:
     desc: Run tests
