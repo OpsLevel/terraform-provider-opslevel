@@ -2,64 +2,36 @@
 
 version: '3'
 
-vars:
-  WORKSPACE_DIR: "workspace"
-  # 'VERSION_DYNAMIC' needs to run in this scope before tasks begin
-  VERSION_DYNAMIC:
-    sh: echo "$(git describe --tags --abbrev=0 | tr -d 'v')$(date +%s)"
-
 tasks:
 
   apply:
     desc: Run "terraform apply"
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "apply" }
-
-  build:
-    desc: Build terraform
-    platforms: [darwin]
-    vars:
-      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      BINARY_PATH_BEFORE_VERSION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
-      OS_ARCH:
-        sh: echo $(go env GOOS)_$(go env GOARCH)
-      VERSION_FROM_BINARY:
-        sh: echo {{.BINARY}} | cut -d '_' -f 2
-    cmds:
-      - go build -o {{.BINARY}} || exit 1
-      - chmod +x {{.BINARY}}
-      - mkdir -p {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
-      - mv {{.BINARY}} {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}
-      - cmd: echo "Built terraform provider at:"
-        silent: true
-      - cmd: echo -e "  {{.BINARY_PATH_BEFORE_VERSION}}/{{.VERSION_FROM_BINARY}}/{{.OS_ARCH}}/{{.BINARY}}"
-        silent: true
+        vars: { TF_COMMAND: "apply", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   clean:
     desc: Clean up terraform files from "workspace"
-    dir: "{{.WORKSPACE_DIR}}"
-    prompt: Remove '*.tf' files from 'workspace' directory?
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/** .terraform/**' from 'workspace' directory?
     cmds:
-      - cmd: rm *.tf *.tfstate
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform.d/ .terraform/
         ignore_error: true
 
   destroy:
     desc: Run "terraform destroy" in "workspace"
-    dir: "{{.WORKSPACE_DIR}}"
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "destroy" }
+        vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   init:
     desc: Run "terraform init" in "workspace"
-    dir: "{{.WORKSPACE_DIR}}"
     env:
       OPSLEVEL_TERRAFORM_SOURCE_VERSION: "0.8.7"
     cmds:
       - './make_backend_tf.sh'
       - touch main.tf
-      - terraform init -upgrade
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
     preconditions:
       - sh: 'which terraform'
         msg: '"terraform" needed - run "brew install terraform"'
@@ -77,16 +49,14 @@ tasks:
 
   plan:
     desc: Run "terraform plan" in "workspace"
-    dir: "{{.WORKSPACE_DIR}}"
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "plan" }
+        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   setup:
-    desc: Build and initialize terraform workspace
+    desc: Initialize terraform workspace
     cmds:
       - task: install-terraform
-      - task: build
       - task: init
 
   ########################################
@@ -96,19 +66,17 @@ tasks:
   format:
     internal: true
     desc: Run terraform format
-    dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - cmd: echo "Listing all terraform files that need formatting..."
       - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check" }
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.USER_WORKING_DIR}}" }
 
   format-fix:
     internal: true
     desc: Run terraform format
-    dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -write=true" }
+        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.USER_WORKING_DIR}}" }
 
   install-terraform:
     internal: true
@@ -130,9 +98,9 @@ tasks:
 
   terraform-command:
     internal: true
-    cmds: ["terraform {{.TF_COMMAND}}"]
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
     requires:
-      vars: [TF_COMMAND]
+      vars: [TF_COMMAND, TF_CMD_DIR]
     preconditions:
       - sh: 'which terraform'
         msg: '"terraform" needed - run "brew install terraform"'
@@ -143,4 +111,4 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "validate" }
+        vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.USER_WORKING_DIR}}" }
