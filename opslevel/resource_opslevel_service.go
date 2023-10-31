@@ -3,6 +3,7 @@ package opslevel
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -131,7 +132,24 @@ func validateServiceTags(i interface{}, k string) (warnings []string, errors []e
 
 func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
 	expectedAliases := getStringArray(d, "aliases")
+	sort.Strings(expectedAliases)
 	existingAliases := service.Aliases
+
+	// TODO: bandaid solution - upon a service's creation, a locked alias
+	// (called the slug) is added into the list of aliases. to get around
+	// this, if the differences in aliases are just 1, ignore them because
+	// that difference is just the slug which is immutable.
+	differences := 0
+	for _, existingAlias := range existingAliases {
+		if !stringInArray(existingAlias, expectedAliases) {
+			differences++
+		}
+	}
+	if differences == 1 {
+		log.Info().Msg("Ignoring 1 difference in aliases (slug)")
+		return nil
+	}
+
 	for _, existingAlias := range existingAliases {
 		if stringInArray(existingAlias, expectedAliases) {
 			continue

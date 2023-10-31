@@ -81,6 +81,7 @@ func resourceTeam() *schema.Resource {
 
 func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
 	expectedAliases := getStringArray(d, "aliases")
+	sort.Strings(expectedAliases)
 	existingAliases := team.Aliases
 	for _, existingAlias := range existingAliases {
 		if existingAlias == team.Alias {
