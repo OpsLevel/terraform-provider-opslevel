@@ -116,33 +116,45 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
-func collectMembersFromTeam(team *opslevel.Team) []string {
-	members := []string{}
+func collectMembersFromTeam(team *opslevel.Team) []map[string]interface{} {
+	members := []map[string]interface{}{}
 
 	for _, user := range team.Members.Nodes {
-		members = append(members, user.Email)
+		member := map[string]interface{}{"email": user.Email}
+		if user.Role != "" {
+			member["role"] = user.Role
+		}
+		members = append(members, member)
 	}
 	return members
 }
 
+func memberInArray(member map[string]interface{}, array []map[string]interface{}) bool {
+	for _, m := range array {
+		if m["email"] == member["email"] && m["role"] == member["role"] {
+			return true
+		}
+	}
+
+	return false
+}
+
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
+	expectedMembers := d.Get("member").([]map[string]interface{})
 	existingMembers := collectMembersFromTeam(team)
 
-	membersToRemove := []string{}
-	membersToAdd := []string{}
+	membersToRemove := []map[string]interface{}{}
+	membersToAdd := []map[string]interface{}{}
 
 	for _, existingMember := range existingMembers {
-		if stringInArray(existingMember, expectedMembers) {
+		if memberInArray(existingMember, expectedMembers) {
 			continue
 		}
-
 		membersToRemove = append(membersToRemove, existingMember)
 	}
 
 	for _, expectedMember := range expectedMembers {
-
-		if stringInArray(expectedMember, existingMembers) {
+		if memberInArray(expectedMember, existingMembers) {
 			continue
 		}
 		membersToAdd = append(membersToAdd, expectedMember)
