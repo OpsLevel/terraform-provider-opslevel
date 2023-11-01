@@ -62,12 +62,20 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"members": {
-				Type:        schema.TypeSet,
-				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				ForceNew:    false,
-				Optional:    true,
+			"member": {
+				Type: schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"email": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"role": {
+							Type:     schema.TypeString,
+							Required: false,
+						},
+					},
+				},
 			},
 			"parent": {
 				Type:        schema.TypeString,
