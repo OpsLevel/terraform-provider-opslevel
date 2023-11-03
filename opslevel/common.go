@@ -212,13 +212,16 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 	output := make([]opslevel.FilterPredicate, 0)
 	for _, item := range d.Get("predicate").([]interface{}) {
 		data := item.(map[string]interface{})
-		output = append(output, opslevel.FilterPredicate{
+		predicate := opslevel.FilterPredicate{
 			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
 			Value:         strings.TrimSpace(data["value"].(string)),
 			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
 			KeyData:       strings.TrimSpace(data["key_data"].(string)),
-			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
-		})
+		}
+		if caseSensitive, ok := d.GetOk("case_sensitive"); ok {
+			predicate.CaseSensitive = opslevel.Bool(caseSensitive.(bool))
+		}
+		output = append(output, predicate)
 	}
 	return output
 }
