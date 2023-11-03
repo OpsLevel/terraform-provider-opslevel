@@ -218,7 +218,7 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
 			KeyData:       strings.TrimSpace(data["key_data"].(string)),
 		}
-		if caseSensitive, ok := d.GetOk(case_sensitive); ok {
+		if caseSensitive, ok := d.GetOk("case_sensitive"); ok {
 			predicate.CaseSensitive = opslevel.Bool(caseSensitive.(bool))
 		}
 		output = append(output, predicate)
