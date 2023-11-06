@@ -137,7 +137,7 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 
-	if err := d.Set("aliases", resource.Aliases); err != nil {
+	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
 		return err
 	}
 	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
