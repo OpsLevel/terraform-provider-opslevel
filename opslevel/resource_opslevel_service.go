@@ -131,7 +131,7 @@ func validateServiceTags(i interface{}, k string) (warnings []string, errors []e
 
 func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
 	expectedAliases := getStringArray(d, "aliases")
-	existingAliases := service.Aliases
+	existingAliases := service.ManagedAliases
 	for _, existingAlias := range existingAliases {
 		if stringInArray(existingAlias, expectedAliases) {
 			continue
@@ -234,7 +234,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		}
 		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath.(string), source)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.ManagedAliases[0])
 		}
 	}
 
@@ -277,7 +277,7 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
-	if err := d.Set("aliases", resource.Aliases); err != nil {
+	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
 		return err
 	}
 	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
@@ -367,7 +367,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		}
 		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath, docSource)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.ManagedAliases[0])
 		}
 	}
 
