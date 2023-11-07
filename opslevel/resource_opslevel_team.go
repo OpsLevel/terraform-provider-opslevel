@@ -174,9 +174,6 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		ManagerEmail:     d.Get("manager_email").(string),
 		Responsibilities: d.Get("responsibilities").(string),
 	}
-	if group, ok := d.GetOk("group"); ok {
-		input.Group = opslevel.NewIdentifier(group.(string))
-	}
 	if parentTeam, ok := d.GetOk("parent"); ok {
 		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
 	}
@@ -282,13 +279,6 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	if d.HasChange("responsibilities") {
 		input.Responsibilities = d.Get("responsibilities").(string)
-	}
-	if d.HasChange("group") {
-		if group, ok := d.GetOk("group"); ok {
-			input.Group = opslevel.NewIdentifier(group.(string))
-		} else {
-			input.Group = nil
-		}
 	}
 	if d.HasChange("parent") {
 		if parentTeam, ok := d.GetOk("parent"); ok {

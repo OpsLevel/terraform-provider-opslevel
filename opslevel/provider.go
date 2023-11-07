@@ -84,7 +84,6 @@ func Provider() terraform.ResourceProvider {
 			"opslevel_check_tool_usage":            resourceCheckToolUsage(),
 			"opslevel_domain":                      resourceDomain(),
 			"opslevel_filter":                      resourceFilter(),
-			"opslevel_group":                       resourceGroup(),
 			"opslevel_infrastructure":              resourceInfrastructure(),
 			"opslevel_integration_aws":             resourceIntegrationAWS(),
 			"opslevel_repository":                  resourceRepository(),
