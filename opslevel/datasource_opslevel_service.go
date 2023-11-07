@@ -59,13 +59,13 @@ func datasourceService() *schema.Resource {
 			},
 			"owner_alias": {
 				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
+				Description: "The alias of the team that owns the service.",
 				Computed:    true,
 				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
 			},
 			"owner_id": {
 				Type:        schema.TypeString,
-				Description: "The team ID that owns the service.",
+				Description: "The id of the team that owns the service.",
 				Computed:    true,
 			},
 			"lifecycle_alias": {

@@ -72,7 +72,7 @@ func resourceService() *schema.Resource {
 			},
 			"owner_alias": {
 				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
+				Description: "The alias of the team that owns the service.",
 				ForceNew:    false,
 				Optional:    true,
 				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",

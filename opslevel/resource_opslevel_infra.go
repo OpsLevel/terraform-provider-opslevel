@@ -32,7 +32,7 @@ func resourceInfrastructure() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The team id of the owner for the infrastructure resource. Does not support aliases!",
+				Description: "The id of the team that owns the infrastructure resource. Does not support aliases!",
 				ForceNew:    false,
 				Optional:    true,
 			},

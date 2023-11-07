@@ -41,7 +41,7 @@ func resourceDomain() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The team id of the owner for the domain.",
+				Description: "The id of the team that owns the domain.",
 				ForceNew:    false,
 				Optional:    true,
 			},

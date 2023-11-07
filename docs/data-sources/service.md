@@ -40,7 +40,7 @@ data "opslevel_service" "bar" {
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `name` (String) The display name of the service.
 - `owner` (String) The team that owns the service.
-- `owner_id` (String) The team ID that owns the service.
+- `owner_id` (String) The id of the team that owns the service.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.

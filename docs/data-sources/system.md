@@ -32,6 +32,6 @@ data "opslevel_system" "example" {
 - `domain` (String) The id of the domain this system is child to.
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the system.
-- `owner` (String) The team id of the system owner.
+- `owner` (String) The id of the team that owns the system.
 
 

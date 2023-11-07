@@ -33,7 +33,7 @@ func datasourceDomain() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The team id of the domain owner.",
+				Description: "The id of the team that owns the domain.",
 				Computed:    true,
 			},
 		},
