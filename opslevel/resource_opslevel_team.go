@@ -55,13 +55,6 @@ func resourceTeam() *schema.Resource {
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"group": {
-				Type:        schema.TypeString,
-				Description: "The group this team belongs to. Only accepts group's Alias",
-				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
-				ForceNew:    false,
-				Optional:    true,
-			},
 			"members": {
 				Type:        schema.TypeSet,
 				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
@@ -223,11 +216,6 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
-	}
-	if _, ok := d.GetOk("group"); ok {
-		if err := d.Set("group", resource.Group.Alias); err != nil {
-			return err
-		}
 	}
 	if _, ok := d.GetOk("parent"); ok {
 		if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {

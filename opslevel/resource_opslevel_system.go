@@ -41,7 +41,7 @@ func resourceSystem() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The id of the owner for the system.  Can be a team or group",
+				Description: "The team id of the owner for the system.",
 				ForceNew:    false,
 				Optional:    true,
 			},
