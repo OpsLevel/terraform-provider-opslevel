@@ -89,7 +89,7 @@ func reconcileInfraAliases(d *schema.ResourceData, resource *opslevel.Infrastruc
 			continue
 		}
 		// Delete
-		err := client.DeleteServiceAlias(existingAlias)
+		err := client.DeleteInfraAlias(existingAlias)
 		if err != nil {
 			return err
 		}
