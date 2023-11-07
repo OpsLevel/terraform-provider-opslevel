@@ -234,7 +234,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		}
 		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath.(string), source)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.ManagedAliases[0])
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
 		}
 	}
 
@@ -338,9 +338,9 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 
 	if d.HasChange("aliases") {
-		tagsErr := reconcileServiceAliases(d, resource, client)
-		if tagsErr != nil {
-			return tagsErr
+		err = reconcileServiceAliases(d, resource, client)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -367,7 +367,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		}
 		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath, docSource)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.ManagedAliases[0])
+			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
 		}
 	}
 
