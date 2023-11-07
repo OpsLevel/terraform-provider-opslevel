@@ -41,7 +41,6 @@ output "team" {
 ### Optional
 
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically
-- `group` (String, Deprecated) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
 - `manager_email` (String) The email of the user who manages the team.
 - `members` (Set of String) List of user emails that belong to the team. This list must contain the 'manager_email' value.
