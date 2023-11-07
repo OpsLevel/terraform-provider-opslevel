@@ -121,18 +121,11 @@ func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) er
 
 func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	input := opslevel.ContactInput{}
-
-	if d.HasChange("type") {
-		input.Type = opslevel.ContactType(d.Get("type").(string))
+	input := opslevel.ContactInput{
+		Type:        opslevel.ContactType(d.Get("type").(string)),
+		DisplayName: opslevel.NewString(d.Get("name").(string)),
+		Address:     d.Get("value").(string),
 	}
-	if d.HasChange("name") {
-		input.DisplayName = opslevel.NewString(d.Get("name").(string))
-	}
-	if d.HasChange("value") {
-		input.Address = d.Get("value").(string)
-	}
-
 	_, err := client.UpdateContact(opslevel.ID(id), input)
 	if err != nil {
 		return err
