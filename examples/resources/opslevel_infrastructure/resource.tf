@@ -1,5 +1,5 @@
-data "opslevel_group" "foo" {
-  identifier = "foo"
+data "opslevel_team" "foo" {
+  alias = "foo"
 }
 
 // Minimum example
@@ -16,7 +16,7 @@ resource "opslevel_infrastructure" "example_1" {
 // Detailed example
 resource "opslevel_infrastructure" "example_2" {
   schema = "Database"
-  owner  = data.opslevel_group.foo.id
+  owner  = data.opslevel_team.foo.id
   provider_data {
     account = "dev"
     name    = "google cloud"
