@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"errors"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
 )
@@ -64,32 +66,7 @@ func resourceGroup() *schema.Resource {
 }
 
 func resourceGroupCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	members := []opslevel.MemberInput{}
-	for _, member := range getStringArray(d, "members") {
-		members = append(members, opslevel.MemberInput{Email: member})
-	}
-
-	teams := []opslevel.IdentifierInput{}
-	for _, team := range getStringArray(d, "teams") {
-		teams = append(teams, *opslevel.NewIdentifier(team))
-	}
-
-	input := opslevel.GroupInput{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Members:     &members,
-		Teams:       &teams,
-	}
-	if parent, ok := d.GetOk("parent"); ok {
-		input.Parent = opslevel.NewIdentifier(parent.(string))
-	}
-	resource, err := client.CreateGroup(input)
-	if err != nil {
-		return err
-	}
-	d.SetId(string(resource.Id))
-
-	return resourceGroupRead(d, client)
+	return errors.New("groups are deprecated - create and update are disabled.")
 }
 
 func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
@@ -135,45 +112,7 @@ func resourceGroupRead(d *schema.ResourceData, client *opslevel.Client) error {
 }
 
 func resourceGroupUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.GroupInput{}
-
-	members := []opslevel.MemberInput{}
-	for _, member := range getStringArray(d, "members") {
-		members = append(members, opslevel.MemberInput{Email: member})
-	}
-
-	teams := []opslevel.IdentifierInput{}
-	for _, team := range getStringArray(d, "teams") {
-		teams = append(teams, *opslevel.NewIdentifier(team))
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("description") {
-		input.Description = d.Get("description").(string)
-	}
-
-	if parent, ok := d.GetOk("parent"); ok {
-		input.Parent = opslevel.NewIdentifier(parent.(string))
-	} else {
-		input.Parent = nil
-	}
-
-	if d.HasChange("members") {
-		input.Members = &members
-	}
-	if d.HasChange("teams") {
-		input.Teams = &teams
-	}
-
-	_, err := client.UpdateGroup(d.Id(), input)
-	if err != nil {
-		return err
-	}
-
-	d.Set("last_updated", timeLastUpdated())
-	return resourceGroupRead(d, client)
+	return errors.New("groups are deprecated - create and update are disabled.")
 }
 
 func resourceGroupDelete(d *schema.ResourceData, client *opslevel.Client) error {
