@@ -62,17 +62,26 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"member": {
-				Type: schema.TypeSet,
+			"members": {
+				Type:     schema.TypeSet,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"email": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"role": {
-							Type:     schema.TypeString,
-							Required: false,
+						"member": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"email": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+									"role": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -135,44 +144,40 @@ func memberInArray(member map[string]interface{}, array []map[string]interface{}
 			return true
 		}
 	}
-
 	return false
 }
 
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := d.Get("member").([]map[string]interface{})
+	expectedMembers := d.Get("members").([]map[string]interface{})
 	existingMembers := collectMembersFromTeam(team)
 
 	membersToRemove := []map[string]interface{}{}
 	membersToAdd := []map[string]interface{}{}
 
 	for _, existingMember := range existingMembers {
-		if memberInArray(existingMember, expectedMembers) {
-			continue
+		if !memberInArray(existingMember, expectedMembers) {
+			membersToRemove = append(membersToRemove, existingMember)
 		}
-		membersToRemove = append(membersToRemove, existingMember)
 	}
-
 	for _, expectedMember := range expectedMembers {
-		if memberInArray(expectedMember, existingMembers) {
-			continue
+		if !memberInArray(expectedMember, existingMembers) {
+			membersToAdd = append(membersToAdd, expectedMember)
 		}
-		membersToAdd = append(membersToAdd, expectedMember)
 	}
 
-	if len(membersToAdd) != 0 {
+	if len(membersToRemove) > 0 {
+		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
+		if err != nil {
+			return err
+		}
+	}
+	if len(membersToAdd) > 0 {
 		_, err := client.AddMembers(&team.TeamId, membersToAdd)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(membersToRemove) != 0 {
-		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
