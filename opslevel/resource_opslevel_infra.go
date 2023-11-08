@@ -21,7 +21,8 @@ func resourceInfrastructure() *schema.Resource {
 			"aliases": {
 				Type:        schema.TypeList,
 				Description: "The aliases of the infrastructure resource.",
-				Computed:    true,
+				ForceNew:    false,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"schema": {
@@ -80,6 +81,33 @@ func resourceInfrastructure() *schema.Resource {
 	}
 }
 
+func reconcileInfraAliases(d *schema.ResourceData, resource *opslevel.InfrastructureResource, client *opslevel.Client) error {
+	expectedAliases := getStringArray(d, "aliases")
+	existingAliases := resource.Aliases
+	for _, existingAlias := range existingAliases {
+		if stringInArray(existingAlias, expectedAliases) {
+			continue
+		}
+		// Delete
+		err := client.DeleteInfraAlias(existingAlias)
+		if err != nil {
+			return err
+		}
+	}
+	for _, expectedAlias := range expectedAliases {
+		if stringInArray(expectedAlias, existingAliases) {
+			continue
+		}
+		// Add
+		id := opslevel.NewID(resource.Id)
+		_, err := client.CreateAliases(*id, []string{expectedAlias})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func flattenInfraProviderData(resource *opslevel.InfrastructureResource) []map[string]any {
 	return []map[string]any{{
 		"account": resource.ProviderData.AccountName,
@@ -114,6 +142,12 @@ func resourceInfrastructureCreate(d *schema.ResourceData, client *opslevel.Clien
 		return err
 	}
 	d.SetId(resource.Id)
+
+	err = reconcileInfraAliases(d, resource, client)
+	if err != nil {
+		return err
+	}
+
 	return resourceInfrastructureRead(d, client)
 }
 
@@ -147,7 +181,7 @@ func resourceInfrastructureRead(d *schema.ResourceData, client *opslevel.Client)
 func resourceInfrastructureUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	_, err := client.UpdateInfrastructure(id, opslevel.InfraInput{
+	resource, err := client.UpdateInfrastructure(id, opslevel.InfraInput{
 		Schema:   d.Get("schema").(string),
 		Owner:    opslevel.NewID(d.Get("owner").(string)),
 		Provider: expandInfraProviderData(d),
@@ -155,6 +189,13 @@ func resourceInfrastructureUpdate(d *schema.ResourceData, client *opslevel.Clien
 	})
 	if err != nil {
 		return err
+	}
+
+	if d.HasChange("aliases") {
+		err = reconcileInfraAliases(d, resource, client)
+		if err != nil {
+			return err
+		}
 	}
 
 	d.Set("last_updated", timeLastUpdated())
