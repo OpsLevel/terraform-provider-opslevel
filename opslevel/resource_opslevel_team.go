@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
+	"github.com/rs/zerolog/log"
 )
 
 func resourceTeam() *schema.Resource {
@@ -125,22 +126,24 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
-func collectMembersFromTeam(team *opslevel.Team) []map[string]interface{} {
-	members := []map[string]interface{}{}
+func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
+	members := []opslevel.TeamMembershipUserInput{}
 
 	for _, user := range team.Members.Nodes {
-		member := map[string]interface{}{"email": user.Email}
-		if user.Role != "" {
-			member["role"] = user.Role
+		member := opslevel.TeamMembershipUserInput{
+			User: opslevel.UserIdentifierInput{
+				Email: user.Email,
+			},
+			// Role: &user.Role,
 		}
 		members = append(members, member)
 	}
 	return members
 }
 
-func memberInArray(member map[string]interface{}, array []map[string]interface{}) bool {
+func memberInArray(member opslevel.TeamMembershipUserInput, array []opslevel.TeamMembershipUserInput) bool {
 	for _, m := range array {
-		if m["email"] == member["email"] && m["role"] == member["role"] {
+		if m.User.Email == member.User.Email && m.Role == member.Role {
 			return true
 		}
 	}
@@ -148,35 +151,68 @@ func memberInArray(member map[string]interface{}, array []map[string]interface{}
 }
 
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := d.Get("members").([]map[string]interface{})
-	existingMembers := collectMembersFromTeam(team)
+	membersMap, ok := d.GetOk("members")
+	if ok {
+		membersSet := membersMap.(*schema.Set).List()
 
-	membersToRemove := []map[string]interface{}{}
-	membersToAdd := []map[string]interface{}{}
+		for _, m := range membersSet {
+			log.Info().Msgf("(BEFORE) m=%v", m)
 
-	for _, existingMember := range existingMembers {
-		if !memberInArray(existingMember, expectedMembers) {
-			membersToRemove = append(membersToRemove, existingMember)
-		}
-	}
-	for _, expectedMember := range expectedMembers {
-		if !memberInArray(expectedMember, existingMembers) {
-			membersToAdd = append(membersToAdd, expectedMember)
+			m2 := m.(map[string]interface{})
+			log.Info().Msgf("(BEFORE) m2=%v", m)
+
+			for _, mm := range m2["member"].([]interface{}) {
+				if member, ok := mm.(map[string]interface{}); ok {
+					log.Info().Msgf("(MEMBER) email=%v role=%v", member["email"], member["role"])
+				}
+			}
 		}
 	}
 
-	if len(membersToRemove) > 0 {
-		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
-		if err != nil {
-			return err
-		}
-	}
-	if len(membersToAdd) > 0 {
-		_, err := client.AddMembers(&team.TeamId, membersToAdd)
-		if err != nil {
-			return err
-		}
-	}
+	// expectedMembers := []opslevel.TeamMembershipUserInput{}
+	// if rawMembers, ok := d.GetOk("members"); ok {
+	// 	// rawMembers = *schema.Set
+	// 	rawMembersSet := rawMembers.(*schema.Set)
+	// 	fmt.Println(rawMembersSet)
+	// 	for _, rawMemberSetItem := range rawMembersSet.List() {
+	// 		fmt.Println(rawMemberSetItem)
+	// 		rawMember := rawMemberSetItem.(map[string]interface{})
+	// 		member := opslevel.TeamMembershipUserInput{
+	// 			User: opslevel.UserIdentifierInput{
+	// 				Email: rawMember["email"].(string),
+	// 			},
+	// 		}
+	// 		if roleStr, ok := rawMember["role"].(*opslevel.UserRole); ok {
+	// 			member.Role = roleStr
+	// 		}
+	// 	}
+	// }
+	// existingMembers := collectMembersFromTeam(team)
+
+	// membersToRemove := []opslevel.TeamMembershipUserInput{}
+	// membersToAdd := []opslevel.TeamMembershipUserInput{}
+
+	// for _, existingMember := range existingMembers {
+	// 	if !memberInArray(existingMember, expectedMembers) {
+	// 		membersToRemove = append(membersToRemove, existingMember)
+	// 	}
+	// }
+	// for _, expectedMember := range expectedMembers {
+	// 	if !memberInArray(expectedMember, existingMembers) {
+	// 		membersToAdd = append(membersToAdd, expectedMember)
+	// 	}
+	// }
+
+	// if len(membersToRemove) > 0 {
+	// 	if _, err := client.RemoveMemberships(&team.TeamId, membersToRemove...); err != nil {
+	// 		return err
+	// 	}
+	// }
+	// if len(membersToAdd) > 0 {
+	// 	if _, err := client.AddMemberships(&team.TeamId, membersToAdd...); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
