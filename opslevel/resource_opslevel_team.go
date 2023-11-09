@@ -69,14 +69,11 @@ func resourceTeam() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"email": {
-							Type: schema.TypeString,
-							// TODO: does this require a description?
+							Type:     schema.TypeString,
 							Required: true,
 						},
 						"role": {
-							Type: schema.TypeString,
-							// TODO: does this require a description?
-							// TODO: should this be required? Does API default it to 'contributor'?
+							Type:     schema.TypeString,
 							Required: true,
 						},
 					},
@@ -176,7 +173,7 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 	}
 
 	for _, expectedMember := range expectedMembers {
-		if memberInArray(expectedMember, expectedMembers) {
+		if memberInArray(expectedMember, existingMembers) {
 			continue
 		}
 		membersToAdd = append(membersToAdd, expectedMember)
