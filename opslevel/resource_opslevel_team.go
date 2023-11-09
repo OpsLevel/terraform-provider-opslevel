@@ -63,12 +63,14 @@ func resourceTeam() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"email": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Description: "The email address or ID of the user to add to a team.",
+							Required:    true,
 						},
 						"role": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Description: "The type of relationship this membership implies.",
+							Required:    true,
 						},
 					},
 				},
