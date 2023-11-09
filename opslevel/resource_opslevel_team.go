@@ -121,10 +121,10 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
 	members := []opslevel.TeamMembershipUserInput{}
 
-	for _, user := range team.Members.Nodes {
+	for _, user := range team.Memberships.Nodes {
 		member := opslevel.TeamMembershipUserInput{
 			User: opslevel.UserIdentifierInput{
-				Email: user.Email,
+				Email: user.User.Email,
 			},
 			Role: string(user.Role),
 		}
