@@ -64,7 +64,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"member": {
 				Type:        schema.TypeList,
-				Description: "List of members in the team with email address and role. At least one member with role 'manager' matching 'manager_email' must be present.",
+				Description: "List of members in the team with email address and role. A member with role 'manager' and email matching 'manager_email' must be present.",
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
