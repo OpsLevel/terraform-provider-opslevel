@@ -36,12 +36,6 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
-			"manager_email": {
-				Type:        schema.TypeString,
-				Description: "The email of the user who manages the team.",
-				ForceNew:    false,
-				Optional:    true,
-			},
 			"responsibilities": {
 				Type:        schema.TypeString,
 				Description: "A description of what the team is responsible for.",
@@ -64,7 +58,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"member": {
 				Type:        schema.TypeList,
-				Description: "List of members in the team with email address and role. A member with role 'manager' and email matching 'manager_email' must be present.",
+				Description: "List of members in the team with email address and role.",
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -199,7 +193,6 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
-		ManagerEmail:     d.Get("manager_email").(string),
 		Responsibilities: d.Get("responsibilities").(string),
 	}
 	if _, ok := d.GetOk("group"); ok {
@@ -240,9 +233,6 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if err := d.Set("name", resource.Name); err != nil {
-		return err
-	}
-	if err := d.Set("manager_email", resource.Manager.Email); err != nil {
 		return err
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
@@ -301,9 +291,6 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 	if d.HasChange("name") {
 		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("manager_email") {
-		input.ManagerEmail = d.Get("manager_email").(string)
 	}
 	if d.HasChange("responsibilities") {
 		input.Responsibilities = d.Get("responsibilities").(string)
