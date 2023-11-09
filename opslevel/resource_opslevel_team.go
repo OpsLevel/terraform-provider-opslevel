@@ -63,9 +63,8 @@ func resourceTeam() *schema.Resource {
 				Optional:    true,
 			},
 			"member": {
-				Type: schema.TypeList,
-				// TODO: enforce this restriction.
-				Description: "List of members in the team with email address and role. At least one member with role 'manager' must be present.",
+				Type:        schema.TypeList,
+				Description: "List of members in the team with email address and role. At least one member with role 'manager' matching 'manager_email' must be present.",
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -200,18 +199,6 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 	return nil
 }
 
-func validateMembershipState(d *schema.ResourceData) error {
-	if membersSet, ok := d.GetOk("members"); ok {
-		if managerEmail, ok := d.GetOk("manager_email"); ok {
-			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
-			if !stringInArray(managerEmail.(string), memberEmails) {
-				return errors.New("The 'manager_email' value is required as a member")
-			}
-		}
-	}
-	return nil
-}
-
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
@@ -225,11 +212,6 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
 	}
 
-	membershipValidationErr := validateMembershipState(d)
-	if membershipValidationErr != nil {
-		return membershipValidationErr
-	}
-
 	resource, err := client.CreateTeam(input)
 	if err != nil {
 		return err
@@ -239,11 +221,6 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	aliasesErr := reconcileTeamAliases(d, resource, client)
 	if aliasesErr != nil {
 		return aliasesErr
-	}
-
-	err = reconcileTeamMembership(d, resource, client)
-	if err != nil {
-		return membershipsErr
 	}
 
 	membersErr := reconcileTeamMembership(d, resource, client)
@@ -301,6 +278,21 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
+	if _, ok := d.GetOk("member"); ok {
+		members := collectMembersFromTeam(resource)
+		memberOutput := []map[string]interface{}{}
+		for _, m := range members {
+			mOutput := make(map[string]interface{})
+			mOutput["email"] = m.User.Email
+			mOutput["role"] = m.Role
+			memberOutput = append(memberOutput, mOutput)
+		}
+
+		if err := d.Set("member", memberOutput); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -308,11 +300,6 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	input := opslevel.TeamUpdateInput{
 		Id: opslevel.ID(id),
-	}
-
-	membershipValidationErr := validateMembershipState(d)
-	if membershipValidationErr != nil {
-		return membershipValidationErr
 	}
 
 	if d.HasChange("name") {
@@ -347,8 +334,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	if d.HasChange("members") {
-		// TODO: update this...
+	if d.HasChange("member") {
 		membersErr := reconcileTeamMembership(d, resource, client)
 		if membersErr != nil {
 			return membersErr
