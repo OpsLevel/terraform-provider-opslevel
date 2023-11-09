@@ -175,15 +175,18 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 		membersToAdd = append(membersToAdd, expectedMember)
 	}
 
-	if len(membersToAdd) != 0 {
-		_, err := client.AddMemberships(&team.TeamId, membersToAdd...)
+	// warning: must remove memberships before adding them.
+	// this prevents a bug where the role of a user changes
+	// but the user isn't added back and disappears.
+	if len(membersToRemove) != 0 {
+		_, err := client.RemoveMemberships(&team.TeamId, membersToRemove...)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(membersToRemove) != 0 {
-		_, err := client.RemoveMemberships(&team.TeamId, membersToRemove...)
+	if len(membersToAdd) != 0 {
+		_, err := client.AddMemberships(&team.TeamId, membersToAdd...)
 		if err != nil {
 			return err
 		}
