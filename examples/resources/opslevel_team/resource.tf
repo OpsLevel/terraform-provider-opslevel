@@ -4,11 +4,18 @@ data "opslevel_team" "parent" {
 
 resource "opslevel_team" "example" {
   name             = "foo"
-  manager_email    = "john.doe@example.com"
-  members          = ["john.doe@example.com", "jane.doe@example.com"]
   responsibilities = "Responsible for foo frontend and backend"
   aliases          = ["bar", "baz"]
   parent           = data.opslevel_team.parent.id
+
+  member {
+    email = "john.doe@example.com"
+    role = "manager"
+  }
+  member {
+    email = "jane.doe@example.com"
+    role = "contributor"
+  }
 }
 
 output "team" {

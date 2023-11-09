@@ -14,9 +14,13 @@ data "opslevel_tier" "tier3" {
 
 resource "opslevel_team" "foo" {
   name             = "foo"
-  manager_email    = "john.doe@example.com"
   responsibilities = "Responsible for foo frontend and backend"
   aliases          = ["bar", "baz"]
+
+  member {
+    email = "john.doe@example.com"
+    role = "manager"
+  }
 }
 
 resource "opslevel_service" "foo" {

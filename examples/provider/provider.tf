@@ -4,8 +4,12 @@ provider "opslevel" {
 
 resource "opslevel_team" "foo" {
   name             = "foo"
-  manager_email    = "foo@example.com"
   responsibilities = "Responsible for foo frontend and backend"
+
+  member {
+    email = "foo@example.com"
+    role = "manager"
+  }
 }
 
 resource "opslevel_service" "foo-frontend" {
