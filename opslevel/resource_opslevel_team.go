@@ -36,12 +36,6 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 			},
-			"manager_email": {
-				Type:        schema.TypeString,
-				Description: "The email of the user who manages the team.",
-				ForceNew:    false,
-				Optional:    true,
-			},
 			"responsibilities": {
 				Type:        schema.TypeString,
 				Description: "A description of what the team is responsible for.",
@@ -62,12 +56,24 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"members": {
-				Type:        schema.TypeSet,
-				Description: "List of user emails that belong to the team. This list must contain the 'manager_email' value.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				ForceNew:    false,
+			"member": {
+				Type:        schema.TypeList,
+				Description: "List of members in the team with email address and role.",
 				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"email": {
+							Type:        schema.TypeString,
+							Description: "The email address or ID of the user to add to a team.",
+							Required:    true,
+						},
+						"role": {
+							Type:        schema.TypeString,
+							Description: "The type of relationship this membership implies.",
+							Required:    true,
+						},
+					},
+				},
 			},
 			"parent": {
 				Type:        schema.TypeString,
@@ -108,24 +114,54 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
-func collectMembersFromTeam(team *opslevel.Team) []string {
-	members := []string{}
+func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
+	members := []opslevel.TeamMembershipUserInput{}
 
-	for _, user := range team.Members.Nodes {
-		members = append(members, user.Email)
+	for _, user := range team.Memberships.Nodes {
+		member := opslevel.TeamMembershipUserInput{
+			User: opslevel.UserIdentifierInput{
+				Email: user.User.Email,
+			},
+			Role: string(user.Role),
+		}
+		members = append(members, member)
 	}
 	return members
 }
 
+func memberInArray(member opslevel.TeamMembershipUserInput, array []opslevel.TeamMembershipUserInput) bool {
+	for _, m := range array {
+		if m.User.Email == member.User.Email && m.Role == member.Role {
+			return true
+		}
+	}
+	return false
+}
+
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := expandStringArray(d.Get("members").(*schema.Set).List())
+	expectedMembers := []opslevel.TeamMembershipUserInput{}
 	existingMembers := collectMembersFromTeam(team)
 
-	membersToRemove := []string{}
-	membersToAdd := []string{}
+	if members, ok := d.GetOk("member"); ok {
+		membersInput := members.([]interface{})
+
+		for _, m := range membersInput {
+			memberInput := m.(map[string]interface{})
+			member := opslevel.TeamMembershipUserInput{
+				User: opslevel.UserIdentifierInput{
+					Email: memberInput["email"].(string),
+				},
+				Role: memberInput["role"].(string),
+			}
+			expectedMembers = append(expectedMembers, member)
+		}
+	}
+
+	membersToRemove := []opslevel.TeamMembershipUserInput{}
+	membersToAdd := []opslevel.TeamMembershipUserInput{}
 
 	for _, existingMember := range existingMembers {
-		if stringInArray(existingMember, expectedMembers) {
+		if memberInArray(existingMember, expectedMembers) {
 			continue
 		}
 
@@ -133,45 +169,35 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 	}
 
 	for _, expectedMember := range expectedMembers {
-
-		if stringInArray(expectedMember, existingMembers) {
+		if memberInArray(expectedMember, existingMembers) {
 			continue
 		}
 		membersToAdd = append(membersToAdd, expectedMember)
 	}
 
-	if len(membersToAdd) != 0 {
-		_, err := client.AddMembers(&team.TeamId, membersToAdd)
-		if err != nil {
-			return err
-		}
-	}
-
+	// warning: must remove memberships before adding them.
+	// this prevents a bug where the role of a user changes
+	// but the user isn't added back and disappears.
 	if len(membersToRemove) != 0 {
-		_, err := client.RemoveMembers(&team.TeamId, membersToRemove)
+		_, err := client.RemoveMemberships(&team.TeamId, membersToRemove...)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
 
-func validateMembershipState(d *schema.ResourceData) error {
-	if membersSet, ok := d.GetOk("members"); ok {
-		if managerEmail, ok := d.GetOk("manager_email"); ok {
-			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
-			if !stringInArray(managerEmail.(string), memberEmails) {
-				return errors.New("The 'manager_email' value is required as a member")
-			}
+	if len(membersToAdd) != 0 {
+		_, err := client.AddMemberships(&team.TeamId, membersToAdd...)
+		if err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
-		ManagerEmail:     d.Get("manager_email").(string),
 		Responsibilities: d.Get("responsibilities").(string),
 	}
 	if _, ok := d.GetOk("group"); ok {
@@ -179,11 +205,6 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 	if parentTeam, ok := d.GetOk("parent"); ok {
 		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
-	}
-
-	membershipValidationErr := validateMembershipState(d)
-	if membershipValidationErr != nil {
-		return membershipValidationErr
 	}
 
 	resource, err := client.CreateTeam(input)
@@ -197,11 +218,9 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 		return aliasesErr
 	}
 
-	if _, ok := d.GetOk("members"); ok {
-		membersErr := reconcileTeamMembership(d, resource, client)
-		if membersErr != nil {
-			return membersErr
-		}
+	membersErr := reconcileTeamMembership(d, resource, client)
+	if membersErr != nil {
+		return membersErr
 	}
 
 	return resourceTeamRead(d, client)
@@ -219,9 +238,6 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if err := d.Set("name", resource.Name); err != nil {
-		return err
-	}
-	if err := d.Set("manager_email", resource.Manager.Email); err != nil {
 		return err
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
@@ -254,8 +270,17 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	if _, ok := d.GetOk("members"); ok {
-		if err := d.Set("members", collectMembersFromTeam(resource)); err != nil {
+	if _, ok := d.GetOk("member"); ok {
+		members := collectMembersFromTeam(resource)
+		memberOutput := []map[string]interface{}{}
+		for _, m := range members {
+			mOutput := make(map[string]interface{})
+			mOutput["email"] = m.User.Email
+			mOutput["role"] = m.Role
+			memberOutput = append(memberOutput, mOutput)
+		}
+
+		if err := d.Set("member", memberOutput); err != nil {
 			return err
 		}
 	}
@@ -269,16 +294,8 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		Id: opslevel.ID(id),
 	}
 
-	membershipValidationErr := validateMembershipState(d)
-	if membershipValidationErr != nil {
-		return membershipValidationErr
-	}
-
 	if d.HasChange("name") {
 		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("manager_email") {
-		input.ManagerEmail = d.Get("manager_email").(string)
 	}
 	if d.HasChange("responsibilities") {
 		input.Responsibilities = d.Get("responsibilities").(string)
@@ -306,7 +323,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	if d.HasChange("members") {
+	if d.HasChange("member") {
 		membersErr := reconcileTeamMembership(d, resource, client)
 		if membersErr != nil {
 			return membersErr

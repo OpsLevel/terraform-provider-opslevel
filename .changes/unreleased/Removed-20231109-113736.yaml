@@ -1,0 +1,3 @@
+kind: Removed
+body: Remove out of date 'manager_email' field on resource 'opslevel_team'
+time: 2023-11-09T11:37:36.282205-05:00
