@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 )
 
 func resourceTeam() *schema.Resource {
@@ -64,17 +63,21 @@ func resourceTeam() *schema.Resource {
 				Optional:    true,
 			},
 			"member": {
-				Type:        schema.TypeList,
+				Type: schema.TypeList,
+				// TODO: enforce this restriction.
 				Description: "List of members in the team with email address and role. At least one member with role 'manager' must be present.",
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"email": {
-							Type:     schema.TypeString,
+							Type: schema.TypeString,
+							// TODO: does this require a description?
 							Required: true,
 						},
 						"role": {
-							Type:     schema.TypeString,
+							Type: schema.TypeString,
+							// TODO: does this require a description?
+							// TODO: should this be required? Does API default it to 'contributor'?
 							Required: true,
 						},
 					},
@@ -119,21 +122,24 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 	return nil
 }
 
-func collectMembersFromTeam(team *opslevel.Team) []map[string]interface{} {
-	members := []map[string]interface{}{}
+func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
+	members := []opslevel.TeamMembershipUserInput{}
 
 	for _, user := range team.Members.Nodes {
-		member := make(map[string]interface{})
-		member["email"] = user.Email
-		member["role"] = string(user.Role)
+		member := opslevel.TeamMembershipUserInput{
+			User: opslevel.UserIdentifierInput{
+				Email: user.Email,
+			},
+			Role: string(user.Role),
+		}
 		members = append(members, member)
 	}
 	return members
 }
 
-func memberInArray(member map[string]interface{}, array []map[string]interface{}) bool {
+func memberInArray(member opslevel.TeamMembershipUserInput, array []opslevel.TeamMembershipUserInput) bool {
 	for _, m := range array {
-		if m["email"] == member["email"] && m["role"] == member["role"] {
+		if m.User.Email == member.User.Email && m.Role == member.Role {
 			return true
 		}
 	}
@@ -141,16 +147,53 @@ func memberInArray(member map[string]interface{}, array []map[string]interface{}
 }
 
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	log.Info().Msg("(hello world) getting started")
-
-	var expectedMembers []interface{}
+	expectedMembers := []opslevel.TeamMembershipUserInput{}
+	existingMembers := collectMembersFromTeam(team)
 
 	if members, ok := d.GetOk("member"); ok {
-		expectedMembers = members.([]interface{})
+		membersInput := members.([]interface{})
 
-		for _, m := range expectedMembers {
-			member := m.(map[string]interface{})
-			log.Info().Msgf("(read member) email=%v role=%v", m["email"], m["role"])
+		for _, m := range membersInput {
+			memberInput := m.(map[string]interface{})
+			member := opslevel.TeamMembershipUserInput{
+				User: opslevel.UserIdentifierInput{
+					Email: memberInput["email"].(string),
+				},
+				Role: memberInput["role"].(string),
+			}
+			expectedMembers = append(expectedMembers, member)
+		}
+	}
+
+	membersToRemove := []opslevel.TeamMembershipUserInput{}
+	membersToAdd := []opslevel.TeamMembershipUserInput{}
+
+	for _, existingMember := range existingMembers {
+		if memberInArray(existingMember, expectedMembers) {
+			continue
+		}
+
+		membersToRemove = append(membersToRemove, existingMember)
+	}
+
+	for _, expectedMember := range expectedMembers {
+		if memberInArray(expectedMember, expectedMembers) {
+			continue
+		}
+		membersToAdd = append(membersToAdd, expectedMember)
+	}
+
+	if len(membersToAdd) != 0 {
+		_, err := client.AddMemberships(&team.TeamId, membersToAdd...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(membersToRemove) != 0 {
+		_, err := client.RemoveMemberships(&team.TeamId, membersToRemove...)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -158,7 +201,6 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 }
 
 func validateMembershipState(d *schema.ResourceData) error {
-	// TODO: what to do here?
 	if membersSet, ok := d.GetOk("members"); ok {
 		if managerEmail, ok := d.GetOk("manager_email"); ok {
 			memberEmails := expandStringArray(membersSet.(*schema.Set).List())
@@ -197,6 +239,11 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	aliasesErr := reconcileTeamAliases(d, resource, client)
 	if aliasesErr != nil {
 		return aliasesErr
+	}
+
+	err = reconcileTeamMembership(d, resource, client)
+	if err != nil {
+		return membershipsErr
 	}
 
 	membersErr := reconcileTeamMembership(d, resource, client)
