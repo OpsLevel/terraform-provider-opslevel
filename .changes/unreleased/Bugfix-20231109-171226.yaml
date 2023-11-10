@@ -1,4 +1,3 @@
 kind: Bugfix
-body: Fix bug where creating/updating a system without specifying 'owner'/'parent'
-  would throw an ID related error
+body: Fix bug where a system's owner cannot be unset on update
 time: 2023-11-09T17:12:26.987375-05:00
