@@ -89,7 +89,7 @@ func datasourceScorecardsRead(d *schema.ResourceData, client *opslevel.Client) e
 		}
 		ids[i] = string(item.Id)
 		names[i] = item.Name
-		ownerIds[i] = string(item.Owner.Id())
+		ownerIds[i] = string(item.Owner.Id)
 		descriptions[i] = item.Description
 		filterIds[i] = string(item.Filter.Id)
 		passingChecks[i] = item.PassingChecks
