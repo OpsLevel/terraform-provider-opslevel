@@ -3,6 +3,7 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
+	"github.com/rs/zerolog/log"
 )
 
 func resourceSystem() *schema.Resource {
@@ -114,28 +115,33 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	input := opslevel.SystemInput{}
-
-	if d.HasChange("name") {
-		input.Name = GetString(d, "name")
-	}
-	if d.HasChange("description") {
-		input.Description = GetString(d, "description")
-	}
-	if d.HasChange("owner") {
-		if owner, ok := d.GetOk("owner"); ok {
-			input.Owner = opslevel.NewID(owner.(string))
-		}
-	}
-	if d.HasChange("domain") {
-		if domain, ok := d.GetOk("domain"); ok {
-			input.Parent = opslevel.NewIdentifier(domain.(string))
-		}
-	}
-	if d.HasChange("note") {
-		input.Note = GetString(d, "note")
+	input := opslevel.SystemInput{
+		Name:        GetString(d, "name"),
+		Description: GetString(d, "description"),
+		Note:        GetString(d, "note"),
+		Owner:       opslevel.NewID(d.Get("owner").(string)),
 	}
 
+	// there's also useridentifier input
+	// it's very unusual for us to use omitempty on a non-pointer
+
+	// Owner is *ID, ID=string
+	// if *ID == null, omitempty will exclude on JSON marshal
+	// if *ID == "", omitempty will include an empty string
+	// if *ID == string that's not empty, omitempty will include the non-empty string
+
+	// Owner ID, ID=string
+	// if ID == "", omitempty will exclude on JSON marshal
+	// if ID is a non empty string, omitempty will leave it alone
+
+	// if _, ok := d.GetOk("owner"); ok {
+	// 	input.Owner = opslevel.NewID(*GetString(d, "owner"))
+	// }
+	if domain, ok := d.GetOk("domain"); ok {
+		input.Parent = opslevel.NewIdentifier(domain.(string))
+	}
+
+	log.Info().Msgf("(update value owner and domain) %v and %v", input.Owner, input.Parent)
 	_, err := client.UpdateSystem(id, input)
 	if err != nil {
 		return err
