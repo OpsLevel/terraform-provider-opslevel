@@ -47,7 +47,7 @@ func resourceSystem() *schema.Resource {
 			},
 			"domain": {
 				Type:        schema.TypeString,
-				Description: "The id or alias of the domain this system is a child for.",
+				Description: "The id or alias of the parent domain this system is a child for.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -62,13 +62,19 @@ func resourceSystem() *schema.Resource {
 }
 
 func resourceSystemCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	resource, err := client.CreateSystem(opslevel.SystemInput{
+	input := opslevel.SystemInput{
 		Name:        GetString(d, "name"),
 		Description: GetString(d, "description"),
-		Owner:       opslevel.NewID(d.Get("owner").(string)),
-		Parent:      opslevel.NewIdentifier(d.Get("domain").(string)),
 		Note:        GetString(d, "note"),
-	})
+	}
+	if owner, ok := d.GetOk("owner"); ok {
+		input.Owner = opslevel.NewID(owner.(string))
+	}
+	if domain, ok := d.GetOk("domain"); ok {
+		input.Parent = opslevel.NewIdentifier(domain.(string))
+	}
+
+	resource, err := client.CreateSystem(input)
 	if err != nil {
 		return err
 	}
@@ -108,22 +114,16 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	input := opslevel.SystemInput{}
+	input := opslevel.SystemInput{
+		Name:        GetString(d, "name"),
+		Description: GetString(d, "description"),
+		Note:        GetString(d, "note"),
+		Owner:       opslevel.NewID(d.Get("owner").(string)), // this can be unset and changed, if we do not use GetOk()
+	}
 
-	if d.HasChange("name") {
-		input.Name = GetString(d, "name")
-	}
-	if d.HasChange("description") {
-		input.Description = GetString(d, "description")
-	}
-	if d.HasChange("owner") {
-		input.Owner = opslevel.NewID(d.Get("owner").(string))
-	}
-	if d.HasChange("domain") {
-		input.Parent = opslevel.NewIdentifier(d.Get("domain").(string))
-	}
-	if d.HasChange("note") {
-		input.Note = GetString(d, "note")
+	// TODO: fix bug where this cannot be unset, only changed
+	if domain, ok := d.GetOk("domain"); ok {
+		input.Parent = opslevel.NewIdentifier(domain.(string))
 	}
 
 	_, err := client.UpdateSystem(id, input)
