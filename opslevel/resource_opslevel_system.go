@@ -3,7 +3,6 @@ package opslevel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 )
 
 func resourceSystem() *schema.Resource {
@@ -119,29 +118,14 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		Name:        GetString(d, "name"),
 		Description: GetString(d, "description"),
 		Note:        GetString(d, "note"),
-		Owner:       opslevel.NewID(d.Get("owner").(string)),
+		Owner:       opslevel.NewID(d.Get("owner").(string)), // this can be unset and changed, if we do not use GetOk()
 	}
 
-	// there's also useridentifier input
-	// it's very unusual for us to use omitempty on a non-pointer
-
-	// Owner is *ID, ID=string
-	// if *ID == null, omitempty will exclude on JSON marshal
-	// if *ID == "", omitempty will include an empty string
-	// if *ID == string that's not empty, omitempty will include the non-empty string
-
-	// Owner ID, ID=string
-	// if ID == "", omitempty will exclude on JSON marshal
-	// if ID is a non empty string, omitempty will leave it alone
-
-	// if _, ok := d.GetOk("owner"); ok {
-	// 	input.Owner = opslevel.NewID(*GetString(d, "owner"))
-	// }
+	// TODO: fix bug where this cannot be unset, only changed
 	if domain, ok := d.GetOk("domain"); ok {
 		input.Parent = opslevel.NewIdentifier(domain.(string))
 	}
 
-	log.Info().Msgf("(update value owner and domain) %v and %v", input.Owner, input.Parent)
 	_, err := client.UpdateSystem(id, input)
 	if err != nil {
 		return err
