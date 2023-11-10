@@ -165,7 +165,7 @@ func resourceInfrastructureRead(d *schema.ResourceData, client *opslevel.Client)
 	if err := d.Set("aliases", resource.Aliases); err != nil {
 		return err
 	}
-	if err := d.Set("owner", resource.Owner.Id()); err != nil {
+	if err := d.Set("owner", resource.Owner.Id); err != nil {
 		return err
 	}
 	if err := d.Set("provider_data", flattenInfraProviderData(resource)); err != nil {

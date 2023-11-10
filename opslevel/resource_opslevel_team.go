@@ -119,9 +119,7 @@ func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserIn
 
 	for _, user := range team.Memberships.Nodes {
 		member := opslevel.TeamMembershipUserInput{
-			User: opslevel.UserIdentifierInput{
-				Email: user.User.Email,
-			},
+			User: opslevel.NewUserIdentifier(user.User.Email),
 			Role: string(user.Role),
 		}
 		members = append(members, member)
@@ -148,9 +146,7 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 		for _, m := range membersInput {
 			memberInput := m.(map[string]interface{})
 			member := opslevel.TeamMembershipUserInput{
-				User: opslevel.UserIdentifierInput{
-					Email: memberInput["email"].(string),
-				},
+				User: opslevel.NewUserIdentifier(memberInput["email"].(string)),
 				Role: memberInput["role"].(string),
 			}
 			expectedMembers = append(expectedMembers, member)

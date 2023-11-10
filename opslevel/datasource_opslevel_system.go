@@ -56,7 +56,7 @@ func datasourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error
 	d.Set("aliases", resource.Aliases)
 	d.Set("name", resource.Name)
 	d.Set("description", resource.Description)
-	d.Set("owner", resource.Owner.Id())
+	d.Set("owner", resource.Owner.Id)
 	d.Set("domain", resource.Parent.Id)
 
 	return nil
