@@ -99,7 +99,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("description", resource.Description); err != nil {
 		return err
 	}
-	if err := d.Set("owner", resource.Owner.Id); err != nil {
+	if err := d.Set("owner", resource.Owner.Id()); err != nil {
 		return err
 	}
 	if err := d.Set("domain", resource.Parent.Id); err != nil {

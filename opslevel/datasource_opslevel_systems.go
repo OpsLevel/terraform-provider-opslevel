@@ -63,7 +63,7 @@ func datasourceSystemsRead(d *schema.ResourceData, client *opslevel.Client) erro
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 		descriptions[i] = item.Description
-		owners[i] = string(item.Owner.Id)
+		owners[i] = string(item.Owner.Id())
 		domains[i] = string(item.Parent.Id)
 	}
 
