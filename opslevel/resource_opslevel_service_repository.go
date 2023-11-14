@@ -74,8 +74,8 @@ func resourceServiceRepositoryCreate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	input := opslevel.ServiceRepositoryCreateInput{
-		Service:    opslevel.IdentifierInput{Id: service.Id},
-		Repository: opslevel.IdentifierInput{Id: repository.Id},
+		Service:    *opslevel.NewIdentifier(string(service.Id)),
+		Repository: *opslevel.NewIdentifier(string(repository.Id)),
 
 		DisplayName:   d.Get("name").(string),
 		BaseDirectory: d.Get("base_directory").(string),
