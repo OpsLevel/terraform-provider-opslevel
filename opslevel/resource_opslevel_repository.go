@@ -61,7 +61,6 @@ func resourceRepositoryCreate(d *schema.ResourceData, client *opslevel.Client) e
 
 func resourceRepositoryRead(d *schema.ResourceData, client *opslevel.Client) error {
 	repository, err := client.GetRepository(*opslevel.NewID(d.Id()))
-
 	if err != nil {
 		return err
 	}

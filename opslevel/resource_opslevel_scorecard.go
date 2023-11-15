@@ -121,7 +121,7 @@ func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) erro
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
-	if err := d.Set("owner_id", resource.Owner.Id); err != nil {
+	if err := d.Set("owner_id", resource.Owner.Id()); err != nil {
 		return err
 	}
 	if err := d.Set("passing_checks", resource.PassingChecks); err != nil {
