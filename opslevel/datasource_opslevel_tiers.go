@@ -35,7 +35,6 @@ func datasourceTiers() *schema.Resource {
 }
 
 func datasourceTiersRead(d *schema.ResourceData, client *opslevel.Client) error {
-
 	result, err := client.ListTiers()
 	if err != nil {
 		return err

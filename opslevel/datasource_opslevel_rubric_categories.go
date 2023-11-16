@@ -25,7 +25,6 @@ func datasourceRubricCategories() *schema.Resource {
 }
 
 func datasourceRubricCategoriesRead(d *schema.ResourceData, client *opslevel.Client) error {
-
 	result, err := client.ListCategories(nil)
 	if err != nil {
 		return err

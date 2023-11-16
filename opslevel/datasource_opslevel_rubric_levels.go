@@ -35,7 +35,6 @@ func datasourceRubricLevels() *schema.Resource {
 }
 
 func datasourceRubricLevelsRead(d *schema.ResourceData, client *opslevel.Client) error {
-
 	result, err := client.ListLevels()
 	if err != nil {
 		return err
