@@ -8,7 +8,7 @@ resource "opslevel_team" "foo" {
 
   member {
     email = "foo@example.com"
-    role = "manager"
+    role  = "manager"
   }
 }
 

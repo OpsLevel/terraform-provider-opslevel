@@ -213,10 +213,10 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 	for _, item := range d.Get("predicate").([]interface{}) {
 		data := item.(map[string]interface{})
 		predicate := opslevel.FilterPredicate{
-			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:         strings.TrimSpace(data["value"].(string)),
-			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData:       strings.TrimSpace(data["key_data"].(string)),
+			Type:    opslevel.PredicateTypeEnum(data["type"].(string)),
+			Value:   strings.TrimSpace(data["value"].(string)),
+			Key:     opslevel.PredicateKeyEnum(data["key"].(string)),
+			KeyData: strings.TrimSpace(data["key_data"].(string)),
 		}
 		if caseSensitive, ok := d.GetOk("case_sensitive"); ok {
 			predicate.CaseSensitive = opslevel.Bool(caseSensitive.(bool))
@@ -295,9 +295,11 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	return output
 }
 
-type reconcileStringArrayAdd func(v string) error
-type reconcileStringArrayUpdate func(o string, n string) error
-type reconcileStringArrayDelete func(v string) error
+type (
+	reconcileStringArrayAdd    func(v string) error
+	reconcileStringArrayUpdate func(o string, n string) error
+	reconcileStringArrayDelete func(v string) error
+)
 
 func reconcileStringArray(current []string, desired []string, add reconcileStringArrayAdd, update reconcileStringArrayUpdate, delete reconcileStringArrayDelete) error {
 	errors := make([]string, 0)
@@ -307,7 +309,7 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 	len_desired := len(desired)
 	sort.Strings(current)
 	sort.Strings(desired)
-	//fmt.Printf("Lengths: %v | %v\n", len_current, len_desired)
+	// fmt.Printf("Lengths: %v | %v\n", len_current, len_desired)
 	if len_desired == 0 {
 		// Delete All in current
 		if delete == nil {
@@ -333,7 +335,7 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 
 	} else {
 		for i_current < len_current || i_desired < len_desired {
-			//fmt.Printf("Step: %v | %v\n", i_current, i_desired)
+			// fmt.Printf("Step: %v | %v\n", i_current, i_desired)
 			if i_desired >= len_desired {
 				if delete != nil {
 					if err := delete(current[i_current]); err != nil {
@@ -360,7 +362,6 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 					if err := update(a, b); err != nil {
 						errors = append(errors, err.Error())
 					}
-
 				}
 				i_current++
 				i_desired++
@@ -371,7 +372,6 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 					if err := add(b); err != nil {
 						errors = append(errors, err.Error())
 					}
-
 				}
 				i_desired++
 				continue
@@ -381,7 +381,6 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 					if err := delete(a); err != nil {
 						errors = append(errors, err.Error())
 					}
-
 				}
 				i_current++
 				continue

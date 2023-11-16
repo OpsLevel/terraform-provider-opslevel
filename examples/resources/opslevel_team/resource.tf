@@ -10,11 +10,11 @@ resource "opslevel_team" "example" {
 
   member {
     email = "john.doe@example.com"
-    role = "manager"
+    role  = "manager"
   }
   member {
     email = "jane.doe@example.com"
-    role = "contributor"
+    role  = "contributor"
   }
 }
 
