@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix index out of range when returning Service errors
-time: 2023-11-07T16:29:55.13703-05:00

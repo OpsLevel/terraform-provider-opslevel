@@ -1,4 +1,0 @@
-kind: Bugfix
-body: reinstate "ANY" as a valid contact_method for opslevel_check_service_ownership
-  resources
-time: 2023-10-30T11:58:18.48408-05:00

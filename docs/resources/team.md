@@ -19,11 +19,18 @@ data "opslevel_team" "parent" {
 
 resource "opslevel_team" "example" {
   name             = "foo"
-  manager_email    = "john.doe@example.com"
-  members          = ["john.doe@example.com", "jane.doe@example.com"]
   responsibilities = "Responsible for foo frontend and backend"
   aliases          = ["bar", "baz"]
   parent           = data.opslevel_team.parent.id
+
+  member {
+    email = "john.doe@example.com"
+    role  = "manager"
+  }
+  member {
+    email = "jane.doe@example.com"
+    role  = "contributor"
+  }
 }
 
 output "team" {
@@ -43,8 +50,7 @@ output "team" {
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically
 - `group` (String, Deprecated) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
-- `manager_email` (String) The email of the user who manages the team.
-- `members` (Set of String) List of user emails that belong to the team. This list must contain the 'manager_email' value.
+- `member` (Block List) List of members in the team with email address and role. (see [below for nested schema](#nestedblock--member))
 - `parent` (String) The parent team. Only accepts team's Alias
 - `responsibilities` (String) A description of what the team is responsible for.
 
@@ -52,6 +58,14 @@ output "team" {
 
 - `alias` (String, Deprecated) The human-friendly, unique identifier for the team.
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--member"></a>
+### Nested Schema for `member`
+
+Required:
+
+- `email` (String) The email address or ID of the user to add to a team.
+- `role` (String) The type of relationship this membership implies.
 
 ## Import
 

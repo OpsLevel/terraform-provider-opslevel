@@ -13,8 +13,8 @@ Manages an infrastructure resource
 ## Example Usage
 
 ```terraform
-data "opslevel_group" "foo" {
-  identifier = "foo"
+data "opslevel_team" "foo" {
+  alias = "foo"
 }
 
 // Minimum example
@@ -31,7 +31,7 @@ resource "opslevel_infrastructure" "example_1" {
 // Detailed example
 resource "opslevel_infrastructure" "example_2" {
   schema = "Database"
-  owner  = data.opslevel_group.foo.id
+  owner  = data.opslevel_team.foo.id
   provider_data {
     account = "dev"
     name    = "google cloud"
@@ -69,6 +69,7 @@ resource "opslevel_infrastructure" "example_2" {
 
 ### Optional
 
+- `aliases` (List of String) The aliases of the infrastructure resource.
 - `data` (String) The data of the infrastructure resource in JSON format.
 - `last_updated` (String)
 - `owner` (String) The id of the owner for the infrastructure resource.  Can be a team or group. Does not support aliases!
@@ -76,7 +77,6 @@ resource "opslevel_infrastructure" "example_2" {
 
 ### Read-Only
 
-- `aliases` (List of String) The aliases of the infrastructure resource.
 - `id` (String) The ID of this resource.
 
 <a id="nestedblock--provider_data"></a>

@@ -1,4 +1,0 @@
-kind: Bugfix
-body: Fix bug with case sensitive field on filter predicates being sent always when
-  it should only be when specified
-time: 2023-11-03T14:00:18.562892-05:00
