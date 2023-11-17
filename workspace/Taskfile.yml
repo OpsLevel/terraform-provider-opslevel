@@ -30,7 +30,7 @@ tasks:
       - './make_backend_tf.sh'
       - touch main.tf
       - task: terraform-command
-        vars: { TF_COMMAND: "init --upgrade", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
   lint:
     desc: Validate and check format of terraform files in current directory

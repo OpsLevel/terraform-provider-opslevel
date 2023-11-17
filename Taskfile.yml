@@ -26,7 +26,7 @@ tasks:
     cmds:
       - go build -o {{.BINARY}} || exit 1
       - chmod +x {{.BINARY}}
-      - mkdir -p {{.LOCATION}} || teue
+      - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
   install-changie:
