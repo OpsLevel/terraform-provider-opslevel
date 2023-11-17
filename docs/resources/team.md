@@ -43,11 +43,11 @@ output "team" {
 
 ### Required
 
+- `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
 - `name` (String) The team's display name.
 
 ### Optional
 
-- `aliases` (List of String) A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically
 - `group` (String, Deprecated) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
 - `member` (Block List) List of members in the team with email address and role. (see [below for nested schema](#nestedblock--member))
@@ -56,7 +56,6 @@ output "team" {
 
 ### Read-Only
 
-- `alias` (String, Deprecated) The human-friendly, unique identifier for the team.
 - `id` (String) The ID of this resource.
 
 <a id="nestedblock--member"></a>

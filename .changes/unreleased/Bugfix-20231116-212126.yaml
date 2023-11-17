@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix a bug with opslevel_team not handling managed aliases correctly
-time: 2023-11-16T21:21:26.784517-06:00
