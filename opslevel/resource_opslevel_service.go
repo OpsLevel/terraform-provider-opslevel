@@ -267,11 +267,15 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
-	if err := d.Set("owner", resource.Owner.Alias); err != nil {
-		return err
+	if owner, ok := d.GetOk("owner"); ok {
+		if err := d.Set("owner", owner); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
-		return err
+	if owner, ok := d.GetOk("owner_alias"); ok {
+		if err := d.Set("owner_alias", owner); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
 		return err
