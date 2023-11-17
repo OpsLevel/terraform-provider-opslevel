@@ -1,0 +1,4 @@
+kind: Refactor
+body: opslevel_team.aliases field is now required - you can supply the default alias
+  that would be generated and we'll handle not reconciling it properly or you can just specify aliases you want to manage
+time: 2023-11-16T21:23:23.920564-06:00

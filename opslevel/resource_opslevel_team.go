@@ -24,12 +24,6 @@ func resourceTeam() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"alias": {
-				Type:        schema.TypeString,
-				Description: "The human-friendly, unique identifier for the team.",
-				Computed:    true,
-				Deprecated:  "field 'alias' on team is no longer supported please use the 'aliases' field which is a list",
-			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The team's display name.",
@@ -44,9 +38,9 @@ func resourceTeam() *schema.Resource {
 			},
 			"aliases": {
 				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the team. Must be ordered alphabetically",
+				Description: "A list of human-friendly, unique identifiers for the team.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"group": {
@@ -230,55 +224,43 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	if err := d.Set("alias", resource.Alias); err != nil {
-		return err
-	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
 		return err
 	}
-	if _, ok := d.GetOk("group"); ok {
-		if err := d.Set("group", resource.Group.Alias); err != nil {
-			return err
-		}
+	if err := d.Set("group", resource.Group.Alias); err != nil {
+		return err
 	}
-	if _, ok := d.GetOk("parent"); ok {
-		if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
-			return err
-		}
+	if err := d.Set("parent", d.Get("parent")); err != nil {
+		return err
 	}
-	if _, ok := d.GetOk("aliases"); ok {
-		aliases := []string{}
-		for _, alias := range resource.Aliases {
-			if alias == resource.Alias {
-				// If user specifies the auto-generated alias in terraform config, don't skip it
-				if !stringInArray(alias, getStringArray(d, "aliases")) {
-					continue
-				}
+
+	aliases := []string{}
+	for _, alias := range resource.Aliases {
+		if alias == resource.Alias {
+			// If user specifies the auto-generated alias in terraform config, don't skip it
+			if !stringInArray(alias, getStringArray(d, "aliases")) {
+				continue
 			}
-			aliases = append(aliases, alias)
 		}
-		sort.Strings(aliases)
-		if err := d.Set("aliases", aliases); err != nil {
-			return err
-		}
+		aliases = append(aliases, alias)
 	}
-
-	if _, ok := d.GetOk("member"); ok {
-		members := collectMembersFromTeam(resource)
-		memberOutput := []map[string]interface{}{}
-		for _, m := range members {
-			mOutput := make(map[string]interface{})
-			mOutput["email"] = m.User.Email
-			mOutput["role"] = m.Role
-			memberOutput = append(memberOutput, mOutput)
-		}
-
-		if err := d.Set("member", memberOutput); err != nil {
-			return err
-		}
+	sort.Strings(aliases)
+	if err := d.Set("aliases", aliases); err != nil {
+		return err
+	}
+	members := collectMembersFromTeam(resource)
+	memberOutput := []map[string]interface{}{}
+	for _, m := range members {
+		mOutput := make(map[string]interface{})
+		mOutput["email"] = m.User.Email
+		mOutput["role"] = m.Role
+		memberOutput = append(memberOutput, mOutput)
+	}
+	if err := d.Set("member", memberOutput); err != nil {
+		return err
 	}
 
 	return nil
