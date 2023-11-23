@@ -188,13 +188,13 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	// owner_alias is deprecated, allow user to use one or the other but not both.
 	var ownerField *opslevel.IdentifierInput
-	owner, ownerUsed := d.GetOk("owner")
-	ownerAlias, ownerAliasUsed := d.GetOk("owner_alias")
-	if ownerUsed && ownerAliasUsed {
+	owner := d.Get("owner")
+	ownerAlias := d.Get("owner_alias")
+	if owner != "" && ownerAlias != "" {
 		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-	} else if ownerUsed {
+	} else if owner != "" {
 		ownerField = opslevel.NewIdentifier(owner.(string))
-	} else if ownerAliasUsed {
+	} else if ownerAlias != "" {
 		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
 	}
 
@@ -323,14 +323,14 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
-	ownerUsed := d.HasChange("owner")
-	ownerAliasUsed := d.HasChange("owner_alias")
-	if ownerUsed && ownerAliasUsed {
+	owner := d.Get("owner")
+	ownerAlias := d.Get("owner_alias")
+	if owner != "" && ownerAlias != "" {
 		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-	} else if ownerUsed {
-		input.Owner = opslevel.NewIdentifier(d.Get("owner").(string))
-	} else if ownerAliasUsed {
-		input.Owner = opslevel.NewIdentifier(d.Get("owner_alias").(string))
+	} else if owner != "" {
+		input.Owner = opslevel.NewIdentifier(owner.(string))
+	} else if ownerAlias != "" {
+		input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
 	}
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
