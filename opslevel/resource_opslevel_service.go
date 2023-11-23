@@ -302,26 +302,14 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	id := d.Id()
 
 	input := opslevel.ServiceUpdateInput{
-		Id: opslevel.ID(id),
-	}
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	if d.HasChange("product") {
-		input.Product = d.Get("product").(string)
-	}
-	if d.HasChange("description") {
-		input.Description = d.Get("description").(string)
-	}
-	if d.HasChange("language") {
-		input.Language = d.Get("language").(string)
-	}
-	if d.HasChange("framework") {
-		input.Framework = d.Get("framework").(string)
-	}
-	if d.HasChange("tier_alias") {
-		input.Tier = d.Get("tier_alias").(string)
+		Id:          opslevel.ID(id),
+		Name:        d.Get("name").(string),
+		Product:     d.Get("product").(string),
+		Description: d.Get("description").(string),
+		Language:    d.Get("language").(string),
+		Framework:   d.Get("framework").(string),
+		Tier:        d.Get("tier_alias").(string),
+		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	owner := d.Get("owner")
 	ownerAlias := d.Get("owner_alias")
@@ -331,9 +319,6 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		input.Owner = opslevel.NewIdentifier(owner.(string))
 	} else if ownerAlias != "" {
 		input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
-	}
-	if d.HasChange("lifecycle_alias") {
-		input.Lifecycle = d.Get("lifecycle_alias").(string)
 	}
 
 	resource, err := client.UpdateService(input)
