@@ -301,24 +301,27 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	input := opslevel.ServiceUpdateInput{
-		Id:          opslevel.ID(id),
-		Name:        d.Get("name").(string),
-		Product:     d.Get("product").(string),
-		Description: d.Get("description").(string),
-		Language:    d.Get("language").(string),
-		Framework:   d.Get("framework").(string),
-		Tier:        d.Get("tier_alias").(string),
-		Lifecycle:   d.Get("lifecycle_alias").(string),
-	}
+	// owner_alias is deprecated, allow user to use one or the other but not both.
+	var ownerField *opslevel.IdentifierInput
 	owner := d.Get("owner")
 	ownerAlias := d.Get("owner_alias")
 	if owner != "" && ownerAlias != "" {
 		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
 	} else if owner != "" {
-		input.Owner = opslevel.NewIdentifier(owner.(string))
+		ownerField = opslevel.NewIdentifier(owner.(string))
 	} else if ownerAlias != "" {
-		input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
+		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
+	}
+	input := opslevel.ServiceUpdateInput{
+		Id:          opslevel.NewID(id),
+		Name:        opslevel.NewString(d.Get("name").(string)),
+		Product:     opslevel.NewString(d.Get("product").(string)),
+		Description: opslevel.NewString(d.Get("description").(string)),
+		Language:    opslevel.NewString(d.Get("language").(string)),
+		Framework:   opslevel.NewString(d.Get("framework").(string)),
+		Tier:        opslevel.NewString(d.Get("tier_alias").(string)),
+		Owner:       ownerField,
+		Lifecycle:   opslevel.NewString(d.Get("lifecycle_alias").(string)),
 	}
 
 	resource, err := client.UpdateService(input)
