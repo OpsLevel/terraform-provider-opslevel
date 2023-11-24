@@ -314,14 +314,14 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 	input := opslevel.ServiceUpdateInput{
 		Id:          opslevel.NewID(id),
-		Name:        opslevel.NewString(d.Get("name").(string)),
-		Product:     opslevel.NewString(d.Get("product").(string)),
-		Description: opslevel.NewString(d.Get("description").(string)),
-		Language:    opslevel.NewString(d.Get("language").(string)),
-		Framework:   opslevel.NewString(d.Get("framework").(string)),
-		Tier:        opslevel.NewString(d.Get("tier_alias").(string)),
+		Name:        getStringPointer(d, "name"),
+		Product:     getStringPointer(d, "product"),
+		Description: getStringPointer(d, "description"),
+		Language:    getStringPointer(d, "language"),
+		Framework:   getStringPointer(d, "framework"),
+		Tier:        getStringPointer(d, "tier_alias"),
 		Owner:       ownerField,
-		Lifecycle:   opslevel.NewString(d.Get("lifecycle_alias").(string)),
+		Lifecycle:   getStringPointer(d, "lifecycle_alias"),
 	}
 
 	resource, err := client.UpdateService(input)

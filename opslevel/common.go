@@ -393,3 +393,11 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 	}
 	return nil
 }
+
+func getStringPointer(d *schema.ResourceData, key string) *string {
+	value := d.Get(key).(string)
+	if value == "" {
+		return nil
+	}
+	return &value
+}
