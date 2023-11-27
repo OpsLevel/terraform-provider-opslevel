@@ -24,7 +24,7 @@ func resourceFilter() *schema.Resource {
 			},
 			"name": {
 				Type:        schema.TypeString,
-				Description: "The team's display name.",
+				Description: "The filter's display name.",
 				ForceNew:    false,
 				Required:    true,
 			},
