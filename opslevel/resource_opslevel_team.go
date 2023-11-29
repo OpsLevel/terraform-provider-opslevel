@@ -251,16 +251,24 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("aliases", aliases); err != nil {
 		return err
 	}
-	members := collectMembersFromTeam(resource)
-	memberOutput := []map[string]interface{}{}
-	for _, m := range members {
-		mOutput := make(map[string]interface{})
-		mOutput["email"] = m.User.Email
-		mOutput["role"] = m.Role
-		memberOutput = append(memberOutput, mOutput)
-	}
-	if err := d.Set("member", memberOutput); err != nil {
-		return err
+
+	// only read members if it was set before in the configuration
+	// some customers may not have any member {} blocks defined
+	// in their config, and they cannot use terraform to manage
+	// teams because of it without either adding the members into
+	// the config or unassigning all the members (unwanted)
+	if members, ok := d.GetOk("member"); members != nil || ok {
+		members := collectMembersFromTeam(resource)
+		memberOutput := []map[string]interface{}{}
+		for _, m := range members {
+			mOutput := make(map[string]interface{})
+			mOutput["email"] = m.User.Email
+			mOutput["role"] = m.Role
+			memberOutput = append(memberOutput, mOutput)
+		}
+		if err := d.Set("member", memberOutput); err != nil {
+			return err
+		}
 	}
 
 	return nil
