@@ -401,3 +401,18 @@ func getStringPointer(d *schema.ResourceData, key string) *string {
 	}
 	return &value
 }
+
+func getNullableInputStringPointer(d *schema.ResourceData, key string) *opslevel.NullableInputString {
+	var output opslevel.NullableInputString
+	value := d.Get(key).(string)
+	if value == "" {
+		output = opslevel.NullableInputString{
+			SetNull: true,
+		}
+	} else {
+		output = opslevel.NullableInputString{
+			Value: value,
+		}
+	}
+	return &output
+}
