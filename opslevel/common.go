@@ -54,6 +54,11 @@ func expandStringMap(m map[string]interface{}) map[string]string {
 	return result
 }
 
+func getStringPointer(d *schema.ResourceData, key string) *string {
+	value := d.Get(key).(string)
+	return &value
+}
+
 func getStringArray(d *schema.ResourceData, key string) []string {
 	output := make([]string, 0)
 	data, ok := d.GetOk(key)
