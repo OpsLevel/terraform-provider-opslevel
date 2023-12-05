@@ -319,9 +319,9 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		Description: getStringPointer(d, "description"),
 		Language:    getStringPointer(d, "language"),
 		Framework:   getStringPointer(d, "framework"),
-		Tier:        getStringPointer(d, "tier_alias"),
+		Tier:        getNullableStringPointer(d, "tier_alias"),
 		Owner:       ownerField,
-		Lifecycle:   getStringPointer(d, "lifecycle_alias"),
+		Lifecycle:   getNullableStringPointer(d, "lifecycle_alias"),
 	}
 
 	resource, err := client.UpdateService(input)

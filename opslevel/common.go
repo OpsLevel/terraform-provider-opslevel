@@ -59,6 +59,14 @@ func getStringPointer(d *schema.ResourceData, key string) *string {
 	return &value
 }
 
+func getNullableStringPointer(d *schema.ResourceData, key string) *string {
+	value := d.Get(key).(string)
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
 func getStringArray(d *schema.ResourceData, key string) []string {
 	output := make([]string, 0)
 	data, ok := d.GetOk(key)
