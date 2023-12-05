@@ -301,10 +301,15 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
+	input := opslevel.ServiceUpdateInput{
+		Id:   opslevel.ID(id),
+		Name: opslevel.NewString(d.Get("name").(string)),
+	}
+
 	// owner_alias is deprecated, allow user to use one or the other but not both.
 	var ownerField *opslevel.IdentifierInput
-	owner := d.Get("owner")
-	ownerAlias := d.Get("owner_alias")
+	owner, ownerSetBefore := d.GetOk("owner")
+	ownerAlias, ownerAliasSetBefore := d.GetOk("owner_alias")
 	if owner != "" && ownerAlias != "" {
 		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
 	} else if owner != "" {
@@ -312,16 +317,27 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	} else if ownerAlias != "" {
 		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
 	}
-	input := opslevel.ServiceUpdateInput{
-		Id:          opslevel.ID(id),
-		Name:        opslevel.NewString(d.Get("name").(string)),
-		Product:     opslevel.NewString(d.Get("product").(string)),
-		Description: opslevel.NewString(d.Get("description").(string)),
-		Language:    opslevel.NewString(d.Get("language").(string)),
-		Framework:   opslevel.NewString(d.Get("framework").(string)),
-		Tier:        opslevel.NewString(d.Get("tier_alias").(string)),
-		Owner:       ownerField,
-		Lifecycle:   opslevel.NewString(d.Get("lifecycle_alias").(string)),
+	if ownerField != nil || (ownerSetBefore || ownerAliasSetBefore) {
+		input.Owner = ownerField
+	}
+
+	if product, ok := d.GetOk("product"); product != nil || ok {
+		input.Product = opslevel.NewString(product.(string))
+	}
+	if description, ok := d.GetOk("description"); description != nil || ok {
+		input.Description = opslevel.NewString(description.(string))
+	}
+	if language, ok := d.GetOk("language"); language != nil || ok {
+		input.Language = opslevel.NewString(language.(string))
+	}
+	if framework, ok := d.GetOk("framework"); framework != nil || ok {
+		input.Framework = opslevel.NewString(framework.(string))
+	}
+	if tier_alias, ok := d.GetOk("tier_alias"); tier_alias != nil || ok {
+		input.Tier = opslevel.NewString(tier_alias.(string))
+	}
+	if lifecycle_alias, ok := d.GetOk("lifecycle_alias"); lifecycle_alias != nil || ok {
+		input.Lifecycle = opslevel.NewString(lifecycle_alias.(string))
 	}
 
 	resource, err := client.UpdateService(input)
