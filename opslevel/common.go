@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
+	"github.com/rs/zerolog/log"
 )
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -392,4 +393,25 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 		return fmt.Errorf(strings.Join(errors, "\n"))
 	}
 	return nil
+}
+
+func setOptionalManagedField(d *schema.ResourceData, field string, value string) error {
+	if savedValue, ok := d.GetOk(field); savedValue != nil || ok {
+		if err := d.Set(field, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setEmptyableField(d *schema.ResourceData, field string, reference **string) {
+	if value, ok := d.GetOk(field); value != nil || ok {
+		log.Debug().Msgf("was %s set before? %t", field, ok)
+
+		if value == nil {
+			*reference = opslevel.NewString("")
+		} else {
+			*reference = opslevel.NewString(value.(string))
+		}
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/rs/zerolog/log"
 
@@ -252,32 +253,30 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
-	if err := d.Set("product", resource.Product); err != nil {
+
+	if err := setOptionalManagedField(d, "product", resource.Product); err != nil {
 		return err
 	}
-	if err := d.Set("description", resource.Description); err != nil {
+	if err := setOptionalManagedField(d, "description", resource.Description); err != nil {
 		return err
 	}
-	if err := d.Set("language", resource.Language); err != nil {
+	if err := setOptionalManagedField(d, "language", resource.Language); err != nil {
 		return err
 	}
-	if err := d.Set("framework", resource.Framework); err != nil {
+	if err := setOptionalManagedField(d, "framework", resource.Framework); err != nil {
 		return err
 	}
-	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
+	if err := setOptionalManagedField(d, "tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
-	if owner, ok := d.GetOk("owner"); ok {
-		if err := d.Set("owner", owner); err != nil {
-			return err
-		}
+	if err := setOptionalManagedField(d, "lifecycle_alias", resource.Lifecycle.Alias); err != nil {
+		return err
 	}
-	if owner, ok := d.GetOk("owner_alias"); ok {
-		if err := d.Set("owner_alias", owner); err != nil {
-			return err
-		}
+	// TODO: 'owner' could be ID or alias, what should we populate this as?
+	if err := setOptionalManagedField(d, "owner", resource.Owner.Alias); err != nil {
+		return err
 	}
-	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
+	if err := setOptionalManagedField(d, "owner_alias", resource.Owner.Alias); err != nil {
 		return err
 	}
 
@@ -310,35 +309,26 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	var ownerField *opslevel.IdentifierInput
 	owner, ownerSetBefore := d.GetOk("owner")
 	ownerAlias, ownerAliasSetBefore := d.GetOk("owner_alias")
-	if owner != "" && ownerAlias != "" {
+	if owner.(string) != "" && ownerAlias.(string) != "" {
 		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-	} else if owner != "" {
+	} else if owner.(string) != "" {
 		ownerField = opslevel.NewIdentifier(owner.(string))
-	} else if ownerAlias != "" {
+	} else if ownerAlias.(string) != "" {
 		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
 	}
 	if ownerField != nil || (ownerSetBefore || ownerAliasSetBefore) {
+		// wtf. how do we unset this?
 		input.Owner = ownerField
 	}
 
-	if product, ok := d.GetOk("product"); product != nil || ok {
-		input.Product = opslevel.NewString(product.(string))
-	}
-	if description, ok := d.GetOk("description"); description != nil || ok {
-		input.Description = opslevel.NewString(description.(string))
-	}
-	if language, ok := d.GetOk("language"); language != nil || ok {
-		input.Language = opslevel.NewString(language.(string))
-	}
-	if framework, ok := d.GetOk("framework"); framework != nil || ok {
-		input.Framework = opslevel.NewString(framework.(string))
-	}
-	if tier_alias, ok := d.GetOk("tier_alias"); tier_alias != nil || ok {
-		input.Tier = opslevel.NewString(tier_alias.(string))
-	}
-	if lifecycle_alias, ok := d.GetOk("lifecycle_alias"); lifecycle_alias != nil || ok {
-		input.Lifecycle = opslevel.NewString(lifecycle_alias.(string))
-	}
+	setEmptyableField(d, "product", &input.Product)
+	setEmptyableField(d, "description", &input.Description)
+	setEmptyableField(d, "language", &input.Language)
+	setEmptyableField(d, "framework", &input.Framework)
+	setEmptyableField(d, "tier_alias", &input.Tier)
+	setEmptyableField(d, "lifecycle_alias", &input.Lifecycle)
+
+	log.Debug().Msgf("%s", spew.Sdump(input))
 
 	resource, err := client.UpdateService(input)
 	if err != nil {
