@@ -254,29 +254,29 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
-	if err := setOptionalManagedField(d, "product", resource.Product); err != nil {
+	if err := readOptionalStringField(d, "product", resource.Product); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "description", resource.Description); err != nil {
+	if err := readOptionalStringField(d, "description", resource.Description); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "language", resource.Language); err != nil {
+	if err := readOptionalStringField(d, "language", resource.Language); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "framework", resource.Framework); err != nil {
+	if err := readOptionalStringField(d, "framework", resource.Framework); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "tier_alias", resource.Tier.Alias); err != nil {
+	if err := readOptionalStringField(d, "tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "lifecycle_alias", resource.Lifecycle.Alias); err != nil {
+	if err := readOptionalStringField(d, "lifecycle_alias", resource.Lifecycle.Alias); err != nil {
 		return err
 	}
 	// TODO: 'owner' could be ID or alias, what should we populate this as?
-	if err := setOptionalManagedField(d, "owner", resource.Owner.Alias); err != nil {
+	if err := readOptionalStringField(d, "owner", resource.Owner.Alias); err != nil {
 		return err
 	}
-	if err := setOptionalManagedField(d, "owner_alias", resource.Owner.Alias); err != nil {
+	if err := readOptionalStringField(d, "owner_alias", resource.Owner.Alias); err != nil {
 		return err
 	}
 
@@ -321,12 +321,12 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		input.Owner = ownerField
 	}
 
-	setEmptyableField(d, "product", &input.Product)
-	setEmptyableField(d, "description", &input.Description)
-	setEmptyableField(d, "language", &input.Language)
-	setEmptyableField(d, "framework", &input.Framework)
-	setEmptyableField(d, "tier_alias", &input.Tier)
-	setEmptyableField(d, "lifecycle_alias", &input.Lifecycle)
+	updateOptionalStringField(d, "product", &input.Product)
+	updateOptionalStringField(d, "description", &input.Description)
+	updateOptionalStringField(d, "language", &input.Language)
+	updateOptionalStringField(d, "framework", &input.Framework)
+	updateOptionalStringField(d, "tier_alias", &input.Tier)
+	updateOptionalStringField(d, "lifecycle_alias", &input.Lifecycle)
 
 	log.Debug().Msgf("%s", spew.Sdump(input))
 

@@ -395,8 +395,9 @@ func reconcileStringArray(current []string, desired []string, add reconcileStrin
 	return nil
 }
 
-func setOptionalManagedField(d *schema.ResourceData, field string, value string) error {
-	if savedValue, ok := d.GetOk(field); savedValue != nil || ok {
+func readOptionalStringField(d *schema.ResourceData, field string, value string) error {
+	if _, setBefore := d.GetOk(field); setBefore {
+		log.Debug().Msgf("(read) field '%s', setBefore %t, value '%s'", field, setBefore, value)
 		if err := d.Set(field, value); err != nil {
 			return err
 		}
@@ -404,14 +405,20 @@ func setOptionalManagedField(d *schema.ResourceData, field string, value string)
 	return nil
 }
 
-func setEmptyableField(d *schema.ResourceData, field string, reference **string) {
-	if value, ok := d.GetOk(field); value != nil || ok {
-		log.Debug().Msgf("was %s set before? %t", field, ok)
+func updateOptionalStringField(d *schema.ResourceData, field string, reference **string) error {
+	// if set before, change it.
 
-		if value == nil {
+	if v, setBefore := d.GetOk(field); v != nil || setBefore {
+		log.Debug().Msgf("(update) field '%s', setBefore %t, value '%s'", field, setBefore, v)
+
+		// mark it so that optional field is read next time
+		if v == nil {
 			*reference = opslevel.NewString("")
+			return d.Set(field, nil)
 		} else {
-			*reference = opslevel.NewString(value.(string))
+			*reference = opslevel.NewString(v.(string))
+			return d.Set(field, v.(string))
 		}
 	}
+	return nil
 }
