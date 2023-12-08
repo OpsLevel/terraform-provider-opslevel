@@ -1,27 +1,17 @@
 name: Changie Gen
 
 on:
-  pull_request:
-    # catch when the PR is opened with the label or when the label is added
-    types: [labeled]
-
-permissions:
-  contents: write
-  pull-requests: read
+  workflow_run:
+    workflows: [Dependabot Labels]
+    types:
+      - completed
 
 jobs:
-  generate_changelog:
-    strategy:
-      matrix:
-        include:
-          - label: "dependencies"
-            changie_kind: "Dependency"
+  generate-changelog:
     runs-on: ubuntu-latest
-
     steps:
-
     - name: Create and commit changelog on bot PR
-      if: ${{ contains(github.event.pull_request.labels.*.name, matrix.label) }}
+      if: github.event.workflow_run.conclusion == 'success'
       id: bot_changelog
       uses: emmyoop/changie_bot@v1.1.0
       with:
@@ -29,5 +19,5 @@ jobs:
         commit_author_name: "Github Build Bot"
         commit_author_email: "<bots@opslevel.com>"
         commit_message: "Add automated changelog yaml from template for bot PR"
-        changie_kind: ${{ matrix.changie_kind }}
-        label: ${{ matrix.label }}
+        changie_kind: Dependency
+        label: dependencies
