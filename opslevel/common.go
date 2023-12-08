@@ -92,6 +92,21 @@ func findService(aliasKey string, idKey string, d *schema.ResourceData, client *
 	return resource, nil
 }
 
+func findPropertyDefinition(d *schema.ResourceData, client *opslevel.Client) (*opslevel.PropertyDefinition, error) {
+	id := d.Get("id").(string)
+	if id == "" {
+		return nil, fmt.Errorf("must provide `id`  field to find by")
+	}
+	resource, err := client.GetPropertyDefinition(id)
+	if err != nil {
+		return nil, err
+	}
+	if resource.Id == "" {
+		return nil, fmt.Errorf("unable to find property definition with id=`%s`", id)
+	}
+	return resource, nil
+}
+
 func findRepository(aliasKey string, idKey string, d *schema.ResourceData, client *opslevel.Client) (*opslevel.Repository, error) {
 	alias := d.Get(aliasKey).(string)
 	id := d.Get(idKey)
