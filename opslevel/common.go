@@ -95,7 +95,7 @@ func findService(aliasKey string, idKey string, d *schema.ResourceData, client *
 func findPropertyDefinition(d *schema.ResourceData, client *opslevel.Client) (*opslevel.PropertyDefinition, error) {
 	id := d.Get("id").(string)
 	if id == "" {
-		return nil, fmt.Errorf("must provide `id`  field to find by")
+		return nil, fmt.Errorf("must provide `id` field to find by")
 	}
 	resource, err := client.GetPropertyDefinition(id)
 	if err != nil {
