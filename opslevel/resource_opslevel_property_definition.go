@@ -39,8 +39,9 @@ func resourcePropertyDefinition() *schema.Resource {
 func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.PropertyDefinitionInput{
 		Name:   d.Get("name").(string),
-		Schema: opslevel.NewJSON(d.Get("product").(string)),
+		Schema: opslevel.JSONString(d.Get("schema").(string)),
 	}
+
 	resource, err := client.CreatePropertyDefinition(input)
 	if err != nil {
 		return err
@@ -52,7 +53,6 @@ func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.C
 
 func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-
 	resource, err := client.GetPropertyDefinition(id)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Cli
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
-	if err := d.Set("schema", resource.Schema); err != nil {
+	if err := d.Set("schema", resource.Schema.ToJSON()); err != nil {
 		return err
 	}
 
@@ -75,5 +75,6 @@ func resourcePropertyDefinitionDelete(d *schema.ResourceData, client *opslevel.C
 		return err
 	}
 	d.SetId("")
+
 	return nil
 }
