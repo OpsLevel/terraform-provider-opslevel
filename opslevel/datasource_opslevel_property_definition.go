@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -33,12 +32,10 @@ func datasourcePropertyDefinition() *schema.Resource {
 
 func datasourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Get("id").(string)
-	log.Debug().Msgf("id: %+v", d.Get("id").(string))
 	resource, err := client.GetPropertyDefinition(id)
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("def: %+v", resource)
 
 	d.SetId(string(resource.Id))
 
