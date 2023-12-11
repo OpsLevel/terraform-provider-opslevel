@@ -10,11 +10,20 @@ func datasourcePropertyDefinition() *schema.Resource {
 	return &schema.Resource{
 		Read: wrap(datasourcePropertyDefinitionRead),
 		Schema: map[string]*schema.Schema{
+			"identifier": {
+				Type:        schema.TypeString,
+				Description: "The id or alias of the property definition to find.",
+				Required:    true,
+			},
 			"id": {
 				Type:        schema.TypeString,
 				Description: "The id of the property definition to find.",
-				ForceNew:    true,
-				Optional:    true,
+				Computed:    true,
+			},
+			"alias": {
+				Type:        schema.TypeString,
+				Description: "The alias of the property definition to find.",
+				Computed:    true,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -31,8 +40,8 @@ func datasourcePropertyDefinition() *schema.Resource {
 }
 
 func datasourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Get("id").(string)
-	resource, err := client.GetPropertyDefinition(id)
+	identifier := d.Get("identifier").(string)
+	resource, err := client.GetPropertyDefinition(identifier)
 	if err != nil {
 		return err
 	}
