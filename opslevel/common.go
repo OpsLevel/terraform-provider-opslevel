@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 )
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -89,23 +88,6 @@ func findService(aliasKey string, idKey string, d *schema.ResourceData, client *
 	}
 	if resource.Id == "" {
 		return nil, fmt.Errorf("unable to find service with alias=`%s` or id=`%s`", alias, id.(string))
-	}
-	return resource, nil
-}
-
-func findPropertyDefinition(idKey string, d *schema.ResourceData, client *opslevel.Client) (*opslevel.PropertyDefinition, error) {
-	id := d.Get(idKey)
-	if id == "" {
-		return nil, fmt.Errorf("must provide `%s` field to find by", idKey)
-	}
-	log.Debug().Msgf("here, %s", id)
-	resource, err := client.GetPropertyDefinition(id.(string))
-	if err != nil {
-		return nil, err
-	}
-	log.Debug().Msgf("here, %+v", resource)
-	if resource == nil || resource.Id == "" {
-		return nil, fmt.Errorf("unable to find property definition with id=`%s`", id)
 	}
 	return resource, nil
 }

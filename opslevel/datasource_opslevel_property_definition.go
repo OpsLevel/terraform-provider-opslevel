@@ -32,14 +32,16 @@ func datasourcePropertyDefinition() *schema.Resource {
 }
 
 func datasourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
-	log.Debug().Msg(d.Get("id").(string))
-	resource, err := findPropertyDefinition("id", d, client)
-	log.Debug().Msgf("%+v", resource)
+	id := d.Get("id").(string)
+	log.Debug().Msgf("id: %+v", d.Get("id").(string))
+	resource, err := client.GetPropertyDefinition(id)
 	if err != nil {
 		return err
 	}
+	log.Debug().Msgf("def: %+v", resource)
 
 	d.SetId(string(resource.Id))
+
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
