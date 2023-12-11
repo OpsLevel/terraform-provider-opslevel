@@ -1,0 +1,1 @@
+terraform import opslevel_property_definition.example Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi85OA
