@@ -95,6 +95,12 @@ func datasourceService() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"repositories": {
+				Type:        schema.TypeList,
+				Description: "List of repositories connected to the service.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -141,6 +147,9 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
+		return err
+	}
+	if err := d.Set("repositories", flattenServiceRepositoriesArray(resource.Repositories)); err != nil {
 		return err
 	}
 
