@@ -295,6 +295,17 @@ func flattenMembersArray(members *opslevel.UserConnection) []string {
 	return output
 }
 
+func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[string]string {
+	output := []map[string]string{}
+	for _, membership := range members.Nodes {
+		asMap := make(map[string]string)
+		asMap["email"] = membership.User.Email
+		asMap["role"] = membership.Role
+		output = append(output, asMap)
+	}
+	return output
+}
+
 func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	output := []string{}
 	for _, team := range teams.Nodes {
