@@ -1,4 +1,0 @@
-kind: Feature
-body: Add support for managing Teams without unassigning team members if members were
-  not previously defined in terraform
-time: 2023-11-29T14:17:15.209888-05:00
