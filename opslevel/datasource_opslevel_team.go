@@ -23,14 +23,28 @@ func datasourceTeam() *schema.Resource {
 				Optional:    true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The name of the team.",
+				Computed:    true,
 			},
 			"members": {
 				Type:        schema.TypeList,
 				Description: "List of repositories connected to the service.",
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"email": {
+							Type:        schema.TypeString,
+							Description: "The email address of the team member.",
+							Computed:    true,
+						},
+						"role": {
+							Type:        schema.TypeString,
+							Description: "The role of the team member.",
+							Computed:    true,
+						},
+					},
+				},
 			},
 			"parent_alias": {
 				Type:        schema.TypeString,
@@ -75,7 +89,7 @@ func datasourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	if err := d.Set("members", flattenMembershipsArray(resource.Memberships)); err != nil {
+	if err := d.Set("members", mapMembershipsArray(resource.Memberships)); err != nil {
 		return err
 	}
 
