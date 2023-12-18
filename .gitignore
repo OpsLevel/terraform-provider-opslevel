@@ -6,6 +6,7 @@ examples/terraform.tfstate.backup
 *.dll
 *.exe
 .DS_Store
+go.work*
 /coverage.out
 /coverage.txt
 example.tf
