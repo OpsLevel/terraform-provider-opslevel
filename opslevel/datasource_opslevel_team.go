@@ -29,7 +29,7 @@ func datasourceTeam() *schema.Resource {
 			},
 			"members": {
 				Type:        schema.TypeList,
-				Description: "List of repositories connected to the service.",
+				Description: "List of members in the team with email address and role.",
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
