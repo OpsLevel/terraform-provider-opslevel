@@ -34,8 +34,17 @@ data "opslevel_team" "devs" {
 
 - `group_alias` (String, Deprecated) The name of the group the team belongs to.
 - `group_id` (String, Deprecated) The id of the group the team belongs to.
-- `name` (String)
+- `members` (List of Object) List of repositories connected to the service. (see [below for nested schema](#nestedatt--members))
+- `name` (String) The name of the team.
 - `parent_alias` (String) The alias of the parent team.
 - `parent_id` (String) The id of the parent team.
+
+<a id="nestedatt--members"></a>
+### Nested Schema for `members`
+
+Read-Only:
+
+- `email` (String)
+- `role` (String)
 
 

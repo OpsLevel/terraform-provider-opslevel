@@ -64,7 +64,7 @@ resource "opslevel_filter" "case_sensitive" {
 
 ### Required
 
-- `name` (String) The team's display name.
+- `name` (String) The filter's display name.
 
 ### Optional
 
