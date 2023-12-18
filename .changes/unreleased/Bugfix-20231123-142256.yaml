@@ -1,4 +1,0 @@
-kind: Bugfix
-body: Fix bug where the error 'can pass only one of owner owner_alias' was thrown
-  when updating services
-time: 2023-11-23T14:22:56.464506-05:00
