@@ -233,7 +233,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("group", resource.Group.Alias); err != nil {
 		return err
 	}
-	if err := d.Set("parent", d.Get("parent")); err != nil {
+	if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
 		return err
 	}
 
