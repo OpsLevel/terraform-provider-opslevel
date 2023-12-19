@@ -101,6 +101,48 @@ func datasourceService() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"properties": {
+				Type:        schema.TypeList,
+				Description: "Custom properties assigned to this service.",
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"definition": {
+							Type:        schema.TypeString,
+							Description: "The custom property definition's ID.",
+							Computed:    true,
+						},
+						"owner": {
+							Type:        schema.TypeString,
+							Description: "The ID of the entity that the property has been assigned to.",
+							Computed:    true,
+						},
+						"validation_errors": {
+							Type:        schema.TypeList,
+							Description: "Errors in current value, when validating against the definition.",
+							Computed:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"message": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"path": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem:     &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
+						"value": {
+							Type:        schema.TypeString,
+							Description: "The value of the custom property.",
+							Computed:    true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -150,6 +192,14 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 	if err := d.Set("repositories", flattenServiceRepositoriesArray(resource.Repositories)); err != nil {
+		return err
+	}
+
+	properties, err := resource.GetProperties(client, nil)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("properties", mapServiceProperties(properties)); err != nil {
 		return err
 	}
 

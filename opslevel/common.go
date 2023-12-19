@@ -306,6 +306,19 @@ func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[strin
 	return output
 }
 
+func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []map[string]any {
+	output := []map[string]any{}
+	for _, property := range properties.Nodes {
+		asMap := make(map[string]any)
+		asMap["definition"] = string(property.Definition.Id)
+		asMap["owner"] = string(property.Owner.Id)
+		asMap["validationErrors"] = property.ValidationErrors
+		asMap["value"] = string(property.Value)
+		output = append(output, asMap)
+	}
+	return output
+}
+
 func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	output := []string{}
 	for _, team := range teams.Nodes {
