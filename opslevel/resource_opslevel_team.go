@@ -289,12 +289,12 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	if d.HasChange("group") {
 		return errors.New("groups are deprecated - create and update are disabled.")
 	}
-	if d.HasChange("parent") {
-		if parentTeam, ok := d.GetOk("parent"); ok {
-			input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
-		} else {
-			input.ParentTeam = nil
-		}
+
+	parentTeam := d.Get("parent")
+	if parentTeam != "" {
+		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
+	} else {
+		input.ParentTeam = nil
 	}
 
 	resource, err := client.UpdateTeam(input)
