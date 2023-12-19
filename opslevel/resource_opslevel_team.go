@@ -58,12 +58,12 @@ func resourceTeam() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"email": {
 							Type:        schema.TypeString,
-							Description: "The email address or ID of the user to add to a team.",
+							Description: "The email address of the team member.",
 							Required:    true,
 						},
 						"role": {
 							Type:        schema.TypeString,
-							Description: "The type of relationship this membership implies.",
+							Description: "The role of the team member.",
 							Required:    true,
 						},
 					},
@@ -71,7 +71,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"parent": {
 				Type:        schema.TypeString,
-				Description: "The parent team. Only accepts team's Alias",
+				Description: "The alias of the parent team.",
 				ForceNew:    false,
 				Optional:    true,
 			},
