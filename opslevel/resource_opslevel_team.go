@@ -58,12 +58,12 @@ func resourceTeam() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"email": {
 							Type:        schema.TypeString,
-							Description: "The email address or ID of the user to add to a team.",
+							Description: "The email address of the team member.",
 							Required:    true,
 						},
 						"role": {
 							Type:        schema.TypeString,
-							Description: "The type of relationship this membership implies.",
+							Description: "The role of the team member.",
 							Required:    true,
 						},
 					},
@@ -71,7 +71,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"parent": {
 				Type:        schema.TypeString,
-				Description: "The parent team. Only accepts team's Alias",
+				Description: "The alias of the parent team.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -233,7 +233,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("group", resource.Group.Alias); err != nil {
 		return err
 	}
-	if err := d.Set("parent", d.Get("parent")); err != nil {
+	if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
 		return err
 	}
 
@@ -289,12 +289,12 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	if d.HasChange("group") {
 		return errors.New("groups are deprecated - create and update are disabled.")
 	}
-	if d.HasChange("parent") {
-		if parentTeam, ok := d.GetOk("parent"); ok {
-			input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
-		} else {
-			input.ParentTeam = nil
-		}
+
+	parentTeam := d.Get("parent")
+	if parentTeam != "" {
+		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
+	} else {
+		input.ParentTeam = nil
 	}
 
 	resource, err := client.UpdateTeam(input)
