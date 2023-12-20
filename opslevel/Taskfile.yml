@@ -31,6 +31,7 @@ tasks:
     desc: Setup go workspace to import opslevel-go
     cmds:
       - git submodule update --init
+      - git submodule update --remote
       - go work init || true
       - go work use . submodules/opslevel-go
       - echo "Workspace ready!"
