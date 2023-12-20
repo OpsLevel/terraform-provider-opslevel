@@ -328,9 +328,12 @@ func mapValidationErrors(valErrors []opslevel.OpsLevelErrors) []map[string]any {
 	output := []map[string]any{}
 	for _, vErr := range valErrors {
 		asMap := make(map[string]any)
+		log.Debug().Msgf("mapping errors | message %s", vErr.Message)
 		asMap["message"] = vErr.Message
+		log.Debug().Msgf("mapping errors | path orig %+v", vErr.Path)
 		path := make([]string, len(vErr.Path))
 		path = append(path, vErr.Path...)
+		log.Debug().Msgf("mapping errors | path copy %+v", path)
 		asMap["path"] = path
 	}
 	return output
