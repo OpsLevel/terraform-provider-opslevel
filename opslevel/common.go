@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
+	"github.com/rs/zerolog/log"
 )
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -309,12 +310,28 @@ func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[strin
 func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []map[string]any {
 	output := []map[string]any{}
 	for _, property := range properties.Nodes {
+		log.Debug().Msgf("definition %s", property.Definition.Id)
+		log.Debug().Msgf("owner %s", property.Owner.Id())
+		log.Debug().Msgf("validationErrors %+v", property.ValidationErrors)
+		log.Debug().Msgf("value %s", property.Value)
 		asMap := make(map[string]any)
 		asMap["definition"] = string(property.Definition.Id)
-		asMap["owner"] = string(property.Owner.Id)
-		asMap["validationErrors"] = property.ValidationErrors
+		asMap["owner"] = string(property.Owner.Id())
+		asMap["validationErrors"] = mapValidationErrors(property.ValidationErrors)
 		asMap["value"] = string(property.Value)
 		output = append(output, asMap)
+	}
+	return output
+}
+
+func mapValidationErrors(valErrors []opslevel.OpsLevelErrors) []map[string]any {
+	output := []map[string]any{}
+	for _, vErr := range valErrors {
+		asMap := make(map[string]any)
+		asMap["message"] = vErr.Message
+		path := make([]string, len(vErr.Path))
+		path = append(path, vErr.Path...)
+		asMap["path"] = path
 	}
 	return output
 }
