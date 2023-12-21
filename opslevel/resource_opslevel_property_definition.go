@@ -29,17 +29,18 @@ func resourcePropertyDefinition() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Description: "The description of the property definition.",
-				Required:    false,
+				Optional:    true,
 			},
 			"schema": {
 				Type:        schema.TypeString,
 				Description: "The schema of the property definition.",
 				Required:    true,
 			},
-			"propertyDisplayStatus": {
+			"property_display_status": {
 				Type:        schema.TypeString,
 				Description: "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
-				Required:    false,
+				Default:     "visible",
+				Optional:    true,
 			},
 		},
 	}
@@ -50,7 +51,7 @@ func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.C
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
 		Schema:                opslevel.NewJSON(d.Get("schema").(string)),
-		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("propertyDisplayStatus").(string)),
+		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string)),
 	}
 
 	resource, err := client.CreatePropertyDefinition(input)
@@ -78,7 +79,7 @@ func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Cli
 	if err := d.Set("schema", resource.Schema.ToJSON()); err != nil {
 		return err
 	}
-	if err := d.Set("propertyDisplayStatus", string(resource.PropertyDisplayStatus)); err != nil {
+	if err := d.Set("property_display_status", string(resource.PropertyDisplayStatus)); err != nil {
 		return err
 	}
 
@@ -91,7 +92,7 @@ func resourcePropertyDefinitionUpdate(d *schema.ResourceData, client *opslevel.C
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
 		Schema:                opslevel.NewJSON(d.Get("schema").(string)),
-		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("propertyDisplayStatus").(string)),
+		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string)),
 	}
 
 	_, err := client.UpdatePropertyDefinition(id, input)
