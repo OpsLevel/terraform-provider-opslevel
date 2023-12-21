@@ -318,7 +318,11 @@ func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []ma
 		asMap["definition"] = string(property.Definition.Id)
 		asMap["owner"] = string(property.Owner.Id())
 		asMap["validationErrors"] = mapValidationErrors(property.ValidationErrors)
-		asMap["value"] = string(property.Value)
+		if property.Value == nil {
+			asMap["value"] = "null"
+		} else {
+			asMap["value"] = string(*property.Value)
+		}
 		output = append(output, asMap)
 	}
 	return output
