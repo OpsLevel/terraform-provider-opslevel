@@ -196,14 +196,16 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 
-	log.Debug().Msg("calling get props")
+	log.Info().Msg("calling get props")
 	properties, err := resource.GetProperties(client, nil)
 	if err != nil {
-		log.Debug().Msg("get props err")
+		log.Info().Msg("get props err")
 		return err
 	}
-	if err := d.Set("properties", mapServiceProperties(properties)); err != nil {
-		log.Debug().Msg("map props err")
+	props := mapServiceProperties(properties)
+	log.Info().Msgf("mapped props %+v", props)
+	if err := d.Set("properties", props); err != nil {
+		log.Info().Msg("map props err")
 		return err
 	}
 
