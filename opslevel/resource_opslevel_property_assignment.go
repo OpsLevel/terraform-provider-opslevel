@@ -62,9 +62,20 @@ func resourcePropertyAssignmentCreate(d *schema.ResourceData, client *opslevel.C
 }
 
 func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := strings.Split(d.Id(), ":")
-	ownerId := id[0]
-	definitionId := id[1]
+	// an invalid id can be passed in by using 'terraform import', validate the it before attaching the id to the resource
+	parts := strings.SplitN(d.Id(), ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("[%s] invalid property assignment id, should be in format 'ownerId:definitionId' (only a single colon between both ids, no spaces or special characters)", d.Id())
+	}
+	ownerId := parts[0]
+	definitionId := parts[1]
+	if !opslevel.IsID(ownerId) {
+		return fmt.Errorf("[%s] invalid ownerId", ownerId)
+	}
+	if !opslevel.IsID(definitionId) {
+		return fmt.Errorf("[%s] invalid definitionId", definitionId)
+	}
+	d.SetId(fmt.Sprintf("%s:%s", ownerId, definitionId))
 
 	resource, err := client.GetProperty(ownerId, definitionId)
 	if err != nil {
