@@ -8,16 +8,51 @@ on:
 
 jobs:
   generate-changelog:
+    env:
+      MAIN_BRANCH: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
+      PR_BRANCH: ${{ github.event.workflow_run.pull_requests[0].head.ref }}
     runs-on: ubuntu-latest
+    # NOTE: "github.event.workflow_run.conclusion" check needed within "steps"
     steps:
-    - name: Create and commit changelog on bot PR
+    - name: Checkout branch that Dependabot labeled
       if: github.event.workflow_run.conclusion == 'success'
-      id: bot_changelog
-      uses: emmyoop/changie_bot@v1.1.0
+      uses: actions/checkout@v4
       with:
-        GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
-        commit_author_name: "Github Build Bot"
-        commit_author_email: "<bots@opslevel.com>"
-        commit_message: "Add automated changelog yaml from template for bot PR"
-        changie_kind: Dependency
-        label: dependencies
+        ref: ${{ env.PR_BRANCH }}
+        token: ${{ secrets.ORG_GITHUB_TOKEN }}
+
+    - name: Check if changelog file exists already
+      if: github.event.workflow_run.conclusion == 'success'
+      shell: bash
+      id: changelog_check
+      run: |
+        git fetch origin ${{ env.MAIN_BRANCH }}
+        if [[ -n $(git diff --name-only main -- .changes/unreleased/*.yaml) ]]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Changelog already exists for this PR, skip creating a new one"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "No changelog exists for this PR, creating a new one"
+        fi
+
+    - name: Create changie log
+      if: >-
+        github.event.workflow_run.conclusion == 'success' &&
+        steps.changelog_check.outputs.exists == 'false'
+      uses: miniscruff/changie-action@v2
+      with:
+        version: latest
+        args: new --kind Feature --body "${{ github.event.workflow_run.display_title }}"
+
+    - name: Commit & Push changes
+      if: >-
+        github.event.workflow_run.conclusion == 'success' &&
+        steps.changelog_check.outputs.exists == 'false'
+      shell: bash
+      run: |
+        git config user.name "OpsLevel Bots"
+        git config user.email "bots@opslevel.com"
+        git pull
+        git add .
+        git commit -m "Add automated changelog yaml from template"
+        git push
