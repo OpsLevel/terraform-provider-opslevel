@@ -187,7 +187,7 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 	// log warnings for any validation errors rather than adding them to state
 	for _, property := range properties.Nodes {
 		for _, validationErr := range property.ValidationErrors {
-			log.Warn().Msgf("service '%s' property '%s' has a validation error message=%s path=[%s]",
+			log.Warn().Msgf("service '%s' property '%s' has a validation error\n\tmessage=\"%s\" path=[%s]",
 				string(resource.Id),
 				string(property.Definition.Id),
 				validationErr.Message,
