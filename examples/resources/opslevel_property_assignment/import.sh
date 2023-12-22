@@ -1,0 +1,1 @@
+terraform import opslevel_property_assignment.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS85MTQyOQ_Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8xODA
