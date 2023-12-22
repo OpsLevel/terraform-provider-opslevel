@@ -1,0 +1,3 @@
+kind: Feature
+body: Support for Property Definitions as a terraform datasource
+time: 2023-12-21T13:33:36.988003-05:00
