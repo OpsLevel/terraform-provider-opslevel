@@ -39,7 +39,7 @@ func resourcePropertyDefinition() *schema.Resource {
 func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.PropertyDefinitionInput{
 		Name:   d.Get("name").(string),
-		Schema: opslevel.JSONString(d.Get("schema").(string)),
+		Schema: opslevel.NewJSON(d.Get("schema").(string)),
 	}
 
 	resource, err := client.CreatePropertyDefinition(input)
