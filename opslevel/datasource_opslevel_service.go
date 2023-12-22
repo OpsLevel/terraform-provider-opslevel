@@ -1,7 +1,10 @@
 package opslevel
 
 import (
+	"strings"
+
 	"github.com/opslevel/opslevel-go/v2023"
+	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -117,24 +120,6 @@ func datasourceService() *schema.Resource {
 							Description: "The ID of the entity that the property has been assigned to.",
 							Computed:    true,
 						},
-						"validation_errors": {
-							Type:        schema.TypeList,
-							Description: "Errors in current value, when validating against the definition.",
-							Computed:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"message": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"path": {
-										Type:     schema.TypeList,
-										Computed: true,
-										Elem:     &schema.Schema{Type: schema.TypeString},
-									},
-								},
-							},
-						},
 						"value": {
 							Type:        schema.TypeString,
 							Description: "The value of the custom property.",
@@ -198,6 +183,16 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 	properties, err := resource.GetProperties(client, nil)
 	if err != nil {
 		return err
+	}
+	// log warnings for any validation errors rather than adding them to state
+	for _, property := range properties.Nodes {
+		for _, validationErr := range property.ValidationErrors {
+			log.Warn().Msgf("service '%s' property '%s' has a validation error message=%s path=[%s]",
+				string(resource.Id),
+				string(property.Definition.Id),
+				validationErr.Message,
+				strings.Join(validationErr.Path, ","))
+		}
 	}
 	props := mapServiceProperties(properties)
 	if err := d.Set("properties", props); err != nil {

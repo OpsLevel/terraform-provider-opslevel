@@ -312,25 +312,12 @@ func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []ma
 		asMap := make(map[string]any)
 		asMap["definition"] = string(property.Definition.Id)
 		asMap["owner"] = string(property.Owner.Id())
-		asMap["validation_errors"] = mapValidationErrors(property.ValidationErrors)
 		if property.Value == nil {
 			asMap["value"] = "null"
 		} else {
 			asMap["value"] = string(*property.Value)
 		}
 		output = append(output, asMap)
-	}
-	return output
-}
-
-func mapValidationErrors(valErrors []opslevel.OpsLevelErrors) []map[string]any {
-	output := []map[string]any{}
-	for _, vErr := range valErrors {
-		asMap := make(map[string]any)
-		asMap["message"] = vErr.Message
-		path := make([]string, len(vErr.Path))
-		path = append(path, vErr.Path...)
-		asMap["path"] = path
 	}
 	return output
 }
