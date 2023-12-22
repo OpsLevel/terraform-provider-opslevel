@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
 )
 
@@ -37,10 +38,11 @@ func resourcePropertyDefinition() *schema.Resource {
 				Required:    true,
 			},
 			"property_display_status": {
-				Type:        schema.TypeString,
-				Description: "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
-				Default:     "visible",
-				Optional:    true,
+				Type:         schema.TypeString,
+				Description:  "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
+				Default:      "visible",
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(opslevel.AllPropertyDisplayStatusEnum, false),
 			},
 		},
 	}
