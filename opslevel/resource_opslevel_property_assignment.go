@@ -12,7 +12,6 @@ func resourcePropertyAssignment() *schema.Resource {
 	return &schema.Resource{
 		Description: "Manages properties assigned to entities (like Services)",
 		Create:      wrap(resourcePropertyAssignmentCreate),
-		Update:      wrap(resourcePropertyAssignmentUpdate),
 		Read:        wrap(resourcePropertyAssignmentRead),
 		Delete:      wrap(resourcePropertyAssignmentDelete),
 		Importer: &schema.ResourceImporter{
@@ -40,6 +39,7 @@ func resourcePropertyAssignment() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The value of the custom property.",
 				Required:    true,
+				ForceNew:    true,
 			},
 		},
 	}
@@ -57,32 +57,6 @@ func resourcePropertyAssignmentCreate(d *schema.ResourceData, client *opslevel.C
 		return err
 	}
 	d.SetId(fmt.Sprintf("%s:%s", resource.Owner.Id(), resource.Definition.Id))
-
-	return resourcePropertyAssignmentRead(d, client)
-}
-
-func resourcePropertyAssignmentUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	// TODO: this is a hack
-	// cannot update an existing property assignment, so instead
-	// delete the current assignment and create a new one.
-	id := strings.Split(d.Id(), ":")
-	ownerId := id[0]
-	definitionId := id[1]
-	valueEncoded := opslevel.JSONString(d.Get("value").(string))
-	input := opslevel.PropertyInput{
-		Owner:      *opslevel.NewIdentifier(ownerId),
-		Definition: *opslevel.NewIdentifier(definitionId),
-		Value:      valueEncoded,
-	}
-
-	err := client.PropertyUnassign(ownerId, definitionId)
-	if err != nil {
-		return err
-	}
-	_, err = client.PropertyAssign(input)
-	if err != nil {
-		return err
-	}
 
 	return resourcePropertyAssignmentRead(d, client)
 }
