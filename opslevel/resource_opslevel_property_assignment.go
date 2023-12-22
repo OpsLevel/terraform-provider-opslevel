@@ -26,13 +26,13 @@ func resourcePropertyAssignment() *schema.Resource {
 			},
 			"definition": {
 				Type:        schema.TypeString,
-				Description: "The custom property definition's ID.",
+				Description: "The custom property definition's ID or alias.",
 				Required:    true,
 				ForceNew:    true,
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The ID of the entity that the property has been assigned to.",
+				Description: "The ID or alias of the entity that the property has been assigned to.",
 				Required:    true,
 				ForceNew:    true,
 			},
