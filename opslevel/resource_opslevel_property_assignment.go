@@ -56,7 +56,7 @@ func resourcePropertyAssignmentCreate(d *schema.ResourceData, client *opslevel.C
 	if err != nil {
 		return err
 	}
-	d.SetId(fmt.Sprintf("%s_%s", resource.Owner.Id(), resource.Definition.Id))
+	d.SetId(fmt.Sprintf("%s:%s", resource.Owner.Id(), resource.Definition.Id))
 
 	return resourcePropertyAssignmentRead(d, client)
 }
@@ -65,7 +65,7 @@ func resourcePropertyAssignmentUpdate(d *schema.ResourceData, client *opslevel.C
 	// TODO: this is a hack
 	// cannot update an existing property assignment, so instead
 	// delete the current assignment and create a new one.
-	id := strings.Split(d.Id(), "_")
+	id := strings.Split(d.Id(), ":")
 	ownerId := id[0]
 	definitionId := id[1]
 	valueEncoded := opslevel.JSONString(d.Get("value").(string))
@@ -88,7 +88,7 @@ func resourcePropertyAssignmentUpdate(d *schema.ResourceData, client *opslevel.C
 }
 
 func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := strings.Split(d.Id(), "_")
+	id := strings.Split(d.Id(), ":")
 	ownerId := id[0]
 	definitionId := id[1]
 
@@ -111,7 +111,7 @@ func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Cli
 }
 
 func resourcePropertyAssignmentDelete(d *schema.ResourceData, client *opslevel.Client) error {
-	id := strings.Split(d.Id(), "_")
+	id := strings.Split(d.Id(), ":")
 	ownerId := id[0]
 	definitionId := id[1]
 	err := client.PropertyUnassign(ownerId, definitionId)
