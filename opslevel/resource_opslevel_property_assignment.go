@@ -75,12 +75,13 @@ func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Cli
 	if !opslevel.IsID(definitionId) {
 		return fmt.Errorf("[%s] invalid definitionId", definitionId)
 	}
-	d.SetId(fmt.Sprintf("%s:%s", ownerId, definitionId))
 
 	resource, err := client.GetProperty(ownerId, definitionId)
 	if err != nil {
 		return err
 	}
+	// if resource was fetched correctly, attach the id to the resource
+	d.SetId(fmt.Sprintf("%s:%s", ownerId, definitionId))
 
 	if err := d.Set("definition", string(resource.Definition.Id)); err != nil {
 		return err
