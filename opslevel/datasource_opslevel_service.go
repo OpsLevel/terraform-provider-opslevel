@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -196,16 +195,12 @@ func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) erro
 		return err
 	}
 
-	log.Info().Msg("calling get props")
 	properties, err := resource.GetProperties(client, nil)
 	if err != nil {
-		log.Info().Msg("get props err")
 		return err
 	}
 	props := mapServiceProperties(properties)
-	log.Info().Msgf("mapped props %+v", props)
 	if err := d.Set("properties", props); err != nil {
-		log.Info().Msg("map props err")
 		return err
 	}
 

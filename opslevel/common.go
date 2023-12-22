@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2023"
-	"github.com/rs/zerolog/log"
 )
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -310,10 +309,6 @@ func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[strin
 func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []map[string]any {
 	output := []map[string]any{}
 	for _, property := range properties.Nodes {
-		log.Info().Msgf("definition %s", property.Definition.Id)
-		log.Info().Msgf("owner %s", property.Owner.Id())
-		log.Info().Msgf("validationErrors %+v", property.ValidationErrors)
-		log.Info().Msgf("value %s", property.Value)
 		asMap := make(map[string]any)
 		asMap["definition"] = string(property.Definition.Id)
 		asMap["owner"] = string(property.Owner.Id())
@@ -332,12 +327,9 @@ func mapValidationErrors(valErrors []opslevel.OpsLevelErrors) []map[string]any {
 	output := []map[string]any{}
 	for _, vErr := range valErrors {
 		asMap := make(map[string]any)
-		log.Info().Msgf("mapping errors | message %s", vErr.Message)
 		asMap["message"] = vErr.Message
-		log.Info().Msgf("mapping errors | path orig %+v", vErr.Path)
 		path := make([]string, len(vErr.Path))
 		path = append(path, vErr.Path...)
-		log.Info().Msgf("mapping errors | path copy %+v", path)
 		asMap["path"] = path
 	}
 	return output
