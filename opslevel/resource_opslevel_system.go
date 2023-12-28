@@ -131,8 +131,7 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		if owner := d.Get("owner"); owner != "" {
 			input.Owner = opslevel.NewID(owner.(string))
 		} else {
-			// TODO: how can we unset an ID?
-			input.Owner = nil
+			input.Owner = opslevel.NewID("")
 		}
 	}
 	if d.HasChange("domain") {
