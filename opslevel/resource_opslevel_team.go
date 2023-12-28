@@ -71,7 +71,7 @@ func resourceTeam() *schema.Resource {
 			},
 			"parent": {
 				Type:        schema.TypeString,
-				Description: "The alias of the parent team.",
+				Description: "The id or alias of the parent team.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -193,8 +193,8 @@ func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	if _, ok := d.GetOk("group"); ok {
 		return errors.New("groups are deprecated - create and update are disabled.")
 	}
-	if parentTeam, ok := d.GetOk("parent"); ok {
-		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
+	if parent := d.Get("parent"); parent != "" {
+		input.ParentTeam = opslevel.NewIdentifier(parent.(string))
 	}
 
 	resource, err := client.CreateTeam(input)
@@ -233,8 +233,19 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	if err := d.Set("group", resource.Group.Alias); err != nil {
 		return err
 	}
-	if err := d.Set("parent", resource.ParentTeam.Alias); err != nil {
-		return err
+
+	// only read in changes to optional fields if they have been set before
+	if parent, ok := d.GetOk("parent"); ok || parent != "" {
+		var parentValue string
+		if opslevel.IsID(parent.(string)) {
+			parentValue = string(resource.ParentTeam.Id)
+		} else {
+			parentValue = string(resource.ParentTeam.Alias)
+		}
+
+		if err := d.Set("parent", parentValue); err != nil {
+			return err
+		}
 	}
 
 	aliases := []string{}
@@ -290,11 +301,12 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		return errors.New("groups are deprecated - create and update are disabled.")
 	}
 
-	parentTeam := d.Get("parent")
-	if parentTeam != "" {
-		input.ParentTeam = opslevel.NewIdentifier(parentTeam.(string))
-	} else {
-		input.ParentTeam = nil
+	if d.HasChange("parent") {
+		if parent := d.Get("parent"); parent != "" {
+			input.ParentTeam = opslevel.NewIdentifier(parent.(string))
+		} else {
+			input.ParentTeam = opslevel.EmptyIdentifier()
+		}
 	}
 
 	resource, err := client.UpdateTeam(input)
