@@ -45,3 +45,4 @@ examples/.terraform.lock.hcl
 main.tf
 workspace/*.tf*
 workspace/.terraform.d/
+workspace/tophatting.md
