@@ -69,12 +69,6 @@ func resourceService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			"parent": {
-				Type:        schema.TypeString,
-				Description: "The parent system for the service.",
-				ForceNew:    false,
-				Optional:    true,
-			},
 			"lifecycle_alias": {
 				Type:        schema.TypeString,
 				Description: "The lifecycle stage of the service.",
@@ -196,9 +190,6 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	if owner := d.Get("owner"); owner != "" {
 		input.Owner = opslevel.NewIdentifier(owner.(string))
 	}
-	if parent := d.Get("parent"); parent != "" {
-		input.Parent = opslevel.NewIdentifier(parent.(string))
-	}
 
 	resource, err := client.CreateService(input)
 	if err != nil {
@@ -274,12 +265,6 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 			return err
 		}
 	}
-	if parent, ok := d.GetOk("parent"); ok {
-		// TODO: there is no way to access service.Parent?
-		if err := d.Set("parent", parent); err != nil {
-			return err
-		}
-	}
 
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
 		return err
@@ -332,13 +317,6 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 			input.Owner = opslevel.NewIdentifier(owner.(string))
 		} else {
 			input.Owner = opslevel.EmptyIdentifier()
-		}
-	}
-	if d.HasChange("parent") {
-		if parent := d.Get("parent"); parent != "" {
-			input.Parent = opslevel.NewIdentifier(parent.(string))
-		} else {
-			input.Parent = opslevel.EmptyIdentifier()
 		}
 	}
 	if d.HasChange("lifecycle_alias") {
