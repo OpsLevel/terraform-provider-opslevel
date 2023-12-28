@@ -47,7 +47,7 @@ func resourceSystem() *schema.Resource {
 			},
 			"domain": {
 				Type:        schema.TypeString,
-				Description: "The id or alias of the parent domain this system is a child for.",
+				Description: "The id of the parent domain this system is a child for.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -117,7 +117,6 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 	if _, ok := d.GetOk("domain"); ok {
-		// TODO: does domain (parent) have a single consistent alias we can use?
 		if err := d.Set("domain", resource.Parent.Id); err != nil {
 			return err
 		}
