@@ -104,7 +104,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	// only read in changes to optional fields if they have been set before
-	if owner, ok := d.GetOk("owner"); ok {
+	if owner, ok := d.GetOk("owner"); ok || owner != "" {
 		var ownerValue string
 		if opslevel.IsID(owner.(string)) {
 			ownerValue = string(resource.Owner.Id())
@@ -116,7 +116,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 			return err
 		}
 	}
-	if _, ok := d.GetOk("domain"); ok {
+	if domain, ok := d.GetOk("domain"); ok || domain != "" {
 		if err := d.Set("domain", resource.Parent.Id); err != nil {
 			return err
 		}
