@@ -282,6 +282,8 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 		return err
 	}
 
+	// only read in changes to optional fields if they have been set before
+	// this will prevent HasChange() from being triggered on update
 	if owner, ok := d.GetOk("owner"); ok {
 		if err := d.Set("owner", owner); err != nil {
 			return err
@@ -292,7 +294,6 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 			return err
 		}
 	}
-
 	if parent, ok := d.GetOk("parent"); ok {
 		if err := d.Set("parent", parent); err != nil {
 			return err
@@ -345,28 +346,27 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
-
-	owner := d.Get("owner")
-	ownerAlias := d.Get("owner_alias")
-	if owner != "" && ownerAlias != "" {
-		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-	} else if owner != "" {
-		input.Owner = opslevel.NewIdentifier(owner.(string))
-	} else if ownerAlias != "" {
-		input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
-	} else {
-		// unset owner on update if not specified
-		input.Owner = opslevel.EmptyIdentifier()
+	if d.HasChange("owner") {
+		owner := d.Get("owner")
+		ownerAlias := d.Get("owner_alias")
+		if owner != "" && ownerAlias != "" {
+			return errors.New("can pass only one of: 'owner' or 'owner_alias'")
+		} else if owner != "" {
+			input.Owner = opslevel.NewIdentifier(owner.(string))
+		} else if ownerAlias != "" {
+			input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
+		} else {
+			input.Owner = opslevel.EmptyIdentifier()
+		}
 	}
-
-	parent := d.Get("parent")
-	if parent != "" {
-		input.Parent = opslevel.NewIdentifier(parent.(string))
-	} else {
-		// unset parent on update if not specified
-		input.Parent = opslevel.EmptyIdentifier()
+	if d.HasChange("parent") {
+		parent := d.Get("parent")
+		if parent != "" {
+			input.Parent = opslevel.NewIdentifier(parent.(string))
+		} else {
+			input.Parent = opslevel.EmptyIdentifier()
+		}
 	}
-
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
 	}
