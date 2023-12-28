@@ -105,14 +105,7 @@ func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 	// only read in changes to optional fields if they have been set before
 	if owner, ok := d.GetOk("owner"); ok || owner != "" {
-		var ownerValue string
-		if opslevel.IsID(owner.(string)) {
-			ownerValue = string(resource.Owner.Id())
-		} else {
-			ownerValue = string(resource.Owner.Alias())
-		}
-
-		if err := d.Set("owner", ownerValue); err != nil {
+		if err := d.Set("owner", resource.Owner.Id()); err != nil {
 			return err
 		}
 	}
