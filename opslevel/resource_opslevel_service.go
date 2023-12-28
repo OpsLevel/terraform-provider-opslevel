@@ -77,6 +77,12 @@ func resourceService() *schema.Resource {
 				Optional:    true,
 				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
 			},
+			"parent": {
+				Type:        schema.TypeString,
+				Description: "The parent system for the service.",
+				ForceNew:    false,
+				Optional:    true,
+			},
 			"lifecycle_alias": {
 				Type:        schema.TypeString,
 				Description: "The lifecycle stage of the service.",
@@ -198,6 +204,13 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
 	}
 
+	// parent is optional
+	var parentField *opslevel.IdentifierInput
+	parent := d.Get("parent")
+	if parent != "" {
+		parentField = opslevel.NewIdentifier(parent.(string))
+	}
+
 	input := opslevel.ServiceCreateInput{
 		Name:        d.Get("name").(string),
 		Product:     d.Get("product").(string),
@@ -206,6 +219,7 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
 		Owner:       ownerField,
+		Parent:      parentField,
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
 	resource, err := client.CreateService(input)
@@ -267,6 +281,7 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
 		return err
 	}
+
 	if owner, ok := d.GetOk("owner"); ok {
 		if err := d.Set("owner", owner); err != nil {
 			return err
@@ -277,6 +292,13 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 			return err
 		}
 	}
+
+	if parent, ok := d.GetOk("parent"); ok {
+		if err := d.Set("parent", parent); err != nil {
+			return err
+		}
+	}
+
 	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
 		return err
 	}
@@ -323,6 +345,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	if d.HasChange("tier_alias") {
 		input.Tier = d.Get("tier_alias").(string)
 	}
+
 	owner := d.Get("owner")
 	ownerAlias := d.Get("owner_alias")
 	if owner != "" && ownerAlias != "" {
@@ -331,7 +354,19 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		input.Owner = opslevel.NewIdentifier(owner.(string))
 	} else if ownerAlias != "" {
 		input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
+	} else {
+		// unset owner on update if not specified
+		input.Owner = opslevel.EmptyIdentifier()
 	}
+
+	parent := d.Get("parent")
+	if parent != "" {
+		input.Parent = opslevel.NewIdentifier(parent.(string))
+	} else {
+		// unset parent on update if not specified
+		input.Parent = opslevel.EmptyIdentifier()
+	}
+
 	if d.HasChange("lifecycle_alias") {
 		input.Lifecycle = d.Get("lifecycle_alias").(string)
 	}
