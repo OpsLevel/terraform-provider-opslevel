@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -69,13 +68,6 @@ func resourceService() *schema.Resource {
 				Description: "The team that owns the service. ID or Alias my be used.",
 				ForceNew:    false,
 				Optional:    true,
-			},
-			"owner_alias": {
-				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
-				ForceNew:    false,
-				Optional:    true,
-				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
 			},
 			"parent": {
 				Type:        schema.TypeString,
@@ -192,25 +184,6 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 }
 
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	// owner_alias is deprecated, allow user to use one or the other but not both.
-	var ownerField *opslevel.IdentifierInput
-	owner := d.Get("owner")
-	ownerAlias := d.Get("owner_alias")
-	if owner != "" && ownerAlias != "" {
-		return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-	} else if owner != "" {
-		ownerField = opslevel.NewIdentifier(owner.(string))
-	} else if ownerAlias != "" {
-		ownerField = opslevel.NewIdentifier(ownerAlias.(string))
-	}
-
-	// parent is optional
-	var parentField *opslevel.IdentifierInput
-	parent := d.Get("parent")
-	if parent != "" {
-		parentField = opslevel.NewIdentifier(parent.(string))
-	}
-
 	input := opslevel.ServiceCreateInput{
 		Name:        d.Get("name").(string),
 		Product:     d.Get("product").(string),
@@ -218,10 +191,15 @@ func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) erro
 		Language:    d.Get("language").(string),
 		Framework:   d.Get("framework").(string),
 		Tier:        d.Get("tier_alias").(string),
-		Owner:       ownerField,
-		Parent:      parentField,
 		Lifecycle:   d.Get("lifecycle_alias").(string),
 	}
+	if owner := d.Get("owner"); owner != "" {
+		input.Owner = opslevel.NewIdentifier(owner.(string))
+	}
+	if parent := d.Get("parent"); parent != "" {
+		input.Parent = opslevel.NewIdentifier(parent.(string))
+	}
+
 	resource, err := client.CreateService(input)
 	if err != nil {
 		return err
@@ -283,18 +261,21 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 	}
 
 	// only read in changes to optional fields if they have been set before
-	// this will prevent HasChange() from being triggered on update
+	// this will prevent HasChange() from detecting changes on update
 	if owner, ok := d.GetOk("owner"); ok {
-		if err := d.Set("owner", owner); err != nil {
-			return err
+		var ownerValue string
+		if opslevel.IsID(owner.(string)) {
+			ownerValue = string(resource.Owner.Id)
+		} else {
+			ownerValue = string(resource.Owner.Alias)
 		}
-	}
-	if owner, ok := d.GetOk("owner_alias"); ok {
-		if err := d.Set("owner_alias", owner); err != nil {
+
+		if err := d.Set("owner", ownerValue); err != nil {
 			return err
 		}
 	}
 	if parent, ok := d.GetOk("parent"); ok {
+		// TODO: there is no way to access service.Parent?
 		if err := d.Set("parent", parent); err != nil {
 			return err
 		}
@@ -347,21 +328,14 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		input.Tier = d.Get("tier_alias").(string)
 	}
 	if d.HasChange("owner") {
-		owner := d.Get("owner")
-		ownerAlias := d.Get("owner_alias")
-		if owner != "" && ownerAlias != "" {
-			return errors.New("can pass only one of: 'owner' or 'owner_alias'")
-		} else if owner != "" {
+		if owner := d.Get("owner"); owner != "" {
 			input.Owner = opslevel.NewIdentifier(owner.(string))
-		} else if ownerAlias != "" {
-			input.Owner = opslevel.NewIdentifier(ownerAlias.(string))
 		} else {
 			input.Owner = opslevel.EmptyIdentifier()
 		}
 	}
 	if d.HasChange("parent") {
-		parent := d.Get("parent")
-		if parent != "" {
+		if parent := d.Get("parent"); parent != "" {
 			input.Parent = opslevel.NewIdentifier(parent.(string))
 		} else {
 			input.Parent = opslevel.EmptyIdentifier()
