@@ -142,7 +142,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 func resourceTriggerDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetTriggerDefinition(*opslevel.NewIdentifier(id))
+	resource, err := client.GetTriggerDefinition(id)
 	if err != nil {
 		return err
 	}
@@ -258,7 +258,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 
 func resourceTriggerDefinitionDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTriggerDefinition(*opslevel.NewIdentifier(id))
+	err := client.DeleteTriggerDefinition(id)
 	if err != nil {
 		return err
 	}
