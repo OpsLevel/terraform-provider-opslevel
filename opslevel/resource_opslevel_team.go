@@ -306,7 +306,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 		if parent := d.Get("parent"); parent != "" {
 			input.ParentTeam = opslevel.NewIdentifier(parent.(string))
 		} else {
-			input.ParentTeam = opslevel.EmptyIdentifier()
+			input.ParentTeam = opslevel.NewIdentifier()
 		}
 	}
 

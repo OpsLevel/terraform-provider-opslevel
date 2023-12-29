@@ -138,7 +138,7 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		if domain := d.Get("domain"); domain != "" {
 			input.Parent = opslevel.NewIdentifier(domain.(string))
 		} else {
-			input.Parent = opslevel.EmptyIdentifier()
+			input.Parent = opslevel.NewIdentifier()
 		}
 	}
 

@@ -316,7 +316,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 		if owner := d.Get("owner"); owner != "" {
 			input.Owner = opslevel.NewIdentifier(owner.(string))
 		} else {
-			input.Owner = opslevel.EmptyIdentifier()
+			input.Owner = opslevel.NewIdentifier()
 		}
 	}
 	if d.HasChange("lifecycle_alias") {
