@@ -55,7 +55,7 @@ func datasourceWebhookAction() *schema.Resource {
 
 func datasourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	identifier := d.Get("identifier").(string)
-	resource, err := client.GetCustomAction(*opslevel.NewIdentifier(identifier))
+	resource, err := client.GetCustomAction(identifier)
 	if err != nil {
 		return err
 	}

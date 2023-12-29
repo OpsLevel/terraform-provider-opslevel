@@ -95,7 +95,7 @@ func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client
 func resourceWebhookActionRead(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
-	resource, err := client.GetCustomAction(*opslevel.NewIdentifier(id))
+	resource, err := client.GetCustomAction(id)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 
 func resourceWebhookActionDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteWebhookAction(*opslevel.NewIdentifier(id))
+	err := client.DeleteWebhookAction(id)
 	if err != nil {
 		return err
 	}
