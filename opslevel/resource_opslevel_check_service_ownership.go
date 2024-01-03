@@ -21,7 +21,7 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "True if a service's owner must have a contact method, False otherwise.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"contact_method": {
 				Type:         schema.TypeString,
@@ -45,9 +45,7 @@ func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opsleve
 	input := opslevel.CheckServiceOwnershipCreateInput{}
 	setCheckCreateInput(d, &input)
 
-	if requireContactMethod, ok := d.GetOk("require_contact_method"); ok {
-		input.RequireContactMethod = opslevel.Bool(requireContactMethod.(bool))
-	}
+	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
 	if value, ok := d.GetOk("contact_method"); ok {
 		contactMethod := opslevel.ContactType(value.(string))
 		input.ContactMethod = &contactMethod
@@ -79,10 +77,8 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 		return err
 	}
 
-	if _, ok := d.GetOk("require_contact_method"); ok {
-		if err := d.Set("require_contact_method", resource.RequireContactMethod); err != nil {
-			return err
-		}
+	if err := d.Set("require_contact_method", resource.RequireContactMethod); err != nil {
+		return err
 	}
 
 	if _, ok := d.GetOk("contact_method"); ok {
@@ -109,9 +105,7 @@ func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opsleve
 	input := opslevel.CheckServiceOwnershipUpdateInput{}
 	setCheckUpdateInput(d, &input)
 
-	if d.HasChange("require_contact_method") {
-		input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
-	}
+	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
 
 	if d.HasChange("contact_method") {
 		contactMethod := opslevel.ContactType(d.Get("contact_method").(string))

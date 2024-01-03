@@ -55,10 +55,9 @@ func resourceTriggerDefinition() *schema.Resource {
 			},
 			"published": {
 				Type:        schema.TypeBool,
-				Description: "The published state of the Custom Action; true if the Trigger Definition is ready for use; false if it is a draft. Defaults to false.",
-				Default:     false,
+				Description: "The published state of the Custom Action; true if the Trigger Definition is ready for use; false if it is a draft.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"access_control": {
 				Type:         schema.TypeString,
@@ -121,9 +120,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 		input.ResponseTemplate = responseTemplate
 	}
 
-	if published, ok := d.GetOk("published"); ok {
-		input.Published = opslevel.Bool(published.(bool))
-	}
+	input.Published = opslevel.Bool(d.Get("published").(bool))
 
 	if _, ok := d.GetOk("entity_type"); ok {
 		entityType := d.Get("entity_type").(string)
@@ -220,14 +217,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		input.Filter = opslevel.NewID(d.Get("filter").(string))
 	}
 
-	if d.HasChange("published") {
-		published, ok := d.GetOk("published")
-		if ok {
-			input.Published = opslevel.Bool(published.(bool))
-		} else {
-			input.Published = opslevel.Bool(false)
-		}
-	}
+	input.Published = opslevel.Bool(d.Get("published").(bool))
 
 	if d.HasChange("access_control") {
 		input.AccessControl = opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string))

@@ -65,7 +65,7 @@ func resourceFilter() *schema.Resource {
 							Type:        schema.TypeBool,
 							Description: "Option for determining whether to compare strings case-sensitively.\n\n",
 							ForceNew:    false,
-							Optional:    true,
+							Required:    true,
 						},
 					},
 				},

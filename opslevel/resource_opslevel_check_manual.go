@@ -128,9 +128,7 @@ func resourceCheckManualUpdate(d *schema.ResourceData, client *opslevel.Client) 
 	if d.HasChange("update_frequency") {
 		input.UpdateFrequency = expandUpdateFrequency(d, "update_frequency")
 	}
-	if d.HasChange("update_requires_comment") {
-		input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)
-	}
+	input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)
 
 	_, err := client.UpdateCheckManual(input)
 	if err != nil {

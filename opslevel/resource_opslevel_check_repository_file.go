@@ -20,7 +20,7 @@ func resourceCheckRepositoryFile() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Whether the check looks for the existence of a directory instead of a file.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"filepaths": {
 				Type:        schema.TypeList,
@@ -37,7 +37,7 @@ func resourceCheckRepositoryFile() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 		}),
 	}
