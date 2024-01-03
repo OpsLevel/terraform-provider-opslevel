@@ -20,7 +20,7 @@ func resourceCheckRepositoryGrep() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Whether the check looks for the existence of a directory instead of a file. Defaults to false",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"filepaths": {
 				Type:        schema.TypeList,
@@ -92,9 +92,7 @@ func resourceCheckRepositoryGrepUpdate(d *schema.ResourceData, client *opslevel.
 	input := opslevel.CheckRepositoryGrepUpdateInput{}
 	setCheckUpdateInput(d, &input)
 
-	if d.HasChange("directory_search") {
-		input.DirectorySearch = d.Get("directory_search").(bool)
-	}
+	input.DirectorySearch = d.Get("directory_search").(bool)
 
 	if d.HasChange("filepaths") {
 		input.Filepaths = getStringArray(d, "filepaths")

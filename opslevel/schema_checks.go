@@ -126,10 +126,7 @@ func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProv
 	if d.HasChange("name") {
 		input.Name = d.Get("name").(string)
 	}
-	if d.HasChange("enabled") {
-		value := d.Get("enabled").(bool)
-		input.Enabled = &value
-	}
+	input.Enabled = opslevel.Bool(d.Get("enabled").(bool))
 	if d.HasChange("enable_on") {
 		enable_on := opslevel.NewISO8601Date(d.Get("enable_on").(string))
 		input.EnableOn = &enable_on

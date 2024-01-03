@@ -43,7 +43,7 @@ func resourceIntegrationAWS() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Allow tags imported from AWS to override ownership set in OpsLevel directly.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"ownership_tag_keys": {
 				Type:        schema.TypeList,
@@ -58,15 +58,12 @@ func resourceIntegrationAWS() *schema.Resource {
 
 func resourceIntegrationAWSCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.AWSIntegrationInput{
-		Name:       opslevel.NewString(d.Get("name").(string)),
-		IAMRole:    opslevel.NewString(d.Get("iam_role").(string)),
-		ExternalID: opslevel.NewString(d.Get("external_id").(string)),
+		Name:                 opslevel.NewString(d.Get("name").(string)),
+		IAMRole:              opslevel.NewString(d.Get("iam_role").(string)),
+		ExternalID:           opslevel.NewString(d.Get("external_id").(string)),
+		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
 	}
 
-	if value, ok := d.GetOk("ownership_tag_overrides"); ok {
-		casted := value.(bool)
-		input.OwnershipTagOverride = &casted
-	}
 	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
 
 	resource, err := client.CreateIntegrationAWS(input)
@@ -92,10 +89,8 @@ func resourceIntegrationAWSRead(d *schema.ResourceData, client *opslevel.Client)
 	if err := d.Set("external_id", resource.ExternalID); err != nil {
 		return err
 	}
-	if _, ok := d.GetOk("ownership_tag_overrides"); ok {
-		if err := d.Set("ownership_tag_overrides", resource.OwnershipTagOverride); err != nil {
-			return err
-		}
+	if err := d.Set("ownership_tag_overrides", resource.OwnershipTagOverride); err != nil {
+		return err
 	}
 	if _, ok := d.GetOk("ownership_tag_keys"); ok {
 		if err := d.Set("ownership_tag_keys", resource.OwnershipTagKeys); err != nil {
@@ -108,15 +103,12 @@ func resourceIntegrationAWSRead(d *schema.ResourceData, client *opslevel.Client)
 
 func resourceIntegrationAWSUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.AWSIntegrationInput{
-		Name:       opslevel.NewString(d.Get("name").(string)),
-		IAMRole:    opslevel.NewString(d.Get("iam_role").(string)),
-		ExternalID: opslevel.NewString(d.Get("external_id").(string)),
+		Name:                 opslevel.NewString(d.Get("name").(string)),
+		IAMRole:              opslevel.NewString(d.Get("iam_role").(string)),
+		ExternalID:           opslevel.NewString(d.Get("external_id").(string)),
+		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
 	}
 
-	if value, ok := d.GetOk("ownership_tag_overrides"); ok {
-		casted := value.(bool)
-		input.OwnershipTagOverride = &casted
-	}
 	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
 
 	_, err := client.UpdateIntegrationAWS(d.Id(), input)
