@@ -1,3 +1,0 @@
-kind: Removed
-body: '[BREAKING CHANGE] remove support for skip_welcome_email in User resource'
-time: 2024-01-03T12:26:30.593973-05:00
