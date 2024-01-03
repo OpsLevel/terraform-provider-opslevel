@@ -41,6 +41,16 @@ func resourceUser() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(opslevel.AllUserRole, false),
 			},
+			// There is no way to read this value from a User resource and no way
+			// to set it in the terraform state. Do not remove it because some
+			// customers rely on this feature regardless.
+			"skip_welcome_email": {
+				Type:        schema.TypeBool,
+				Description: "Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.",
+				Default:     false,
+				ForceNew:    false,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -48,8 +58,9 @@ func resourceUser() *schema.Resource {
 func resourceUserCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	email := d.Get("email").(string)
 	input := opslevel.UserInput{
-		Name: d.Get("name").(string),
-		Role: opslevel.UserRole(d.Get("role").(string)),
+		Name:             d.Get("name").(string),
+		Role:             opslevel.UserRole(d.Get("role").(string)),
+		SkipWelcomeEmail: d.Get("skip_welcome_email").(bool),
 	}
 	resource, err := client.InviteUser(email, input)
 	if err != nil {
