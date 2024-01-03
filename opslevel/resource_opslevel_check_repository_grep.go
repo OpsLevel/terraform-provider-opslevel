@@ -18,7 +18,7 @@ func resourceCheckRepositoryGrep() *schema.Resource {
 		Schema: getCheckSchema(map[string]*schema.Schema{
 			"directory_search": {
 				Type:        schema.TypeBool,
-				Description: "Whether the check looks for the existence of a directory instead of a file. Defaults to false",
+				Description: "Whether the check looks for the existence of a directory instead of a file.",
 				ForceNew:    false,
 				Required:    true,
 			},
