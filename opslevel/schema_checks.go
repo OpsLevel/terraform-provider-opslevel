@@ -25,7 +25,7 @@ func getCheckSchema(extras map[string]*schema.Schema) map[string]*schema.Schema 
 			Type:        schema.TypeBool,
 			Description: `Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.`,
 			ForceNew:    false,
-			Optional:    true,
+			Required:    true,
 		},
 		"enable_on": {
 			Type: schema.TypeString,
