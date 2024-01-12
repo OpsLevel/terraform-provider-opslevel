@@ -78,9 +78,9 @@ func resourceRepositoryUpdate(d *schema.ResourceData, client *opslevel.Client) e
 	}
 
 	if owner, ok := d.GetOk("owner"); ok {
-		input.Owner = opslevel.NewID(owner.(string))
+		input.OwnerId = opslevel.NewID(owner.(string))
 	} else {
-		input.Owner = opslevel.NewID("")
+		input.OwnerId = opslevel.NewID("")
 	}
 
 	_, err := client.UpdateRepository(input)

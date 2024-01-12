@@ -38,19 +38,18 @@ func resourceCheckRepositoryGrep() *schema.Resource {
 }
 
 func resourceCheckRepositoryGrepCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryGrepCreateInput{}
-	setCheckCreateInput(d, &input)
-
-	input.DirectorySearch = d.Get("directory_search").(bool)
-	input.Filepaths = getStringArray(d, "filepaths")
-	input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
-	if input.FileContentsPredicate == nil {
-		input.FileContentsPredicate = &opslevel.PredicateInput{
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckRepositoryGrepCreateInput](checkCreateInput)
+	input.DirectorySearch = opslevel.RefOf(d.Get("directory_search").(bool))
+	input.FilePaths = getStringArray(d, "filepaths")
+	fileContentsPredicate := expandPredicate(d, "file_contents_predicate")
+	if fileContentsPredicate == nil {
+		input.FileContentsPredicate = opslevel.PredicateInput{
 			Type: opslevel.PredicateTypeEnum("exists"),
 		}
 	}
 
-	resource, err := client.CreateCheckRepositoryGrep(input)
+	resource, err := client.CreateCheckRepositoryGrep(*input)
 	if err != nil {
 		return err
 	}
@@ -89,19 +88,18 @@ func resourceCheckRepositoryGrepRead(d *schema.ResourceData, client *opslevel.Cl
 }
 
 func resourceCheckRepositoryGrepUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryGrepUpdateInput{}
-	setCheckUpdateInput(d, &input)
-
-	input.DirectorySearch = d.Get("directory_search").(bool)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckRepositoryGrepUpdateInput](checkUpdateInput)
+	input.DirectorySearch = opslevel.RefOf(d.Get("directory_search").(bool))
 
 	if d.HasChange("filepaths") {
-		input.Filepaths = getStringArray(d, "filepaths")
+		input.FilePaths = opslevel.RefOf(getStringArray(d, "filepaths"))
 	}
 	if d.HasChange("file_contents_predicate") {
-		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+		input.FileContentsPredicate = expandPredicateUpdate(d, "file_contents_predicate")
 	}
 
-	_, err := client.UpdateCheckRepositoryGrep(input)
+	_, err := client.UpdateCheckRepositoryGrep(*input)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"errors"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -43,13 +42,6 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"group": {
-				Type:        schema.TypeString,
-				Description: "The group this team belongs to. Only accepts group's Alias",
-				Deprecated:  "field 'group' on team is no longer supported please use the 'parent' field.",
-				ForceNew:    false,
-				Optional:    true,
 			},
 			"member": {
 				Type:        schema.TypeList,
@@ -113,9 +105,10 @@ func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserIn
 	members := []opslevel.TeamMembershipUserInput{}
 
 	for _, user := range team.Memberships.Nodes {
+		newUserIdentifier := opslevel.NewUserIdentifier(user.User.Email)
 		member := opslevel.TeamMembershipUserInput{
-			User: opslevel.NewUserIdentifier(user.User.Email),
-			Role: string(user.Role),
+			User: &newUserIdentifier,
+			Role: opslevel.RefOf(user.Role),
 		}
 		members = append(members, member)
 	}
@@ -140,9 +133,10 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 
 		for _, m := range membersInput {
 			memberInput := m.(map[string]interface{})
+			newUserIdentifier := opslevel.NewUserIdentifier(memberInput["email"].(string))
 			member := opslevel.TeamMembershipUserInput{
-				User: opslevel.NewUserIdentifier(memberInput["email"].(string)),
-				Role: memberInput["role"].(string),
+				User: &newUserIdentifier,
+				Role: opslevel.RefOf(memberInput["role"].(string)),
 			}
 			expectedMembers = append(expectedMembers, member)
 		}
@@ -189,10 +183,7 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 func resourceTeamCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.TeamCreateInput{
 		Name:             d.Get("name").(string),
-		Responsibilities: d.Get("responsibilities").(string),
-	}
-	if _, ok := d.GetOk("group"); ok {
-		return errors.New("groups are deprecated - create and update are disabled.")
+		Responsibilities: opslevel.RefOf(d.Get("responsibilities").(string)),
 	}
 	if parent := d.Get("parent"); parent != "" {
 		input.ParentTeam = opslevel.NewIdentifier(parent.(string))
@@ -229,9 +220,6 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 	if err := d.Set("responsibilities", resource.Responsibilities); err != nil {
-		return err
-	}
-	if err := d.Set("group", resource.Group.Alias); err != nil {
 		return err
 	}
 
@@ -289,17 +277,14 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 	input := opslevel.TeamUpdateInput{
-		Id: opslevel.ID(id),
+		Id: opslevel.NewID(id),
 	}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("responsibilities") {
-		input.Responsibilities = d.Get("responsibilities").(string)
-	}
-	if d.HasChange("group") {
-		return errors.New("groups are deprecated - create and update are disabled.")
+		input.Responsibilities = opslevel.RefOf(d.Get("responsibilities").(string))
 	}
 
 	if d.HasChange("parent") {

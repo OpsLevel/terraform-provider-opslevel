@@ -32,15 +32,14 @@ func resourceCheckToolUsage() *schema.Resource {
 }
 
 func resourceCheckToolUsageCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckToolUsageCreateInput{}
-	setCheckCreateInput(d, &input)
-
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckToolUsageCreateInput](checkCreateInput)
 	input.ToolCategory = opslevel.ToolCategory(d.Get("tool_category").(string))
 	input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
 	input.ToolUrlPredicate = expandPredicate(d, "tool_url_predicate")
 	input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
 
-	resource, err := client.CreateCheckToolUsage(input)
+	resource, err := client.CreateCheckToolUsage(*input)
 	if err != nil {
 		return err
 	}
@@ -77,23 +76,23 @@ func resourceCheckToolUsageRead(d *schema.ResourceData, client *opslevel.Client)
 }
 
 func resourceCheckToolUsageUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckToolUsageUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckToolUsageUpdateInput](checkUpdateInput)
 
 	if d.HasChange("tool_category") {
-		input.ToolCategory = opslevel.ToolCategory(d.Get("tool_category").(string))
+		input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(d.Get("tool_category").(string)))
 	}
 	if d.HasChange("tool_name_predicate") {
-		input.ToolNamePredicate = expandPredicate(d, "tool_name_predicate")
+		input.ToolNamePredicate = expandPredicateUpdate(d, "tool_name_predicate")
 	}
 	if d.HasChange("tool_url_predicate") {
-		input.ToolUrlPredicate = expandPredicate(d, "tool_url_predicate")
+		input.ToolUrlPredicate = expandPredicateUpdate(d, "tool_url_predicate")
 	}
 	if d.HasChange("environment_predicate") {
-		input.EnvironmentPredicate = expandPredicate(d, "environment_predicate")
+		input.EnvironmentPredicate = expandPredicateUpdate(d, "environment_predicate")
 	}
 
-	_, err := client.UpdateCheckToolUsage(input)
+	_, err := client.UpdateCheckToolUsage(*input)
 	if err != nil {
 		return err
 	}

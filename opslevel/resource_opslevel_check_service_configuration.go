@@ -20,10 +20,10 @@ func resourceCheckServiceConfiguration() *schema.Resource {
 }
 
 func resourceCheckServiceConfigurationCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceConfigurationCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckServiceConfigurationCreateInput](checkCreateInput)
 
-	resource, err := client.CreateCheckServiceConfiguration(input)
+	resource, err := client.CreateCheckServiceConfiguration(*input)
 	if err != nil {
 		return err
 	}
@@ -48,10 +48,10 @@ func resourceCheckServiceConfigurationRead(d *schema.ResourceData, client *opsle
 }
 
 func resourceCheckServiceConfigurationUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceConfigurationUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckServiceConfigurationUpdateInput](checkUpdateInput)
 
-	_, err := client.UpdateCheckServiceConfiguration(input)
+	_, err := client.UpdateCheckServiceConfiguration(*input)
 	if err != nil {
 		return err
 	}

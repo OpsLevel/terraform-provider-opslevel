@@ -56,7 +56,7 @@ func resourceTeamContact() *schema.Resource {
 func resourceTeamContactCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.ContactInput{
 		Type:        opslevel.ContactType(d.Get("type").(string)),
-		DisplayName: opslevel.NewString(d.Get("name").(string)),
+		DisplayName: opslevel.RefOf(d.Get("name").(string)),
 		Address:     d.Get("value").(string),
 	}
 	resource, err := client.AddContact(d.Get("team").(string), input)
@@ -123,7 +123,7 @@ func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) 
 	id := d.Id()
 	input := opslevel.ContactInput{
 		Type:        opslevel.ContactType(d.Get("type").(string)),
-		DisplayName: opslevel.NewString(d.Get("name").(string)),
+		DisplayName: opslevel.RefOf(d.Get("name").(string)),
 		Address:     d.Get("value").(string),
 	}
 	_, err := client.UpdateContact(opslevel.ID(id), input)

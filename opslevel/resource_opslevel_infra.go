@@ -33,7 +33,7 @@ func resourceInfrastructure() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The id of the owner for the infrastructure resource.  Can be a team or group. Does not support aliases!",
+				Description: "The id of the owner for the infrastructure resource. The team id. Does not support aliases!",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -136,7 +136,7 @@ func resourceInfrastructureCreate(d *schema.ResourceData, client *opslevel.Clien
 		Schema:   d.Get("schema").(string),
 		Owner:    opslevel.NewID(d.Get("owner").(string)),
 		Provider: expandInfraProviderData(d),
-		Data:     opslevel.NewJSON(d.Get("data").(string)),
+		Data:     opslevel.RefOf(opslevel.NewJSON(d.Get("data").(string))),
 	})
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func resourceInfrastructureUpdate(d *schema.ResourceData, client *opslevel.Clien
 		Schema:   d.Get("schema").(string),
 		Owner:    opslevel.NewID(d.Get("owner").(string)),
 		Provider: expandInfraProviderData(d),
-		Data:     opslevel.NewJSON(d.Get("data").(string)),
+		Data:     opslevel.RefOf(opslevel.NewJSON(d.Get("data").(string))),
 	})
 	if err != nil {
 		return err

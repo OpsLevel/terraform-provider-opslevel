@@ -49,7 +49,7 @@ func resourcePropertyAssignmentCreate(d *schema.ResourceData, client *opslevel.C
 	input := opslevel.PropertyInput{
 		Owner:      *opslevel.NewIdentifier(d.Get("owner").(string)),
 		Definition: *opslevel.NewIdentifier(d.Get("definition").(string)),
-		Value:      opslevel.JSONString(d.Get("value").(string)),
+		Value:      opslevel.JsonString(d.Get("value").(string)),
 	}
 
 	resource, err := client.PropertyAssign(input)

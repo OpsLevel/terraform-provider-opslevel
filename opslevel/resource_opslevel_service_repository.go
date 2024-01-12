@@ -77,8 +77,8 @@ func resourceServiceRepositoryCreate(d *schema.ResourceData, client *opslevel.Cl
 		Service:    *opslevel.NewIdentifier(string(service.Id)),
 		Repository: *opslevel.NewIdentifier(string(repository.Id)),
 
-		DisplayName:   d.Get("name").(string),
-		BaseDirectory: d.Get("base_directory").(string),
+		DisplayName:   opslevel.RefOf(d.Get("name").(string)),
+		BaseDirectory: opslevel.RefOf(d.Get("base_directory").(string)),
 	}
 	resource, err := client.CreateServiceRepository(input)
 	if err != nil {
@@ -148,10 +148,10 @@ func resourceServiceRepositoryUpdate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if d.HasChange("name") {
-		input.DisplayName = d.Get("name").(string)
+		input.DisplayName = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("base_directory") {
-		input.BaseDirectory = d.Get("base_directory").(string)
+		input.BaseDirectory = opslevel.RefOf(d.Get("base_directory").(string))
 	}
 
 	resource, err := client.UpdateServiceRepository(input)

@@ -58,9 +58,9 @@ func resourceUser() *schema.Resource {
 func resourceUserCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	email := d.Get("email").(string)
 	input := opslevel.UserInput{
-		Name:             d.Get("name").(string),
-		Role:             opslevel.UserRole(d.Get("role").(string)),
-		SkipWelcomeEmail: d.Get("skip_welcome_email").(bool),
+		Name:             opslevel.RefOf(d.Get("name").(string)),
+		Role:             opslevel.RefOf(opslevel.UserRole(d.Get("role").(string))),
+		SkipWelcomeEmail: opslevel.RefOf(d.Get("skip_welcome_email").(bool)),
 	}
 	resource, err := client.InviteUser(email, input)
 	if err != nil {
@@ -97,10 +97,10 @@ func resourceUserUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.UserInput{}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("role") {
-		input.Role = opslevel.UserRole(d.Get("role").(string))
+		input.Role = opslevel.RefOf(opslevel.UserRole(d.Get("role").(string)))
 	}
 
 	_, err := client.UpdateUser(id, input)

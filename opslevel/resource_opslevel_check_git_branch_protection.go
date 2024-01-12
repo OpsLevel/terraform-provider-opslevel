@@ -20,10 +20,10 @@ func resourceCheckGitBranchProtection() *schema.Resource {
 }
 
 func resourceCheckGitBranchProtectionCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckGitBranchProtectionCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckGitBranchProtectionCreateInput](checkCreateInput)
 
-	resource, err := client.CreateCheckGitBranchProtection(input)
+	resource, err := client.CreateCheckGitBranchProtection(*input)
 	if err != nil {
 		return err
 	}
@@ -48,10 +48,10 @@ func resourceCheckGitBranchProtectionRead(d *schema.ResourceData, client *opslev
 }
 
 func resourceCheckGitBranchProtectionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckGitBranchProtectionUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckGitBranchProtectionUpdateInput](checkUpdateInput)
 
-	_, err := client.UpdateCheckGitBranchProtection(input)
+	_, err := client.UpdateCheckGitBranchProtection(*input)
 	if err != nil {
 		return err
 	}

@@ -42,21 +42,21 @@ func resourceCheckServiceOwnership() *schema.Resource {
 }
 
 func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceOwnershipCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckServiceOwnershipCreateInput](checkCreateInput)
 
 	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
 	if value, ok := d.GetOk("contact_method"); ok {
 		contactMethod := opslevel.ContactType(value.(string))
-		input.ContactMethod = &contactMethod
+		input.ContactMethod = opslevel.RefOf(string(contactMethod))
 	}
 	if tagKey, ok := d.GetOk("tag_key"); ok {
-		input.TeamTagKey = tagKey.(string)
+		input.TagKey = opslevel.RefOf(tagKey.(string))
 	}
 
-	input.TeamTagPredicate = expandPredicate(d, "tag_predicate")
+	input.TagPredicate = expandPredicate(d, "tag_predicate")
 
-	resource, err := client.CreateCheckServiceOwnership(input)
+	resource, err := client.CreateCheckServiceOwnership(*input)
 	if err != nil {
 		return err
 	}
@@ -102,25 +102,24 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceOwnershipUpdateInput{}
-	setCheckUpdateInput(d, &input)
-
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckServiceOwnershipUpdateInput](checkUpdateInput)
 	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
 
 	if d.HasChange("contact_method") {
 		contactMethod := opslevel.ContactType(d.Get("contact_method").(string))
-		input.ContactMethod = &contactMethod
+		input.ContactMethod = opslevel.RefOf(string(contactMethod))
 	}
 
 	if d.HasChange("tag_key") {
-		input.TeamTagKey = d.Get("tag_key").(string)
+		input.TagKey = opslevel.RefOf(d.Get("tag_key").(string))
 	}
 
 	if d.HasChange("tag_predicate") {
-		input.TeamTagPredicate = expandPredicateUpdate(d, "tag_predicate")
+		input.TagPredicate = expandPredicateUpdate(d, "tag_predicate")
 	}
 
-	_, err := client.UpdateCheckServiceOwnership(input)
+	_, err := client.UpdateCheckServiceOwnership(*input)
 	if err != nil {
 		return err
 	}

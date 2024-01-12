@@ -41,7 +41,7 @@ func resourceSystem() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The id of the owner for the system.  Can be a team or group",
+				Description: "The id of the owner for the system. The team id.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -68,7 +68,7 @@ func resourceSystemCreate(d *schema.ResourceData, client *opslevel.Client) error
 		Note:        GetString(d, "note"),
 	}
 	if owner := d.Get("owner"); owner != "" {
-		input.Owner = opslevel.NewID(owner.(string))
+		input.OwnerId = opslevel.NewID(owner.(string))
 	}
 	if domain := d.Get("domain"); domain != "" {
 		input.Parent = opslevel.NewIdentifier(domain.(string))
@@ -129,9 +129,9 @@ func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error
 
 	if d.HasChange("owner") {
 		if owner := d.Get("owner"); owner != "" {
-			input.Owner = opslevel.NewID(owner.(string))
+			input.OwnerId = opslevel.NewID(owner.(string))
 		} else {
-			input.Owner = opslevel.NewID("")
+			input.OwnerId = opslevel.NewID("")
 		}
 	}
 	if d.HasChange("domain") {

@@ -58,9 +58,9 @@ func resourceIntegrationAWS() *schema.Resource {
 
 func resourceIntegrationAWSCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.AWSIntegrationInput{
-		Name:                 opslevel.NewString(d.Get("name").(string)),
-		IAMRole:              opslevel.NewString(d.Get("iam_role").(string)),
-		ExternalID:           opslevel.NewString(d.Get("external_id").(string)),
+		Name:                 opslevel.RefOf(d.Get("name").(string)),
+		IAMRole:              opslevel.RefOf(d.Get("iam_role").(string)),
+		ExternalID:           opslevel.RefOf(d.Get("external_id").(string)),
 		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
 	}
 
@@ -103,9 +103,9 @@ func resourceIntegrationAWSRead(d *schema.ResourceData, client *opslevel.Client)
 
 func resourceIntegrationAWSUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.AWSIntegrationInput{
-		Name:                 opslevel.NewString(d.Get("name").(string)),
-		IAMRole:              opslevel.NewString(d.Get("iam_role").(string)),
-		ExternalID:           opslevel.NewString(d.Get("external_id").(string)),
+		Name:                 opslevel.RefOf(d.Get("name").(string)),
+		IAMRole:              opslevel.RefOf(d.Get("iam_role").(string)),
+		ExternalID:           opslevel.RefOf(d.Get("external_id").(string)),
 		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
 	}
 

@@ -41,7 +41,7 @@ func resourceDomain() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The id of the owner for the domain.  Can be a team or group",
+				Description: "The id of the owner for the domain. The team id.",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -59,7 +59,7 @@ func resourceDomainCreate(d *schema.ResourceData, client *opslevel.Client) error
 	resource, err := client.CreateDomain(opslevel.DomainInput{
 		Name:        GetString(d, "name"),
 		Description: GetString(d, "description"),
-		Owner:       opslevel.NewID(d.Get("owner").(string)),
+		OwnerId:     opslevel.NewID(d.Get("owner").(string)),
 		Note:        GetString(d, "note"),
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ func resourceDomainUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Description = GetString(d, "description")
 	}
 	if d.HasChange("owner") {
-		input.Owner = opslevel.NewID(d.Get("owner").(string))
+		input.OwnerId = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("note") {
 		input.Note = GetString(d, "note")

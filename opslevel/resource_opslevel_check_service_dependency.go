@@ -20,10 +20,10 @@ func resourceCheckServiceDependency() *schema.Resource {
 }
 
 func resourceCheckServiceDependencyCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceDependencyCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckServiceDependencyCreateInput](checkCreateInput)
 
-	resource, err := client.CreateCheckServiceDependency(input)
+	resource, err := client.CreateCheckServiceDependency(*input)
 	if err != nil {
 		return err
 	}
@@ -48,11 +48,10 @@ func resourceCheckServiceDependencyRead(d *schema.ResourceData, client *opslevel
 }
 
 func resourceCheckServiceDependencyUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServiceDependencyUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckServiceDependencyUpdateInput](checkUpdateInput)
 
-	_, err := client.UpdateCheckServiceDependency(input)
-	if err != nil {
+	if _, err := client.UpdateCheckServiceDependency(*input); err != nil {
 		return err
 	}
 	d.Set("last_updated", timeLastUpdated())

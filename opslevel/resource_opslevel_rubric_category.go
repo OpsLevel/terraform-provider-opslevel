@@ -65,7 +65,7 @@ func resourceRubricCategoryUpdate(d *schema.ResourceData, client *opslevel.Clien
 	}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 
 	_, err := client.UpdateCategory(input)

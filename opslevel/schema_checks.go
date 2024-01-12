@@ -104,10 +104,34 @@ func setCheckData(d *schema.ResourceData, resource *opslevel.Check) error {
 	return nil
 }
 
+func getCheckCreateInputFrom(d *schema.ResourceData) opslevel.CheckCreateInput {
+	checkCreateInput := opslevel.CheckCreateInput{}
+	checkCreateInput.Name = d.Get("name").(string)
+	if value, ok := d.GetOk("enabled"); ok {
+		checkCreateInput.Enabled = opslevel.RefOf(value.(bool))
+	}
+	if value, ok := d.GetOk("enable_on"); ok {
+		enable_on := opslevel.NewISO8601Date(value.(string))
+		checkCreateInput.EnableOn = &enable_on
+	}
+	checkCreateInput.Category = *opslevel.NewID(d.Get("category").(string))
+	checkCreateInput.Level = *opslevel.NewID(d.Get("level").(string))
+	if value, ok := d.GetOk("owner"); ok {
+		checkCreateInput.Owner = opslevel.NewID(value.(string))
+	}
+	if value, ok := d.GetOk("filter"); ok {
+		checkCreateInput.Filter = opslevel.NewID(value.(string))
+	}
+	if value, ok := d.GetOk("notes"); ok {
+		checkCreateInput.Notes = opslevel.RefOf(value.(string))
+	}
+	return checkCreateInput
+}
+
 func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProvider) {
 	input := p.GetCheckCreateInput()
 	input.Name = d.Get("name").(string)
-	input.Enabled = d.Get("enabled").(bool)
+	input.Enabled = opslevel.RefOf(d.Get("enabled").(bool))
 	if value, ok := d.GetOk("enable_on"); ok {
 		enable_on := opslevel.NewISO8601Date(value.(string))
 		input.EnableOn = &enable_on
@@ -116,7 +140,31 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 	input.Level = *opslevel.NewID(d.Get("level").(string))
 	input.Owner = opslevel.NewID(d.Get("owner").(string))
 	input.Filter = opslevel.NewID(d.Get("filter").(string))
-	input.Notes = d.Get("notes").(string)
+	input.Notes = opslevel.RefOf(d.Get("notes").(string))
+}
+
+func getCheckUpdateInputFrom(d *schema.ResourceData) opslevel.CheckUpdateInput {
+	checkUpdateInput := opslevel.CheckUpdateInput{}
+	checkUpdateInput.Name = d.Get("name").(string)
+	if value, ok := d.GetOk("enabled"); ok {
+		checkUpdateInput.Enabled = opslevel.RefOf(value.(bool))
+	}
+	if value, ok := d.GetOk("enable_on"); ok {
+		enable_on := opslevel.NewISO8601Date(value.(string))
+		checkUpdateInput.EnableOn = &enable_on
+	}
+	checkUpdateInput.Category = *opslevel.NewID(d.Get("category").(string))
+	checkUpdateInput.Level = *opslevel.NewID(d.Get("level").(string))
+	if value, ok := d.GetOk("owner"); ok {
+		checkUpdateInput.Owner = opslevel.NewID(value.(string))
+	}
+	if value, ok := d.GetOk("filter"); ok {
+		checkUpdateInput.Filter = opslevel.NewID(value.(string))
+	}
+	if value, ok := d.GetOk("notes"); ok {
+		checkUpdateInput.Notes = opslevel.RefOf(value.(string))
+	}
+	return checkUpdateInput
 }
 
 func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProvider) {

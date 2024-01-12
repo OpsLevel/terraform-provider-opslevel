@@ -69,7 +69,7 @@ func resourceServiceTagCreate(d *schema.ResourceData, client *opslevel.Client) e
 	}
 
 	input := opslevel.TagCreateInput{
-		Id: service.Id,
+		Id: &service.Id,
 
 		Key:   d.Get("key").(string),
 		Value: d.Get("value").(string),
@@ -133,10 +133,10 @@ func resourceServiceTagUpdate(d *schema.ResourceData, client *opslevel.Client) e
 	}
 
 	if d.HasChange("key") {
-		input.Key = d.Get("key").(string)
+		input.Key = opslevel.RefOf(d.Get("key").(string))
 	}
 	if d.HasChange("value") {
-		input.Value = d.Get("value").(string)
+		input.Value = opslevel.RefOf(d.Get("value").(string))
 	}
 
 	resource, err := client.UpdateTag(input)

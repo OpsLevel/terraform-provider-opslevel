@@ -183,7 +183,7 @@ func expandPredicate(d *schema.ResourceData, key string) *opslevel.PredicateInpu
 	}
 	return &opslevel.PredicateInput{
 		Type:  opslevel.PredicateTypeEnum(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
-		Value: d.Get(fmt.Sprintf("%s.0.value", key)).(string),
+		Value: opslevel.RefOf(d.Get(fmt.Sprintf("%s.0.value", key)).(string)),
 	}
 }
 
@@ -192,8 +192,8 @@ func expandPredicateUpdate(d *schema.ResourceData, key string) *opslevel.Predica
 		return nil
 	}
 	return &opslevel.PredicateUpdateInput{
-		Type:  opslevel.PredicateTypeEnum(d.Get(fmt.Sprintf("%s.0.type", key)).(string)),
-		Value: d.Get(fmt.Sprintf("%s.0.value", key)).(string),
+		Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(d.Get(fmt.Sprintf("%s.0.type", key)).(string))),
+		Value: opslevel.RefOf(d.Get(fmt.Sprintf("%s.0.value", key)).(string)),
 	}
 }
 
@@ -208,7 +208,23 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	return output
 }
 
-func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
+func expandFilterPredicateInputs(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
+	output := make([]opslevel.FilterPredicateInput, 0)
+	for _, item := range d.Get("predicate").([]interface{}) {
+		data := item.(map[string]interface{})
+		predicate := opslevel.FilterPredicateInput{
+			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
+			Value:         opslevel.RefOf(strings.TrimSpace(data["value"].(string))),
+			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
+			KeyData:       opslevel.RefOf(strings.TrimSpace(data["key_data"].(string))),
+			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
+		}
+		output = append(output, predicate)
+	}
+	return &output
+}
+
+func expandFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicate {
 	output := make([]opslevel.FilterPredicate, 0)
 	for _, item := range d.Get("predicate").([]interface{}) {
 		data := item.(map[string]interface{})
@@ -221,7 +237,7 @@ func expandFilterPredicates(d *schema.ResourceData) []opslevel.FilterPredicate {
 		}
 		output = append(output, predicate)
 	}
-	return output
+	return &output
 }
 
 func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any {
