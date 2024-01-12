@@ -107,7 +107,7 @@ func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserIn
 	for _, user := range team.Memberships.Nodes {
 		newUserIdentifier := opslevel.NewUserIdentifier(user.User.Email)
 		member := opslevel.TeamMembershipUserInput{
-			User: &newUserIdentifier,
+			User: newUserIdentifier,
 			Role: opslevel.RefOf(user.Role),
 		}
 		members = append(members, member)
@@ -135,7 +135,7 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 			memberInput := m.(map[string]interface{})
 			newUserIdentifier := opslevel.NewUserIdentifier(memberInput["email"].(string))
 			member := opslevel.TeamMembershipUserInput{
-				User: &newUserIdentifier,
+				User: newUserIdentifier,
 				Role: opslevel.RefOf(memberInput["role"].(string)),
 			}
 			expectedMembers = append(expectedMembers, member)
@@ -320,7 +320,7 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceTeamDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteTeam(opslevel.ID(id))
+	err := client.DeleteTeam(id)
 	if err != nil {
 		return err
 	}

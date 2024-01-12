@@ -34,7 +34,7 @@ func datasourceServicesRead(d *schema.ResourceData, client *opslevel.Client) err
 	field := d.Get("filter.0.field").(string)
 	value := d.Get("filter.0.value").(string)
 
-	var services opslevel.ServiceConnection
+	var services *opslevel.ServiceConnection
 	var err error
 
 	switch field {

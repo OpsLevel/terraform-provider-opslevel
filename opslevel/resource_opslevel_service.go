@@ -368,9 +368,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 
 func resourceServiceDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteService(opslevel.ServiceDeleteInput{
-		Id: opslevel.NewID(id),
-	})
+	err := client.DeleteService(id)
 	if err != nil {
 		return err
 	}

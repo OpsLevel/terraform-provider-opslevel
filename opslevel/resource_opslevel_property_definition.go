@@ -49,10 +49,14 @@ func resourcePropertyDefinition() *schema.Resource {
 }
 
 func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
+	if err != nil {
+		return err
+	}
 	input := opslevel.PropertyDefinitionInput{
 		Name:                  opslevel.RefOf(d.Get("name").(string)),
 		Description:           opslevel.RefOf(d.Get("description").(string)),
-		Schema:                opslevel.RefOf(opslevel.NewJSONSchema(d.Get("schema").(string))),
+		Schema:                newJSONSchema,
 		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
 	}
 
@@ -90,15 +94,18 @@ func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Cli
 
 func resourcePropertyDefinitionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
+	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
+	if err != nil {
+		return err
+	}
 	input := opslevel.PropertyDefinitionInput{
 		Name:                  opslevel.RefOf(d.Get("name").(string)),
 		Description:           opslevel.RefOf(d.Get("description").(string)),
-		Schema:                opslevel.RefOf(opslevel.NewJSONSchema(d.Get("schema").(string))),
+		Schema:                newJSONSchema,
 		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
 	}
 
-	_, err := client.UpdatePropertyDefinition(id, input)
-	if err != nil {
+	if _, err = client.UpdatePropertyDefinition(id, input); err != nil {
 		return err
 	}
 
