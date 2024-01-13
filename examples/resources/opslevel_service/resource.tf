@@ -32,7 +32,7 @@ resource "opslevel_service" "foo" {
 
   lifecycle_alias = data.opslevel_lifecycle.beta.alias
   tier_alias      = data.opslevel_tier.tier3.alias
-  owner           = opslevel_team.foo.alias
+  owner           = opslevel_team.foo.id
 
   api_document_path             = "/swagger.json"
   preferred_api_document_source = "PULL" //or "PUSH"

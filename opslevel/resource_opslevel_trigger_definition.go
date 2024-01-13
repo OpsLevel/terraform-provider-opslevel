@@ -93,9 +93,9 @@ func resourceTriggerDefinition() *schema.Resource {
 func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		Name:          d.Get("name").(string),
-		Owner:         *opslevel.NewID(d.Get("owner").(string)),
-		Action:        *opslevel.NewID(d.Get("action").(string)),
-		AccessControl: opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)),
+		OwnerId:       *opslevel.NewID(d.Get("owner").(string)),
+		ActionId:      opslevel.NewID(d.Get("action").(string)),
+		AccessControl: opslevel.RefOf(opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string))),
 	}
 	extended_teams := opslevel.NewIdentifierArray(getStringArray(d, "extended_team_access"))
 	if len(extended_teams) > 0 {
@@ -103,28 +103,28 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if _, ok := d.GetOk("description"); ok {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 
 	if _, ok := d.GetOk("filter"); ok {
-		input.Filter = opslevel.NewID(d.Get("filter").(string))
+		input.FilterId = opslevel.NewID(d.Get("filter").(string))
 	}
 
 	if _, ok := d.GetOk("manual_inputs_definition"); ok {
 		manualInputsDefinition := d.Get("manual_inputs_definition").(string)
-		input.ManualInputsDefinition = manualInputsDefinition
+		input.ManualInputsDefinition = opslevel.RefOf(manualInputsDefinition)
 	}
 
 	if _, ok := d.GetOk("response_template"); ok {
 		responseTemplate := d.Get("response_template").(string)
-		input.ResponseTemplate = responseTemplate
+		input.ResponseTemplate = opslevel.RefOf(responseTemplate)
 	}
 
 	input.Published = opslevel.Bool(d.Get("published").(bool))
 
 	if _, ok := d.GetOk("entity_type"); ok {
 		entityType := d.Get("entity_type").(string)
-		input.EntityType = opslevel.CustomActionsEntityTypeEnum(entityType)
+		input.EntityType = opslevel.RefOf(opslevel.CustomActionsEntityTypeEnum(entityType))
 	}
 
 	resource, err := client.CreateTriggerDefinition(input)
@@ -197,16 +197,16 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if d.HasChange("name") {
-		input.Name = opslevel.NewString(d.Get("name").(string))
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("description") {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 	if d.HasChange("owner") {
-		input.Owner = opslevel.NewID(d.Get("owner").(string))
+		input.OwnerId = opslevel.NewID(d.Get("owner").(string))
 	}
 	if d.HasChange("action") {
-		input.Action = opslevel.NewID(d.Get("action").(string))
+		input.ActionId = opslevel.NewID(d.Get("action").(string))
 	}
 	if d.HasChange("manual_inputs_definition") {
 		manualInputsDefinition := d.Get("manual_inputs_definition").(string)
@@ -214,13 +214,13 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 	}
 
 	if d.HasChange("filter") {
-		input.Filter = opslevel.NewID(d.Get("filter").(string))
+		input.FilterId = opslevel.NewID(d.Get("filter").(string))
 	}
 
 	input.Published = opslevel.Bool(d.Get("published").(bool))
 
 	if d.HasChange("access_control") {
-		input.AccessControl = opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string))
+		input.AccessControl = opslevel.RefOf(opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)))
 	}
 
 	if d.HasChange("response_template") {
@@ -230,7 +230,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 
 	if d.HasChange("entity_type") {
 		entityType := d.Get("entity_type").(string)
-		input.EntityType = opslevel.CustomActionsEntityTypeEnum(entityType)
+		input.EntityType = opslevel.RefOf(opslevel.CustomActionsEntityTypeEnum(entityType))
 	}
 
 	extended_teams := opslevel.NewIdentifierArray(getStringArray(d, "extended_team_access"))

@@ -49,11 +49,15 @@ func resourcePropertyDefinition() *schema.Resource {
 }
 
 func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
+	if err != nil {
+		return err
+	}
 	input := opslevel.PropertyDefinitionInput{
-		Name:                  d.Get("name").(string),
-		Description:           d.Get("description").(string),
-		Schema:                opslevel.NewJSON(d.Get("schema").(string)),
-		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string)),
+		Name:                  opslevel.RefOf(d.Get("name").(string)),
+		Description:           opslevel.RefOf(d.Get("description").(string)),
+		Schema:                newJSONSchema,
+		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
 	}
 
 	resource, err := client.CreatePropertyDefinition(input)
@@ -90,15 +94,18 @@ func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Cli
 
 func resourcePropertyDefinitionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
+	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
+	if err != nil {
+		return err
+	}
 	input := opslevel.PropertyDefinitionInput{
-		Name:                  d.Get("name").(string),
-		Description:           d.Get("description").(string),
-		Schema:                opslevel.NewJSON(d.Get("schema").(string)),
-		PropertyDisplayStatus: opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string)),
+		Name:                  opslevel.RefOf(d.Get("name").(string)),
+		Description:           opslevel.RefOf(d.Get("description").(string)),
+		Schema:                newJSONSchema,
+		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
 	}
 
-	_, err := client.UpdatePropertyDefinition(id, input)
-	if err != nil {
+	if _, err = client.UpdatePropertyDefinition(id, input); err != nil {
 		return err
 	}
 

@@ -73,14 +73,14 @@ func resourceWebhookAction() *schema.Resource {
 func resourceWebhookActionCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.CustomActionsWebhookActionCreateInput{
 		Name:           d.Get("name").(string),
-		LiquidTemplate: d.Get("payload").(string),
-		WebhookURL:     d.Get("url").(string),
-		HTTPMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string)),
-		Headers:        expandHeaders(d.Get("headers")),
+		LiquidTemplate: opslevel.RefOf(d.Get("payload").(string)),
+		WebhookUrl:     d.Get("url").(string),
+		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string)),
+		Headers:        opslevel.RefOf(expandHeaders(d.Get("headers"))),
 	}
 
 	if _, ok := d.GetOk("description"); ok {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 
 	resource, err := client.CreateWebhookAction(input)
@@ -133,19 +133,19 @@ func resourceWebhookActionUpdate(d *schema.ResourceData, client *opslevel.Client
 	}
 
 	if d.HasChange("name") {
-		input.Name = opslevel.NewString(d.Get("name").(string))
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("description") {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 	if d.HasChange("payload") {
-		input.LiquidTemplate = opslevel.NewString(d.Get("payload").(string))
+		input.LiquidTemplate = opslevel.RefOf(d.Get("payload").(string))
 	}
 	if d.HasChange("url") {
-		input.WebhookURL = opslevel.NewString(d.Get("url").(string))
+		input.WebhookUrl = opslevel.RefOf(d.Get("url").(string))
 	}
 	if d.HasChange("method") {
-		input.HTTPMethod = opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string))
+		input.HttpMethod = opslevel.RefOf(opslevel.CustomActionsHttpMethodEnum(d.Get("method").(string)))
 	}
 	if d.HasChange("headers") {
 		headers := expandHeaders(d.Get("headers"))

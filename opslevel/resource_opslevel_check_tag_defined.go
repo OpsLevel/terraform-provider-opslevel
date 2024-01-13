@@ -28,13 +28,12 @@ func resourceCheckTagDefined() *schema.Resource {
 }
 
 func resourceCheckTagDefinedCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckTagDefinedCreateInput{}
-	setCheckCreateInput(d, &input)
-
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckTagDefinedCreateInput](checkCreateInput)
 	input.TagKey = d.Get("tag_key").(string)
 	input.TagPredicate = expandPredicate(d, "tag_predicate")
 
-	resource, err := client.CreateCheckTagDefined(input)
+	resource, err := client.CreateCheckTagDefined(*input)
 	if err != nil {
 		return err
 	}
@@ -65,17 +64,17 @@ func resourceCheckTagDefinedRead(d *schema.ResourceData, client *opslevel.Client
 }
 
 func resourceCheckTagDefinedUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckTagDefinedUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckTagDefinedUpdateInput](checkUpdateInput)
 
 	if d.HasChange("tag_key") {
-		input.TagKey = d.Get("tag_key").(string)
+		input.TagKey = opslevel.RefOf(d.Get("tag_key").(string))
 	}
 	if d.HasChange("tag_predicate") {
-		input.TagPredicate = expandPredicate(d, "tag_predicate")
+		input.TagPredicate = expandPredicateUpdate(d, "tag_predicate")
 	}
 
-	_, err := client.UpdateCheckTagDefined(input)
+	_, err := client.UpdateCheckTagDefined(*input)
 	if err != nil {
 		return err
 	}

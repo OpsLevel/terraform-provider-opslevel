@@ -65,13 +65,13 @@ func resourceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	tagCreateInput := opslevel.TagCreateInput{
 		Key:   d.Get("key").(string),
 		Value: d.Get("value").(string),
-		Type:  resourceType,
+		Type:  opslevel.RefOf(resourceType),
 	}
 
 	if opslevel.IsID(resourceId) {
-		tagCreateInput.Id = opslevel.ID(resourceId)
+		tagCreateInput.Id = opslevel.NewID(resourceId)
 	} else {
-		tagCreateInput.Alias = resourceId
+		tagCreateInput.Alias = opslevel.RefOf(resourceId)
 	}
 	newTag, err := client.CreateTag(tagCreateInput)
 	if err != nil {
@@ -133,8 +133,8 @@ func resourceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 
 	input := opslevel.TagUpdateInput{
 		Id:    opslevel.ID(id),
-		Key:   d.Get("key").(string),
-		Value: d.Get("value").(string),
+		Key:   opslevel.RefOf(d.Get("key").(string)),
+		Value: opslevel.RefOf(d.Get("value").(string)),
 	}
 	if _, err := client.UpdateTag(input); err != nil {
 		return err

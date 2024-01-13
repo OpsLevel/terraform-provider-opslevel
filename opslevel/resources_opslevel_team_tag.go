@@ -62,7 +62,7 @@ func resourceTeamTagCreate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 
 	input := opslevel.TagCreateInput{
-		Id: team.Id,
+		Id: opslevel.RefOf(team.Id),
 
 		Key:   d.Get("key").(string),
 		Value: d.Get("value").(string),
@@ -127,10 +127,10 @@ func resourceTeamTagUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	}
 
 	if d.HasChange("key") {
-		input.Key = d.Get("key").(string)
+		input.Key = opslevel.RefOf(d.Get("key").(string))
 	}
 	if d.HasChange("value") {
-		input.Value = d.Get("value").(string)
+		input.Value = opslevel.RefOf(d.Get("value").(string))
 	}
 
 	resource, err := client.UpdateTag(input)

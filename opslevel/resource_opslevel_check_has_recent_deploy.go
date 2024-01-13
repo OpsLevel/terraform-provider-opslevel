@@ -27,12 +27,11 @@ func resourceCheckHasRecentDeploy() *schema.Resource {
 }
 
 func resourceCheckHasRecentDeployCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckHasRecentDeployCreateInput{}
-	setCheckCreateInput(d, &input)
-
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckHasRecentDeployCreateInput](checkCreateInput)
 	input.Days = d.Get("days").(int)
 
-	resource, err := client.CreateCheckHasRecentDeploy(input)
+	resource, err := client.CreateCheckHasRecentDeploy(*input)
 	if err != nil {
 		return err
 	}
@@ -60,14 +59,13 @@ func resourceCheckHasRecentDeployRead(d *schema.ResourceData, client *opslevel.C
 }
 
 func resourceCheckHasRecentDeployUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckHasRecentDeployUpdateInput{}
-	setCheckUpdateInput(d, &input)
-
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckHasRecentDeployUpdateInput](checkUpdateInput)
 	if d.HasChange("days") {
 		input.Days = opslevel.NewInt(d.Get("days").(int))
 	}
 
-	_, err := client.UpdateCheckHasRecentDeploy(input)
+	_, err := client.UpdateCheckHasRecentDeploy(*input)
 	if err != nil {
 		return err
 	}

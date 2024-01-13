@@ -42,11 +42,11 @@ func resourceServiceDependencyCreate(d *schema.ResourceData, client *opslevel.Cl
 	dependsOn := d.Get("depends_upon").(string)
 
 	input := opslevel.ServiceDependencyCreateInput{
-		Key: opslevel.ServiceDependencyKey{
-			Service:   *opslevel.NewIdentifier(serviceIdentifier),
-			DependsOn: *opslevel.NewIdentifier(dependsOn),
+		DependencyKey: opslevel.ServiceDependencyKey{
+			SourceIdentifier:      opslevel.NewIdentifier(serviceIdentifier),
+			DestinationIdentifier: opslevel.NewIdentifier(dependsOn),
 		},
-		Notes: d.Get("note").(string),
+		Notes: opslevel.RefOf(d.Get("note").(string)),
 	}
 	resource, err := client.CreateServiceDependency(input)
 	if err != nil {

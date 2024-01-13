@@ -48,7 +48,7 @@ func resourceRubricLevel() *schema.Resource {
 func resourceRubricLevelCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.LevelCreateInput{
 		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+		Description: opslevel.RefOf(d.Get("description").(string)),
 	}
 	if v, ok := d.GetOk("index"); ok {
 		index := v.(int)
@@ -90,10 +90,10 @@ func resourceRubricLevelUpdate(d *schema.ResourceData, client *opslevel.Client) 
 	}
 
 	if d.HasChange("name") {
-		input.Name = *opslevel.NewString(d.Get("name").(string))
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("description") {
-		input.Description = opslevel.NewString(d.Get("description").(string))
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 
 	_, err := client.UpdateLevel(input)

@@ -58,8 +58,8 @@ func resourceSecret() *schema.Resource {
 
 func resourceSecretCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.SecretInput{
-		Owner: *opslevel.NewIdentifier(d.Get("owner").(string)),
-		Value: d.Get("value").(string),
+		Owner: opslevel.NewIdentifier(d.Get("owner").(string)),
+		Value: opslevel.RefOf(d.Get("value").(string)),
 	}
 	alias := d.Get("alias").(string)
 	resource, err := client.CreateSecret(alias, input)
@@ -101,8 +101,8 @@ func resourceSecretRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceSecretUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.SecretInput{
-		Owner: *opslevel.NewIdentifier(d.Get("owner").(string)),
-		Value: d.Get("value").(string),
+		Owner: opslevel.NewIdentifier(d.Get("owner").(string)),
+		Value: opslevel.RefOf(d.Get("value").(string)),
 	}
 
 	_, err := client.UpdateSecret(d.Id(), input)

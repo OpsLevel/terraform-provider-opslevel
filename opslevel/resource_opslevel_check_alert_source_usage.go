@@ -30,13 +30,12 @@ func resourceCheckAlertSourceUsage() *schema.Resource {
 }
 
 func resourceCheckAlertSourceUsageCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckAlertSourceUsageCreateInput{}
-	setCheckCreateInput(d, &input)
-
-	input.AlertSourceType = opslevel.AlertSourceTypeEnum(d.Get("alert_type").(string))
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckAlertSourceUsageCreateInput](checkCreateInput)
+	input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(d.Get("alert_type").(string)))
 	input.AlertSourceNamePredicate = expandPredicate(d, "alert_name_predicate")
 
-	resource, err := client.CreateCheckAlertSourceUsage(input)
+	resource, err := client.CreateCheckAlertSourceUsage(*input)
 	if err != nil {
 		return err
 	}
@@ -68,17 +67,17 @@ func resourceCheckAlertSourceUsageRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckAlertSourceUsageUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckAlertSourceUsageUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckAlertSourceUsageUpdateInput](checkUpdateInput)
 
 	if d.HasChange("alert_type") {
-		input.AlertSourceType = opslevel.AlertSourceTypeEnum(d.Get("alert_type").(string))
+		input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(d.Get("alert_type").(string)))
 	}
 	if d.HasChange("alert_name_predicate") {
 		input.AlertSourceNamePredicate = expandPredicateUpdate(d, "alert_name_predicate")
 	}
 
-	_, err := client.UpdateCheckAlertSourceUsage(input)
+	_, err := client.UpdateCheckAlertSourceUsage(*input)
 	if err != nil {
 		return err
 	}

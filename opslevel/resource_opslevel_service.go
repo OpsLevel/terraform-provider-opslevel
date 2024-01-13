@@ -179,16 +179,16 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 
 func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.ServiceCreateInput{
-		Name:        d.Get("name").(string),
-		Product:     d.Get("product").(string),
-		Description: d.Get("description").(string),
-		Language:    d.Get("language").(string),
-		Framework:   d.Get("framework").(string),
-		Tier:        d.Get("tier_alias").(string),
-		Lifecycle:   d.Get("lifecycle_alias").(string),
+		Name:           d.Get("name").(string),
+		Product:        opslevel.RefOf(d.Get("product").(string)),
+		Description:    opslevel.RefOf(d.Get("description").(string)),
+		Language:       opslevel.RefOf(d.Get("language").(string)),
+		Framework:      opslevel.RefOf(d.Get("framework").(string)),
+		TierAlias:      opslevel.RefOf(d.Get("tier_alias").(string)),
+		LifecycleAlias: opslevel.RefOf(d.Get("lifecycle_alias").(string)),
 	}
 	if owner := d.Get("owner"); owner != "" {
-		input.Owner = opslevel.NewIdentifier(owner.(string))
+		input.OwnerInput = opslevel.NewIdentifier(owner.(string))
 	}
 
 	resource, err := client.CreateService(input)
@@ -291,36 +291,36 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 	id := d.Id()
 
 	input := opslevel.ServiceUpdateInput{
-		Id: opslevel.ID(id),
+		Id: opslevel.NewID(id),
 	}
 
 	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
+		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("product") {
-		input.Product = d.Get("product").(string)
+		input.Product = opslevel.RefOf(d.Get("product").(string))
 	}
 	if d.HasChange("description") {
-		input.Description = d.Get("description").(string)
+		input.Description = opslevel.RefOf(d.Get("description").(string))
 	}
 	if d.HasChange("language") {
-		input.Language = d.Get("language").(string)
+		input.Language = opslevel.RefOf(d.Get("language").(string))
 	}
 	if d.HasChange("framework") {
-		input.Framework = d.Get("framework").(string)
+		input.Framework = opslevel.RefOf(d.Get("framework").(string))
 	}
 	if d.HasChange("tier_alias") {
-		input.Tier = d.Get("tier_alias").(string)
+		input.TierAlias = opslevel.RefOf(d.Get("tier_alias").(string))
 	}
 	if d.HasChange("owner") {
 		if owner := d.Get("owner"); owner != "" {
-			input.Owner = opslevel.NewIdentifier(owner.(string))
+			input.OwnerInput = opslevel.NewIdentifier(owner.(string))
 		} else {
-			input.Owner = opslevel.NewIdentifier()
+			input.OwnerInput = opslevel.NewIdentifier()
 		}
 	}
 	if d.HasChange("lifecycle_alias") {
-		input.Lifecycle = d.Get("lifecycle_alias").(string)
+		input.LifecycleAlias = opslevel.RefOf(d.Get("lifecycle_alias").(string))
 	}
 
 	resource, err := client.UpdateService(input)
@@ -368,9 +368,7 @@ func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) erro
 
 func resourceServiceDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
-	err := client.DeleteService(opslevel.ServiceDeleteInput{
-		Id: opslevel.ID(id),
-	})
+	err := client.DeleteService(id)
 	if err != nil {
 		return err
 	}

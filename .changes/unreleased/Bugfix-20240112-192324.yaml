@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug where using 'required_contact_method = true' in service ownership checks
+  was not possible
+time: 2024-01-12T19:23:24.869524-05:00

@@ -30,13 +30,12 @@ func resourceCheckServiceProperty() *schema.Resource {
 }
 
 func resourceCheckServicePropertyCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServicePropertyCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckServicePropertyCreateInput](checkCreateInput)
+	input.ServiceProperty = opslevel.ServicePropertyTypeEnum(d.Get("property").(string))
+	input.PropertyValuePredicate = expandPredicate(d, "predicate")
 
-	input.Property = opslevel.ServicePropertyTypeEnum(d.Get("property").(string))
-	input.Predicate = expandPredicate(d, "predicate")
-
-	resource, err := client.CreateCheckServiceProperty(input)
+	resource, err := client.CreateCheckServiceProperty(*input)
 	if err != nil {
 		return err
 	}
@@ -67,17 +66,17 @@ func resourceCheckServicePropertyRead(d *schema.ResourceData, client *opslevel.C
 }
 
 func resourceCheckServicePropertyUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckServicePropertyUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckServicePropertyUpdateInput](checkUpdateInput)
 
 	if d.HasChange("property") {
-		input.Property = opslevel.ServicePropertyTypeEnum(d.Get("property").(string))
+		input.ServiceProperty = opslevel.RefOf(opslevel.ServicePropertyTypeEnum(d.Get("property").(string)))
 	}
 	if d.HasChange("predicate") {
-		input.Predicate = expandPredicate(d, "predicate")
+		input.PropertyValuePredicate = expandPredicateUpdate(d, "predicate")
 	}
 
-	_, err := client.UpdateCheckServiceProperty(input)
+	_, err := client.UpdateCheckServiceProperty(*input)
 	if err != nil {
 		return err
 	}

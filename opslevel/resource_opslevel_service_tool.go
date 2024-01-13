@@ -73,14 +73,14 @@ func resourceServiceToolCreate(d *schema.ResourceData, client *opslevel.Client) 
 	}
 
 	input := opslevel.ToolCreateInput{
-		ServiceId: service.Id,
+		ServiceId: &service.Id,
 
 		DisplayName: d.Get("name").(string),
 		Category:    opslevel.ToolCategory(d.Get("category").(string)),
 		Url:         d.Get("url").(string),
 	}
 	if env := d.Get("environment"); env != nil {
-		input.Environment = env.(string)
+		input.Environment = opslevel.RefOf(env.(string))
 	}
 	resource, err := client.CreateTool(input)
 	if err != nil {
@@ -153,16 +153,16 @@ func resourceServiceToolUpdate(d *schema.ResourceData, client *opslevel.Client) 
 	}
 
 	if d.HasChange("name") {
-		input.DisplayName = d.Get("name").(string)
+		input.DisplayName = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("category") {
-		input.Category = opslevel.ToolCategory(d.Get("category").(string))
+		input.Category = opslevel.RefOf(opslevel.ToolCategory(d.Get("category").(string)))
 	}
 	if d.HasChange("url") {
-		input.Url = d.Get("url").(string)
+		input.Url = opslevel.RefOf(d.Get("url").(string))
 	}
 	if d.HasChange("environment") {
-		input.Environment = d.Get("environment").(string)
+		input.Environment = opslevel.RefOf(d.Get("environment").(string))
 	}
 
 	resource, err := client.UpdateTool(input)

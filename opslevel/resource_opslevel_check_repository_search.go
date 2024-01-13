@@ -32,13 +32,12 @@ func resourceCheckRepositorySearch() *schema.Resource {
 }
 
 func resourceCheckRepositorySearchCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositorySearchCreateInput{}
-	setCheckCreateInput(d, &input)
-
-	input.FileExtensions = getStringArray(d, "file_extensions")
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckRepositorySearchCreateInput](checkCreateInput)
+	input.FileExtensions = opslevel.RefOf(getStringArray(d, "file_extensions"))
 	input.FileContentsPredicate = *expandPredicate(d, "file_contents_predicate")
 
-	resource, err := client.CreateCheckRepositorySearch(input)
+	resource, err := client.CreateCheckRepositorySearch(*input)
 	if err != nil {
 		return err
 	}
@@ -69,18 +68,18 @@ func resourceCheckRepositorySearchRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckRepositorySearchUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositorySearchUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckRepositorySearchUpdateInput](checkUpdateInput)
 
 	if d.HasChange("file_extensions") {
-		input.FileExtensions = getStringArray(d, "file_extensions")
+		input.FileExtensions = opslevel.RefOf(getStringArray(d, "file_extensions"))
 	}
 
 	if d.HasChange("file_contents_predicate") {
-		input.FileContentsPredicate = expandPredicate(d, "file_contents_predicate")
+		input.FileContentsPredicate = expandPredicateUpdate(d, "file_contents_predicate")
 	}
 
-	_, err := client.UpdateCheckRepositorySearch(input)
+	_, err := client.UpdateCheckRepositorySearch(*input)
 	if err != nil {
 		return err
 	}

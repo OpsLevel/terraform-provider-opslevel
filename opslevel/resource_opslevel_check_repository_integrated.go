@@ -20,10 +20,10 @@ func resourceCheckRepositoryIntegrated() *schema.Resource {
 }
 
 func resourceCheckRepositoryIntegratedCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryIntegratedCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckRepositoryIntegratedCreateInput](checkCreateInput)
 
-	resource, err := client.CreateCheckRepositoryIntegrated(input)
+	resource, err := client.CreateCheckRepositoryIntegrated(*input)
 	if err != nil {
 		return err
 	}
@@ -48,11 +48,10 @@ func resourceCheckRepositoryIntegratedRead(d *schema.ResourceData, client *opsle
 }
 
 func resourceCheckRepositoryIntegratedUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckRepositoryIntegratedUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckRepositoryIntegratedUpdateInput](checkUpdateInput)
 
-	_, err := client.UpdateCheckRepositoryIntegrated(input)
-	if err != nil {
+	if _, err := client.UpdateCheckRepositoryIntegrated(*input); err != nil {
 		return err
 	}
 	d.Set("last_updated", timeLastUpdated())

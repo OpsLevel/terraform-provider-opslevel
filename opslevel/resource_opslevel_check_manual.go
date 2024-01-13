@@ -61,11 +61,22 @@ func resourceCheckManual() *schema.Resource {
 	}
 }
 
-func expandUpdateFrequency(d *schema.ResourceData, key string) *opslevel.ManualCheckFrequencyInput {
+func expandUpdateFrequencyOnCreate(d *schema.ResourceData, key string) *opslevel.ManualCheckFrequencyInput {
 	if _, ok := d.GetOk(key); !ok {
 		return nil
 	}
 	return opslevel.NewManualCheckFrequencyInput(
+		d.Get(fmt.Sprintf("%s.0.starting_data", key)).(string),
+		opslevel.FrequencyTimeScale(d.Get(fmt.Sprintf("%s.0.time_scale", key)).(string)),
+		d.Get(fmt.Sprintf("%s.0.value", key)).(int),
+	)
+}
+
+func expandUpdateFrequencyOnUpdate(d *schema.ResourceData, key string) *opslevel.ManualCheckFrequencyUpdateInput {
+	if _, ok := d.GetOk(key); !ok {
+		return nil
+	}
+	return opslevel.NewManualCheckFrequencyUpdateInput(
 		d.Get(fmt.Sprintf("%s.0.starting_data", key)).(string),
 		opslevel.FrequencyTimeScale(d.Get(fmt.Sprintf("%s.0.time_scale", key)).(string)),
 		d.Get(fmt.Sprintf("%s.0.value", key)).(int),
@@ -85,13 +96,12 @@ func flattenUpdateFrequency(input *opslevel.ManualCheckFrequency) []map[string]i
 }
 
 func resourceCheckManualCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckManualCreateInput{}
-	setCheckCreateInput(d, &input)
-
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckManualCreateInput](checkCreateInput)
 	input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)
-	input.UpdateFrequency = expandUpdateFrequency(d, "update_frequency")
+	input.UpdateFrequency = expandUpdateFrequencyOnCreate(d, "update_frequency")
 
-	resource, err := client.CreateCheckManual(input)
+	resource, err := client.CreateCheckManual(*input)
 	if err != nil {
 		return err
 	}
@@ -122,15 +132,14 @@ func resourceCheckManualRead(d *schema.ResourceData, client *opslevel.Client) er
 }
 
 func resourceCheckManualUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckManualUpdateInput{}
-	setCheckUpdateInput(d, &input)
-
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckManualUpdateInput](checkUpdateInput)
 	if d.HasChange("update_frequency") {
-		input.UpdateFrequency = expandUpdateFrequency(d, "update_frequency")
+		input.UpdateFrequency = expandUpdateFrequencyOnUpdate(d, "update_frequency")
 	}
-	input.UpdateRequiresComment = d.Get("update_requires_comment").(bool)
+	input.UpdateRequiresComment = opslevel.RefOf(d.Get("update_requires_comment").(bool))
 
-	_, err := client.UpdateCheckManual(input)
+	_, err := client.UpdateCheckManual(*input)
 	if err != nil {
 		return err
 	}

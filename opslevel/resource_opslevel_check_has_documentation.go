@@ -36,13 +36,13 @@ func resourceCheckHasDocumentation() *schema.Resource {
 }
 
 func resourceCheckHasDocumentationCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckHasDocumentationCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckHasDocumentationCreateInput](checkCreateInput)
 
 	input.DocumentType = opslevel.HasDocumentationTypeEnum(d.Get("document_type").(string))
 	input.DocumentSubtype = opslevel.HasDocumentationSubtypeEnum(d.Get("document_subtype").(string))
 
-	resource, err := client.CreateCheckHasDocumentation(input)
+	resource, err := client.CreateCheckHasDocumentation(*input)
 	if err != nil {
 		return err
 	}
@@ -73,17 +73,17 @@ func resourceCheckHasDocumentationRead(d *schema.ResourceData, client *opslevel.
 }
 
 func resourceCheckHasDocumentationUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckHasDocumentationUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckHasDocumentationUpdateInput](checkUpdateInput)
 
 	if d.HasChange("document_type") {
-		input.DocumentType = opslevel.HasDocumentationTypeEnum(d.Get("document_type").(string))
+		input.DocumentType = opslevel.RefOf(opslevel.HasDocumentationTypeEnum(d.Get("document_type").(string)))
 	}
 	if d.HasChange("document_subtype") {
-		input.DocumentSubtype = opslevel.HasDocumentationSubtypeEnum(d.Get("document_subtype").(string))
+		input.DocumentSubtype = opslevel.RefOf(opslevel.HasDocumentationSubtypeEnum(d.Get("document_subtype").(string)))
 	}
 
-	_, err := client.UpdateCheckHasDocumentation(input)
+	_, err := client.UpdateCheckHasDocumentation(*input)
 	if err != nil {
 		return err
 	}

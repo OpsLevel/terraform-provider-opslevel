@@ -33,7 +33,7 @@ func resourceInfrastructure() *schema.Resource {
 			},
 			"owner": {
 				Type:        schema.TypeString,
-				Description: "The id of the owner for the infrastructure resource.  Can be a team or group. Does not support aliases!",
+				Description: "The id of the team that owns the infrastructure resource. Does not support aliases!",
 				ForceNew:    false,
 				Optional:    true,
 			},
@@ -132,11 +132,15 @@ func expandInfraProviderData(d *schema.ResourceData) *opslevel.InfraProviderInpu
 }
 
 func resourceInfrastructureCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	newJSON, err := opslevel.NewJSON(d.Get("data").(string))
+	if err != nil {
+		return err
+	}
 	resource, err := client.CreateInfrastructure(opslevel.InfraInput{
 		Schema:   d.Get("schema").(string),
 		Owner:    opslevel.NewID(d.Get("owner").(string)),
 		Provider: expandInfraProviderData(d),
-		Data:     opslevel.NewJSON(d.Get("data").(string)),
+		Data:     newJSON,
 	})
 	if err != nil {
 		return err
@@ -181,11 +185,15 @@ func resourceInfrastructureRead(d *schema.ResourceData, client *opslevel.Client)
 func resourceInfrastructureUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	id := d.Id()
 
+	newJSON, err := opslevel.NewJSON(d.Get("data").(string))
+	if err != nil {
+		return err
+	}
 	resource, err := client.UpdateInfrastructure(id, opslevel.InfraInput{
 		Schema:   d.Get("schema").(string),
 		Owner:    opslevel.NewID(d.Get("owner").(string)),
 		Provider: expandInfraProviderData(d),
-		Data:     opslevel.NewJSON(d.Get("data").(string)),
+		Data:     newJSON,
 	})
 	if err != nil {
 		return err

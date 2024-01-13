@@ -51,16 +51,16 @@ func resourceCheckCustomEvent() *schema.Resource {
 }
 
 func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckCustomEventCreateInput{}
-	setCheckCreateInput(d, &input)
+	checkCreateInput := getCheckCreateInputFrom(d)
+	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckCustomEventCreateInput](checkCreateInput)
 
-	input.Integration = *opslevel.NewID(d.Get("integration").(string))
+	input.IntegrationId = *opslevel.NewID(d.Get("integration").(string))
 	input.PassPending = opslevel.Bool(d.Get("pass_pending").(bool))
 	input.ServiceSelector = d.Get("service_selector").(string)
 	input.SuccessCondition = d.Get("success_condition").(string)
-	input.Message = d.Get("message").(string)
+	input.ResultMessage = opslevel.RefOf(d.Get("message").(string))
 
-	resource, err := client.CreateCheckCustomEvent(input)
+	resource, err := client.CreateCheckCustomEvent(*input)
 	if err != nil {
 		return err
 	}
@@ -108,25 +108,25 @@ func resourceCheckCustomEventRead(d *schema.ResourceData, client *opslevel.Clien
 }
 
 func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.CheckCustomEventUpdateInput{}
-	setCheckUpdateInput(d, &input)
+	checkUpdateInput := getCheckUpdateInputFrom(d)
+	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckCustomEventUpdateInput](checkUpdateInput)
 
 	if d.HasChange("integration") {
-		input.Integration = opslevel.NewID(d.Get("integration").(string))
+		input.IntegrationId = opslevel.NewID(d.Get("integration").(string))
 	}
 	input.PassPending = opslevel.Bool(d.Get("pass_pending").(bool))
 	if d.HasChange("service_selector") {
-		input.ServiceSelector = d.Get("service_selector").(string)
+		input.ServiceSelector = opslevel.RefOf(d.Get("service_selector").(string))
 	}
 	if d.HasChange("success_condition") {
-		input.SuccessCondition = d.Get("success_condition").(string)
+		input.SuccessCondition = opslevel.RefOf(d.Get("success_condition").(string))
 	}
 	if d.HasChange("message") {
 		message := d.Get("message").(string)
-		input.Message = &message
+		input.ResultMessage = &message
 	}
 
-	_, err := client.UpdateCheckCustomEvent(input)
+	_, err := client.UpdateCheckCustomEvent(*input)
 	if err != nil {
 		return err
 	}
