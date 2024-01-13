@@ -21,7 +21,7 @@ func resourceCheckServiceOwnership() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "True if a service's owner must have a contact method, False otherwise.",
 				ForceNew:    false,
-				Required:    true,
+				Optional:    true,
 			},
 			"contact_method": {
 				Type:         schema.TypeString,
