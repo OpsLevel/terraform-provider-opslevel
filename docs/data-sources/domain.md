@@ -31,6 +31,6 @@ data "opslevel_domain" "example" {
 - `description` (String) The description of the domain.
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the domain.
-- `owner` (String) The id of the domain owner - could be a group or team.
+- `owner` (String) The id of the team that owns the domain.
 
 

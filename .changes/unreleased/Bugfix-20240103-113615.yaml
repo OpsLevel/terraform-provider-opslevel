@@ -1,4 +1,0 @@
-kind: Bugfix
-body: '[BREAKING CHANGE] require filter predicate case_sensitive bool to prevent bug
-  where value cannot be set to false'
-time: 2024-01-03T11:36:15.475217-05:00

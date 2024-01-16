@@ -61,6 +61,7 @@ resource "opslevel_check_has_documentation" "has_docs" {
 - `category` (String) The id of the category the check belongs to.
 - `document_subtype` (String) The subtype of the document.
 - `document_type` (String) The type of the document.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 
@@ -69,7 +70,6 @@ resource "opslevel_check_has_documentation" "has_docs" {
 - `enable_on` (String) The date when the check will be automatically enabled.
 If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
 See example in opslevel_check_manual for proper configuration.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
 - `notes` (String) Additional information about the check.

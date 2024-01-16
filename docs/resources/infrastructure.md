@@ -72,7 +72,7 @@ resource "opslevel_infrastructure" "example_2" {
 - `aliases` (List of String) The aliases of the infrastructure resource.
 - `data` (String) The data of the infrastructure resource in JSON format.
 - `last_updated` (String)
-- `owner` (String) The id of the owner for the infrastructure resource.  Can be a team or group. Does not support aliases!
+- `owner` (String) The id of the team that owns the infrastructure resource. Does not support aliases!
 - `provider_data` (Block List, Max: 1) The provider specific data for the infrastructure resource. (see [below for nested schema](#nestedblock--provider_data))
 
 ### Read-Only

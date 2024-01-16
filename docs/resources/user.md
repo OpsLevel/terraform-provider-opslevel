@@ -32,7 +32,7 @@ resource "opslevel_user" "john" {
 
 - `last_updated` (String)
 - `role` (String) The access role (e.g. user vs admin) of the user.
-- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel.
+- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.
 
 ### Read-Only
 

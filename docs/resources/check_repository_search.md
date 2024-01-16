@@ -62,6 +62,7 @@ resource "opslevel_check_repository_search" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `file_contents_predicate` (Block List, Min: 1, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--file_contents_predicate))
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
@@ -71,7 +72,6 @@ resource "opslevel_check_repository_search" "example" {
 - `enable_on` (String) The date when the check will be automatically enabled.
 If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
 See example in opslevel_check_manual for proper configuration.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `file_extensions` (List of String) Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: ["py", "rb"].
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)

@@ -70,6 +70,7 @@ resource "opslevel_check_manual" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 - `update_requires_comment` (Boolean) Whether the check requires a comment or not.
@@ -79,7 +80,6 @@ resource "opslevel_check_manual" "example" {
 - `enable_on` (String) The date when the check will be automatically enabled.
 If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
 See example in opslevel_check_manual for proper configuration.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
 - `notes` (String) Additional information about the check.

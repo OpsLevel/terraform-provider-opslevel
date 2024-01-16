@@ -100,6 +100,7 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 - `action` (String) The action that will be triggered by the Trigger Definition.
 - `name` (String) The name of the Trigger Definition
 - `owner` (String) The owner of the Trigger Definition.
+- `published` (Boolean) The published state of the Custom Action; true if the Trigger Definition is ready for use; false if it is a draft.
 
 ### Optional
 
@@ -108,7 +109,6 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 - `extended_team_access` (List of String) The set of additional teams who can invoke this Trigger Definition.
 - `filter` (String) A filter defining which services this Trigger Definition applies to.
 - `manual_inputs_definition` (String) The YAML definition of any custom inputs for this Trigger Definition.
-- `published` (Boolean) The published state of the Custom Action; true if the Trigger Definition is ready for use; false if it is a draft. Defaults to false.
 - `response_template` (String) The liquid template used to parse the response from the Webhook Action.
 
 ### Read-Only

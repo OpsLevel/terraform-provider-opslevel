@@ -48,10 +48,9 @@ output "team" {
 
 ### Optional
 
-- `group` (String, Deprecated) The group this team belongs to. Only accepts group's Alias
 - `last_updated` (String)
 - `member` (Block List) List of members in the team with email address and role. (see [below for nested schema](#nestedblock--member))
-- `parent` (String) The parent team. Only accepts team's Alias
+- `parent` (String) The id or alias of the parent team.
 - `responsibilities` (String) A description of what the team is responsible for.
 
 ### Read-Only
@@ -63,8 +62,8 @@ output "team" {
 
 Required:
 
-- `email` (String) The email address or ID of the user to add to a team.
-- `role` (String) The type of relationship this membership implies.
+- `email` (String) The email address of the team member.
+- `role` (String) The role of the team member.
 
 ## Import
 

@@ -43,10 +43,10 @@ resource "opslevel_system" "example" {
 ### Optional
 
 - `description` (String) The description for the system.
-- `domain` (String) The id or alias of the parent domain this system is a child for.
+- `domain` (String) The id of the parent domain this system is a child for.
 - `last_updated` (String)
 - `note` (String) Additional information about the system.
-- `owner` (String) The id of the owner for the system.  Can be a team or group
+- `owner` (String) The id of the team that owns the system.
 
 ### Read-Only
 

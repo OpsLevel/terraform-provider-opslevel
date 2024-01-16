@@ -44,8 +44,18 @@ data "opslevel_service" "bar" {
 - `owner_id` (String) The team ID that owns the service.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
+- `properties` (List of Object) Custom properties assigned to this service. (see [below for nested schema](#nestedatt--properties))
 - `repositories` (List of String) List of repositories connected to the service.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.
+
+<a id="nestedatt--properties"></a>
+### Nested Schema for `properties`
+
+Read-Only:
+
+- `definition` (String)
+- `owner` (String)
+- `value` (String)
 
 

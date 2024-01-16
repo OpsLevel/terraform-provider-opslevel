@@ -37,7 +37,7 @@ resource "opslevel_domain" "example" {
 - `description` (String) The description for the domain.
 - `last_updated` (String)
 - `note` (String) Additional information about the domain.
-- `owner` (String) The id of the owner for the domain.  Can be a team or group
+- `owner` (String) The id of the team that owns the domain.
 
 ### Read-Only
 
