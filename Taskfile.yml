@@ -9,10 +9,10 @@ vars:
 
 includes:
   go:
-    taskfile: "./opslevel/Taskfile.yml"
+    taskfile: "./internal/Taskfile.yml"
   terraform:
-    taskfile: "./workspace/Taskfile.yml"
-    dir: ./workspace
+    taskfile: "./workspace_new/Taskfile.yml"
+    dir: ./workspace_new
     aliases: [tf]
 
 tasks:
@@ -54,14 +54,18 @@ tasks:
   setup:
     desc: Setup env and tools
     cmds:
-      - task: install-changie
-      - task: go:setup
+      # - task: install-changie
+      # - task: go:setup
       - task: build
-      - task: terraform:init
+      # - task: terraform:init
 
   test:
     desc: Run tests
+    dir: internal
     env:
       TF_ACC: true
+      OPSLEVEL_API_URL: https://app.opslevel.com
     cmds:
-      - task: go:test
+      # - task: go:test
+      - terraform init
+      - go test ./... -v {{ .CLI_ARGS }}
