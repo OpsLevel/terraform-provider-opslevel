@@ -98,7 +98,7 @@ func getConnectiveEnum(d *schema.ResourceData) *opslevel.ConnectiveEnum {
 }
 
 func getFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
-	predicates := interfacesMap(d.Get("predicate"))
+	predicates := interfacesMaps(d.Get("predicate"))
 	return expandFilterPredicateInputs(predicates)
 }
 

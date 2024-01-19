@@ -7,28 +7,28 @@ import (
 	"testing"
 )
 
-func compareKey(t *testing.T, m map[string]string, key string, exp string) {
+func compareKey(t *testing.T, m map[string]interface{}, key string, exp interface{}) {
 	got := m[key]
-	if exp != m[key] {
+	if !reflect.DeepEqual(exp, m[key]) {
 		t.Errorf("on key '%s' expected value %#v got\n\t%#v", key, exp, got)
 	}
 }
 
-func TestInterfacesMap(t *testing.T) {
-	predicateInputs := `[{"case_sensitive":"true","key":"tags","key_data":"image","type":"ends_with","value":"ID"},{"case_sensitive":"false","key":"name","key_data":"","type":"contains","value":"runner"},{"case_sensitive":"","key":"repository_ids","key_data":"","type":"exists","value":""}]`
+func TestInterfacesMaps(t *testing.T) {
+	predicateInputs := `[{"case_sensitive":true,"key":"tags","key_data":"image","type":"ends_with","value":"ID"},{"case_insensitive":true,"key":"name","key_data":"","type":"contains","value":"runner"},{"key":"repository_ids","key_data":"","type":"exists","value":""}]`
 	var unread interface{}
 	err := json.Unmarshal([]byte(predicateInputs), &unread)
 	if err != nil {
 		t.Error(err)
 	}
-	output := interfacesMap(unread)
+	output := interfacesMaps(unread)
 	if len(output) != 3 {
 		t.Errorf("expected resulting interfaces map len to be 3 got %d", len(output))
 	}
 	if len(output[0]) != 5 {
 		t.Errorf("expected len 5 got %d", len(output[0]))
 	}
-	compareKey(t, output[0], "case_sensitive", "true")
+	compareKey(t, output[0], "case_sensitive", true)
 	compareKey(t, output[0], "key", "tags")
 	compareKey(t, output[0], "key_data", "image")
 	compareKey(t, output[0], "type", "ends_with")
@@ -36,23 +36,22 @@ func TestInterfacesMap(t *testing.T) {
 	if len(output[1]) != 5 {
 		t.Errorf("expected len 5 got %d", len(output[1]))
 	}
-	compareKey(t, output[1], "case_sensitive", "false")
+	compareKey(t, output[1], "case_insensitive", true)
 	compareKey(t, output[1], "key", "name")
 	compareKey(t, output[1], "key_data", "")
 	compareKey(t, output[1], "type", "contains")
 	compareKey(t, output[1], "value", "runner")
-	if len(output[2]) != 5 {
-		t.Errorf("expected len 5 got %d", len(output[2]))
+	if len(output[2]) != 4 {
+		t.Errorf("expected len 4 got %d", len(output[2]))
 	}
 	compareKey(t, output[2], "key", "repository_ids")
 	compareKey(t, output[2], "type", "exists")
-	compareKey(t, output[2], "case_sensitive", "")
 	compareKey(t, output[2], "key_data", "")
 	compareKey(t, output[2], "value", "")
 }
 
 func TestExpandFilterPredicates(t *testing.T) {
-	predicateInputs := []map[string]string{
+	predicateInputs := []map[string]interface{}{
 		{
 			"type":           "ends_with",
 			"value":          "ID",

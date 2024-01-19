@@ -18,9 +18,9 @@ func cleanerString(s string) string {
 	return strings.TrimSpace(strings.ToLower(s))
 }
 
-// interfacesMap converts an interface{} into a []map[string]string. This is a useful conversion for passing
+// interfacesMaps converts an interface{} into a []map[string]interface{}. This is a useful conversion for passing
 // schema.ResourceData objects from terraform into mapstructure.Decode to get actual struct types.
-func interfacesMap(i interface{}) []map[string]string {
+func interfacesMaps(i interface{}) []map[string]interface{} {
 	// interface{} 					to 		[]interface{}								segment into slices.
 	interfaces := i.([]interface{})
 	// interface{}					to		[]map[string]interface{}					convert each slice item into a map.
@@ -28,15 +28,7 @@ func interfacesMap(i interface{}) []map[string]string {
 	for i, item := range interfaces {
 		mapStringInterfaces[i] = item.(map[string]interface{})
 	}
-	// []map[string]interface{}		to		[]map[string]string							convert each map value into a string.
-	mapStringStrings := make([]map[string]string, len(interfaces))
-	for i, _ := range interfaces {
-		mapStringStrings[i] = make(map[string]string)
-		for k, v := range mapStringInterfaces[i] {
-			mapStringStrings[i][k] = v.(string)
-		}
-	}
-	return mapStringStrings
+	return mapStringInterfaces
 }
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -236,7 +228,7 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 }
 
 func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput {
-	data := d.([]map[string]string)
+	data := d.([]map[string]interface{})
 	output := make([]opslevel.FilterPredicateInput, len(data))
 	for i, item := range data {
 		var predicate opslevel.FilterPredicateInput
@@ -247,8 +239,8 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 				Msg("mapstructure decoding error - please add a bug report https://github.com/OpsLevel/terraform-provider-opslevel/issues/new")
 		}
 		// special cases
-		if item["key_data"] != "" {
-			predicate.KeyData = opslevel.RefTo(item["key_data"])
+		if item["key_data"] != nil {
+			predicate.KeyData = opslevel.RefTo(item["key_data"].(string))
 		} else {
 			predicate.KeyData = nil
 		}
