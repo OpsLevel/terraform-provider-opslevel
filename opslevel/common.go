@@ -18,32 +18,6 @@ func cleanerString(s string) string {
 	return strings.TrimSpace(strings.ToLower(s))
 }
 
-// boolStringToBool is a workaround for our Terraform provider version not being able to differentiate
-// between unset, nil and zero values in inputs. Will return true if the string in lowercase is "true"
-// and false if it is "false". Otherwise, it will return nil.
-func boolStringToBool(s string) *bool {
-	switch cleanerString(s) {
-	case "true":
-		return opslevel.RefTo(true)
-	case "false":
-		return opslevel.RefTo(false)
-	default:
-		return nil
-	}
-}
-
-// boolToStringBool does the opposite of boolStringToBool. Since our Terraform provider can't differentiate between nil
-// and empty values, a nil bool will be returned as an empty string.
-func boolToStringBool(b *bool) string {
-	if b == nil {
-		return ""
-	} else if *b == true {
-		return "true"
-	} else {
-		return "false"
-	}
-}
-
 // interfacesMap converts an interface{} into a []map[string]string. This is a useful conversion for passing
 // schema.ResourceData objects from terraform into mapstructure.Decode to get actual struct types.
 func interfacesMap(i interface{}) []map[string]string {
@@ -269,15 +243,23 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 		err := mapstructure.Decode(item, &predicate)
 		if err != nil {
 			log.Panic().Str("func", "expandFilterPredicateInputs").
-				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("mapstructure decoding error")
+				Str("item", fmt.Sprintf("%#v", item)).Err(err).
+				Msg("mapstructure decoding error - please add a bug report https://github.com/OpsLevel/terraform-provider-opslevel/issues/new")
 		}
-		// special cases: field name on input type and terraform field name mismatch
+		// special cases
 		if item["key_data"] != "" {
 			predicate.KeyData = opslevel.RefTo(item["key_data"])
 		} else {
 			predicate.KeyData = nil
 		}
-		predicate.CaseSensitive = boolStringToBool(item["case_sensitive"])
+		if item["case_sensitive"] == "true" && item["case_insensitive"] == "true" {
+			log.Panic().Str("func", "expandFilterPredicateInputs").
+				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("can't set both case_insensitive and case_sensitive at the same time.")
+		} else if item["case_sensitive"] == "true" {
+			predicate.CaseSensitive = opslevel.RefTo(true)
+		} else if item["case_insensitive"] == "true" {
+			predicate.CaseSensitive = opslevel.RefTo(false)
+		}
 		output[i] = predicate
 	}
 	return &output
@@ -292,8 +274,13 @@ func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any 
 			"type":     string(predicate.Type),
 			"value":    predicate.Value,
 		}
-		// special cases: field name on output type does not match 1:1 with terraform field name
-		o["case_sensitive"] = boolToStringBool(predicate.CaseSensitive)
+		// special cases
+		if predicate.CaseSensitive == nil {
+		} else if *predicate.CaseSensitive == true {
+			o["case_sensitive"] = true
+		} else if *predicate.CaseSensitive == false {
+			o["case_insensitive"] = true
+		}
 		output = append(output, o)
 	}
 	return output

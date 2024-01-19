@@ -61,9 +61,15 @@ func resourceFilter() *schema.Resource {
 							ForceNew:    false,
 							Optional:    true,
 						},
+						"case_insensitive": {
+							Type:        schema.TypeBool,
+							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.",
+							ForceNew:    false,
+							Optional:    true,
+						},
 						"case_sensitive": {
-							Type:        schema.TypeString,
-							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.\nUse a boolean contained in a string like 'true' or 'false' or omit for null.",
+							Type:        schema.TypeBool,
+							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.",
 							ForceNew:    false,
 							Optional:    true,
 						},

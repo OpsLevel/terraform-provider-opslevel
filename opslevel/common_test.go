@@ -61,10 +61,10 @@ func TestExpandFilterPredicates(t *testing.T) {
 			"case_sensitive": "true",
 		},
 		{
-			"type":           "contains",
-			"value":          "runner",
-			"key":            "name",
-			"case_sensitive": "false",
+			"type":             "contains",
+			"value":            "runner",
+			"key":              "name",
+			"case_insensitive": "true",
 		},
 		{
 			"type": "exists",
@@ -96,6 +96,59 @@ func TestExpandFilterPredicates(t *testing.T) {
 	outputs := *expandFilterPredicateInputs(predicateInputs)
 	for i := range outputs {
 		if !reflect.DeepEqual(outputs[i], expectedInputs[i]) {
+			t.Errorf("expected %#v\n\tgot %#v", expectedInputs[i], outputs[i])
+		}
+	}
+}
+
+func TestFlattenFilterPredicates(t *testing.T) {
+	predicates := []opslevel.FilterPredicate{
+		{
+			Type:          opslevel.PredicateTypeEnumEndsWith,
+			Value:         "ID",
+			Key:           opslevel.PredicateKeyEnumTags,
+			KeyData:       "image",
+			CaseSensitive: opslevel.RefOf(true),
+		},
+		{
+			Type:          opslevel.PredicateTypeEnumContains,
+			Value:         "runner",
+			Key:           opslevel.PredicateKeyEnumName,
+			CaseSensitive: opslevel.RefOf(false),
+		},
+		{
+			Type: opslevel.PredicateTypeEnumExists,
+			Key:  opslevel.PredicateKeyEnumRepositoryIDs,
+		},
+	}
+	// tf provider version can't differentiate between nil vs zero val on inputs
+	// means required fields will be parsed as zero (or nil if they are pointers)
+	expectedInputs := []map[string]interface{}{
+		{
+			"type":           "ends_with",
+			"value":          "ID",
+			"key":            "tags",
+			"key_data":       "image",
+			"case_sensitive": true,
+		},
+		{
+			"type":             "contains",
+			"value":            "runner",
+			"key":              "name",
+			"case_insensitive": true,
+			"key_data":         "",
+		},
+		{
+			"type":     "exists",
+			"key":      "repository_ids",
+			"value":    "",
+			"key_data": "",
+		},
+	}
+
+	outputs := flattenFilterPredicates(predicates)
+	for i := range outputs {
+		if !reflect.DeepEqual(expectedInputs[i], outputs[i]) {
 			t.Errorf("expected %#v\n\tgot %#v", expectedInputs[i], outputs[i])
 		}
 	}
