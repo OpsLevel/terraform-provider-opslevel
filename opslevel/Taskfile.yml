@@ -4,6 +4,14 @@ version: '3'
 
 tasks:
 
+  fix:
+    desc: Fix formatting and linting of go code
+    deps: [install-gofumpt, install-golangci-lint]
+    cmds:
+      - gofumpt -w .
+      - go mod tidy
+      - golangci-lint run --fix
+
   lint:
     desc: Check formatting and linting of go code
     deps: [install-gofumpt, install-golangci-lint]
@@ -11,14 +19,6 @@ tasks:
       - gofumpt -d .
       - go vet ./...
       - golangci-lint run
-
-  lintfix:
-    desc: Fix formatting and linting of go code
-    deps: [install-gofumpt, install-golangci-lint]
-    cmds:
-      - gofumpt -w .
-      - go mod tidy
-      - golangci-lint run --fix
 
   setup:
     desc: Setup go linter, formatter, and opslevel-go submodule
@@ -29,9 +29,9 @@ tasks:
 
   setup-opslevel-go:
     desc: Setup go workspace to import opslevel-go
+    internal: true
     cmds:
-      - git submodule update --init
-      - git submodule update --remote
+      - git submodule update --init --remote
       - go work init || true
       - go work use . submodules/opslevel-go
       - echo "Workspace ready!"

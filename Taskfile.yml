@@ -6,16 +6,20 @@ vars:
   # 'VERSION_DYNAMIC' needs to run in this scope before 'task build' begins
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
+  WORKSPACE_DIR: "workspace"
 
 includes:
   go:
+    internal: true
     taskfile: "./opslevel/Taskfile.yml"
-  terraform:
-    taskfile: "./workspace/Taskfile.yml"
-    dir: ./workspace
-    aliases: [tf]
 
 tasks:
+
+  apply:
+    desc: Run "terraform apply"
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "apply", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   build:
     desc: Build local opslevel terraform provider
@@ -29,27 +33,58 @@ tasks:
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
+  clean:
+    desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
+    dir: "{{.WORKSPACE_DIR}}"
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
+    cmds:
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
+        ignore_error: true
+
+  destroy:
+    desc: Run "terraform destroy" in "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  fix:
+    desc: Fix formatting and linting
+    cmds:
+      - task: go:fix
+      - task: format-fix
+
+  init:
+    desc: Initialize terraform workspace
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: install-terraform
+      - './make_backend_tf.sh'
+      - touch main.tf
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
   install-changie:
     desc: Install changie
     aliases: [get-changie]
     cmds:
       - cmd: echo "Installing changie..."
         silent: true
-      - go install github.com/miniscruff/changie@latest
-      - cmd: echo -e "\nSuccess! 'changie' installed."
+      - which changie > /dev/null || go install github.com/miniscruff/changie@latest
+      - cmd: echo -e "Success! 'changie' installed."
         silent: true
 
   lint:
     desc: Check formatting and linting
     cmds:
       - task: go:lint
-      - task: terraform:lint
+      - task: validate
+      - task: format-check
 
-  lintfix:
-    desc: Fix formatting and linting
+  plan:
+    desc: Run "terraform plan" in "{{.WORKSPACE_DIR}}"
     cmds:
-      - task: go:lintfix
-      - task: terraform:lintfix
+      - task: terraform-command
+        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   setup:
     desc: Setup env and tools
@@ -57,7 +92,7 @@ tasks:
       - task: install-changie
       - task: go:setup
       - task: build
-      - task: terraform:init
+      - task: init
 
   test:
     desc: Run tests
@@ -65,3 +100,57 @@ tasks:
       TF_ACC: true
     cmds:
       - task: go:test
+
+  ########################################
+  # internal (not directly called) tasks #
+  ########################################
+
+  format-check:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - cmd: echo "Listing all terraform files that need formatting..."
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  format-fix:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  install-terraform:
+    internal: true
+    aliases: [get]
+    cmds:
+      - echo "Installing terraform..."
+      - task: install-terraform-mac-os
+      - echo -e "\nSuccess! 'terraform' installed."
+
+  install-terraform-mac-os:
+    internal: true
+    platforms: [darwin]
+    cmds:
+      - brew tap hashicorp/tap
+      - brew install hashicorp/tap/terraform
+    preconditions:
+      - sh: 'which brew'
+        msg: '"brew" needed to install terraform - see https://brew.sh'
+
+  terraform-command:
+    internal: true
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
+    requires:
+      vars: [TF_COMMAND, TF_CMD_DIR]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  validate:
+    internal: true
+    desc: Run "terraform validate" in current directory
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.ROOT_DIR}}" }
