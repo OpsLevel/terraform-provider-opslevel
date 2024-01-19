@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fixed bug in filter predicates where making some filters like on repository_ids
+  was impossible because of the bool case_sensitive being required.
+time: 2024-01-19T02:26:48.175798-05:00

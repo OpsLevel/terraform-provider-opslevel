@@ -1,0 +1,3 @@
+kind: Bugfix
+body: Fixed bug in filters where the connective was not able to be omitted/null.
+time: 2024-01-19T02:29:22.325706-05:00
