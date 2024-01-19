@@ -157,27 +157,21 @@ func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterUpdateInput{
-		Id: *opslevel.NewID(d.Id()),
+		Id:   *opslevel.NewID(d.Id()),
+		Name: opslevel.RefOf(d.Get("name").(string)),
 	}
 
-	if d.HasChange("name") {
-		input.Name = opslevel.RefOf(d.Get("name").(string))
+	predicates, err := getFilterPredicates(d)
+	if err != nil {
+		return err
 	}
-	if d.HasChange("predicate") {
-		predicates, err := getFilterPredicates(d)
-		if err != nil {
-			return err
-		}
-		input.Predicates = predicates
-	}
-	if d.HasChange("connective") {
-		input.Connective = getConnectiveEnum(d)
-	}
+	input.Predicates = predicates
+	input.Connective = getConnectiveEnum(d)
 	if input.Predicates != nil && len(*input.Predicates) > 1 && input.Connective == nil {
 		return errors.New("if there is more than 1 'predicate' then 'connective' must be set")
 	}
 
-	_, err := client.UpdateFilter(input)
+	_, err = client.UpdateFilter(input)
 	if err != nil {
 		return err
 	}

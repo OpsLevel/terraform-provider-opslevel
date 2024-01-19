@@ -1,4 +1,0 @@
-kind: Refactor
-body: '[BREAKING CHANGE] Bool value case_sensitive in filter predicate is now an optional
-  string containing a bool rather than a required literal bool'
-time: 2024-01-19T02:30:03.940876-05:00

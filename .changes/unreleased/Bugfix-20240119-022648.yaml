@@ -1,4 +1,8 @@
 kind: Bugfix
-body: Fixed bug in filter predicates where making some filters like on repository_ids
-  was impossible because of the bool case_sensitive being required.
+body: Fixed bug in filter predicates where making some filters like on
+  repository_ids was impossible because of bool 'case_sensitive' being
+  required. To toggle case_sensitive use 'case_sensitive = true' or
+  'case_insensitive = true'. A bug still persists where case sensitivity
+  cannot be disabled when updating a predicate. The workaround is to
+  manually set the predicate to null in Graphiql.
 time: 2024-01-19T02:26:48.175798-05:00

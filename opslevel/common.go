@@ -244,10 +244,20 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 		} else {
 			predicate.KeyData = nil
 		}
-		if item["case_sensitive"] == true {
+		// all 4 cases of case_sensitive, case_insensitive need to be handled.
+		// TODO: bug persists where we cannot unset predicate case_sensitive
+		// value once it is set because opslevel-go cannot send null. Also
+		// affects Predicate.key_data and Filter.connective.
+		x := item["case_sensitive"] == true
+		y := item["case_insensitive"] == true
+		if x && y {
+			// not possible because of input validation
+		} else if x && !y {
 			predicate.CaseSensitive = opslevel.RefTo(true)
-		} else if item["case_insensitive"] == true {
+		} else if !x && y {
 			predicate.CaseSensitive = opslevel.RefTo(false)
+		} else if !x && !y {
+			predicate.CaseSensitive = nil
 		}
 		output[i] = predicate
 	}
@@ -263,7 +273,8 @@ func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any 
 			"type":     string(predicate.Type),
 			"value":    predicate.Value,
 		}
-		// special cases
+		// current terraform provider version cannot differentiate between nil and zero
+		// this is the reverse of the 4 cases in the expand function
 		if predicate.CaseSensitive == nil {
 			o["case_sensitive"] = false
 			o["case_insensitive"] = false
