@@ -15,7 +15,7 @@ func compareKey(t *testing.T, m map[string]interface{}, key string, exp interfac
 }
 
 func TestInterfacesMaps(t *testing.T) {
-	predicateInputs := `[{"case_sensitive":true,"key":"tags","key_data":"image","type":"ends_with","value":"ID"},{"case_insensitive":true,"key":"name","key_data":"","type":"contains","value":"runner"},{"key":"repository_ids","key_data":"","type":"exists","value":""}]`
+	predicateInputs := `[{"case_insensitive":false,"case_sensitive":true,"key":"tags","key_data":"image","type":"ends_with","value":"ID"},{"case_insensitive":true,"case_sensitive":false,"key":"name","key_data":"","type":"contains","value":"runner"},{"case_insensitive":false,"case_sensitive":false,"key":"repository_ids","key_data":"","type":"exists","value":""}]`
 	var unread interface{}
 	err := json.Unmarshal([]byte(predicateInputs), &unread)
 	if err != nil {
@@ -25,25 +25,29 @@ func TestInterfacesMaps(t *testing.T) {
 	if len(output) != 3 {
 		t.Errorf("expected resulting interfaces map len to be 3 got %d", len(output))
 	}
-	if len(output[0]) != 5 {
-		t.Errorf("expected len 5 got %d", len(output[0]))
+	if len(output[0]) != 6 {
+		t.Errorf("expected len 6 got %d", len(output[0]))
 	}
 	compareKey(t, output[0], "case_sensitive", true)
+	compareKey(t, output[0], "case_insensitive", false)
 	compareKey(t, output[0], "key", "tags")
 	compareKey(t, output[0], "key_data", "image")
 	compareKey(t, output[0], "type", "ends_with")
 	compareKey(t, output[0], "value", "ID")
-	if len(output[1]) != 5 {
-		t.Errorf("expected len 5 got %d", len(output[1]))
+	if len(output[1]) != 6 {
+		t.Errorf("expected len 6 got %d", len(output[1]))
 	}
+	compareKey(t, output[1], "case_sensitive", false)
 	compareKey(t, output[1], "case_insensitive", true)
 	compareKey(t, output[1], "key", "name")
 	compareKey(t, output[1], "key_data", "")
 	compareKey(t, output[1], "type", "contains")
 	compareKey(t, output[1], "value", "runner")
-	if len(output[2]) != 4 {
-		t.Errorf("expected len 4 got %d", len(output[2]))
+	if len(output[2]) != 6 {
+		t.Errorf("expected len 6 got %d", len(output[2]))
 	}
+	compareKey(t, output[2], "case_sensitive", false)
+	compareKey(t, output[2], "case_insensitive", false)
 	compareKey(t, output[2], "key", "repository_ids")
 	compareKey(t, output[2], "type", "exists")
 	compareKey(t, output[2], "key_data", "")
@@ -53,17 +57,19 @@ func TestInterfacesMaps(t *testing.T) {
 func TestExpandFilterPredicates(t *testing.T) {
 	predicateInputs := []map[string]interface{}{
 		{
-			"type":           "ends_with",
-			"value":          "ID",
-			"key":            "tags",
-			"key_data":       "image",
-			"case_sensitive": "true",
+			"type":             "ends_with",
+			"value":            "ID",
+			"key":              "tags",
+			"key_data":         "image",
+			"case_sensitive":   true,
+			"case_insensitive": false,
 		},
 		{
 			"type":             "contains",
 			"value":            "runner",
 			"key":              "name",
-			"case_insensitive": "true",
+			"case_sensitive":   false,
+			"case_insensitive": true,
 		},
 		{
 			"type": "exists",
@@ -124,24 +130,28 @@ func TestFlattenFilterPredicates(t *testing.T) {
 	// means required fields will be parsed as zero (or nil if they are pointers)
 	expectedInputs := []map[string]interface{}{
 		{
-			"type":           "ends_with",
-			"value":          "ID",
-			"key":            "tags",
-			"key_data":       "image",
-			"case_sensitive": true,
+			"type":             "ends_with",
+			"value":            "ID",
+			"key":              "tags",
+			"key_data":         "image",
+			"case_sensitive":   true,
+			"case_insensitive": false,
 		},
 		{
 			"type":             "contains",
 			"value":            "runner",
 			"key":              "name",
+			"case_sensitive":   false,
 			"case_insensitive": true,
 			"key_data":         "",
 		},
 		{
-			"type":     "exists",
-			"key":      "repository_ids",
-			"value":    "",
-			"key_data": "",
+			"type":             "exists",
+			"key":              "repository_ids",
+			"value":            "",
+			"key_data":         "",
+			"case_sensitive":   false,
+			"case_insensitive": false,
 		},
 	}
 

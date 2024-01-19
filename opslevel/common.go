@@ -244,12 +244,12 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 		} else {
 			predicate.KeyData = nil
 		}
-		if item["case_sensitive"] == "true" && item["case_insensitive"] == "true" {
+		if item["case_sensitive"] == true && item["case_insensitive"] == true {
 			log.Panic().Str("func", "expandFilterPredicateInputs").
 				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("can't set both case_insensitive and case_sensitive at the same time.")
-		} else if item["case_sensitive"] == "true" {
+		} else if item["case_sensitive"] == true {
 			predicate.CaseSensitive = opslevel.RefTo(true)
-		} else if item["case_insensitive"] == "true" {
+		} else if item["case_insensitive"] == true {
 			predicate.CaseSensitive = opslevel.RefTo(false)
 		}
 		output[i] = predicate
@@ -268,9 +268,13 @@ func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any 
 		}
 		// special cases
 		if predicate.CaseSensitive == nil {
+			o["case_sensitive"] = false
+			o["case_insensitive"] = false
 		} else if *predicate.CaseSensitive == true {
 			o["case_sensitive"] = true
+			o["case_insensitive"] = false
 		} else if *predicate.CaseSensitive == false {
+			o["case_sensitive"] = false
 			o["case_insensitive"] = true
 		}
 		output = append(output, o)

@@ -1,9 +1,11 @@
 package opslevel
 
 import (
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/rs/zerolog/log"
 )
 
 func resourceFilter() *schema.Resource {
@@ -63,13 +65,13 @@ func resourceFilter() *schema.Resource {
 						},
 						"case_insensitive": {
 							Type:        schema.TypeBool,
-							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.",
+							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							ForceNew:    false,
 							Optional:    true,
 						},
 						"case_sensitive": {
 							Type:        schema.TypeBool,
-							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.",
+							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							ForceNew:    false,
 							Optional:    true,
 						},
@@ -86,6 +88,7 @@ func resourceFilter() *schema.Resource {
 	}
 }
 
+// TODO: if len(predicates) > 1 then it is required to have a connective set.
 func getConnectiveEnum(d *schema.ResourceData) *opslevel.ConnectiveEnum {
 	switch cleanerString(d.Get("connective").(string)) {
 	case "or":
@@ -97,8 +100,13 @@ func getConnectiveEnum(d *schema.ResourceData) *opslevel.ConnectiveEnum {
 	}
 }
 
+// TODO: prevent case_sensitive and case_insensitive at the same time.
 func getFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
-	predicates := interfacesMaps(d.Get("predicate"))
+	raw := d.Get("predicate")
+	rawJSON, _ := json.Marshal(raw)
+	log.Debug().Str("func", "getFilterPredicates").
+		Msg(string(rawJSON))
+	predicates := interfacesMaps(raw)
 	return expandFilterPredicateInputs(predicates)
 }
 
@@ -107,6 +115,9 @@ func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error
 		Name:       d.Get("name").(string),
 		Predicates: getFilterPredicates(d),
 		Connective: getConnectiveEnum(d),
+	}
+	if input.Predicates != nil && len(*input.Predicates) > 0 && input.Connective == nil {
+
 	}
 
 	resource, err := client.CreateFilter(input)
