@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"errors"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -61,31 +62,65 @@ func resourceFilter() *schema.Resource {
 							ForceNew:    false,
 							Optional:    true,
 						},
+						"case_insensitive": {
+							Type:        schema.TypeBool,
+							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
+							ForceNew:    false,
+							Optional:    true,
+						},
 						"case_sensitive": {
 							Type:        schema.TypeBool,
-							Description: "Option for determining whether to compare strings case-sensitively.\n\n",
+							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							ForceNew:    false,
-							Required:    true,
+							Optional:    true,
 						},
 					},
 				},
 			},
 			"connective": {
-				Type:         schema.TypeString,
-				Description:  "The logical operator to be used in conjunction with predicates.",
-				ForceNew:     false,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice(append(opslevel.AllConnectiveEnum, ""), false),
+				Type:        schema.TypeString,
+				Description: "The logical operator to be used in conjunction with predicates.",
+				ForceNew:    false,
+				Optional:    true,
 			},
 		},
 	}
 }
 
+func getConnectiveEnum(d *schema.ResourceData) *opslevel.ConnectiveEnum {
+	switch cleanerString(d.Get("connective").(string)) {
+	case "or":
+		return opslevel.RefTo(opslevel.ConnectiveEnumOr)
+	case "and":
+		return opslevel.RefTo(opslevel.ConnectiveEnumAnd)
+	default:
+		return nil
+	}
+}
+
+func getFilterPredicates(d *schema.ResourceData) (*[]opslevel.FilterPredicateInput, error) {
+	predicates := interfacesMaps(d.Get("predicate"))
+	for _, pred := range predicates {
+		if pred["case_sensitive"] == true && pred["case_insensitive"] == true {
+			return nil, errors.New("a predicate should not have 'case_sensitive' and 'case_insensitive' set at the same time")
+		}
+	}
+	return expandFilterPredicateInputs(predicates), nil
+}
+
 func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	var err error
+	predicates, err := getFilterPredicates(d)
+	if err != nil {
+		return err
+	}
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
-		Predicates: expandFilterPredicateInputs(d),
-		Connective: opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string))),
+		Predicates: predicates,
+		Connective: getConnectiveEnum(d),
+	}
+	if input.Predicates != nil && len(*input.Predicates) > 1 && input.Connective == nil {
+		return errors.New("if there is more than 1 'predicate' then 'connective' must be set")
 	}
 
 	resource, err := client.CreateFilter(input)
@@ -122,20 +157,21 @@ func resourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterUpdateInput{
-		Id: *opslevel.NewID(d.Id()),
+		Id:   *opslevel.NewID(d.Id()),
+		Name: opslevel.RefOf(d.Get("name").(string)),
 	}
 
-	if d.HasChange("name") {
-		input.Name = opslevel.RefOf(d.Get("name").(string))
+	predicates, err := getFilterPredicates(d)
+	if err != nil {
+		return err
 	}
-	if d.HasChange("predicate") {
-		input.Predicates = expandFilterPredicateInputs(d)
-	}
-	if d.HasChange("connective") {
-		input.Connective = opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string)))
+	input.Predicates = predicates
+	input.Connective = getConnectiveEnum(d)
+	if input.Predicates != nil && len(*input.Predicates) > 1 && input.Connective == nil {
+		return errors.New("if there is more than 1 'predicate' then 'connective' must be set")
 	}
 
-	_, err := client.UpdateFilter(input)
+	_, err = client.UpdateFilter(input)
 	if err != nil {
 		return err
 	}
