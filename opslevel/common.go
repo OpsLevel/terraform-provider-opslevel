@@ -2,6 +2,8 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,20 +29,25 @@ func boolStringToBool(s string) *bool {
 	}
 }
 
-func valueIfPresent[T any](key string, m map[string]T) *T {
-	if _, ok := m[key]; ok {
-		found := m[key]
-		return &found
+// interfacesMap converts an interface{} into a []map[string]string. This is a useful conversion for passing
+// schema.ResourceData objects from terraform into mapstructure.Decode to get actual struct types.
+func interfacesMap(i interface{}) []map[string]string {
+	// interface{} 					to 		[]interface{}								segment into slices.
+	interfaces := i.([]interface{})
+	// interface{}					to		[]map[string]interface{}					convert each slice item into a map.
+	mapStringInterfaces := make([]map[string]interface{}, len(interfaces))
+	for i, item := range interfaces {
+		mapStringInterfaces[i] = item.(map[string]interface{})
 	}
-	return nil
-}
-
-func innerSchema[T any](d interface{}) map[string]T {
-	return d.(map[string]T)
-}
-
-func innerSchemaList[T any](d interface{}) []map[string]T {
-	return d.([]map[string]T)
+	// []map[string]interface{}		to		[]map[string]string							convert each map value into a string.
+	mapStringStrings := make([]map[string]string, len(interfaces))
+	for i, _ := range interfaces {
+		mapStringStrings[i] = make(map[string]string)
+		for k, v := range mapStringInterfaces[i] {
+			mapStringStrings[i][k] = v.(string)
+		}
+	}
+	return mapStringStrings
 }
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
@@ -239,16 +246,23 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	return output
 }
 
-func expandFilterPredicateInputs(d []map[string]string) *[]opslevel.FilterPredicateInput {
-	output := make([]opslevel.FilterPredicateInput, len(d))
-	for i, data := range d {
-		predicate := opslevel.FilterPredicateInput{
-			Type:          opslevel.PredicateTypeEnum(*valueIfPresent[string]("type", data)),
-			Value:         valueIfPresent[string]("value", data),
-			Key:           opslevel.PredicateKeyEnum(*valueIfPresent[string]("key", data)),
-			KeyData:       valueIfPresent[string]("key_data", data),
-			CaseSensitive: boolStringToBool(data["case_sensitive"]),
+func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput {
+	data := d.([]map[string]string)
+	output := make([]opslevel.FilterPredicateInput, len(data))
+	for i, item := range data {
+		var predicate opslevel.FilterPredicateInput
+		err := mapstructure.Decode(item, &predicate)
+		if err != nil {
+			log.Panic().Str("func", "expandFilterPredicateInputs").
+				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("mapstructure decoding error")
 		}
+		log.Debug().Str("func", "expandFilterPredicateInputs").
+			Str("item", fmt.Sprintf("%#v", item)).Msgf("mapstructure is %#v", predicate)
+		// special cases: json tag and terraform field name mismatch
+		if item["key_data"] != "" {
+			predicate.KeyData = opslevel.RefTo(item["key_data"])
+		}
+		predicate.CaseSensitive = boolStringToBool(item["case_sensitive"])
 		output[i] = predicate
 	}
 	return &output

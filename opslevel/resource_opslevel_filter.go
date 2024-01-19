@@ -82,9 +82,10 @@ func resourceFilter() *schema.Resource {
 }
 
 func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
+	predicates := interfacesMap(d.Get("predicate"))
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
-		Predicates: expandFilterPredicateInputs(innerSchemaList[string](d.Get("predicate"))),
+		Predicates: expandFilterPredicateInputs(predicates),
 		Connective: opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string))),
 	}
 
@@ -129,7 +130,8 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("predicate") {
-		input.Predicates = expandFilterPredicateInputs(innerSchemaList[string](d.Get("predicate")))
+		predicates := d.Get("predicate")
+		input.Predicates = expandFilterPredicateInputs(predicates)
 	}
 	if d.HasChange("connective") {
 		input.Connective = opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string)))
