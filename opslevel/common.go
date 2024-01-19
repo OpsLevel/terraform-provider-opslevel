@@ -12,6 +12,37 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
+// boolStringToBool is a workaround for our Terraform provider version not being able to differentiate
+// between unset, nil and zero values in inputs. Will return true if the string in lowercase is "true"
+// and false if it is "false". Otherwise, it will return nil.
+func boolStringToBool(s string) *bool {
+	s = strings.TrimSpace(strings.ToLower(s))
+	switch s {
+	case "true":
+		return opslevel.RefTo(true)
+	case "false":
+		return opslevel.RefTo(false)
+	default:
+		return nil
+	}
+}
+
+func valueIfPresent[T any](key string, m map[string]T) *T {
+	if _, ok := m[key]; ok {
+		found := m[key]
+		return &found
+	}
+	return nil
+}
+
+func innerSchema[T any](d interface{}) map[string]T {
+	return d.(map[string]T)
+}
+
+func innerSchemaList[T any](d interface{}) []map[string]T {
+	return d.([]map[string]T)
+}
+
 var DefaultPredicateDescription = "A condition that should be satisfied."
 
 func timeID() string {
@@ -208,34 +239,17 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	return output
 }
 
-func expandFilterPredicateInputs(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
-	output := make([]opslevel.FilterPredicateInput, 0)
-	for _, item := range d.Get("predicate").([]interface{}) {
-		data := item.(map[string]interface{})
+func expandFilterPredicateInputs(d []map[string]string) *[]opslevel.FilterPredicateInput {
+	output := make([]opslevel.FilterPredicateInput, len(d))
+	for i, data := range d {
 		predicate := opslevel.FilterPredicateInput{
-			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:         opslevel.RefOf(strings.TrimSpace(data["value"].(string))),
-			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData:       opslevel.RefOf(strings.TrimSpace(data["key_data"].(string))),
-			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
+			Type:          opslevel.PredicateTypeEnum(*valueIfPresent[string]("type", data)),
+			Value:         valueIfPresent[string]("value", data),
+			Key:           opslevel.PredicateKeyEnum(*valueIfPresent[string]("key", data)),
+			KeyData:       valueIfPresent[string]("key_data", data),
+			CaseSensitive: boolStringToBool(data["case_sensitive"]),
 		}
-		output = append(output, predicate)
-	}
-	return &output
-}
-
-func expandFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicate {
-	output := make([]opslevel.FilterPredicate, 0)
-	for _, item := range d.Get("predicate").([]interface{}) {
-		data := item.(map[string]interface{})
-		predicate := opslevel.FilterPredicate{
-			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:         strings.TrimSpace(data["value"].(string)),
-			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData:       strings.TrimSpace(data["key_data"].(string)),
-			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
-		}
-		output = append(output, predicate)
+		output[i] = predicate
 	}
 	return &output
 }

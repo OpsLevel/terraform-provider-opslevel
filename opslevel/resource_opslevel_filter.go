@@ -62,10 +62,10 @@ func resourceFilter() *schema.Resource {
 							Optional:    true,
 						},
 						"case_sensitive": {
-							Type:        schema.TypeBool,
-							Description: "Option for determining whether to compare strings case-sensitively.\n\n",
+							Type:        schema.TypeString,
+							Description: "Option for determining whether to compare strings case-sensitively. Not usable for all predicate types.\nUse a boolean contained in a string like 'true' or 'false' or omit for null.",
 							ForceNew:    false,
-							Required:    true,
+							Optional:    true,
 						},
 					},
 				},
@@ -84,7 +84,7 @@ func resourceFilter() *schema.Resource {
 func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
-		Predicates: expandFilterPredicateInputs(d),
+		Predicates: expandFilterPredicateInputs(innerSchemaList[string](d.Get("predicate"))),
 		Connective: opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string))),
 	}
 
@@ -129,7 +129,7 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("predicate") {
-		input.Predicates = expandFilterPredicateInputs(d)
+		input.Predicates = expandFilterPredicateInputs(innerSchemaList[string](d.Get("predicate")))
 	}
 	if d.HasChange("connective") {
 		input.Connective = opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string)))
