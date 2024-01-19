@@ -33,6 +33,14 @@ tasks:
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
+  ci:
+    desc: Workflow to run in CI
+    cmds:
+      - task: go:setup
+      - task: go:has-latest-opslevel-go
+      - task: lint
+      - task: test
+
   clean:
     desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
     dir: "{{.WORKSPACE_DIR}}"
