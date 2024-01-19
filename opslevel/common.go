@@ -32,6 +32,18 @@ func boolStringToBool(s string) *bool {
 	}
 }
 
+// boolToStringBool does the opposite of boolStringToBool. Since our Terraform provider can't differentiate between nil
+// and empty values, a nil bool will be returned as an empty string.
+func boolToStringBool(b *bool) string {
+	if b == nil {
+		return ""
+	} else if *b == true {
+		return "true"
+	} else {
+		return "false"
+	}
+}
+
 // interfacesMap converts an interface{} into a []map[string]string. This is a useful conversion for passing
 // schema.ResourceData objects from terraform into mapstructure.Decode to get actual struct types.
 func interfacesMap(i interface{}) []map[string]string {
@@ -259,9 +271,11 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 			log.Panic().Str("func", "expandFilterPredicateInputs").
 				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("mapstructure decoding error")
 		}
-		// special cases: json tag and terraform field name mismatch
+		// special cases: field name on input type and terraform field name mismatch
 		if item["key_data"] != "" {
 			predicate.KeyData = opslevel.RefTo(item["key_data"])
+		} else {
+			predicate.KeyData = nil
 		}
 		predicate.CaseSensitive = boolStringToBool(item["case_sensitive"])
 		output[i] = predicate
@@ -272,13 +286,15 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any {
 	output := make([]map[string]any, 0, len(input))
 	for _, predicate := range input {
-		output = append(output, map[string]any{
-			"key":            string(predicate.Key),
-			"key_data":       predicate.KeyData,
-			"type":           string(predicate.Type),
-			"value":          predicate.Value,
-			"case_sensitive": predicate.CaseSensitive,
-		})
+		o := map[string]any{
+			"key":      string(predicate.Key),
+			"key_data": predicate.KeyData,
+			"type":     string(predicate.Type),
+			"value":    predicate.Value,
+		}
+		// special cases: field name on output type does not match 1:1 with terraform field name
+		o["case_sensitive"] = boolToStringBool(predicate.CaseSensitive)
+		output = append(output, o)
 	}
 	return output
 }
