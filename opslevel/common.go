@@ -14,12 +14,15 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
+func cleanerString(s string) string {
+	return strings.TrimSpace(strings.ToLower(s))
+}
+
 // boolStringToBool is a workaround for our Terraform provider version not being able to differentiate
 // between unset, nil and zero values in inputs. Will return true if the string in lowercase is "true"
 // and false if it is "false". Otherwise, it will return nil.
 func boolStringToBool(s string) *bool {
-	s = strings.TrimSpace(strings.ToLower(s))
-	switch s {
+	switch cleanerString(s) {
 	case "true":
 		return opslevel.RefTo(true)
 	case "false":
@@ -256,8 +259,6 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 			log.Panic().Str("func", "expandFilterPredicateInputs").
 				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("mapstructure decoding error")
 		}
-		log.Debug().Str("func", "expandFilterPredicateInputs").
-			Str("item", fmt.Sprintf("%#v", item)).Msgf("mapstructure is %#v", predicate)
 		// special cases: json tag and terraform field name mismatch
 		if item["key_data"] != "" {
 			predicate.KeyData = opslevel.RefTo(item["key_data"])

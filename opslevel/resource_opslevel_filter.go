@@ -71,22 +71,36 @@ func resourceFilter() *schema.Resource {
 				},
 			},
 			"connective": {
-				Type:         schema.TypeString,
-				Description:  "The logical operator to be used in conjunction with predicates.",
-				ForceNew:     false,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice(append(opslevel.AllConnectiveEnum, ""), false),
+				Type:        schema.TypeString,
+				Description: "The logical operator to be used in conjunction with predicates.",
+				ForceNew:    false,
+				Optional:    true,
 			},
 		},
 	}
 }
 
-func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
+func getConnectiveEnum(d *schema.ResourceData) *opslevel.ConnectiveEnum {
+	switch cleanerString(d.Get("connective").(string)) {
+	case "or":
+		return opslevel.RefTo(opslevel.ConnectiveEnumOr)
+	case "and":
+		return opslevel.RefTo(opslevel.ConnectiveEnumAnd)
+	default:
+		return nil
+	}
+}
+
+func getFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
 	predicates := interfacesMap(d.Get("predicate"))
+	return expandFilterPredicateInputs(predicates)
+}
+
+func resourceFilterCreate(d *schema.ResourceData, client *opslevel.Client) error {
 	input := opslevel.FilterCreateInput{
 		Name:       d.Get("name").(string),
-		Predicates: expandFilterPredicateInputs(predicates),
-		Connective: opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string))),
+		Predicates: getFilterPredicates(d),
+		Connective: getConnectiveEnum(d),
 	}
 
 	resource, err := client.CreateFilter(input)
@@ -130,11 +144,10 @@ func resourceFilterUpdate(d *schema.ResourceData, client *opslevel.Client) error
 		input.Name = opslevel.RefOf(d.Get("name").(string))
 	}
 	if d.HasChange("predicate") {
-		predicates := d.Get("predicate")
-		input.Predicates = expandFilterPredicateInputs(predicates)
+		input.Predicates = getFilterPredicates(d)
 	}
 	if d.HasChange("connective") {
-		input.Connective = opslevel.RefOf(opslevel.ConnectiveEnum(d.Get("connective").(string)))
+		input.Connective = getConnectiveEnum(d)
 	}
 
 	_, err := client.UpdateFilter(input)

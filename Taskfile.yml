@@ -29,7 +29,14 @@ tasks:
     cmds:
       - task: build
       - task: tf:init
-      - task: tf:apply
+      - task: tf:force-apply
+
+  ready-destroy:
+    desc: Run build and init followed by terraform destroy in workspace/
+    cmds:
+      - task: build
+      - task: tf:init
+      - task: tf:force-destroy
 
   build:
     desc: Build local opslevel terraform provider
