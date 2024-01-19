@@ -244,10 +244,7 @@ func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput
 		} else {
 			predicate.KeyData = nil
 		}
-		if item["case_sensitive"] == true && item["case_insensitive"] == true {
-			log.Panic().Str("func", "expandFilterPredicateInputs").
-				Str("item", fmt.Sprintf("%#v", item)).Err(err).Msg("can't set both case_insensitive and case_sensitive at the same time.")
-		} else if item["case_sensitive"] == true {
+		if item["case_sensitive"] == true {
 			predicate.CaseSensitive = opslevel.RefTo(true)
 		} else if item["case_insensitive"] == true {
 			predicate.CaseSensitive = opslevel.RefTo(false)
