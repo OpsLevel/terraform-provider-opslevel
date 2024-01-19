@@ -10,12 +10,6 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: "apply", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
 
-  force-apply:
-    desc: Run "terraform apply" and FORCE YES
-    cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
-
   clean:
     desc: Clean up terraform files from "workspace"
     prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from 'workspace' directory?
@@ -25,12 +19,6 @@ tasks:
 
   destroy:
     desc: Run "terraform destroy" in "workspace"
-    cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
-
-  force-destroy:
-    desc: Run "terraform destroy" in "workspace" and FORCE YES
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.TASKFILE_DIR}}" }
