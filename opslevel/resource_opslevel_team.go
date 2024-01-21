@@ -35,7 +35,6 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			// TODO: we need to use managedAliases here - slug is being included
 			"aliases": {
 				Type:        schema.TypeList,
 				Description: "A list of human-friendly, unique identifiers for the team.",
