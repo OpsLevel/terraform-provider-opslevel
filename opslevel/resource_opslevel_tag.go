@@ -95,13 +95,13 @@ func resourceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
 
 	tags, err := resource.GetTags(client, nil)
 	if err != nil {
-		return fmt.Errorf("Unable to get tags from '%s' with id '%s'", resourceType, resourceId)
+		return fmt.Errorf("unable to get tags from '%s' with id '%s'", resourceType, resourceId)
 	}
 	id := d.Id()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil || tag == nil {
 		return fmt.Errorf(
-			"Tag '%s' for type %s with id '%s' not found. %s",
+			"tag '%s' for type %s with id '%s' not found. %s",
 			id,
 			resource.ResourceType(),
 			resource.ResourceId(),

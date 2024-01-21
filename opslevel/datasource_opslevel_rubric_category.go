@@ -23,7 +23,7 @@ func datasourceRubricCategory() *schema.Resource {
 
 func filterRubricCategories(levels *opslevel.CategoryConnection, field string, value string) (*opslevel.Category, error) {
 	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Category
@@ -47,7 +47,7 @@ func filterRubricCategories(levels *opslevel.CategoryConnection, field string, v
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Unable to find category with: %s==%s", field, value)
+		return nil, fmt.Errorf("unable to find category with: %s==%s", field, value)
 	}
 	return &output, nil
 }

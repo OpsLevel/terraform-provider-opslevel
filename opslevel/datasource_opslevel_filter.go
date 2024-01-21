@@ -23,7 +23,7 @@ func datasourceFilter() *schema.Resource {
 
 func filterFilters(data []opslevel.Filter, field string, value string) (*opslevel.Filter, error) {
 	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Filter
@@ -47,7 +47,7 @@ func filterFilters(data []opslevel.Filter, field string, value string) (*opsleve
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Unable to find filter with: %s==%s", field, value)
+		return nil, fmt.Errorf("unable to find filter with: %s==%s", field, value)
 	}
 	return &output, nil
 }

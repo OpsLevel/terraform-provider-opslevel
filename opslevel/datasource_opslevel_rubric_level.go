@@ -32,7 +32,7 @@ func datasourceRubricLevel() *schema.Resource {
 
 func filterRubricLevels(levels []opslevel.Level, field string, value string) (*opslevel.Level, error) {
 	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Level
@@ -66,7 +66,7 @@ func filterRubricLevels(levels []opslevel.Level, field string, value string) (*o
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Unable to find level with: %s==%s", field, value)
+		return nil, fmt.Errorf("unable to find level with: %s==%s", field, value)
 	}
 	return &output, nil
 }

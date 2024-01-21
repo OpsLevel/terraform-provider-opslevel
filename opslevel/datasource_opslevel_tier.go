@@ -32,7 +32,7 @@ func datasourceTier() *schema.Resource {
 
 func filterTiers(levels []opslevel.Tier, field string, value string) (*opslevel.Tier, error) {
 	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Tier
@@ -66,7 +66,7 @@ func filterTiers(levels []opslevel.Tier, field string, value string) (*opslevel.
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Unable to find tier with: %s==%s", field, value)
+		return nil, fmt.Errorf("unable to find tier with: %s==%s", field, value)
 	}
 	return &output, nil
 }

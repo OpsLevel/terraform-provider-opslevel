@@ -23,7 +23,7 @@ func datasourceIntegration() *schema.Resource {
 
 func filterIntegrations(data []opslevel.Integration, field string, value string) (*opslevel.Integration, error) {
 	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 
 	var output opslevel.Integration
@@ -47,7 +47,7 @@ func filterIntegrations(data []opslevel.Integration, field string, value string)
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Unable to find integration with: %s==%s", field, value)
+		return nil, fmt.Errorf("unable to find integration with: %s==%s", field, value)
 	}
 	return &output, nil
 }
