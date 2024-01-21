@@ -45,7 +45,7 @@ func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opsleve
 	checkCreateInput := getCheckCreateInputFrom(d)
 	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckServiceOwnershipCreateInput](checkCreateInput)
 
-	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
+	input.RequireContactMethod = opslevel.RefTo(d.Get("require_contact_method").(bool))
 	if value, ok := d.GetOk("contact_method"); ok {
 		contactMethod := opslevel.ContactType(value.(string))
 		input.ContactMethod = opslevel.RefOf(string(contactMethod))
@@ -104,7 +104,7 @@ func resourceCheckServiceOwnershipRead(d *schema.ResourceData, client *opslevel.
 func resourceCheckServiceOwnershipUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	checkUpdateInput := getCheckUpdateInputFrom(d)
 	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckServiceOwnershipUpdateInput](checkUpdateInput)
-	input.RequireContactMethod = opslevel.Bool(d.Get("require_contact_method").(bool))
+	input.RequireContactMethod = opslevel.RefTo(d.Get("require_contact_method").(bool))
 
 	if d.HasChange("contact_method") {
 		contactMethod := opslevel.ContactType(d.Get("contact_method").(string))

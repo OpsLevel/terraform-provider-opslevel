@@ -200,7 +200,7 @@ func expandPredicateUpdate(d *schema.ResourceData, key string) *opslevel.Predica
 }
 
 func flattenPredicate(input *opslevel.Predicate) []map[string]string {
-	output := []map[string]string{}
+	output := make([]map[string]string, 0)
 	if input != nil {
 		output = append(output, map[string]string{
 			"type":  string(input.Type),
@@ -305,7 +305,7 @@ func flattenTag(tag opslevel.Tag) string {
 }
 
 func flattenTagArray(tags []opslevel.Tag) []string {
-	output := []string{}
+	output := make([]string, 0)
 	for _, tag := range tags {
 		output = append(output, flattenTag(tag))
 	}
@@ -313,7 +313,7 @@ func flattenTagArray(tags []opslevel.Tag) []string {
 }
 
 func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryConnection) []string {
-	output := []string{}
+	output := make([]string, 0)
 	for _, rep := range repositories.Edges {
 		output = append(output, string(rep.Node.Id))
 	}
@@ -321,7 +321,7 @@ func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryCon
 }
 
 func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[string]string {
-	output := []map[string]string{}
+	output := make([]map[string]string, 0)
 	for _, membership := range members.Nodes {
 		asMap := make(map[string]string)
 		asMap["email"] = membership.User.Email
@@ -332,7 +332,7 @@ func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[strin
 }
 
 func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []map[string]any {
-	output := []map[string]any{}
+	output := make([]map[string]any, 0)
 	for _, property := range properties.Nodes {
 		asMap := make(map[string]any)
 		asMap["definition"] = string(property.Definition.Id)
@@ -348,7 +348,7 @@ func mapServiceProperties(properties *opslevel.ServicePropertiesConnection) []ma
 }
 
 func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
-	output := []string{}
+	output := make([]string, 0)
 	for _, team := range teams.Nodes {
 		output = append(output, team.Alias)
 	}

@@ -240,7 +240,7 @@ func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error 
 		if opslevel.IsID(owner.(string)) {
 			ownerValue = string(resource.Owner.Id)
 		} else {
-			ownerValue = string(resource.Owner.Alias)
+			ownerValue = resource.Owner.Alias
 		}
 
 		if err := d.Set("owner", ownerValue); err != nil {

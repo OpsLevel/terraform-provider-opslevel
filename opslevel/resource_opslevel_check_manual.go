@@ -84,7 +84,7 @@ func expandUpdateFrequencyOnUpdate(d *schema.ResourceData, key string) *opslevel
 }
 
 func flattenUpdateFrequency(input *opslevel.ManualCheckFrequency) []map[string]interface{} {
-	output := []map[string]interface{}{}
+	output := make([]map[string]interface{}, 0)
 	if input != nil {
 		output = append(output, map[string]interface{}{
 			"starting_data": input.StartingDate.Format(time.RFC3339),

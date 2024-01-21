@@ -55,7 +55,7 @@ func resourceCheckCustomEventCreate(d *schema.ResourceData, client *opslevel.Cli
 	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckCustomEventCreateInput](checkCreateInput)
 
 	input.IntegrationId = *opslevel.NewID(d.Get("integration").(string))
-	input.PassPending = opslevel.Bool(d.Get("pass_pending").(bool))
+	input.PassPending = opslevel.RefTo(d.Get("pass_pending").(bool))
 	input.ServiceSelector = d.Get("service_selector").(string)
 	input.SuccessCondition = d.Get("success_condition").(string)
 	input.ResultMessage = opslevel.RefOf(d.Get("message").(string))
@@ -114,7 +114,7 @@ func resourceCheckCustomEventUpdate(d *schema.ResourceData, client *opslevel.Cli
 	if d.HasChange("integration") {
 		input.IntegrationId = opslevel.NewID(d.Get("integration").(string))
 	}
-	input.PassPending = opslevel.Bool(d.Get("pass_pending").(bool))
+	input.PassPending = opslevel.RefTo(d.Get("pass_pending").(bool))
 	if d.HasChange("service_selector") {
 		input.ServiceSelector = opslevel.RefOf(d.Get("service_selector").(string))
 	}

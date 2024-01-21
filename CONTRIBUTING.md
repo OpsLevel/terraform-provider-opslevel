@@ -1,10 +1,10 @@
 # Contributing
 
 1. [About this document](#about-this-document)
-3. [Getting the code](#getting-the-code)
-4. [Setting up an environment](#setting-up-an-environment)
-5. [Local development](#local-development)
-7. [Submitting a Pull Request](#submitting-a-pull-request)
+2. [Getting the code](#getting-the-code)
+3. [Setting up an environment](#setup-a-terraform-workspace)
+4. [Local development](#setting-up-an-environment-for-local-development)
+5. [Submitting a Pull Request](#submitting-a-pull-request)
 
 ## About this document
 

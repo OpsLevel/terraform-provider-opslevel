@@ -101,7 +101,7 @@ func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *o
 }
 
 func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
-	members := []opslevel.TeamMembershipUserInput{}
+	members := make([]opslevel.TeamMembershipUserInput, 0)
 
 	for _, user := range team.Memberships.Nodes {
 		newUserIdentifier := opslevel.NewUserIdentifier(user.User.Email)
@@ -124,7 +124,7 @@ func memberInArray(member opslevel.TeamMembershipUserInput, array []opslevel.Tea
 }
 
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := []opslevel.TeamMembershipUserInput{}
+	expectedMembers := make([]opslevel.TeamMembershipUserInput, 0)
 	existingMembers := collectMembersFromTeam(team)
 
 	if members, ok := d.GetOk("member"); ok {
@@ -141,8 +141,8 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 		}
 	}
 
-	membersToRemove := []opslevel.TeamMembershipUserInput{}
-	membersToAdd := []opslevel.TeamMembershipUserInput{}
+	membersToRemove := make([]opslevel.TeamMembershipUserInput, 0)
+	membersToAdd := make([]opslevel.TeamMembershipUserInput, 0)
 
 	for _, existingMember := range existingMembers {
 		if memberInArray(existingMember, expectedMembers) {
@@ -228,7 +228,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		if opslevel.IsID(parent.(string)) {
 			parentValue = string(resource.ParentTeam.Id)
 		} else {
-			parentValue = string(resource.ParentTeam.Alias)
+			parentValue = resource.ParentTeam.Alias
 		}
 
 		if err := d.Set("parent", parentValue); err != nil {
@@ -236,7 +236,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	aliases := []string{}
+	aliases := make([]string, 0)
 	for _, alias := range resource.Aliases {
 		if alias == resource.Alias {
 			// If user specifies the auto-generated alias in terraform config, don't skip it
@@ -258,7 +258,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 	// the config or unassigning all the members (unwanted)
 	if members, ok := d.GetOk("member"); members != nil || ok {
 		members := collectMembersFromTeam(resource)
-		memberOutput := []map[string]interface{}{}
+		memberOutput := make([]map[string]interface{}, 0)
 		for _, m := range members {
 			mOutput := make(map[string]interface{})
 			mOutput["email"] = m.User.Email

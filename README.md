@@ -1,7 +1,7 @@
 <p align="center">
     <a href="https://github.com/OpsLevel/terraform-provider-opslevel/blob/main/LICENSE" alt="License">
         <img src="https://img.shields.io/github/license/OpsLevel/terraform-provider-opslevel.svg" /></a>
-    <a href="http://golang.org" alt="Made With Go">
+    <a href="https://go.dev" alt="Made With Go">
         <img src="https://img.shields.io/github/go-mod/go-version/OpsLevel/terraform-provider-opslevel" /></a>
     <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/releases/" alt="Release">
         <img src="https://img.shields.io/github/v/release/OpsLevel/terraform-provider-opslevel?include_prereleases" /></a>  

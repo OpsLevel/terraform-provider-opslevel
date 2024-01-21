@@ -1,3 +1,3 @@
 package opslevel
 
-var version string = "dev"
+var version = "dev"

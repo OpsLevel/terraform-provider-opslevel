@@ -92,6 +92,7 @@ func resourceRepositoryUpdate(d *schema.ResourceData, client *opslevel.Client) e
 	return resourceRepositoryRead(d, client)
 }
 
+//goland:noinspection GoUnusedParameter
 func resourceRepositoryDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	// No API call to make because the repository is not able to be deleted
 	d.SetId("")

@@ -14,7 +14,7 @@ func handleInput(d *schema.ResourceData) opslevel.ScorecardInput {
 		OwnerId:                     *opslevel.NewID(d.Get("owner_id").(string)),
 		Description:                 &description,
 		FilterId:                    opslevel.NewID(d.Get("filter_id").(string)),
-		AffectsOverallServiceLevels: opslevel.Bool(d.Get("affects_overall_service_levels").(bool)),
+		AffectsOverallServiceLevels: opslevel.RefTo(d.Get("affects_overall_service_levels").(bool)),
 	}
 
 	return input

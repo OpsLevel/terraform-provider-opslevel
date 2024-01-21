@@ -45,7 +45,7 @@ func resourceCheckRepositoryGrepCreate(d *schema.ResourceData, client *opslevel.
 	fileContentsPredicate := expandPredicate(d, "file_contents_predicate")
 	if fileContentsPredicate == nil {
 		input.FileContentsPredicate = opslevel.PredicateInput{
-			Type: opslevel.PredicateTypeEnum("exists"),
+			Type: "exists",
 		}
 	}
 
