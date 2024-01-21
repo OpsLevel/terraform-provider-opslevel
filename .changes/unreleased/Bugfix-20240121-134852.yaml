@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug where tier_alias and lifecycle_alias in service resource was not considered
+  required (it is)
+time: 2024-01-21T13:48:52.111279-05:00

@@ -60,7 +60,7 @@ func resourceService() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The software tier that the service belongs to.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"owner": {
 				Type:        schema.TypeString,
@@ -72,7 +72,7 @@ func resourceService() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The lifecycle stage of the service.",
 				ForceNew:    false,
-				Optional:    true,
+				Required:    true,
 			},
 			"api_document_path": {
 				Type:        schema.TypeString,
@@ -132,13 +132,10 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 	return nil
 }
 
-// TODO: existingTags does nothing here.
 func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
 	tags := getStringArray(d, "tags")
-	existingTags := []string{}
 	for _, tag := range service.Tags.Nodes {
 		flattenedTag := flattenTag(tag)
-		existingTags = append(existingTags, flattenedTag)
 		if stringInArray(flattenedTag, tags) {
 			// Update
 			continue
