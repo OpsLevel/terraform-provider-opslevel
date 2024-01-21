@@ -132,6 +132,7 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 	return nil
 }
 
+// TODO: existingTags does nothing here.
 func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
 	tags := getStringArray(d, "tags")
 	existingTags := []string{}
