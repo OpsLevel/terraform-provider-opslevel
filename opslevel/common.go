@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -55,22 +54,6 @@ func stringInArray(term string, search []string) bool {
 		}
 	}
 	return false
-}
-
-func expandStringArray(m []interface{}) []string {
-	result := make([]string, 0)
-	for _, v := range m {
-		result = append(result, v.(string))
-	}
-	return result
-}
-
-func expandStringMap(m map[string]interface{}) map[string]string {
-	result := make(map[string]string)
-	for k, v := range m {
-		result[k] = v.(string)
-	}
-	return result
 }
 
 func getStringArray(d *schema.ResourceData, key string) []string {
@@ -337,14 +320,6 @@ func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryCon
 	return output
 }
 
-func flattenMembersArray(members *opslevel.UserConnection) []string {
-	output := []string{}
-	for _, member := range members.Nodes {
-		output = append(output, member.Email)
-	}
-	return output
-}
-
 func mapMembershipsArray(members *opslevel.TeamMembershipConnection) []map[string]string {
 	output := []map[string]string{}
 	for _, membership := range members.Nodes {
@@ -378,103 +353,4 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 		output = append(output, team.Alias)
 	}
 	return output
-}
-
-type (
-	reconcileStringArrayAdd    func(v string) error
-	reconcileStringArrayUpdate func(o string, n string) error
-	reconcileStringArrayDelete func(v string) error
-)
-
-func reconcileStringArray(current []string, desired []string, add reconcileStringArrayAdd, update reconcileStringArrayUpdate, delete reconcileStringArrayDelete) error {
-	errors := make([]string, 0)
-	i_current := 0
-	len_current := len(current)
-	i_desired := 0
-	len_desired := len(desired)
-	sort.Strings(current)
-	sort.Strings(desired)
-	// fmt.Printf("Lengths: %v | %v\n", len_current, len_desired)
-	if len_desired == 0 {
-		// Delete All in current
-		if delete == nil {
-			return nil
-		}
-		for _, v := range current {
-			if err := delete(v); err != nil {
-				errors = append(errors, err.Error())
-			}
-		}
-		return nil
-	}
-	if len_current == 0 {
-		// Add All from desired
-		if add == nil {
-			return nil
-		}
-		for _, v := range desired {
-			if err := add(v); err != nil {
-				errors = append(errors, err.Error())
-			}
-		}
-
-	} else {
-		for i_current < len_current || i_desired < len_desired {
-			// fmt.Printf("Step: %v | %v\n", i_current, i_desired)
-			if i_desired >= len_desired {
-				if delete != nil {
-					if err := delete(current[i_current]); err != nil {
-						errors = append(errors, err.Error())
-					}
-				}
-				i_current++
-				continue
-			}
-
-			if i_current >= len_current {
-				if add != nil {
-					if err := add(desired[i_desired]); err != nil {
-						errors = append(errors, err.Error())
-					}
-				}
-				i_desired++
-				continue
-			}
-			a := current[i_current]
-			b := desired[i_desired]
-			if a == b {
-				if update != nil {
-					if err := update(a, b); err != nil {
-						errors = append(errors, err.Error())
-					}
-				}
-				i_current++
-				i_desired++
-				continue
-			}
-			if a > b {
-				if add != nil {
-					if err := add(b); err != nil {
-						errors = append(errors, err.Error())
-					}
-				}
-				i_desired++
-				continue
-			}
-			if a < b {
-				if delete != nil {
-					if err := delete(a); err != nil {
-						errors = append(errors, err.Error())
-					}
-				}
-				i_current++
-				continue
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return fmt.Errorf(strings.Join(errors, "\n"))
-	}
-	return nil
 }

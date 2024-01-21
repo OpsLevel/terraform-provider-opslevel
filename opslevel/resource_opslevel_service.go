@@ -1,7 +1,6 @@
 package opslevel
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -105,20 +104,6 @@ func resourceService() *schema.Resource {
 			},
 		},
 	}
-}
-
-func validateServiceTags(i interface{}, k string) (warnings []string, errors []error) {
-	data, ok := i.([]string)
-	if !ok {
-		return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
-	}
-	for _, item := range data {
-		key := strings.TrimSpace(strings.Split(item, ":")[0])
-		if ok := TagKeyRegex.MatchString(key); !ok {
-			return nil, []error{fmt.Errorf("'%s' - %s", key, TagKeyErrorMsg)}
-		}
-	}
-	return nil, nil
 }
 
 func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {

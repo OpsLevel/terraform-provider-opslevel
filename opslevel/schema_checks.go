@@ -128,21 +128,6 @@ func getCheckCreateInputFrom(d *schema.ResourceData) opslevel.CheckCreateInput {
 	return checkCreateInput
 }
 
-func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProvider) {
-	input := p.GetCheckCreateInput()
-	input.Name = d.Get("name").(string)
-	input.Enabled = opslevel.RefOf(d.Get("enabled").(bool))
-	if value, ok := d.GetOk("enable_on"); ok {
-		enable_on := opslevel.NewISO8601Date(value.(string))
-		input.EnableOn = &enable_on
-	}
-	input.Category = *opslevel.NewID(d.Get("category").(string))
-	input.Level = *opslevel.NewID(d.Get("level").(string))
-	input.Owner = opslevel.NewID(d.Get("owner").(string))
-	input.Filter = opslevel.NewID(d.Get("filter").(string))
-	input.Notes = opslevel.RefOf(d.Get("notes").(string))
-}
-
 func getCheckUpdateInputFrom(d *schema.ResourceData) opslevel.CheckUpdateInput {
 	checkUpdateInput := opslevel.CheckUpdateInput{}
 	checkUpdateInput.Name = d.Get("name").(string)
@@ -165,36 +150,6 @@ func getCheckUpdateInputFrom(d *schema.ResourceData) opslevel.CheckUpdateInput {
 		checkUpdateInput.Notes = opslevel.RefOf(value.(string))
 	}
 	return checkUpdateInput
-}
-
-func setCheckUpdateInput(d *schema.ResourceData, p opslevel.CheckUpdateInputProvider) {
-	input := p.GetCheckUpdateInput()
-	input.Id = opslevel.ID(d.Id())
-
-	if d.HasChange("name") {
-		input.Name = d.Get("name").(string)
-	}
-	input.Enabled = opslevel.Bool(d.Get("enabled").(bool))
-	if d.HasChange("enable_on") {
-		enable_on := opslevel.NewISO8601Date(d.Get("enable_on").(string))
-		input.EnableOn = &enable_on
-	}
-	if d.HasChange("category") {
-		input.Category = *opslevel.NewID(d.Get("category").(string))
-	}
-	if d.HasChange("level") {
-		input.Level = *opslevel.NewID(d.Get("level").(string))
-	}
-	if d.HasChange("owner") {
-		input.Owner = opslevel.NewID(d.Get("owner").(string))
-	}
-	if d.HasChange("filter") {
-		input.Filter = opslevel.NewID(d.Get("filter").(string))
-	}
-	if d.HasChange("notes") {
-		notes := d.Get("notes").(string)
-		input.Notes = &notes
-	}
 }
 
 func resourceCheckDelete(d *schema.ResourceData, client *opslevel.Client) error {
