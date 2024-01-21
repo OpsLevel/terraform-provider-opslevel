@@ -100,7 +100,6 @@ func resourceService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				// ValidateFunc: validateServiceTags, // TODO: Not Yet Supported
 			},
 		},
 	}
