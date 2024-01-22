@@ -2,9 +2,10 @@ package opslevel
 
 import (
 	"encoding/json"
-	"github.com/opslevel/opslevel-go/v2024"
 	"reflect"
 	"testing"
+
+	"github.com/opslevel/opslevel-go/v2024"
 )
 
 func compareKey(t *testing.T, m map[string]interface{}, key string, exp interface{}) {
