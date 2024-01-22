@@ -2,12 +2,13 @@ package opslevel
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/rs/zerolog/log"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -278,10 +279,10 @@ func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any 
 		if predicate.CaseSensitive == nil {
 			o["case_sensitive"] = false
 			o["case_insensitive"] = false
-		} else if *predicate.CaseSensitive == true {
+		} else if *predicate.CaseSensitive {
 			o["case_sensitive"] = true
 			o["case_insensitive"] = false
-		} else if *predicate.CaseSensitive == false {
+		} else {
 			o["case_sensitive"] = false
 			o["case_insensitive"] = true
 		}
