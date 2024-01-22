@@ -130,18 +130,11 @@ tasks:
 
   install-terraform:
     internal: true
-    aliases: [get]
-    cmds:
-      - echo "Installing terraform..."
-      - task: install-terraform-mac-os
-      - echo -e "\nSuccess! 'terraform' installed."
-
-  install-terraform-mac-os:
-    internal: true
     platforms: [darwin]
     cmds:
-      - brew tap hashicorp/tap
-      - brew install hashicorp/tap/terraform
+      - echo "Installing terraform..."
+      - which terraform > /dev/null || brew tap hashicorp/tap && brew install hashicorp/tap/terraform
+      - echo -e "\nSuccess! 'terraform' installed."
     preconditions:
       - sh: 'which brew'
         msg: '"brew" needed to install terraform - see https://brew.sh'
