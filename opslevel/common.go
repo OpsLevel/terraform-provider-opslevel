@@ -2,6 +2,8 @@ package opslevel
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +13,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/opslevel/opslevel-go/v2024"
 )
+
+func cleanerString(s string) string {
+	return strings.TrimSpace(strings.ToLower(s))
+}
+
+// interfacesMaps converts an interface{} into a []map[string]interface{}. This is a useful conversion for passing
+// schema.ResourceData objects from terraform into mapstructure.Decode to get actual struct types.
+func interfacesMaps(i interface{}) []map[string]interface{} {
+	// interface{} 					to 		[]interface{}								segment into slices.
+	interfaces := i.([]interface{})
+	// interface{}					to		[]map[string]interface{}					convert each slice item into a map.
+	mapStringInterfaces := make([]map[string]interface{}, len(interfaces))
+	for i, item := range interfaces {
+		mapStringInterfaces[i] = item.(map[string]interface{})
+	}
+	return mapStringInterfaces
+}
 
 var DefaultPredicateDescription = "A condition that should be satisfied."
 
@@ -208,34 +227,39 @@ func flattenPredicate(input *opslevel.Predicate) []map[string]string {
 	return output
 }
 
-func expandFilterPredicateInputs(d *schema.ResourceData) *[]opslevel.FilterPredicateInput {
-	output := make([]opslevel.FilterPredicateInput, 0)
-	for _, item := range d.Get("predicate").([]interface{}) {
-		data := item.(map[string]interface{})
-		predicate := opslevel.FilterPredicateInput{
-			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:         opslevel.RefOf(strings.TrimSpace(data["value"].(string))),
-			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData:       opslevel.RefOf(strings.TrimSpace(data["key_data"].(string))),
-			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
+func expandFilterPredicateInputs(d interface{}) *[]opslevel.FilterPredicateInput {
+	data := d.([]map[string]interface{})
+	output := make([]opslevel.FilterPredicateInput, len(data))
+	for i, item := range data {
+		var predicate opslevel.FilterPredicateInput
+		err := mapstructure.Decode(item, &predicate)
+		if err != nil {
+			log.Panic().Str("func", "expandFilterPredicateInputs").
+				Str("item", fmt.Sprintf("%#v", item)).Err(err).
+				Msg("mapstructure decoding error - please add a bug report https://github.com/OpsLevel/terraform-provider-opslevel/issues/new")
 		}
-		output = append(output, predicate)
-	}
-	return &output
-}
-
-func expandFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicate {
-	output := make([]opslevel.FilterPredicate, 0)
-	for _, item := range d.Get("predicate").([]interface{}) {
-		data := item.(map[string]interface{})
-		predicate := opslevel.FilterPredicate{
-			Type:          opslevel.PredicateTypeEnum(data["type"].(string)),
-			Value:         strings.TrimSpace(data["value"].(string)),
-			Key:           opslevel.PredicateKeyEnum(data["key"].(string)),
-			KeyData:       strings.TrimSpace(data["key_data"].(string)),
-			CaseSensitive: opslevel.Bool(data["case_sensitive"].(bool)),
+		// special cases
+		if item["key_data"] != nil {
+			predicate.KeyData = opslevel.RefTo(item["key_data"].(string))
+		} else {
+			predicate.KeyData = nil
 		}
-		output = append(output, predicate)
+		// all 4 cases of case_sensitive, case_insensitive need to be handled.
+		// TODO: bug persists where we cannot unset predicate case_sensitive
+		// value once it is set because opslevel-go cannot send null. Also
+		// affects Predicate.key_data and Filter.connective.
+		x := item["case_sensitive"] == true
+		y := item["case_insensitive"] == true
+		if x && y {
+			// not possible because of input validation
+		} else if x && !y {
+			predicate.CaseSensitive = opslevel.RefTo(true)
+		} else if !x && y {
+			predicate.CaseSensitive = opslevel.RefTo(false)
+		} else if !x && !y {
+			predicate.CaseSensitive = nil
+		}
+		output[i] = predicate
 	}
 	return &output
 }
@@ -243,13 +267,25 @@ func expandFilterPredicates(d *schema.ResourceData) *[]opslevel.FilterPredicate 
 func flattenFilterPredicates(input []opslevel.FilterPredicate) []map[string]any {
 	output := make([]map[string]any, 0, len(input))
 	for _, predicate := range input {
-		output = append(output, map[string]any{
-			"key":            string(predicate.Key),
-			"key_data":       predicate.KeyData,
-			"type":           string(predicate.Type),
-			"value":          predicate.Value,
-			"case_sensitive": predicate.CaseSensitive,
-		})
+		o := map[string]any{
+			"key":      string(predicate.Key),
+			"key_data": predicate.KeyData,
+			"type":     string(predicate.Type),
+			"value":    predicate.Value,
+		}
+		// current terraform provider version cannot differentiate between nil and zero
+		// this is the reverse of the 4 cases in the expand function
+		if predicate.CaseSensitive == nil {
+			o["case_sensitive"] = false
+			o["case_insensitive"] = false
+		} else if *predicate.CaseSensitive == true {
+			o["case_sensitive"] = true
+			o["case_insensitive"] = false
+		} else if *predicate.CaseSensitive == false {
+			o["case_sensitive"] = false
+			o["case_insensitive"] = true
+		}
+		output = append(output, o)
 	}
 	return output
 }

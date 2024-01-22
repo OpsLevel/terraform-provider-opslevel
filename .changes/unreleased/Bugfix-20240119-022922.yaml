@@ -1,0 +1,6 @@
+kind: Bugfix
+body: Fixed bug in filters where the connective was not able to be omitted.
+  A bug still persists where once the optional 'connective' value is set
+  it cannot be unset to null, only changed to 'and' and 'or'. To workaround
+  this you can set 'connective' to null in Graphiql.
+time: 2024-01-19T02:29:22.325706-05:00
