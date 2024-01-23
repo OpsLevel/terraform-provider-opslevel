@@ -61,6 +61,30 @@ tasks:
       - task: go:fix
       - task: format-fix
 
+  hard-apply:
+    desc: Rebuild and run "terraform apply -auto-approve"
+    cmds:
+      - task: build
+      - task: init
+      - task: terraform-command
+        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  hard-destroy:
+    desc: Rebuild and run "terraform destroy -auto-approve"
+    cmds:
+      - task: build
+      - task: init
+      - task: terraform-command
+        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  hard-plan:
+    desc: Rebuild and run "terraform plan"
+    cmds:
+      - task: build
+      - task: init
+      - task: terraform-command
+        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
   init:
     desc: Initialize terraform workspace
     dir: "{{.WORKSPACE_DIR}}"
