@@ -1,3 +1,3 @@
 kind: Bugfix
-body: fix updates to owner and description fields, can assign alias not just id
+body: on property_assignment resources the fields owner and definition can use alias not just id, fix an infinite plan bug because we store the wrong thing into the terraform state 
 time: 2024-01-24T10:36:47.402589-06:00
