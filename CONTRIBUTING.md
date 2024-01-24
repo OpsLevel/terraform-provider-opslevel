@@ -55,7 +55,7 @@ repository, check out a new branch, and push directly to that branch.
 1. Make sure you have a working
 [golang development environment](https://learn.gopherguides.com/courses/preparing-your-environment-for-go-development)
 setup.
-2. Ensure [task](https://taskfile.dev/) is installed then run:
+2. Ensure [task](https://taskfile.dev/installation/) is installed then run:
 
 ```sh
 # Run `task setup --dry` to see what will be installed before running
@@ -119,20 +119,22 @@ After any code change you can just run the following to build and pull in the la
 
 ```sh
 # Build and initialize terraform workspace
-task terraform:setup
+task terraform-setup
 ```
 
 See other terraform tasks with `task --list`:
 
 ```sh
-# Run `terraform plan` in the "workspace" directory with:
-task terraform:plan
+# To rebuild Go code and run "terraform plan" in "workspace", use:
+task plan
 
-# Run `terraform apply` in the "workspace" directory with:
-task terraform:apply
+# To rebuild Go code and run "terraform apply -auto-approve" in "workspace", use:
+task apply
 
-# Run `terraform destroy` in the "workspace" directory with:
-task terraform:destroy
+# WARNING: this will destroy all resources without approval.
+# Use "terraform destroy" if you are want confirmation before destroying all resources.
+# To rebuild Go code and run "terraform destroy -auto-approve" in "workspace", use:
+task destroy
 ```
 
 Feel free to investigate the [Taskfile.yml](./Taskfile.yml) for details.

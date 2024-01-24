@@ -16,10 +16,11 @@ includes:
 tasks:
 
   apply:
-    desc: Run "terraform apply"
+    desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
     cmds:
+      - task: terraform-setup
       - task: terraform-command
-        vars: { TF_COMMAND: "apply", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   build:
     desc: Build local opslevel terraform provider
@@ -50,40 +51,17 @@ tasks:
         ignore_error: true
 
   destroy:
-    desc: Run "terraform destroy" in "{{.WORKSPACE_DIR}}"
+    desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
     cmds:
+      - task: terraform-setup
       - task: terraform-command
-        vars: { TF_COMMAND: "destroy", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   fix:
     desc: Fix formatting and linting
     cmds:
       - task: go:fix
       - task: format-fix
-
-  hard-apply:
-    desc: Rebuild and run "terraform apply -auto-approve"
-    cmds:
-      - task: build
-      - task: init
-      - task: terraform-command
-        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  hard-destroy:
-    desc: Rebuild and run "terraform destroy -auto-approve"
-    cmds:
-      - task: build
-      - task: init
-      - task: terraform-command
-        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  hard-plan:
-    desc: Rebuild and run "terraform plan"
-    cmds:
-      - task: build
-      - task: init
-      - task: terraform-command
-        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   init:
     desc: Initialize terraform workspace
@@ -113,8 +91,9 @@ tasks:
       - task: format-check
 
   plan:
-    desc: Run "terraform plan" in "{{.WORKSPACE_DIR}}"
+    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
     cmds:
+      - task: terraform-setup
       - task: terraform-command
         vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -123,6 +102,12 @@ tasks:
     cmds:
       - task: install-changie
       - task: go:setup
+      - task: terraform-setup
+
+  setup-terraform:
+    desc: Setup env and tools
+    aliases: ["setup-tf", "tf-setup", "terraform-setup"]
+    cmds:
       - task: build
       - task: init
 
