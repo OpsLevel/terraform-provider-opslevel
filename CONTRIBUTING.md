@@ -119,20 +119,20 @@ After any code change you can just run the following to build and pull in the la
 
 ```sh
 # Build and initialize terraform workspace
-task terraform:setup
+task setup
 ```
 
 See other terraform tasks with `task --list`:
 
 ```sh
 # Run `terraform plan` in the "workspace" directory with:
-task terraform:plan
+task plan
 
 # Run `terraform apply` in the "workspace" directory with:
-task terraform:apply
+task apply
 
 # Run `terraform destroy` in the "workspace" directory with:
-task terraform:destroy
+task destroy
 ```
 
 Feel free to investigate the [Taskfile.yml](./Taskfile.yml) for details.
