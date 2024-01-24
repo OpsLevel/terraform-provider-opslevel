@@ -83,10 +83,10 @@ func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Cli
 	// if resource was fetched correctly, attach the id to the resource
 	d.SetId(fmt.Sprintf("%s:%s", ownerId, definitionId))
 
-	if err := d.Set("definition", string(resource.Definition.Id)); err != nil {
+	if err := d.Set("definition", d.Get("definition")); err != nil {
 		return err
 	}
-	if err := d.Set("owner", string(resource.Owner.Id())); err != nil {
+	if err := d.Set("owner", d.Get("owner")); err != nil {
 		return err
 	}
 	if err := d.Set("value", string(*resource.Value)); err != nil {
