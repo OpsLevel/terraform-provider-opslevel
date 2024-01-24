@@ -21,8 +21,8 @@ Terraform Provider for [OpsLevel](https://opslevel.com)
 ===============================
 
 [Provider Documentation](https://registry.terraform.io/providers/OpsLevel/opslevel/latest/docs)
-[Quickstart](https://www.opslevel.com/docs/api/terraform)
-[Importing All Existing Account Data](https://www.opslevel.com/docs/api/terraform/#Importing)
+[Quickstart](https://www.opslevel.com/docs/terraform)
+[Importing All Existing Account Data](https://www.opslevel.com/docs/terraform/#Importing)
 
 ## Example
 
