@@ -42,7 +42,7 @@ jobs:
       uses: miniscruff/changie-action@v2
       with:
         version: latest
-        args: new --kind Feature --body "${{ github.event.workflow_run.display_title }}"
+        args: new --kind Dependency --body "${{ github.event.workflow_run.display_title }}"
 
     - name: Commit & Push changes
       if: >-
