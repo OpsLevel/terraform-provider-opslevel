@@ -39,7 +39,7 @@ func resourceCheckRepositorySearchCreate(d *schema.ResourceData, client *opsleve
 	input.FileExtensions = opslevel.RefOf(getStringArray(d, "file_extensions"))
 	predicate := expandPredicate(d, "file_contents_predicate")
 	if predicate == nil {
-		return fmt.Errorf("unexpected: expanding predicate 'file_contents_predicate' returned nil")
+		return fmt.Errorf("error reading 'file_contents_predicate' in config - a valid type and value are required")
 	}
 	input.FileContentsPredicate = *predicate
 
