@@ -54,10 +54,13 @@ func filterIntegrations(data []opslevel.Integration, field string, value string)
 
 func datasourceIntegrationRead(d *schema.ResourceData, client *opslevel.Client) error {
 	resp, err := client.ListIntegrations(nil)
-	results := resp.Nodes
 	if err != nil {
 		return err
 	}
+	if resp == nil {
+		return fmt.Errorf("unexpected: listing integrations returned nil")
+	}
+	results := resp.Nodes
 
 	field := d.Get("filter.0.field").(string)
 	value := d.Get("filter.0.value").(string)

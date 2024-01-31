@@ -53,7 +53,6 @@ func resourceCheckServiceOwnershipCreate(d *schema.ResourceData, client *opsleve
 	if tagKey, ok := d.GetOk("tag_key"); ok {
 		input.TagKey = opslevel.RefOf(tagKey.(string))
 	}
-
 	input.TagPredicate = expandPredicate(d, "tag_predicate")
 
 	resource, err := client.CreateCheckServiceOwnership(*input)

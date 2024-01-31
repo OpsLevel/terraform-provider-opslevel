@@ -1,6 +1,7 @@
 package opslevel
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -35,7 +36,11 @@ func resourceCheckRepositorySearchCreate(d *schema.ResourceData, client *opsleve
 	checkCreateInput := getCheckCreateInputFrom(d)
 	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckRepositorySearchCreateInput](checkCreateInput)
 	input.FileExtensions = opslevel.RefOf(getStringArray(d, "file_extensions"))
-	input.FileContentsPredicate = *expandPredicate(d, "file_contents_predicate")
+	predicate := expandPredicate(d, "file_contents_predicate")
+	if predicate == nil {
+		return fmt.Errorf("unexpected: expanding predicate 'file_contents_predicate' returned nil")
+	}
+	input.FileContentsPredicate = *predicate
 
 	resource, err := client.CreateCheckRepositorySearch(*input)
 	if err != nil {

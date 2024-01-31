@@ -102,24 +102,9 @@ func resourceService() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				// ValidateFunc: validateServiceTags, // TODO: Not Yet Supported
 			},
 		},
 	}
-}
-
-func validateServiceTags(i interface{}, k string) (warnings []string, errors []error) {
-	data, ok := i.([]string)
-	if !ok {
-		return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
-	}
-	for _, item := range data {
-		key := strings.TrimSpace(strings.Split(item, ":")[0])
-		if ok := TagKeyRegex.MatchString(key); !ok {
-			return nil, []error{fmt.Errorf("'%s' - %s", key, TagKeyErrorMsg)}
-		}
-	}
-	return nil, nil
 }
 
 func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
@@ -159,8 +144,12 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 	}
 	tagInput := map[string]string{}
 	for _, tag := range tags {
-		key := strings.TrimSpace(strings.Split(tag, ":")[0])
-		value := strings.TrimSpace(strings.Split(tag, ":")[1])
+		parts := strings.Split(tag, ":")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid tag: '%s'", tag)
+		}
+		key := parts[0]
+		value := parts[1]
 		tagInput[key] = value
 	}
 	_, err := client.AssignTags(string(service.Id), tagInput)

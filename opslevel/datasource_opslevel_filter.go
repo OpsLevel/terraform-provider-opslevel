@@ -54,10 +54,13 @@ func filterFilters(data []opslevel.Filter, field string, value string) (*opsleve
 
 func datasourceFilterRead(d *schema.ResourceData, client *opslevel.Client) error {
 	resp, err := client.ListFilters(nil)
-	results := resp.Nodes
 	if err != nil {
 		return err
 	}
+	if resp == nil {
+		return fmt.Errorf("unexpected: listing filters returned nil")
+	}
+	results := resp.Nodes
 
 	field := d.Get("filter.0.field").(string)
 	value := d.Get("filter.0.value").(string)

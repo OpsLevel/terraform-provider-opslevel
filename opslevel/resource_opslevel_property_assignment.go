@@ -98,6 +98,9 @@ func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Cli
 
 func resourcePropertyAssignmentDelete(d *schema.ResourceData, client *opslevel.Client) error {
 	id := strings.Split(d.Id(), ":")
+	if len(id) != 2 {
+		return fmt.Errorf("[%s] invalid property assignment id, should be in format 'ownerId:definitionId' (only a single colon between both ids, no spaces or special characters)", d.Id())
+	}
 	ownerId := id[0]
 	definitionId := id[1]
 	err := client.PropertyUnassign(ownerId, definitionId)
