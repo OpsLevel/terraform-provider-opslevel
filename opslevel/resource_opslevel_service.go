@@ -146,7 +146,7 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 	for _, tag := range tags {
 		parts := strings.Split(tag, ":")
 		if len(parts) != 2 {
-			return fmt.Errorf("invalid tag: '%s'", tag)
+			return fmt.Errorf("[%s] invalid tag, should be in format 'key:value' (only a single colon between the key and value, no spaces or special characters)", tag)
 		}
 		key := parts[0]
 		value := parts[1]
