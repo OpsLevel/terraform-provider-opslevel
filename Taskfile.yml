@@ -2,107 +2,63 @@
 
 version: '3'
 
+env:
+  OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
+  SRC_DIR: "{{.TASKFILE_DIR}}"
+
 vars:
   # 'VERSION_DYNAMIC' needs to run in this scope before 'task build' begins
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
   WORKSPACE_DIR: "workspace"
 
-includes:
-  go:
-    internal: true
-    taskfile: "./opslevel/Taskfile.yml"
-
 tasks:
-
-  apply:
-    desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  build:
-    desc: Build local opslevel terraform provider
-    platforms: [darwin]
-    vars:
-      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      LOCATION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
-    cmds:
-      - go build -ldflags="-s -w -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
-      - chmod +x {{.BINARY}}
-      - mkdir -p {{.LOCATION}}
-      - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
-
   ci:
     desc: Workflow to run in CI
+    deps:
+      - install-nilaway
+      - install-gofumpt
+      - install-golangci-lint
     cmds:
-      - task: go:setup
-      - task: go:has-latest-opslevel-go
+      - task: workspace
+      - task: has-latest-opslevel-go
       - task: lint
       - task: test
 
-  clean:
-    desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
-    dir: "{{.WORKSPACE_DIR}}"
-    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
-    cmds:
-      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
-        ignore_error: true
-
-  destroy:
-    desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
   fix:
-    desc: Fix formatting and linting
+    desc: Fix formatting, linting, go.mod, and update submodule
+    dir: "{{.SRC_DIR}}"
     cmds:
-      - task: go:fix
-      - task: format-fix
-
-  init:
-    desc: Initialize terraform workspace
-    dir: "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: install-terraform
-      - './make_backend_tf.sh'
-      - touch main.tf
-      - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  install-changie:
-    desc: Install changie
-    aliases: [get-changie]
-    cmds:
-      - cmd: echo "Installing changie..."
-        silent: true
-      - which changie > /dev/null || go install github.com/miniscruff/changie@latest
-      - cmd: echo -e "Success! 'changie' installed."
-        silent: true
+      - task: update-opslevel-go
+      - gofumpt -w .
+      - go get -u
+      - go mod tidy
+      - golangci-lint run --fix
+      - nilaway -fix -test=false ./...
 
   lint:
-    desc: Check formatting and linting
+    desc: Formatting and linting
+    dir: "{{.SRC_DIR}}"
     cmds:
-      - task: go:lint
-      - task: validate
-      - task: format-check
-
-  plan:
-    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+      - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
+      - golangci-lint run
+      - nilaway -test=false ./...
+      - task: terraform-validate
+      - task: terraform-format-check
 
   setup:
-    desc: Setup env and tools
+    desc: Setup linter, formatter, etc. for local testing
     cmds:
+      - cmd: echo "Installing development tools..."
+        silent: true
       - task: install-changie
-      - task: go:setup
-      - task: terraform-setup
+      - task: install-nilaway
+      - task: install-gofumpt
+      - task: install-golangci-lint
+      - task: setup-terraform
+      - cmd: echo "Development tools installed!"
+        silent: true
+      - task: workspace
 
   setup-terraform:
     desc: Setup env and tools
@@ -115,27 +71,147 @@ tasks:
     desc: Run tests
     env:
       TF_ACC: true
+    dir: "{{.SRC_DIR}}"
     cmds:
-      - task: go:test
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
+
+  terraform-apply:
+    desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
+    aliases: ["apply"]
+    cmds:
+      - task: terraform-setup
+      - task: terraform-command
+        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-build:
+    desc: Build local opslevel terraform provider
+    aliases: ["build"]
+    platforms: [darwin]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+      LOCATION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
+    cmds:
+      - go build -ldflags="-s -w -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - mkdir -p {{.LOCATION}}
+      - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
+
+  terraform-clean:
+    desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
+    aliases: ["clean"]
+    dir: "{{.WORKSPACE_DIR}}"
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
+    cmds:
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
+        ignore_error: true
+
+  terraform-destroy:
+    desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
+    aliases: ["destroy"]
+    cmds:
+      - task: terraform-setup
+      - task: terraform-command
+        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-init:
+    desc: Initialize terraform workspace
+    aliases: ["init"]
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: install-terraform
+      - './make_backend_tf.sh'
+      - touch main.tf
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-plan:
+    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
+    aliases: ["plan"]
+    cmds:
+      - task: terraform-setup
+      - task: terraform-command
+        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  workspace:
+    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    dir: "{{.SRC_DIR}}"
+    cmds:
+      - cmd: echo "Setting up opslevel-go workspace..."
+        silent: true
+      - git submodule update --init --remote
+      - go work init || true
+      - go work use . submodules/opslevel-go
+      - cmd: echo "opslevel-go workspace ready!"
+        silent: true
 
   ########################################
   # internal (not directly called) tasks #
   ########################################
 
-  format-check:
+  go-install-tool:
+    desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
     internal: true
-    desc: Run terraform format
+    silent: true
+    vars:
+      IS_TOOL_INSTALLED:
+        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
     cmds:
-      - cmd: echo "Listing all terraform files that need formatting..."
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
+      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
+      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
+      - echo "  '{{.GO_TOOL}}' is installed."
+    requires:
+      vars: [GO_TOOL, GO_TOOL_PATH]
 
-  format-fix:
+  has-latest-opslevel-go:
+    desc: Check if latest release of opslevel-go in go.mod
     internal: true
-    desc: Run terraform format
+    dir: "{{.SRC_DIR}}"
+    silent: true
+    vars:
+      GO_WORK: "go.work"
+      TMP_GO_WORK: "tmp_go.work"
+      LATEST_OPSLEVEL_GO_VERSION:
+        sh: go list -u -m -versions github.com/opslevel/opslevel-go/v2024 | awk '{print $NF}'
     cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+      - if [[ -f {{.GO_WORK}} ]]; then mv {{.GO_WORK}} {{.TMP_GO_WORK}}; fi
+      - defer: if [[ -f {{.TMP_GO_WORK}} ]]; then mv {{.TMP_GO_WORK}} {{.GO_WORK}}; fi
+      - |-
+        if [[ {{.LATEST_OPSLEVEL_GO_VERSION}} == $(go list -m --json '{{.OPSLEVEL_GO_PKG}}' | jq -r '.Version') ]]; then
+          echo "Using latest version of opslevel-go - {{.LATEST_OPSLEVEL_GO_VERSION}}";
+        else
+          echo "WARNING: current version of opslevel-go is behind '{{.LATEST_OPSLEVEL_GO_VERSION}}'"
+          echo "Run 'task lintfix' to get latest version"
+          exit 1
+        fi
+
+  install-changie:
+    desc: go install "changie"
+    internal: true
+    cmds:
+      - task: go-install-tool
+        vars: { GO_TOOL: "changie", GO_TOOL_PATH: "github.com/miniscruff/changie@latest" }
+
+  install-gofumpt:
+    desc: go install "gofumpt"
+    internal: true
+    cmds:
+      - task: go-install-tool
+        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
+
+  install-golangci-lint:
+    desc: go install "golangci-lint"
+    internal: true
+    cmds:
+      - task: go-install-tool
+        vars: { GO_TOOL: "golangci-lint", GO_TOOL_PATH: "github.com/golangci/golangci-lint/cmd/golangci-lint@latest" }
+
+  install-nilaway:
+    desc: go install "nilaway"
+    internal: true
+    cmds:
+      - task: go-install-tool
+        vars: { GO_TOOL: "nilaway", GO_TOOL_PATH: "go.uber.org/nilaway/cmd/nilaway@latest" }
 
   install-terraform:
     internal: true
@@ -157,10 +233,32 @@ tasks:
       - sh: 'which terraform'
         msg: '"terraform" needed - run "brew install terraform"'
 
-  validate:
+  terraform-format-check:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - cmd: echo "Listing all terraform files that need formatting..."
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  terraform-format-fix:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  terraform-validate:
     internal: true
     desc: Run "terraform validate" in current directory
     dir: '{{.ROOT_DIR}}'
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  update-opslevel-go:
+    internal: true
+    desc: Update opslevel-go version to latest release
+    dir: "{{.SRC_DIR}}"
+    cmds:
+      - go get -u "{{.OPSLEVEL_GO_PKG}}"
