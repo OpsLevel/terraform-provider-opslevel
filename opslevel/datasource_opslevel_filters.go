@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+
 	"github.com/opslevel/opslevel-go/v2024"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"

@@ -7,7 +7,7 @@ env:
   SRC_DIR: "{{.TASKFILE_DIR}}"
 
 vars:
-  # 'VERSION_DYNAMIC' needs to run in this scope before 'task build' begins
+  # 'VERSION_DYNAMIC' needs to run in this scope before 'task terraform-build' begins
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
   WORKSPACE_DIR: "workspace"
@@ -16,6 +16,7 @@ tasks:
   ci:
     desc: Workflow to run in CI
     deps:
+      - brew-install-jq
       - install-nilaway
       - install-gofumpt
       - install-golangci-lint
@@ -51,6 +52,7 @@ tasks:
     cmds:
       - cmd: echo "Installing development tools..."
         silent: true
+      - task: brew-install-jq
       - task: install-changie
       - task: install-nilaway
       - task: install-gofumpt
@@ -64,8 +66,8 @@ tasks:
     desc: Setup env and tools
     aliases: ["setup-tf", "tf-setup", "terraform-setup"]
     cmds:
-      - task: build
-      - task: init
+      - task: terraform-build
+      - task: terraform-init
 
   test:
     desc: Run tests
@@ -148,6 +150,14 @@ tasks:
   # internal (not directly called) tasks #
   ########################################
 
+  brew-install-jq:
+    internal: true
+    platforms: [darwin]
+    cmds: ["which jq > /dev/null || brew install jq"]
+    preconditions:
+      - sh: 'which brew'
+        msg: '"brew" needed to install "jq"- see https://brew.sh'
+
   go-install-tool:
     desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
     internal: true
@@ -181,7 +191,7 @@ tasks:
           echo "Using latest version of opslevel-go - {{.LATEST_OPSLEVEL_GO_VERSION}}";
         else
           echo "WARNING: current version of opslevel-go is behind '{{.LATEST_OPSLEVEL_GO_VERSION}}'"
-          echo "Run 'task lintfix' to get latest version"
+          echo "Run 'task fix' to get latest version"
           exit 1
         fi
 
