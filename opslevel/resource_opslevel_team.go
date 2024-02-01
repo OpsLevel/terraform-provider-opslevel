@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"slices"
-	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -230,8 +229,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	sort.Strings(resource.Aliases)
-	if err := d.Set("aliases", resource.Aliases); err != nil {
+	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
 		return err
 	}
 
