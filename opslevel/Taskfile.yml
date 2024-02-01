@@ -3,12 +3,11 @@
 version: '3'
 vars:
   OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
-  SRC_DIR: "{{.TASKFILE_DIR}}/.."
 
 tasks:
   fix:
     desc: Fix formatting, linting, go.mod, and update submodule
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     cmds:
       - task: update-opslevel-go
       - go get -u
@@ -19,7 +18,7 @@ tasks:
 
   lint:
     desc: Formatting and linting
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     deps: [install-gofumpt, install-golangci-lint, install-nilaway]
     cmds:
       - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
@@ -41,13 +40,13 @@ tasks:
 
   test:
     desc: Run tests
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     cmds:
       - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     cmds:
       - cmd: echo "Setting up opslevel-go workspace..."
         silent: true
@@ -63,7 +62,7 @@ tasks:
 
   go-install-tool:
     desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     internal: true
     silent: true
     vars:
@@ -80,7 +79,7 @@ tasks:
   has-latest-opslevel-go:
     desc: Check if latest release of opslevel-go in go.mod
     internal: true
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     silent: true
     vars:
       GO_WORK: "go.work"
@@ -130,6 +129,6 @@ tasks:
   update-opslevel-go:
     internal: true
     desc: Update opslevel-go version to latest release
-    dir: "{{.SRC_DIR}}"
+    dir: "{{.ROOT_DIR}}"
     cmds:
       - go get -u "{{.OPSLEVEL_GO_PKG}}"

@@ -39,12 +39,12 @@ tasks:
   setup:
     desc: Setup all necessary tools and submodule for local development
     cmds:
-      - cmd: echo "Installing all dev tools..."
+      - cmd: echo "Beginning setup..."
         silent: true
       - task: brew-install-jq
       - task: go:setup
       - task: setup-terraform
-      - cmd: echo "All dev tools installed!"
+      - cmd: echo "Setup complete!"
         silent: true
 
   test:
@@ -116,8 +116,12 @@ tasks:
     desc: Setup env and tools
     aliases: ["setup-tf", "tf-setup", "terraform-setup"]
     cmds:
+      - cmd: echo "Installing Terraform provider dev..."
+        silent: true
       - task: terraform-build
       - task: terraform-init
+      - cmd: echo "Terraform provider dev installed!"
+        silent: true
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
