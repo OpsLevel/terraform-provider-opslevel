@@ -229,6 +229,7 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
+	slices.Sort(resource.ManagedAliases)
 	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
 		return err
 	}
