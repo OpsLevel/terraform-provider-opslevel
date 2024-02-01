@@ -49,31 +49,6 @@ func wrap(handler func(data *schema.ResourceData, client *opslevel.Client) error
 	}
 }
 
-func stringInArray(term string, search []string) bool {
-	for _, item := range search {
-		if term == item {
-			return true
-		}
-	}
-	return false
-}
-
-func expandStringArray(m []interface{}) []string {
-	result := make([]string, 0)
-	for _, v := range m {
-		result = append(result, v.(string))
-	}
-	return result
-}
-
-func expandStringMap(m map[string]interface{}) map[string]string {
-	result := make(map[string]string)
-	for k, v := range m {
-		result[k] = v.(string)
-	}
-	return result
-}
-
 func getStringArray(d *schema.ResourceData, key string) []string {
 	output := make([]string, 0)
 	data, ok := d.GetOk(key)

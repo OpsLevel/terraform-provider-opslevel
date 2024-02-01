@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug where aliases was required for Team resource and aliases contained the
+  slug
+time: 2024-02-01T16:10:08.651472-05:00
