@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -125,23 +126,19 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 	expectedAliases := getStringArray(d, "aliases")
 	existingAliases := service.ManagedAliases
 	for _, existingAlias := range existingAliases {
-		if stringInArray(existingAlias, expectedAliases) {
-			continue
-		}
-		// Delete
-		err := client.DeleteServiceAlias(existingAlias)
-		if err != nil {
-			return err
+		if !slices.Contains(expectedAliases, existingAlias) {
+			err := client.DeleteServiceAlias(existingAlias)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	for _, expectedAlias := range expectedAliases {
-		if stringInArray(expectedAlias, existingAliases) {
-			continue
-		}
-		// Add
-		_, err := client.CreateAliases(service.Id, []string{expectedAlias})
-		if err != nil {
-			return err
+		if !slices.Contains(existingAliases, expectedAlias) {
+			_, err := client.CreateAliases(service.Id, []string{expectedAlias})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -149,18 +146,15 @@ func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, 
 
 func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
 	tags := getStringArray(d, "tags")
-	existingTags := []string{}
+	existingTags := make([]string, 0)
 	for _, tag := range service.Tags.Nodes {
 		flattenedTag := flattenTag(tag)
 		existingTags = append(existingTags, flattenedTag)
-		if stringInArray(flattenedTag, tags) {
-			// Update
-			continue
-		}
-		// Delete
-		err := client.DeleteTag(tag.Id)
-		if err != nil {
-			return err
+		if !slices.Contains(tags, flattenedTag) {
+			err := client.DeleteTag(tag.Id)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	tagInput := map[string]string{}

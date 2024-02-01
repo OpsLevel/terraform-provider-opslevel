@@ -1,7 +1,7 @@
 package opslevel
 
 import (
-	"sort"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -35,12 +35,11 @@ func resourceTeam() *schema.Resource {
 				ForceNew:    false,
 				Optional:    true,
 			},
-			// TODO: we need to use managedAliases here - slug is being included
 			"aliases": {
 				Type:        schema.TypeList,
 				Description: "A list of human-friendly, unique identifiers for the team.",
 				ForceNew:    false,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"member": {
@@ -74,35 +73,28 @@ func resourceTeam() *schema.Resource {
 
 func reconcileTeamAliases(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
 	expectedAliases := getStringArray(d, "aliases")
-	existingAliases := team.Aliases
+	existingAliases := team.ManagedAliases
 	for _, existingAlias := range existingAliases {
-		if existingAlias == team.Alias {
-			continue
-		}
-		if stringInArray(existingAlias, expectedAliases) {
-			continue
-		}
-		// Delete
-		err := client.DeleteTeamAlias(existingAlias)
-		if err != nil {
-			return err
+		if !slices.Contains(expectedAliases, existingAlias) {
+			err := client.DeleteTeamAlias(existingAlias)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	for _, expectedAlias := range expectedAliases {
-		if stringInArray(expectedAlias, existingAliases) {
-			continue
-		}
-		// Add
-		_, err := client.CreateAliases(team.Id, []string{expectedAlias})
-		if err != nil {
-			return err
+		if !slices.Contains(existingAliases, expectedAlias) {
+			_, err := client.CreateAliases(team.Id, []string{expectedAlias})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
 func collectMembersFromTeam(team *opslevel.Team) []opslevel.TeamMembershipUserInput {
-	members := []opslevel.TeamMembershipUserInput{}
+	members := make([]opslevel.TeamMembershipUserInput, 0)
 
 	for _, user := range team.Memberships.Nodes {
 		newUserIdentifier := opslevel.NewUserIdentifier(user.User.Email)
@@ -125,7 +117,7 @@ func memberInArray(member opslevel.TeamMembershipUserInput, array []opslevel.Tea
 }
 
 func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client *opslevel.Client) error {
-	expectedMembers := []opslevel.TeamMembershipUserInput{}
+	expectedMembers := make([]opslevel.TeamMembershipUserInput, 0)
 	existingMembers := collectMembersFromTeam(team)
 
 	if members, ok := d.GetOk("member"); ok {
@@ -142,8 +134,8 @@ func reconcileTeamMembership(d *schema.ResourceData, team *opslevel.Team, client
 		}
 	}
 
-	membersToRemove := []opslevel.TeamMembershipUserInput{}
-	membersToAdd := []opslevel.TeamMembershipUserInput{}
+	membersToRemove := make([]opslevel.TeamMembershipUserInput, 0)
+	membersToAdd := make([]opslevel.TeamMembershipUserInput, 0)
 
 	for _, existingMember := range existingMembers {
 		if memberInArray(existingMember, expectedMembers) {
@@ -237,18 +229,8 @@ func resourceTeamRead(d *schema.ResourceData, client *opslevel.Client) error {
 		}
 	}
 
-	aliases := []string{}
-	for _, alias := range resource.Aliases {
-		if alias == resource.Alias {
-			// If user specifies the auto-generated alias in terraform config, don't skip it
-			if !stringInArray(alias, getStringArray(d, "aliases")) {
-				continue
-			}
-		}
-		aliases = append(aliases, alias)
-	}
-	sort.Strings(aliases)
-	if err := d.Set("aliases", aliases); err != nil {
+	slices.Sort(resource.ManagedAliases)
+	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
 		return err
 	}
 
@@ -301,9 +283,9 @@ func resourceTeamUpdate(d *schema.ResourceData, client *opslevel.Client) error {
 	}
 
 	if d.HasChange("aliases") {
-		tagsErr := reconcileTeamAliases(d, resource, client)
-		if tagsErr != nil {
-			return tagsErr
+		err = reconcileTeamAliases(d, resource, client)
+		if err != nil {
+			return err
 		}
 	}
 

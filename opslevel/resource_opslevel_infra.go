@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"slices"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -85,24 +87,20 @@ func reconcileInfraAliases(d *schema.ResourceData, resource *opslevel.Infrastruc
 	expectedAliases := getStringArray(d, "aliases")
 	existingAliases := resource.Aliases
 	for _, existingAlias := range existingAliases {
-		if stringInArray(existingAlias, expectedAliases) {
-			continue
-		}
-		// Delete
-		err := client.DeleteInfraAlias(existingAlias)
-		if err != nil {
-			return err
+		if !slices.Contains(expectedAliases, existingAlias) {
+			err := client.DeleteInfraAlias(existingAlias)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	for _, expectedAlias := range expectedAliases {
-		if stringInArray(expectedAlias, existingAliases) {
-			continue
-		}
-		// Add
-		id := opslevel.NewID(resource.Id)
-		_, err := client.CreateAliases(*id, []string{expectedAlias})
-		if err != nil {
-			return err
+		if !slices.Contains(existingAliases, expectedAlias) {
+			id := opslevel.NewID(resource.Id)
+			_, err := client.CreateAliases(*id, []string{expectedAlias})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
