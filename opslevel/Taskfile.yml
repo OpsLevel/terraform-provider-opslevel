@@ -30,7 +30,6 @@ tasks:
     cmds:
       - cmd: echo "Installing Go dev tools..."
         silent: true
-      - task: install-changie
       - task: install-nilaway
       - task: install-gofumpt
       - task: install-golangci-lint
@@ -97,13 +96,6 @@ tasks:
           echo "Run 'task fix' to get latest version"
           exit 1
         fi
-
-  install-changie:
-    desc: go install "changie"
-    internal: true
-    cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "changie", GO_TOOL_PATH: "github.com/miniscruff/changie@latest" }
 
   install-gofumpt:
     desc: go install "gofumpt"

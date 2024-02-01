@@ -16,6 +16,7 @@ tasks:
     desc: Workflow to run in CI
     deps:
       - brew-install-jq
+      - install-changie
       - go:install-nilaway
       - go:install-gofumpt
       - go:install-golangci-lint
@@ -139,6 +140,13 @@ tasks:
     preconditions:
       - sh: 'which brew'
         msg: '"brew" needed to install "jq"- see https://brew.sh'
+
+  install-changie:
+    desc: go install "changie"
+    internal: true
+    cmds:
+      - task: go:go-install-tool
+        vars: { GO_TOOL: "changie", GO_TOOL_PATH: "github.com/miniscruff/changie@latest" }
 
   install-terraform:
     internal: true
