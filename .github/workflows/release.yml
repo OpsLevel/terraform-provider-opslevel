@@ -74,6 +74,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete ${{ steps.next_version.outputs.version_tag }} || true
+      - name: Set Package Version
+        run: |
+          cat << EOF > opslevel/version.go
+          package opslevel
+
+          const version string = "${{ steps.next_version.outputs.version_tag }}"
+          EOF
       - name: Import GPG key
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v6
