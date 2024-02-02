@@ -8,7 +8,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-s -w -X opslevel.version={{.Version}}'
+      - '-s -w -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.Version}}'
     goos:
       - windows
       - linux
