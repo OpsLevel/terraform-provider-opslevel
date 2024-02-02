@@ -175,7 +175,7 @@ tasks:
       GO_WORK: "go.work"
       TMP_GO_WORK: "tmp_go.work"
       LATEST_OPSLEVEL_GO_VERSION:
-        sh: go list -u -m -versions github.com/opslevel/opslevel-go/v2024 | awk '{print $NF}'
+        sh: go list -u -m -versions {{.OPSLEVEL_GO_PKG}} | awk '{print $NF}'
     cmds:
       - if [[ -f {{.GO_WORK}} ]]; then mv {{.GO_WORK}} {{.TMP_GO_WORK}}; fi
       - defer: if [[ -f {{.TMP_GO_WORK}} ]]; then mv {{.TMP_GO_WORK}} {{.GO_WORK}}; fi
