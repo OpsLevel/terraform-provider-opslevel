@@ -18,9 +18,9 @@ tasks:
       - install-golangci-lint
       - install-nilaway
     cmds:
+      - task: lint
       - task: workspace
       - task: has-latest-opslevel-go
-      - task: lint
       - task: test
 
   fix:
