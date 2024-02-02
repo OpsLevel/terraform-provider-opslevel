@@ -56,7 +56,8 @@ tasks:
     internal: true
     cmds:
       - git submodule update --init --remote
-      - go work init || true
+      - rm go.work go.work.sum || true
+      - go work init
       - go work use . submodules/opslevel-go
       - echo "Workspace ready!"
 
