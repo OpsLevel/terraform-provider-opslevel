@@ -1,84 +1,22 @@
 # https://taskfile.dev/
 
 version: '3'
-vars:
+env:
   OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
 
 tasks:
+
   fix:
-    desc: Fix formatting, linting, go.mod, and update submodule
-    dir: "{{.ROOT_DIR}}"
+    desc: Fix formatting and linting of go code
+    deps: [install-gofumpt, install-golangci-lint]
     cmds:
       - task: update-opslevel-go
-      - go get -u
       - gofumpt -w .
       - go mod tidy
       - golangci-lint run --fix
-      - nilaway -fix -test=false ./...
-
-  lint:
-    desc: Formatting and linting
-    dir: "{{.ROOT_DIR}}"
-    deps: [install-gofumpt, install-golangci-lint, install-nilaway]
-    cmds:
-      - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
-      - golangci-lint run
-      - nilaway -test=false ./...
-
-  setup:
-    desc: Setup all necessary tools and submodule for local development
-    cmds:
-      - cmd: echo "Installing Go dev tools..."
-        silent: true
-      - task: install-nilaway
-      - task: install-gofumpt
-      - task: install-golangci-lint
-      - task: workspace
-      - cmd: echo "Go dev tools installed!"
-        silent: true
-
-  test:
-    desc: Run tests
-    dir: "{{.ROOT_DIR}}"
-    cmds:
-      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
-
-  workspace:
-    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
-    dir: "{{.ROOT_DIR}}"
-    cmds:
-      - cmd: echo "Setting up opslevel-go workspace..."
-        silent: true
-      - git submodule update --init --remote
-      - rm go.work go.work.sum || true
-      - go work init || true
-      - go work use . submodules/opslevel-go
-      - cmd: echo "opslevel-go workspace ready!"
-        silent: true
-
-  ########################################
-  # internal (not directly called) tasks #
-  ########################################
-
-  go-install-tool:
-    desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
-    dir: "{{.ROOT_DIR}}"
-    internal: true
-    silent: true
-    vars:
-      IS_TOOL_INSTALLED:
-        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
-    cmds:
-      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
-      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
-      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
-      - echo "  '{{.GO_TOOL}}' is installed."
-    requires:
-      vars: [GO_TOOL, GO_TOOL_PATH]
 
   has-latest-opslevel-go:
     desc: Check if latest release of opslevel-go in go.mod
-    internal: true
     dir: "{{.ROOT_DIR}}"
     silent: true
     vars:
@@ -98,30 +36,73 @@ tasks:
           exit 1
         fi
 
-  install-gofumpt:
-    desc: go install "gofumpt"
-    internal: true
+  lint:
+    desc: Check formatting and linting of go code
+    deps: [install-gofumpt, install-golangci-lint]
     cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
+      - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
+      - go vet ./...
+      - golangci-lint run
 
-  install-golangci-lint:
-    desc: go install "golangci-lint"
-    internal: true
+  setup:
+    desc: Setup go linter, formatter, and opslevel-go submodule
     cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "golangci-lint", GO_TOOL_PATH: "github.com/golangci/golangci-lint/cmd/golangci-lint@latest" }
+      - task: install-gofumpt
+      - task: install-golangci-lint
+      - task: setup-opslevel-go
 
-  install-nilaway:
-    desc: go install "nilaway"
+  setup-opslevel-go:
+    desc: Setup go workspace to import opslevel-go
     internal: true
     cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "nilaway", GO_TOOL_PATH: "go.uber.org/nilaway/cmd/nilaway@latest" }
+      - git submodule update --init --remote
+      - rm go.work go.work.sum || true
+      - go work init
+      - go work use . submodules/opslevel-go
+      - echo "Workspace ready!"
+
+  test:
+    desc: Run go tests
+    cmds:
+      - go test -race -coverprofile=coverage.out -covermode=atomic -v ./... {{ .CLI_ARGS }}
+      - grep -v "/enum.go" coverage.out > coverage.txt
+    silent: true
 
   update-opslevel-go:
-    internal: true
     desc: Update opslevel-go version to latest release
     dir: "{{.ROOT_DIR}}"
     cmds:
       - go get -u "{{.OPSLEVEL_GO_PKG}}"
+
+  ########################################
+  # internal (not directly called) tasks #
+  ########################################
+
+  install-go-tool:
+    internal: true
+    silent: true
+    vars:
+      IS_TOOL_INSTALLED:
+        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
+    cmds:
+      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
+      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
+      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
+    requires:
+      vars: [GO_TOOL, GO_TOOL_PATH]
+
+  install-gofumpt:
+    desc: go install "gofumpt" and set GOBIN if not set
+    internal: true
+    silent: true
+    cmds:
+      - task: install-go-tool
+        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
+
+  install-golangci-lint:
+    desc: go install "golangci-lint" and set GOBIN if not set
+    internal: true
+    silent: true
+    cmds:
+      - task: install-go-tool
+        vars: { GO_TOOL: "golangci-lint", GO_TOOL_PATH: "github.com/golangci/golangci-lint/cmd/golangci-lint@latest" }

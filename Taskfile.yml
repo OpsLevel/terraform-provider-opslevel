@@ -1,72 +1,29 @@
 # https://taskfile.dev/
 
 version: '3'
+
+vars:
+  # 'VERSION_DYNAMIC' needs to run in this scope before 'task build' begins
+  VERSION_DYNAMIC:
+    sh: echo "$(date +%s).0.0"
+  WORKSPACE_DIR: "workspace"
+
 includes:
   go:
     internal: true
     taskfile: "./opslevel/Taskfile.yml"
-vars:
-  # 'VERSION_DYNAMIC' needs to run in this scope before 'task terraform-build' begins
-  VERSION_DYNAMIC:
-    sh: echo "$(date +%s).0.0"
-  WORKSPACE_DIR: "{{.ROOT_DIR}}/workspace"
 
 tasks:
-  ci:
-    desc: Workflow to run in CI
-    deps:
-      - brew-install-jq
-      - install-changie
-      - go:install-nilaway
-      - go:install-gofumpt
-      - go:install-golangci-lint
-    cmds:
-      - task: go:has-latest-opslevel-go
-      - task: lint
-      - task: test
 
-  fix:
-    desc: Fix formatting, linting, go.mod, and update submodule
-    cmds:
-      - task: go:fix
-
-  lint:
-    desc: Formatting and linting
-    cmds:
-      - task: go:lint
-      - task: terraform-validate
-      - task: terraform-format-check
-
-  setup:
-    desc: Setup all necessary tools and submodule for local development
-    cmds:
-      - cmd: echo "Beginning setup..."
-        silent: true
-      - task: brew-install-jq
-      - task: go:setup
-      - task: setup-terraform
-      - cmd: echo "Setup complete!"
-        silent: true
-
-  test:
-    desc: Run tests
-    env:
-      TF_ACC: true
-    cmds:
-      - task: go:test
-
-  terraform-apply:
+  apply:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
-    aliases: ["apply"]
     cmds:
-      - task: setup-terraform
+      - task: terraform-setup
       - task: terraform-command
         vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
-  terraform-build:
+  build:
     desc: Build local opslevel terraform provider
-    dir: "{{.ROOT_DIR}}"
-    aliases: ["build"]
     platforms: [darwin]
     vars:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
@@ -77,26 +34,37 @@ tasks:
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
-  terraform-clean:
-    desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
-    aliases: ["clean"]
+  ci:
+    desc: Workflow to run in CI
+    cmds:
+      - task: go:setup
+      - task: go:has-latest-opslevel-go
+      - task: lint
+      - task: test
+
+  clean:
+    desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
     dir: "{{.WORKSPACE_DIR}}"
     prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
     cmds:
       - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
         ignore_error: true
 
-  terraform-destroy:
+  destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
-    aliases: ["destroy"]
     cmds:
-      - task: setup-terraform
+      - task: terraform-setup
       - task: terraform-command
         vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
-  terraform-init:
+  fix:
+    desc: Fix formatting and linting
+    cmds:
+      - task: go:fix
+      - task: format-fix
+
+  init:
     desc: Initialize terraform workspace
-    aliases: ["init"]
     dir: "{{.WORKSPACE_DIR}}"
     cmds:
       - task: install-terraform
@@ -105,48 +73,69 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
-  terraform-plan:
-    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
-    aliases: ["plan"]
+  install-changie:
+    desc: Install changie
+    aliases: [get-changie]
     cmds:
-      - task: setup-terraform
+      - cmd: echo "Installing changie..."
+        silent: true
+      - which changie > /dev/null || go install github.com/miniscruff/changie@latest
+      - cmd: echo -e "Success! 'changie' installed."
+        silent: true
+
+  lint:
+    desc: Check formatting and linting
+    cmds:
+      - task: go:lint
+      - task: validate
+      - task: format-check
+
+  plan:
+    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: terraform-setup
       - task: terraform-command
         vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  setup:
+    desc: Setup env and tools
+    cmds:
+      - task: install-changie
+      - task: go:setup
+      - task: terraform-setup
 
   setup-terraform:
     desc: Setup env and tools
     aliases: ["setup-tf", "tf-setup", "terraform-setup"]
     cmds:
-      - cmd: echo "Installing Terraform provider dev..."
-        silent: true
-      - task: terraform-build
-      - task: terraform-init
-      - cmd: echo "Terraform provider dev installed!"
-        silent: true
+      - task: build
+      - task: init
 
-  workspace:
-    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+  test:
+    desc: Run tests
+    env:
+      TF_ACC: true
     cmds:
-      - task: go:workspace
+      - task: go:test
 
   ########################################
   # internal (not directly called) tasks #
   ########################################
 
-  brew-install-jq:
+  format-check:
     internal: true
-    platforms: [darwin]
-    cmds: ["which jq > /dev/null || brew install jq"]
-    preconditions:
-      - sh: 'which brew'
-        msg: '"brew" needed to install "jq"- see https://brew.sh'
-
-  install-changie:
-    desc: go install "changie"
-    internal: true
+    desc: Run terraform format
     cmds:
-      - task: go:go-install-tool
-        vars: { GO_TOOL: "changie", GO_TOOL_PATH: "github.com/miniscruff/changie@latest" }
+      - cmd: echo "Listing all terraform files that need formatting..."
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  format-fix:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
 
   install-terraform:
     internal: true
@@ -168,24 +157,10 @@ tasks:
       - sh: 'which terraform'
         msg: '"terraform" needed - run "brew install terraform"'
 
-  terraform-format-check:
+  validate:
     internal: true
-    desc: Run terraform format
-    cmds:
-      - cmd: echo "Listing all terraform files that need formatting..."
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-
-  terraform-format-fix:
-    internal: true
-    desc: Run terraform format
-    cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-
-  terraform-validate:
-    internal: true
-    desc: Run "terraform validate" in root directory
+    desc: Run "terraform validate" in current directory
+    dir: '{{.ROOT_DIR}}'
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.ROOT_DIR}}" }
