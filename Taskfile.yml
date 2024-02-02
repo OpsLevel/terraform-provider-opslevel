@@ -69,7 +69,7 @@ tasks:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
     aliases: ["apply"]
     cmds:
-      - task: terraform-setup
+      - task: setup-terraform
       - task: terraform-command
         vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -98,7 +98,7 @@ tasks:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
     aliases: ["destroy"]
     cmds:
-      - task: terraform-setup
+      - task: setup-terraform
       - task: terraform-command
         vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -117,7 +117,7 @@ tasks:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
     aliases: ["plan"]
     cmds:
-      - task: terraform-setup
+      - task: setup-terraform
       - task: terraform-command
         vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
