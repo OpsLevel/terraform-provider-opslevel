@@ -15,13 +15,6 @@ includes:
 
 tasks:
 
-  apply:
-    desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
   build:
     desc: Build local opslevel terraform provider
     platforms: [darwin]
@@ -42,26 +35,11 @@ tasks:
       - task: lint
       - task: test
 
-  clean:
-    desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
-    dir: "{{.WORKSPACE_DIR}}"
-    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
-    cmds:
-      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
-        ignore_error: true
-
-  destroy:
-    desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
   fix:
     desc: Fix formatting and linting
     cmds:
       - task: go:fix
-      - task: format-fix
+      - task: terraform-format-fix
 
   init:
     desc: Initialize terraform workspace
@@ -87,22 +65,15 @@ tasks:
     desc: Check formatting and linting
     cmds:
       - task: go:lint
-      - task: validate
-      - task: format-check
-
-  plan:
-    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
-    cmds:
-      - task: terraform-setup
-      - task: terraform-command
-        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform-validate
+      - task: terraform-format-check
 
   setup:
     desc: Setup env and tools
     cmds:
       - task: install-changie
       - task: go:setup
-      - task: terraform-setup
+      - task: setup-terraform
 
   setup-terraform:
     desc: Setup env and tools
@@ -110,6 +81,39 @@ tasks:
     cmds:
       - task: build
       - task: init
+
+  terraform-apply:
+    desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
+    aliases: [apply]
+    cmds:
+      - task: setup-terraform
+      - task: terraform-command
+        vars: { TF_COMMAND: "apply -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-clean:
+    aliases: [clean]
+    desc: Clean up terraform files from "{{.WORKSPACE_DIR}}"
+    dir: "{{.WORKSPACE_DIR}}"
+    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
+    cmds:
+      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
+        ignore_error: true
+
+  terraform-destroy:
+    aliases: [destroy]
+    desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: setup-terraform
+      - task: terraform-command
+        vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-plan:
+    aliases: [plan]
+    desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
+    cmds:
+      - task: setup-terraform
+      - task: terraform-command
+        vars: { TF_COMMAND: "plan", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   test:
     desc: Run tests
@@ -122,7 +126,16 @@ tasks:
   # internal (not directly called) tasks #
   ########################################
 
-  format-check:
+  terraform-command:
+    internal: true
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
+    requires:
+      vars: [TF_COMMAND, TF_CMD_DIR]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  terraform-format-check:
     internal: true
     desc: Run terraform format
     cmds:
@@ -130,7 +143,7 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
 
-  format-fix:
+  terraform-format-fix:
     internal: true
     desc: Run terraform format
     cmds:
@@ -148,16 +161,7 @@ tasks:
       - sh: 'which brew'
         msg: '"brew" needed to install terraform - see https://brew.sh'
 
-  terraform-command:
-    internal: true
-    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
-    requires:
-      vars: [TF_COMMAND, TF_CMD_DIR]
-    preconditions:
-      - sh: 'which terraform'
-        msg: '"terraform" needed - run "brew install terraform"'
-
-  validate:
+  terraform-validate:
     internal: true
     desc: Run "terraform validate" in current directory
     dir: '{{.ROOT_DIR}}'
