@@ -81,7 +81,7 @@ tasks:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
       LOCATION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
     cmds:
-      - go build -o {{.BINARY}} || exit 1
+      - go build -ldflags="-s -w -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
       - chmod +x {{.BINARY}}
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
