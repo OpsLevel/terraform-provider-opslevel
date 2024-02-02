@@ -50,6 +50,7 @@ tasks:
       - cmd: echo "Setting up opslevel-go workspace..."
         silent: true
       - git submodule update --init --remote
+      - rm go.work go.work.sum || true
       - go work init || true
       - go work use . submodules/opslevel-go
       - cmd: echo "opslevel-go workspace ready!"
