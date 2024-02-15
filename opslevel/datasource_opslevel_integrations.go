@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"fmt"
+
 	"github.com/opslevel/opslevel-go/v2024"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -26,10 +28,13 @@ func datasourceIntegrations() *schema.Resource {
 
 func datasourceIntegrationsRead(d *schema.ResourceData, client *opslevel.Client) error {
 	resp, err := client.ListIntegrations(nil)
-	result := resp.Nodes
 	if err != nil {
 		return err
 	}
+	if resp == nil {
+		return fmt.Errorf("unexpected: listing integrations returned nil")
+	}
+	result := resp.Nodes
 
 	count := len(result)
 	ids := make([]string, count)
