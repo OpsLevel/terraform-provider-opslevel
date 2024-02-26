@@ -81,12 +81,13 @@ resource "opslevel_filter" "case_sensitive" {
 
 Required:
 
-- `case_sensitive` (Boolean) Option for determining whether to compare strings case-sensitively.
 - `key` (String) The condition key used by the predicate.
 - `type` (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `matches`, `does_not_match`, `satisfies_jq_expression`
 
 Optional:
 
+- `case_insensitive` (Boolean) Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.
+- `case_sensitive` (Boolean) Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.
 - `key_data` (String) Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.
 - `value` (String) The condition value used by the predicate.
 
