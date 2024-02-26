@@ -23,7 +23,7 @@ jobs:
         run: git fetch --force --tags
       - name: Determine Next Version
         id: next_version
-        uses: zwaldowski/semver-release-action@v3
+        uses: zwaldowski/semver-release-action@v4
         with:
           dry_run: true
           bump: "minor"
