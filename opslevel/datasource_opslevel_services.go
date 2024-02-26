@@ -49,7 +49,12 @@ func datasourceServicesRead(d *schema.ResourceData, client *opslevel.Client) err
 	case "product":
 		services, err = client.ListServicesWithProduct(value, nil)
 	case "tag":
-		services, err = client.ListServicesWithTag(opslevel.NewTagArgs(value), nil)
+		var tagArgs opslevel.TagArgs
+		tagArgs, err = opslevel.NewTagArgs(value)
+		if err != nil {
+			return err
+		}
+		services, err = client.ListServicesWithTag(tagArgs, nil)
 	case "tier":
 		services, err = client.ListServicesWithTier(value, nil)
 	default:
