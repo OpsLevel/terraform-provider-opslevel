@@ -27,7 +27,7 @@ variable "OPSLEVEL_API_TOKEN" {
 }
 
 variable "OPSLEVEL_API_TIMEOUT" {
-  type    = int
+  type    = number
   default = 10
 }
 EOF
