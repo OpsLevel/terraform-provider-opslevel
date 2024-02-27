@@ -20,8 +20,9 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/OpsLevel/OpsLevel",
-		Debug:   debug,
+		Address:         "registry.terraform.io/OpsLevel/OpsLevel",
+		Debug:           debug,
+		ProtocolVersion: 6,
 	}
 	err := providerserver.Serve(context.Background(), opslevel.New(version), opts)
 	if err != nil {
