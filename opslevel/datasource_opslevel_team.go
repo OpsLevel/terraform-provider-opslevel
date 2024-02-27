@@ -1,4 +1,4 @@
-// package opslevel
+package opslevel
 
 // import (
 // 	"github.com/opslevel/opslevel-go/v2024"

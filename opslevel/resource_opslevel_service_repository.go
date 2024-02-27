@@ -1,4 +1,4 @@
-// package opslevel
+package opslevel
 
 // import (
 // 	"strings"

@@ -1,3 +1,3 @@
-// package opslevel
+package opslevel
 
-// var version string = "dev"
+var version string = "dev"

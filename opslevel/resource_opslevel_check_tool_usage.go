@@ -1,4 +1,4 @@
-// package opslevel
+package opslevel
 
 // import (
 // 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
