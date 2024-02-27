@@ -1,19 +1,17 @@
 package opslevel
 
-// import (
-// 	"fmt"
-// 	"sort"
-// 	"strconv"
-// 	"strings"
-// 	"time"
-
-// 	"github.com/mitchellh/mapstructure"
-// 	"github.com/rs/zerolog/log"
-
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+import (
+	// "fmt"
+	// "sort"
+	"strconv"
+	// "strings"
+	"time"
+	// "github.com/mitchellh/mapstructure"
+	// "github.com/rs/zerolog/log"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	// "github.com/opslevel/opslevel-go/v2024"
+)
 
 // func cleanerString(s string) string {
 // 	return strings.TrimSpace(strings.ToLower(s))
@@ -34,13 +32,13 @@ package opslevel
 
 // var DefaultPredicateDescription = "A condition that should be satisfied."
 
-// func timeID() string {
-// 	return strconv.FormatInt(time.Now().Unix(), 10)
-// }
+func timeID() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
+}
 
-// func timeLastUpdated() string {
-// 	return time.Now().Format(time.RFC850)
-// }
+func timeLastUpdated() string {
+	return time.Now().Format(time.RFC850)
+}
 
 // func wrap(handler func(data *schema.ResourceData, client *opslevel.Client) error) func(d *schema.ResourceData, meta interface{}) error {
 // 	return func(data *schema.ResourceData, meta interface{}) error {

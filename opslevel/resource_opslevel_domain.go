@@ -187,11 +187,7 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	data.Id = types.StringValue(string(resource.Id))
-	// NOTE: copy common.go to get timeLastUpdated()
-	// data.LastUpdated - time
-
-	// d.Set("last_updated", timeLastUpdated())
-	// return resourceDomainRead(d, client)
+	data.LastUpdated = types.StringValue(timeLastUpdated())
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
