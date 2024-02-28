@@ -120,7 +120,7 @@ func resourceTriggerDefinitionCreate(d *schema.ResourceData, client *opslevel.Cl
 		input.ResponseTemplate = opslevel.RefOf(responseTemplate)
 	}
 
-	input.Published = opslevel.Bool(d.Get("published").(bool))
+	input.Published = opslevel.RefOf(d.Get("published").(bool))
 
 	if _, ok := d.GetOk("entity_type"); ok {
 		entityType := d.Get("entity_type").(string)
@@ -217,7 +217,7 @@ func resourceTriggerDefinitionUpdate(d *schema.ResourceData, client *opslevel.Cl
 		input.FilterId = opslevel.NewID(d.Get("filter").(string))
 	}
 
-	input.Published = opslevel.Bool(d.Get("published").(bool))
+	input.Published = opslevel.RefOf(d.Get("published").(bool))
 
 	if d.HasChange("access_control") {
 		input.AccessControl = opslevel.RefOf(opslevel.CustomActionsTriggerDefinitionAccessControlEnum(d.Get("access_control").(string)))

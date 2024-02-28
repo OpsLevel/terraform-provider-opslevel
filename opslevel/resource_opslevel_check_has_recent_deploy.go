@@ -62,7 +62,7 @@ func resourceCheckHasRecentDeployUpdate(d *schema.ResourceData, client *opslevel
 	checkUpdateInput := getCheckUpdateInputFrom(d)
 	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckHasRecentDeployUpdateInput](checkUpdateInput)
 	if d.HasChange("days") {
-		input.Days = opslevel.NewInt(d.Get("days").(int))
+		input.Days = opslevel.RefOf(d.Get("days").(int))
 	}
 
 	_, err := client.UpdateCheckHasRecentDeploy(*input)

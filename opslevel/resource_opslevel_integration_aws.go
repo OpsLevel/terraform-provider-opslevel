@@ -61,7 +61,7 @@ func resourceIntegrationAWSCreate(d *schema.ResourceData, client *opslevel.Clien
 		Name:                 opslevel.RefOf(d.Get("name").(string)),
 		IAMRole:              opslevel.RefOf(d.Get("iam_role").(string)),
 		ExternalID:           opslevel.RefOf(d.Get("external_id").(string)),
-		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
+		OwnershipTagOverride: opslevel.RefOf(d.Get("ownership_tag_overrides").(bool)),
 	}
 
 	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
@@ -106,7 +106,7 @@ func resourceIntegrationAWSUpdate(d *schema.ResourceData, client *opslevel.Clien
 		Name:                 opslevel.RefOf(d.Get("name").(string)),
 		IAMRole:              opslevel.RefOf(d.Get("iam_role").(string)),
 		ExternalID:           opslevel.RefOf(d.Get("external_id").(string)),
-		OwnershipTagOverride: opslevel.Bool(d.Get("ownership_tag_overrides").(bool)),
+		OwnershipTagOverride: opslevel.RefOf(d.Get("ownership_tag_overrides").(bool)),
 	}
 
 	input.OwnershipTagKeys = getStringArray(d, "ownership_tag_keys")
