@@ -20,6 +20,8 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
+const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+
 // Ensure the implementation satisfies the provider.Provider interface.
 var _ provider.Provider = &OpslevelProvider{}
 
@@ -134,14 +136,11 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewDomainResource,
-	}
+	return []func() resource.Resource{}
 }
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewDomainDataSource,
 		NewDomainDataSources,
 	}
 }
