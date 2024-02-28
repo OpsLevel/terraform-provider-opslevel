@@ -26,9 +26,6 @@ func testAccPreCheck(t *testing.T) {
 	if os.Getenv("OPSLEVEL_API_TOKEN") == "" {
 		t.Fatal("OPSLEVEL_API_TOKEN must be set for acceptance tests")
 	}
-	// if os.Getenv("OPSLEVEL_API_URL") == "" {
-	// 	t.Fatal("OPSLEVEL_API_URL must be set for acceptance tests")
-	// }
 }
 
 // var (
