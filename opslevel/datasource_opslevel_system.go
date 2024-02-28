@@ -13,7 +13,7 @@ func datasourceSystem() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The id or alias of the system to find.",
 				ForceNew:    true,
-				Optional:    true,
+				Required:    true,
 			},
 			"aliases": {
 				Type:        schema.TypeList,
