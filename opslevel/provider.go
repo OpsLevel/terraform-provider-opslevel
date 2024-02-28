@@ -134,15 +134,12 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewDomainResource,
-	}
+	return []func() resource.Resource{}
 }
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDomainDataSource,
-		NewDomainDataSources,
 	}
 }
 
