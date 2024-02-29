@@ -9,13 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/opslevel/opslevel-go/v2024"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ datasource.DataSource = &DomainDataSource{}
-
-const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+var _ datasource.DataSourceWithConfigure = &DomainDataSource{}
 
 func NewDomainDataSource() datasource.DataSource {
 	return &DomainDataSource{}
@@ -23,7 +20,7 @@ func NewDomainDataSource() datasource.DataSource {
 
 // DomainDataSource defines the data source implementation.
 type DomainDataSource struct {
-	client *opslevel.Client
+	CommonClient
 }
 
 // DomainDataSourceModel describes the data source data model.
@@ -73,26 +70,6 @@ func (d *DomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 		},
 	}
-}
-
-func (d *DomainDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*opslevel.Client)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *opslevel.Client, got: %T. Please report this issue to the provider developers at %s.", req.ProviderData, providerIssueUrl),
-		)
-
-		return
-	}
-
-	d.client = client
 }
 
 func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

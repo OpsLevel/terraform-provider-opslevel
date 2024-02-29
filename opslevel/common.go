@@ -1,16 +1,19 @@
 package opslevel
 
 import (
-	// "fmt"
+	"context"
+	"fmt"
 	// "sort"
 	"strconv"
-	// "strings"
 	"time"
+
+	// "strings"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	// "github.com/mitchellh/mapstructure"
 	// "github.com/rs/zerolog/log"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	// "github.com/opslevel/opslevel-go/v2024"
+	"github.com/opslevel/opslevel-go/v2024"
 )
 
 // func cleanerString(s string) string {
@@ -31,6 +34,33 @@ import (
 // }
 
 // var DefaultPredicateDescription = "A condition that should be satisfied."
+
+const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+
+type CommonClient struct {
+	client *opslevel.Client
+}
+
+// CommonClient defines the data source implementation.
+func (d *CommonClient) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*opslevel.Client)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *opslevel.Client, got: %T. Please report this issue to the provider developers at %s.", req.ProviderData, providerIssueUrl),
+		)
+
+		return
+	}
+
+	d.client = client
+}
 
 func timeID() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
