@@ -11,14 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces.
+// Ensure DomainDataSource implements DataSourceWithConfigure interface
 var _ datasource.DataSourceWithConfigure = &DomainDataSource{}
 
 func NewDomainDataSource() datasource.DataSource {
 	return &DomainDataSource{}
 }
 
-// DomainDataSource defines the data source implementation.
+// DomainDataSource manages a Domain data source.
 type DomainDataSource struct {
 	CommonClient
 }
@@ -89,9 +89,6 @@ func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	data.Id = types.StringValue(string(domain.Id))
-
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "read an OpsLevel Domain data source")
 
 	// Save data into Terraform state

@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-//go:embed provider_test_block.tf
-var providerBlock string
-
 func TestAccDomainDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -17,7 +14,7 @@ func TestAccDomainDataSource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Read testing
 			{
-				Config: providerBlock + testAccDomainDataSourceConfig,
+				Config: commonProviderBlock + testAccDomainDataSourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.opslevel_domain.test", "identifier", "my_domain"),
 				),

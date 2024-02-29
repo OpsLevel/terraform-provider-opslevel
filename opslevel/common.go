@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"os"
 	// "sort"
 	"strconv"
 	"time"
@@ -35,13 +36,26 @@ import (
 
 // var DefaultPredicateDescription = "A condition that should be satisfied."
 
-const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+const (
+	providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+	providerFile     = "../tests/provider.tf"
+)
+
+var commonProviderBlock string
+
+func init() {
+	contents, err := os.ReadFile(providerFile)
+	if err != nil {
+		fmt.Printf("Could not read the content in the file due to %v", err)
+	}
+	commonProviderBlock = string(contents)
+}
 
 type CommonClient struct {
 	client *opslevel.Client
 }
 
-// CommonClient defines the data source implementation.
+// Configure sets up the OpsLevel client for datasources and resources
 func (d *CommonClient) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {

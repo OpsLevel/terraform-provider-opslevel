@@ -46,25 +46,34 @@ tasks:
 
   setup:
     desc: Setup linter, formatter, etc. for local testing
-    cmds:
-      - cmd: echo "Installing development tools..."
-        silent: true
+    deps:
+      - echo "Installing development tools..."
       - task: brew-install-jq
       - task: install-changie
       - task: install-gofumpt
       - task: install-golangci-lint
       - task: install-nilaway
+      - task: install-terraform
+      - echo "Development tools installed!"
+    cmds:
       - task: setup-terraform
-      - cmd: echo "Development tools installed!"
-        silent: true
       - task: workspace
 
   setup-terraform:
-    desc: Setup env and tools
+    desc: Build OpsLevel terraform provider and run terraform init in {{.WORKSPACE_DIR}}
     aliases: ["setup-tf", "tf-setup", "terraform-setup"]
     cmds:
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+
+  setup-terraform-from:
+    internal: true
+    cmds:
       - task: terraform-build
-      - task: terraform-init
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.SETUP_DIR}}" }
+    requires:
+      vars: [SETUP_DIR]
 
   terraform-apply:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -92,8 +101,16 @@ tasks:
     aliases: ["clean"]
     prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
     cmds:
-      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-clean-no-prompt:
+    internal: true
+    cmds:
+      - cmd: rm -rf {{.CLEAN_DIR}}/*.tfstate {{.CLEAN_DIR}}/.terraform.lock.hcl {{.CLEAN_DIR}}/./terraform.* {{.CLEAN_DIR}}/.terraform/
         ignore_error: true
+    requires:
+      vars: [CLEAN_DIR]
 
   terraform-destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -104,15 +121,24 @@ tasks:
         vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-init:
-    dir: "{{.WORKSPACE_DIR}}"
     desc: Initialize terraform workspace
     aliases: ["init"]
     cmds:
-      - task: install-terraform
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-init-from:
+    dir: "{{.INIT_DIR}}"
+    internal: true
+    cmds:
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.INIT_DIR}}" }
       - './make_backend_tf.sh'
       - touch main.tf
       - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.INIT_DIR}}" }
+    requires:
+      vars: [INIT_DIR]
 
   terraform-plan:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
@@ -127,14 +153,9 @@ tasks:
     env:
       TF_ACC: true
       TF_VAR_OPSLEVEL_API_URL: https://app.opslevel.com
-    deps:
-      - setup-terraform
     cmds:
-      - cmd: rm {{.TEST_DIR}}/.terraform.lock.hcl || true
-        silent: true
-      - cmd: ln -s {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.TEST_DIR}} || true
-        silent: true
-      - terraform -chdir={{.TEST_DIR}} init
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.TEST_DIR}}" }
       - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN terraform -chdir={{.TEST_DIR}} test
       - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
     requires:
