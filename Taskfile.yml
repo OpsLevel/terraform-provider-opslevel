@@ -8,6 +8,7 @@ vars:
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
   WORKSPACE_DIR: "workspace"
+  TEST_DIR: "tests"
 
 tasks:
   ci:
@@ -126,7 +127,15 @@ tasks:
     env:
       TF_ACC: true
       TF_VAR_OPSLEVEL_API_URL: https://app.opslevel.com
+    deps:
+      - setup-terraform
     cmds:
+      - cmd: rm {{.TEST_DIR}}/.terraform.lock.hcl || true
+        silent: true
+      - cmd: ln -s {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.TEST_DIR}} || true
+        silent: true
+      - terraform -chdir={{.TEST_DIR}} init
+      - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN terraform -chdir={{.TEST_DIR}} test
       - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
     requires:
       vars: [OPSLEVEL_API_TOKEN]
