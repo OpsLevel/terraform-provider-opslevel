@@ -125,9 +125,11 @@ tasks:
     desc: Run tests
     env:
       TF_ACC: true
-      OPSLEVEL_API_URL: https://app.opslevel.com
+      TF_VAR_OPSLEVEL_API_URL: https://app.opslevel.com
     cmds:
-      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
+      - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
 
   workspace:
     desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
