@@ -1,0 +1,4 @@
+kind: Feature
+body: Add support for locked property assignments and allowed_in_config_files property
+  definitions
+time: 2024-03-01T12:33:35.980507-05:00
