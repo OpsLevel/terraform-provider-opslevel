@@ -10,6 +10,11 @@ func datasourcePropertyDefinitions() *schema.Resource {
 	return &schema.Resource{
 		Read: wrap(datasourcePropertyDefinitionsRead),
 		Schema: map[string]*schema.Schema{
+			"allowed_in_config_files": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeBool},
+			},
 			"ids": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -46,12 +51,14 @@ func datasourcePropertyDefinitionsRead(d *schema.ResourceData, client *opslevel.
 	}
 
 	count := len(resources.Nodes)
+	allowedInConfigFiles := make([]bool, count)
 	ids := make([]string, count)
 	names := make([]string, count)
 	descriptions := make([]string, count)
 	schemas := make([]string, count)
 	propertyDisplayStatuses := make([]string, count)
 	for i, item := range resources.Nodes {
+		allowedInConfigFiles[i] = item.AllowedInConfigFiles
 		ids[i] = string(item.Id)
 		names[i] = item.Name
 		descriptions[i] = item.Description
@@ -60,6 +67,7 @@ func datasourcePropertyDefinitionsRead(d *schema.ResourceData, client *opslevel.
 	}
 
 	d.SetId(timeID())
+	d.Set("allowed_in_config_files", allowedInConfigFiles)
 	d.Set("ids", ids)
 	d.Set("names", names)
 	d.Set("descriptions", descriptions)
