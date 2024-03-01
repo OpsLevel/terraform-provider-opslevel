@@ -10,6 +10,11 @@ func datasourcePropertyDefinition() *schema.Resource {
 	return &schema.Resource{
 		Read: wrap(datasourcePropertyDefinitionRead),
 		Schema: map[string]*schema.Schema{
+			"allowed_in_config_files": {
+				Type:        schema.TypeBool,
+				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
+				Required:    true,
+			},
 			"identifier": {
 				Type:        schema.TypeString,
 				Description: "The id or alias of the property definition to find.",
@@ -50,6 +55,9 @@ func datasourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.C
 
 	d.SetId(string(resource.Id))
 
+	if err := d.Set("allowed_in_config_files", resource.AllowedInConfigFiles); err != nil {
+		return err
+	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
