@@ -31,7 +31,7 @@ func resourcePropertyAssignment() *schema.Resource {
 			},
 			"locked": {
 				Type:        schema.TypeBool,
-				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
+				Description: "Locked = true if the property has been set in opslevel.yml.",
 				Computed:    true,
 			},
 			"owner": {
