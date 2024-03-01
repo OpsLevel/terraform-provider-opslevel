@@ -13,7 +13,7 @@ func datasourcePropertyDefinition() *schema.Resource {
 			"allowed_in_config_files": {
 				Type:        schema.TypeBool,
 				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
-				Required:    true,
+				Computed:    true,
 			},
 			"identifier": {
 				Type:        schema.TypeString,
