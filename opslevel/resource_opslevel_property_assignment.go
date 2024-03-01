@@ -29,6 +29,11 @@ func resourcePropertyAssignment() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 			},
+			"locked": {
+				Type:        schema.TypeBool,
+				Description: "Locked = true if the property has been set in opslevel.yml.",
+				Computed:    true,
+			},
 			"owner": {
 				Type:        schema.TypeString,
 				Description: "The ID or alias of the entity that the property has been assigned to.",
@@ -84,6 +89,9 @@ func resourcePropertyAssignmentRead(d *schema.ResourceData, client *opslevel.Cli
 	d.SetId(fmt.Sprintf("%s:%s", ownerId, definitionId))
 
 	if err := d.Set("definition", d.Get("definition")); err != nil {
+		return err
+	}
+	if err := d.Set("locked", d.Get("locked")); err != nil {
 		return err
 	}
 	if err := d.Set("owner", d.Get("owner")); err != nil {

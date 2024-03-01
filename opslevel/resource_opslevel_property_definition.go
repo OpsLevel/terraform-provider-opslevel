@@ -17,6 +17,13 @@ func resourcePropertyDefinition() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
+			"allowed_in_config_files": {
+				Type:        schema.TypeBool,
+				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
+				// not required on API end - but using required here will prevent us from needing to do the hack by using
+				// 2 booleans while we wait to migrate to the next SDK version.
+				Required: true,
+			},
 			"last_updated": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -54,6 +61,7 @@ func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.C
 		return err
 	}
 	input := opslevel.PropertyDefinitionInput{
+		AllowedInConfigFiles:  opslevel.RefOf(d.Get("allowed_in_config_files").(bool)),
 		Name:                  opslevel.RefOf(d.Get("name").(string)),
 		Description:           opslevel.RefOf(d.Get("description").(string)),
 		Schema:                newJSONSchema,
@@ -76,6 +84,9 @@ func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Cli
 		return err
 	}
 
+	if err := d.Set("allowed_in_config_files", resource.AllowedInConfigFiles); err != nil {
+		return err
+	}
 	if err := d.Set("name", resource.Name); err != nil {
 		return err
 	}
@@ -99,6 +110,7 @@ func resourcePropertyDefinitionUpdate(d *schema.ResourceData, client *opslevel.C
 		return err
 	}
 	input := opslevel.PropertyDefinitionInput{
+		AllowedInConfigFiles:  opslevel.RefOf(d.Get("allowed_in_config_files").(bool)),
 		Name:                  opslevel.RefOf(d.Get("name").(string)),
 		Description:           opslevel.RefOf(d.Get("description").(string)),
 		Schema:                newJSONSchema,
