@@ -8,6 +8,7 @@ vars:
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
   WORKSPACE_DIR: "workspace"
+  DEBUG_LOG: debug.log
   TEST_DIR: "tests"
 
 tasks:
@@ -47,14 +48,12 @@ tasks:
   setup:
     desc: Setup linter, formatter, etc. for local testing
     deps:
-      - echo "Installing development tools..."
       - task: brew-install-jq
       - task: install-changie
       - task: install-gofumpt
       - task: install-golangci-lint
       - task: install-nilaway
       - task: install-terraform
-      - echo "Development tools installed!"
     cmds:
       - task: setup-terraform
       - task: workspace
@@ -95,6 +94,26 @@ tasks:
       - chmod +x {{.BINARY}}
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
+
+  debug-start:
+    desc: Start headless debug
+    aliases: ["debug"]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+    cmds:
+      - defer: rm {{.BINARY}}
+      - go build -gcflags="all=-N -l" -ldflags="-s -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
+      - dlv exec --accept-multiclient --continue --headless {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
+
+  debug-attach:
+    desc: Attach to headless debug sessions
+    vars:
+      LOCAL_PORT:
+        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f2 -f3
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d':' -f2
+    cmds:
+      - dlv connect {{.LOCAL_PORT}}
 
   terraform-clean:
     desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
@@ -150,13 +169,20 @@ tasks:
 
   test:
     desc: Run tests
+    cmds:
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}" }
+      # - task: run-acceptance-tests
+
+  run-acceptance-tests:
+    internal: true
     env:
       TF_ACC: true
       TF_VAR_OPSLEVEL_API_URL: https://app.opslevel.com
     cmds:
-      - task: setup-terraform-from
-        vars: { SETUP_DIR: "{{.TEST_DIR}}" }
-      - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN terraform -chdir={{.TEST_DIR}} test
+      - echo "Running acceptance tests..."
       - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
     requires:
       vars: [OPSLEVEL_API_TOKEN]
