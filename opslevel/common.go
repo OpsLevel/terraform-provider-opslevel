@@ -35,10 +35,7 @@ import (
 
 // var DefaultPredicateDescription = "A condition that should be satisfied."
 
-const (
-	providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
-	providerFile     = "../tests/provider.tf"
-)
+const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
 
 type CommonClient struct {
 	client *opslevel.Client
@@ -56,7 +53,7 @@ func (d *CommonClient) Configure(_ context.Context, req datasource.ConfigureRequ
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *opslevel.Client, got: %T. Please report this issue to the provider developers at %s.", req.ProviderData, providerIssueUrl),
+			fmt.Sprintf("expected *opslevel.Client, got: %T. Please report this issue to the provider developers at %s.", req.ProviderData, providerIssueUrl),
 		)
 
 		return

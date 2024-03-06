@@ -89,59 +89,15 @@ func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	data.Id = types.StringValue(string(domain.Id))
+	domainAliases, aliasesDiag := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
+	resp.Diagnostics.Append(aliasesDiag...)
+
+	data.Aliases = domainAliases
+	data.Name = types.StringValue(string(domain.Name))
+	data.Description = types.StringValue(string(domain.Description))
+	data.Owner = types.StringValue(string(domain.Owner.Id()))
 	tflog.Trace(ctx, "read an OpsLevel Domain data source")
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
-
-// func datasourceDomain() *schema.Resource {
-// 	return &schema.Resource{
-// 		Read: wrap(datasourceDomainRead),
-// 		Schema: map[string]*schema.Schema{
-// 			"identifier": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id or alias of the domain to find.",
-// 				ForceNew:    true,
-// 				Optional:    true,
-// 			},
-// 			"aliases": {
-// 				Type:        schema.TypeList,
-// 				Description: "The aliases of the domain.",
-// 				Computed:    true,
-// 				Elem:        &schema.Schema{Type: schema.TypeString},
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The name of the domain.",
-// 				Computed:    true,
-// 			},
-// 			"description": {
-// 				Type:        schema.TypeString,
-// 				Description: "The description of the domain.",
-// 				Computed:    true,
-// 			},
-// 			"owner": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the team that owns the domain.",
-// 				Computed:    true,
-// 			},
-// 		},
-// 	}
-// }
-
-// func datasourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	identifier := d.Get("identifier").(string)
-// 	resource, err := client.GetDomain(identifier)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	d.SetId(string(resource.Id))
-// 	d.Set("aliases", resource.Aliases)
-// 	d.Set("name", resource.Name)
-// 	d.Set("description", resource.Description)
-// 	d.Set("owner", resource.Owner.Id())
-
-// 	return nil
-// }
