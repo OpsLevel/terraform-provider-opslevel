@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"os"
 	// "sort"
 	"strconv"
 	"time"
@@ -40,16 +39,6 @@ const (
 	providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
 	providerFile     = "../tests/provider.tf"
 )
-
-var commonProviderBlock string
-
-func init() {
-	contents, err := os.ReadFile(providerFile)
-	if err != nil {
-		fmt.Printf("Could not read the content in the file due to %v", err)
-	}
-	commonProviderBlock = string(contents)
-}
 
 type CommonClient struct {
 	client *opslevel.Client
