@@ -53,10 +53,10 @@ tasks:
       - task: install-gofumpt
       - task: install-golangci-lint
       - task: install-nilaway
-      - task: setup-terraform
       - cmd: echo "Development tools installed!"
         silent: true
       - task: workspace
+      - task: setup-terraform
 
   setup-terraform:
     desc: Setup env and tools
