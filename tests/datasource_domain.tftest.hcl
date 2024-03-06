@@ -1,5 +1,5 @@
 mock_provider "opslevel" {
-  alias = "fake"
+  alias  = "fake"
   source = "./mock_datasource"
 }
 

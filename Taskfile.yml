@@ -315,7 +315,7 @@ tasks:
     desc: Run "terraform validate" in current directory
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+        vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
 
   update-opslevel-go:
     internal: true
