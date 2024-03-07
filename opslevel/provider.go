@@ -109,9 +109,7 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 
 	// Configuration values are now available.
 	tflog.Debug(ctx, "Setting opslevel client API token...")
-	if data.ApiToken.IsNull() {
-		configApiToken(&data, resp)
-	}
+	configApiToken(&data, resp)
 	tflog.Debug(ctx, "opslevel client API token is set")
 
 	tflog.Debug(ctx, "Setting opslevel client API endpoint URL...")
