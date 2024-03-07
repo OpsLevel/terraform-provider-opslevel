@@ -113,15 +113,11 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 	tflog.Debug(ctx, "opslevel client API token is set")
 
 	tflog.Debug(ctx, "Setting opslevel client API endpoint URL...")
-	if data.ApiUrl.IsNull() {
-		configApiUrl(&data)
-	}
+	configApiUrl(&data)
 	tflog.Debug(ctx, "opslevel client API endpoint URL is set")
 
 	tflog.Debug(ctx, "Setting opslevel client API timeout...")
-	if data.ApiTimeout.IsNull() {
-		configApiTimeOut(&data, resp)
-	}
+	configApiTimeOut(&data, resp)
 	tflog.Debug(ctx, "opslevel client API timeout is set")
 
 	opts := []opslevel.Option{
