@@ -7,3 +7,29 @@ mock_data "opslevel_domain" {
     owner       = null
   }
 }
+
+mock_data "opslevel_domains" {
+  defaults = {
+    # id intentionally omitted - will be assigned a random string
+    domains = [
+      {
+        aliases = [
+          "mock-alias-one",
+          "mock-alias-two"
+        ]
+        name        = "mock-domain-name"
+        description = "mock-domain-description"
+        owner       = null
+      },
+      {
+        aliases = [
+          "fake-alias-one",
+          "fake-alias-two"
+        ]
+        name        = "fake-domain-name"
+        description = "fake-domain-description"
+        owner       = null
+      },
+    ]
+  }
+}
