@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -24,8 +25,8 @@ type DomainDataSource struct {
 	CommonClient
 }
 
-// DomainDataSourceModel describes the data source data model.
-type DomainDataSourceModel struct {
+// DomainModel is the model for a domain object.
+type DomainModel struct {
 	Aliases     types.List   `tfsdk:"aliases"`
 	Description types.String `tfsdk:"description"`
 	Id          types.String `tfsdk:"id"`
@@ -33,32 +34,8 @@ type DomainDataSourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-// domainDataSourceModelWithIdentifier needed for a single Domain
-type domainDataSourceModelWithIdentifier struct {
-	Aliases     types.List   `tfsdk:"aliases"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
-	Identifier  types.String `tfsdk:"identifier"`
-	Name        types.String `tfsdk:"name"`
-	Owner       types.String `tfsdk:"owner"`
-}
-
-// newDomainDataSourceModelWithIdentifier used for a single Domain
-func newDomainDataSourceModelWithIdentifier(ctx context.Context, domain opslevel.Domain, identifier types.String) (domainDataSourceModelWithIdentifier, diag.Diagnostics) {
-	domainDataSourceModel, diag := NewDomainDataSourceModel(ctx, domain)
-	domainDataSourceModelWithIdentifier := domainDataSourceModelWithIdentifier{
-		Id:          domainDataSourceModel.Id,
-		Aliases:     domainDataSourceModel.Aliases,
-		Identifier:  identifier,
-		Name:        domainDataSourceModel.Name,
-		Description: domainDataSourceModel.Description,
-		Owner:       domainDataSourceModel.Owner,
-	}
-	return domainDataSourceModelWithIdentifier, diag
-}
-
-func NewDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (DomainDataSourceModel, diag.Diagnostics) {
-	var domainDataSourceModel DomainDataSourceModel
+func NewDomainModel(ctx context.Context, domain opslevel.Domain) (DomainModel, diag.Diagnostics) {
+	var domainDataSourceModel DomainModel
 
 	domainDataSourceModel.Id = types.StringValue(string(domain.Id))
 	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
@@ -110,24 +87,25 @@ func (d *DomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 }
 
 func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data domainDataSourceModelWithIdentifier
-
-	// Read Terraform configuration data into the model
+	var identifier string
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("identifier"), &identifier)...)
+	var data DomainModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	domain, err := d.client.GetDomain(data.Identifier.ValueString())
+	domain, err := d.client.GetDomain(identifier)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
 		return
 	}
-	domainDataModel, diags := newDomainDataSourceModelWithIdentifier(ctx, *domain, data.Identifier)
+	model, diags := NewDomainModel(ctx, *domain)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Domain data source")
 	resp.Diagnostics.Append(diags...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &domainDataModel)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), identifier)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
