@@ -150,7 +150,9 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 }
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewDomainDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {

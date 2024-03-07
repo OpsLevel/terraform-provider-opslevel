@@ -8,6 +8,8 @@ vars:
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
   WORKSPACE_DIR: "workspace"
+  DEBUG_LOG: debug.log
+  TEST_DIR: "tests"
 
 tasks:
   ci:
@@ -45,25 +47,32 @@ tasks:
 
   setup:
     desc: Setup linter, formatter, etc. for local testing
-    cmds:
-      - cmd: echo "Installing development tools..."
-        silent: true
+    deps:
       - task: brew-install-jq
       - task: install-changie
       - task: install-gofumpt
       - task: install-golangci-lint
       - task: install-nilaway
+      - task: install-terraform
+    cmds:
       - task: setup-terraform
-      - cmd: echo "Development tools installed!"
-        silent: true
       - task: workspace
 
   setup-terraform:
-    desc: Setup env and tools
+    desc: Build OpsLevel terraform provider and run terraform init in {{.WORKSPACE_DIR}}
     aliases: ["setup-tf", "tf-setup", "terraform-setup"]
     cmds:
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+
+  setup-terraform-from:
+    internal: true
+    cmds:
       - task: terraform-build
-      - task: terraform-init
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.SETUP_DIR}}" }
+    requires:
+      vars: [SETUP_DIR]
 
   terraform-apply:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -86,13 +95,41 @@ tasks:
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
+  debug-start:
+    desc: Start headless debug
+    aliases: ["debug"]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+    cmds:
+      - defer: rm {{.BINARY}}
+      - go build -gcflags="all=-N -l" -ldflags="-s -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
+      - dlv exec --accept-multiclient --continue --headless {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
+
+  debug-attach:
+    desc: Attach to headless debug sessions
+    vars:
+      LOCAL_PORT:
+        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f2 -f3
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d':' -f2
+    cmds:
+      - dlv connect {{.LOCAL_PORT}}
+
   terraform-clean:
     desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
     aliases: ["clean"]
     prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
     cmds:
-      - cmd: rm -rf *.tfstate .terraform.lock.hcl ./terraform.* .terraform/
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-clean-no-prompt:
+    internal: true
+    cmds:
+      - cmd: rm -rf {{.CLEAN_DIR}}/*.tfstate {{.CLEAN_DIR}}/.terraform.lock.hcl {{.CLEAN_DIR}}/./terraform.* {{.CLEAN_DIR}}/.terraform/
         ignore_error: true
+    requires:
+      vars: [CLEAN_DIR]
 
   terraform-destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -103,15 +140,24 @@ tasks:
         vars: { TF_COMMAND: "destroy -auto-approve", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-init:
-    dir: "{{.WORKSPACE_DIR}}"
     desc: Initialize terraform workspace
     aliases: ["init"]
     cmds:
-      - task: install-terraform
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-init-from:
+    dir: "{{.INIT_DIR}}"
+    internal: true
+    cmds:
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.INIT_DIR}}" }
       - './make_backend_tf.sh'
       - touch main.tf
       - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.INIT_DIR}}" }
+    requires:
+      vars: [INIT_DIR]
 
   terraform-plan:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
@@ -123,10 +169,20 @@ tasks:
 
   test:
     desc: Run tests
+    cmds:
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}" }
+      # - task: run-acceptance-tests
+
+  run-acceptance-tests:
+    internal: true
     env:
       TF_ACC: true
       TF_VAR_OPSLEVEL_API_URL: https://app.opslevel.com
     cmds:
+      - echo "Running acceptance tests..."
       - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
     requires:
       vars: [OPSLEVEL_API_TOKEN]
@@ -259,7 +315,7 @@ tasks:
     desc: Run "terraform validate" in current directory
     cmds:
       - task: terraform-command
-        vars: { TF_COMMAND: "validate", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+        vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
 
   update-opslevel-go:
     internal: true
