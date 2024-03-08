@@ -9,6 +9,7 @@ import (
 
 	// "strings"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	// "github.com/mitchellh/mapstructure"
 	// "github.com/rs/zerolog/log"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -36,6 +37,31 @@ import (
 // var DefaultPredicateDescription = "A condition that should be satisfied."
 
 const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
+
+type CommonResourceClient struct {
+	client *opslevel.Client
+}
+
+// Configure sets up the OpsLevel client for datasources and resources
+func (d *CommonResourceClient) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*opslevel.Client)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("expected *opslevel.Client, got: %T please report this issue to the provider developers at %s.", req.ProviderData, providerIssueUrl),
+		)
+
+		return
+	}
+
+	d.client = client
+}
 
 type CommonClient struct {
 	client *opslevel.Client

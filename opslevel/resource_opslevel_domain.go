@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	// "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,9 +15,9 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.Resource = &DomainResource{}
+var _ resource.ResourceWithConfigure = &DomainResource{}
 
-// _ resource.ResourceWithImportState = &DomainResource{}
+var _ resource.ResourceWithImportState = &DomainResource{}
 
 func NewDomainResource() resource.Resource {
 	return &DomainResource{}
@@ -26,7 +25,7 @@ func NewDomainResource() resource.Resource {
 
 // DomainResource defines the resource implementation.
 type DomainResource struct {
-	client *opslevel.Client
+	CommonResourceClient
 }
 
 // DomainResourceModel describes the resource data model.
@@ -86,26 +85,6 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	}
 }
 
-func (r *DomainResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*opslevel.Client)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *opslevel.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	r.client = client
-}
-
 func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data DomainResourceModel
 
@@ -130,10 +109,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	data.Id = types.StringValue(string(resource.Id))
 	data.LastUpdated = types.StringValue(timeLastUpdated())
 
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a domain resource")
-
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -219,131 +195,3 @@ func (r *DomainResource) Delete(ctx context.Context, req resource.DeleteRequest,
 func (r *DomainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
-
-// func resourceDomain() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a domain",
-// 		Create:      wrap(resourceDomainCreate),
-// 		Read:        wrap(resourceDomainRead),
-// 		Update:      wrap(resourceDomainUpdate),
-// 		Delete:      wrap(resourceDomainDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"aliases": {
-// 				Type:        schema.TypeList,
-// 				Description: "The aliases of the domain.",
-// 				Computed:    true,
-// 				Elem:        &schema.Schema{Type: schema.TypeString},
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The name for the domain.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"description": {
-// 				Type:        schema.TypeString,
-// 				Description: "The description for the domain.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 			"owner": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the team that owns the domain.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 			"note": {
-// 				Type:        schema.TypeString,
-// 				Description: "Additional information about the domain.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 		},
-// 	}
-// }
-
-// func resourceDomainCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	resource, err := client.CreateDomain(opslevel.DomainInput{
-// 		Name:        GetString(d, "name"),
-// 		Description: GetString(d, "description"),
-// 		OwnerId:     opslevel.NewID(d.Get("owner").(string)),
-// 		Note:        GetString(d, "note"),
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
-// 	return resourceDomainRead(d, client)
-// }
-
-// func resourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-
-// 	resource, err := client.GetDomain(id)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if err := d.Set("aliases", resource.Aliases); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("name", resource.Name); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("description", resource.Description); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("owner", resource.Owner.Id()); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("note", resource.Note); err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func resourceDomainUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-
-// 	input := opslevel.DomainInput{}
-
-// 	if d.HasChange("name") {
-// 		input.Name = GetString(d, "name")
-// 	}
-// 	if d.HasChange("description") {
-// 		input.Description = GetString(d, "description")
-// 	}
-// 	if d.HasChange("owner") {
-// 		input.OwnerId = opslevel.NewID(d.Get("owner").(string))
-// 	}
-// 	if d.HasChange("note") {
-// 		input.Note = GetString(d, "note")
-// 	}
-
-// 	_, err := client.UpdateDomain(id, input)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	d.Set("last_updated", timeLastUpdated())
-// 	return resourceDomainRead(d, client)
-// }
-
-// func resourceDomainDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeleteDomain(id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
