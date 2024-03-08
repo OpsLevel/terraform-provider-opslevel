@@ -55,8 +55,8 @@ tasks:
       - task: install-nilaway
       - task: install-terraform
     cmds:
-      - task: setup-terraform
       - task: workspace
+      - task: setup-terraform
 
   setup-terraform:
     desc: Build OpsLevel terraform provider and run terraform init in {{.WORKSPACE_DIR}}
@@ -85,7 +85,6 @@ tasks:
   terraform-build:
     desc: Build local opslevel terraform provider
     aliases: ["build"]
-    platforms: [darwin]
     vars:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
       LOCATION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"

@@ -63,12 +63,12 @@ func (d *CommonResourceClient) Configure(ctx context.Context, req resource.Confi
 	d.client = client
 }
 
-type CommonClient struct {
+type CommonDataSourceClient struct {
 	client *opslevel.Client
 }
 
 // Configure sets up the OpsLevel client for datasources and resources
-func (d *CommonClient) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *CommonDataSourceClient) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
