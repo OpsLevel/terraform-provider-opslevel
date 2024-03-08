@@ -20,6 +20,8 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
+const defaultApiTimeout = int64(30)
+
 // Ensure the implementation satisfies the provider.Provider interface.
 var _ provider.Provider = &OpslevelProvider{}
 
@@ -60,21 +62,8 @@ func (p *OpslevelProvider) Schema(ctx context.Context, req provider.SchemaReques
 	}
 }
 
-func (p *OpslevelProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data OpslevelProviderModel
-	defaultApiUrl := "https://api.opslevel.com/"
-	defaultApiTimeout := 10
-	tflog.Info(ctx, "Initializing opslevel client")
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Configuration values are now available.
-	tflog.Debug(ctx, "Setting opslevel client API token...")
-	if data.ApiToken.ValueString() == "" {
+func configApiToken(data *OpslevelProviderModel, resp *provider.ConfigureResponse) {
+	if data.ApiUrl.IsNull() || data.ApiToken.Equal(types.StringValue("")) {
 		if apiToken, ok := os.LookupEnv("OPSLEVEL_API_TOKEN"); ok {
 			data.ApiToken = types.StringValue(apiToken)
 		} else {
@@ -85,33 +74,61 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 			)
 		}
 	}
-	tflog.Debug(ctx, "opslevel client API token is set")
+}
 
-	tflog.Debug(ctx, "Setting opslevel client API endpoint URL...")
-	if data.ApiUrl.IsNull() {
+func configApiUrl(data *OpslevelProviderModel) {
+	if data.ApiUrl.IsNull() || data.ApiUrl.Equal(types.StringValue("")) {
 		if apiUrl, ok := os.LookupEnv("OPSLEVEL_API_URL"); ok {
 			data.ApiUrl = types.StringValue(apiUrl)
 		} else {
-			data.ApiUrl = types.StringValue(defaultApiUrl)
+			data.ApiUrl = types.StringValue("https://api.opslevel.com/")
 		}
 	}
+}
+
+func configApiTimeOut(data *OpslevelProviderModel, resp *provider.ConfigureResponse) {
+	if data.ApiTimeout.ValueInt64() > 0 {
+		return
+	}
+
+	if apiTimeout, ok := os.LookupEnv("OPSLEVEL_API_TIMEOUT"); ok {
+		if timeout, err := strconv.Atoi(apiTimeout); err == nil {
+			data.ApiTimeout = types.Int64Value(int64(timeout))
+			return
+		}
+	}
+
+	resp.Diagnostics.AddWarning(
+		"Expected OPSLEVEL_API_TIMEOUT to be an int",
+		fmt.Sprintf(
+			"OPSLEVEL_API_TIMEOUT was set but not as an int. The default timeout value of %d seconds will be used.",
+			defaultApiTimeout,
+		),
+	)
+	data.ApiTimeout = types.Int64Value(defaultApiTimeout)
+}
+
+func (p *OpslevelProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data OpslevelProviderModel
+	tflog.Info(ctx, "Initializing opslevel client")
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Configuration values are now available.
+	tflog.Debug(ctx, "Setting opslevel client API token...")
+	configApiToken(&data, resp)
+	tflog.Debug(ctx, "opslevel client API token is set")
+
+	tflog.Debug(ctx, "Setting opslevel client API endpoint URL...")
+	configApiUrl(&data)
 	tflog.Debug(ctx, "opslevel client API endpoint URL is set")
 
 	tflog.Debug(ctx, "Setting opslevel client API timeout...")
-	if data.ApiTimeout.IsNull() {
-		data.ApiTimeout = types.Int64Value(int64(defaultApiTimeout))
-
-		if apiTimeout, ok := os.LookupEnv("OPSLEVEL_API_TIMEOUT"); ok {
-			if timeout, err := strconv.Atoi(apiTimeout); err == nil {
-				data.ApiTimeout = types.Int64Value(int64(timeout))
-			} else {
-				resp.Diagnostics.AddWarning(
-					"Expected OPSLEVEL_API_TIMEOUT to be an int",
-					fmt.Sprintf("OPSLEVEL_API_TIMEOUT was set but not as an int. The default timeout value of %d seconds will be used.", defaultApiTimeout),
-				)
-			}
-		}
-	}
+	configApiTimeOut(&data, resp)
 	tflog.Debug(ctx, "opslevel client API timeout is set")
 
 	opts := []opslevel.Option{
@@ -134,13 +151,13 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewDomainResource,
-	}
+	return []func() resource.Resource{}
 }
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewDomainDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
