@@ -76,17 +76,17 @@ func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
 		return
 	}
-	parsedDomains, diags := parseAllDomains(ctx, domains.Nodes)
+	domainsListValue, diags := allDomainsToListValue(ctx, domains.Nodes)
 	resp.Diagnostics.Append(diags...)
 
-	data.Domains = parsedDomains
+	data.Domains = domainsListValue
 
 	tflog.Trace(ctx, "listed all OpsLevel Domain data sources")
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func parseAllDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (basetypes.ListValue, diag.Diagnostics) {
+func allDomainsToListValue(ctx context.Context, opslevelDomains []opslevel.Domain) (basetypes.ListValue, diag.Diagnostics) {
 	domains := make([]attr.Value, len(opslevelDomains))
 
 	for i, domain := range opslevelDomains {
