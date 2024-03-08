@@ -8,6 +8,7 @@ on:
       - '.github/workflows/tests.yml'
       - 'go.mod'
       - '**.go'
+      - 'tests/**'
 
 jobs:
   test:
