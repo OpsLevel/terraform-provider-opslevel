@@ -28,7 +28,7 @@ type DomainResource struct {
 	CommonResourceClient
 }
 
-// DomainResourceModel describes the resource data model.
+// DomainResourceModel describes the Domain managed resource.
 type DomainResourceModel struct {
 	Aliases     types.List   `tfsdk:"aliases"`
 	Description types.String `tfsdk:"description"`
