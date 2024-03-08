@@ -22,7 +22,7 @@ mock_data "opslevel_domains" {
         owner       = "mock-owner"
       },
       {
-        aliases = []
+        aliases     = []
         name        = "fake-domain-name"
         description = ""
         owner       = null
