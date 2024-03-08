@@ -79,20 +79,20 @@ func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 	parsedDomains, diags := parseAllDomains(ctx, domains.Nodes)
 	resp.Diagnostics.Append(diags...)
 
-	data.Domains = *parsedDomains
+	data.Domains = parsedDomains
 
 	tflog.Trace(ctx, "listed all OpsLevel Domain data sources")
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func parseAllDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (*basetypes.ListValue, diag.Diagnostics) {
+func parseAllDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (basetypes.ListValue, diag.Diagnostics) {
 	domains := make([]attr.Value, len(opslevelDomains))
 
 	for i, domain := range opslevelDomains {
 		domainObject, diags := domainToObject(ctx, domain)
-		if diags.HasError() {
-			return nil, diags
+		if diags != nil && diags.HasError() {
+			return basetypes.NewListNull(domainObjectType), diags
 		}
 		domains[i] = domainObject
 	}
@@ -101,17 +101,17 @@ func parseAllDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (*b
 		domainObjectType,
 		domains,
 	)
-	if diags.HasError() {
-		return nil, diags
+	if diags != nil && diags.HasError() {
+		return basetypes.NewListNull(domainObjectType), diags
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 // domainToObject converts an opslevel.Domain to a basetypes.ObjectValue
 func domainToObject(ctx context.Context, opslevelDomain opslevel.Domain) (basetypes.ObjectValue, diag.Diagnostics) {
 	domainObject, diags := NewDomainDataSourceModel(ctx, opslevelDomain)
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
 		return basetypes.ObjectValue{}, diags
 	}
 
@@ -123,7 +123,7 @@ func domainToObject(ctx context.Context, opslevelDomain opslevel.Domain) (basety
 	domainModel["owner"] = domainObject.Owner
 
 	parsedDomain, diags := types.ObjectValue(domainObjectType.AttrTypes, domainModel)
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
 		return basetypes.ObjectValue{}, diags
 	}
 	return parsedDomain, nil
