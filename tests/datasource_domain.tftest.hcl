@@ -53,4 +53,9 @@ run "datasource_domains_all" {
     condition     = length(data.opslevel_domains.all.domains) == 2
     error_message = "wrong number of owners in opslevel_domains.all.owner"
   }
+
+  assert {
+    condition     = data.opslevel_domains.all.domains[1].description == ""
+    error_message = "wrong number of owners in opslevel_domains.all.owner"
+  }
 }
