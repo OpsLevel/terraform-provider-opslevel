@@ -23,7 +23,7 @@ func NewDomainDataSourcesAll() datasource.DataSource {
 
 // DomainDataSourcesAll manages a list of all Domain data sources.
 type DomainDataSourcesAll struct {
-	CommonClient
+	CommonDataSourceClient
 }
 
 // domainObjectType is derived from DomainDataSourceModel, needed for lists

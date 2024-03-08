@@ -21,7 +21,7 @@ func NewDomainDataSource() datasource.DataSource {
 
 // DomainDataSource manages a Domain data source.
 type DomainDataSource struct {
-	CommonClient
+	CommonDataSourceClient
 }
 
 // DomainDataSourceModel describes the data source data model.
