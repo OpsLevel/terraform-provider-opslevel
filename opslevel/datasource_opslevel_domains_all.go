@@ -15,17 +15,18 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ datasource.DataSourceWithConfigure = &DomainDataSources{}
+var _ datasource.DataSourceWithConfigure = &DomainDataSourcesAll{}
 
-func NewDomainDataSources() datasource.DataSource {
-	return &DomainDataSources{}
+func NewDomainDataSourcesAll() datasource.DataSource {
+	return &DomainDataSourcesAll{}
 }
 
-// DomainDataSources defines the data source implementation.
-type DomainDataSources struct {
+// DomainDataSourcesAll manages a list of all Domain data sources.
+type DomainDataSourcesAll struct {
 	CommonClient
 }
 
+// domainObjectType is derived from DomainDataSourceModel, needed for lists
 var domainObjectType = types.ObjectType{
 	AttrTypes: map[string]attr.Type{
 		"aliases":     types.ListType{ElemType: types.StringType},
@@ -41,11 +42,11 @@ type DomainDataSourcesModel struct {
 	Domains types.List `tfsdk:"domains"`
 }
 
-func (d *DomainDataSources) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *DomainDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_domains"
 }
 
-func (d *DomainDataSources) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *DomainDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "List of all Domain data sources",
@@ -60,7 +61,7 @@ func (d *DomainDataSources) Schema(ctx context.Context, req datasource.SchemaReq
 	}
 }
 
-func (d *DomainDataSources) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data DomainDataSourcesModel
 
 	// Read Terraform configuration data into the model
@@ -75,45 +76,24 @@ func (d *DomainDataSources) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
 		return
 	}
-	parsedDomains, diags := parseDomains(ctx, domains.Nodes)
+	parsedDomains, diags := parseAllDomains(ctx, domains.Nodes)
 	resp.Diagnostics.Append(diags...)
 
 	data.Domains = *parsedDomains
 
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "listed all OpsLevel Domain data sources")
-
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func parseDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (*basetypes.ListValue, diag.Diagnostics) {
+func parseAllDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (*basetypes.ListValue, diag.Diagnostics) {
 	domains := make([]attr.Value, len(opslevelDomains))
 
 	for i, domain := range opslevelDomains {
-		domainModel := make(map[string]attr.Value)
-
-		if len(domain.Aliases) > 0 {
-			aliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
-			if diags.HasError() {
-				return nil, diags
-			}
-			domainModel["aliases"] = aliases
-		} else {
-			domainModel["aliases"] = types.ListNull(types.StringType)
-		}
-
-		domainModel["description"] = types.StringValue(string(domain.Description))
-		domainModel["id"] = types.StringValue(string(domain.Id))
-		domainModel["name"] = types.StringValue(string(domain.Name))
-		domainModel["owner"] = types.StringValue(string(domain.Owner.Id()))
-
-		domainObject, diags := types.ObjectValue(domainObjectType.AttrTypes, domainModel)
+		domainObject, diags := domainToObject(ctx, domain)
 		if diags.HasError() {
 			return nil, diags
 		}
-
 		domains[i] = domainObject
 	}
 
@@ -126,4 +106,25 @@ func parseDomains(ctx context.Context, opslevelDomains []opslevel.Domain) (*base
 	}
 
 	return &result, nil
+}
+
+// domainToObject converts an opslevel.Domain to a basetypes.ObjectValue
+func domainToObject(ctx context.Context, opslevelDomain opslevel.Domain) (basetypes.ObjectValue, diag.Diagnostics) {
+	domainObject, diags := NewDomainDataSourceModel(ctx, opslevelDomain)
+	if diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+
+	domainModel := make(map[string]attr.Value)
+	domainModel["aliases"] = domainObject.Aliases
+	domainModel["description"] = domainObject.Description
+	domainModel["id"] = domainObject.Id
+	domainModel["name"] = domainObject.Name
+	domainModel["owner"] = domainObject.Owner
+
+	parsedDomain, diags := types.ObjectValue(domainObjectType.AttrTypes, domainModel)
+	if diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	return parsedDomain, nil
 }
