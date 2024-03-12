@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -37,6 +38,21 @@ type DomainResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Note        types.String `tfsdk:"note"`
 	Owner       types.String `tfsdk:"owner"`
+}
+
+func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain) (DomainResourceModel, diag.Diagnostics) {
+	var domainResourceModel DomainResourceModel
+
+	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
+	domainResourceModel.Aliases = domainAliases
+	domainResourceModel.Description = types.StringValue(string(domain.Description))
+	domainResourceModel.Id = types.StringValue(string(domain.Id))
+	domainResourceModel.Name = types.StringValue(string(domain.Name))
+	domainResourceModel.Note = types.StringValue(string(domain.Note))
+	domainResourceModel.Owner = types.StringValue(string(domain.Owner.Id()))
+	domainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
+
+	return domainResourceModel, diags
 }
 
 func (r *DomainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -105,13 +121,11 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create domain, got error: %s", err))
 		return
 	}
-	data.Aliases = types.ListNull(types.StringType)
-	data.Id = types.StringValue(string(resource.Id))
-	data.LastUpdated = types.StringValue(timeLastUpdated())
+	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a domain resource")
-	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdDomainResourceModel)...)
 }
 
 func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -162,17 +176,11 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))
 		return
 	}
-	domainAliases, d := types.ListValueFrom(ctx, types.StringType, resource.ManagedAliases)
-	resp.Diagnostics.Append(d...)
-
-	data.Aliases = domainAliases
-	data.Id = types.StringValue(string(resource.Id))
-	data.LastUpdated = types.StringValue(timeLastUpdated())
+	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a domain resource")
-
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)
 }
 
 func (r *DomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
