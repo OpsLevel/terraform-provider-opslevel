@@ -29,7 +29,7 @@ func (v idStringValidator) ValidateString(ctx context.Context, request validator
 
 	value := request.ConfigValue.ValueString()
 
-	if opslevel.IsID(value) {
+	if !opslevel.IsID(value) {
 		response.Diagnostics.AddError("expected a valid id", fmt.Sprintf("a valid id should start with Z2lkOi8v. %s was set to `%s`", request.Path, value))
 	}
 }
