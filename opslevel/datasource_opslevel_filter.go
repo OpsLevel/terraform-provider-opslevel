@@ -54,7 +54,7 @@ func (d *FilterDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				Computed:            true,
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the domain.",
+				Description: "The name of the filter.",
 				Computed:    true,
 			},
 		},
@@ -94,7 +94,7 @@ func (d *FilterDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter FilterModel) (*opslevel.Filter, error) {
 	if filter.Value.Equal(types.StringValue("")) {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 	for _, opslevelFilter := range opslevelFilters {
 		switch filter.Field.ValueString() {
@@ -109,5 +109,5 @@ func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter FilterModel
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find filter with: %s==%s", filter.Field, filter.Value)
+	return nil, fmt.Errorf("unable to find filter with: %s==%s", filter.Field, filter.Value)
 }
