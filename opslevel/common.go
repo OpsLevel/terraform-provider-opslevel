@@ -8,8 +8,13 @@ import (
 	"time"
 
 	// "strings"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
 	// "github.com/mitchellh/mapstructure"
 	// "github.com/rs/zerolog/log"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -320,32 +325,37 @@ func timeLastUpdated() string {
 // 	return output
 // }
 
-// func getDatasourceFilter(required bool, validFieldNames []string) *schema.Schema {
-// 	return &schema.Schema{
-// 		Type:     schema.TypeList,
-// 		ForceNew: true,
-// 		Required: required,
-// 		Optional: !required,
-// 		MaxItems: 1,
-// 		Elem: &schema.Resource{
-// 			Schema: map[string]*schema.Schema{
-// 				"field": {
-// 					Type:         schema.TypeString,
-// 					Description:  "The field of the target resource to filter upon.",
-// 					ForceNew:     true,
-// 					Required:     true,
-// 					ValidateFunc: validation.StringInSlice(validFieldNames, false),
-// 				},
-// 				"value": {
-// 					Type:        schema.TypeString,
-// 					Description: "The field value of the target resource to match.",
-// 					ForceNew:    true,
-// 					Optional:    true,
-// 				},
-// 			},
-// 		},
-// 	}
-// }
+type FilterModel struct {
+	Field types.String `tfsdk:"field"`
+	Value types.String `tfsdk:"value"`
+}
+
+func NewFilterModel(field string, value string) FilterModel {
+	return FilterModel{
+		Field: types.StringValue(string(field)),
+		Value: types.StringValue(string(value)),
+	}
+}
+
+// getDatasourceFilter originally had a "required" bool input parameter - no longer needed
+func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "The filter of the target resource to filter upon.",
+		Attributes: map[string]schema.Attribute{
+			"field": schema.StringAttribute{
+				Description: "The field of the target resource to filter upon.",
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(validFieldNames...),
+				},
+			},
+			"value": schema.StringAttribute{
+				Description: "The field value of the target resource to match.",
+				Optional:    true,
+			},
+		},
+	}
+}
 
 // func flattenTag(tag opslevel.Tag) string {
 // 	return fmt.Sprintf("%s:%s", tag.Key, tag.Value)
