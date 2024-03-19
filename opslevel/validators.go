@@ -13,7 +13,7 @@ type idStringValidator struct{}
 
 // Description describes the validation in plain text formatting.
 func (v idStringValidator) Description(_ context.Context) string {
-	return "value expected to be a string that isn't an empty string"
+	return "id expected to be a string starting with 'Z2lkOi8v'"
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
