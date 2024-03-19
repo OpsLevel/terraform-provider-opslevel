@@ -4,6 +4,27 @@ data "opslevel_domain" "mock_domain" {
 
 data "opslevel_domains" "all" {}
 
+data "opslevel_filter" "name_filter" {
+  filter {
+    field = "name"
+    value = "name-value"
+  }
+}
+
+data "opslevel_filter" "id_filter" {
+  filter {
+    field = "id"
+    value = "Z2lkOi8vb3BzbGV2ZWwvVGllci8yMTAw"
+  }
+}
+
+data "opslevel_filter" "mock_filter" {
+  filter {
+    field = "name"
+    value = "stuff"
+  }
+}
+
 data "opslevel_tier" "mock_tier" {
   filter {
     field = "alias"
