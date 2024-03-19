@@ -31,7 +31,6 @@ tasks:
       - go get -u
       - go mod tidy
       - golangci-lint run --fix
-      - nilaway -fix -test=false ./...
       - task: terraform-format-fix
 
   lint:
@@ -39,7 +38,7 @@ tasks:
     cmds:
       - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
       - golangci-lint run
-      - nilaway -test=false ./...
+      - nilaway -test=false -include-pkgs='github.com/opslevel/terraform-provider-opslevel' ./...
       - task: terraform-validate
       - task: terraform-format-check
 
