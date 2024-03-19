@@ -325,13 +325,14 @@ func timeLastUpdated() string {
 // 	return output
 // }
 
-type FilterModel struct {
+// FilterBlockModel models data for a terraform block - used to filter resources
+type FilterBlockModel struct {
 	Field types.String `tfsdk:"field"`
 	Value types.String `tfsdk:"value"`
 }
 
-func NewFilterModel(field string, value string) FilterModel {
-	return FilterModel{
+func NewFilterBlockModel(field string, value string) FilterBlockModel {
+	return FilterBlockModel{
 		Field: types.StringValue(string(field)),
 		Value: types.StringValue(string(value)),
 	}
