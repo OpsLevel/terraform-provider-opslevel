@@ -351,7 +351,7 @@ func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
 			},
 			"value": schema.StringAttribute{
 				Description: "The field value of the target resource to match.",
-				Optional:    true,
+				Required:    true,
 			},
 		},
 	}
