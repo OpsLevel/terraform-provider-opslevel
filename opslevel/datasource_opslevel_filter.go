@@ -75,13 +75,13 @@ func (d *FilterDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	opslevelFilters, err := d.client.ListFilters(nil)
 	if err != nil {
-		resp.Diagnostics.AddError("TODO", fmt.Sprintf("Unable to read filter datasource, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read filter datasource, got error: %s", err))
 		return
 	}
 
 	opslevelFilter, err := filterOpsLevelFilters(opslevelFilters.Nodes, data.Filter)
 	if err != nil {
-		resp.Diagnostics.AddError("TODO", fmt.Sprintf("Unable to read filter datasource, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read filter datasource, got error: %s", err))
 		return
 	}
 
