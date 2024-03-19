@@ -160,6 +160,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		NewDomainDataSource,
 		NewDomainDataSourcesAll,
+		NewFilterDataSource,
 		NewTierDataSource,
 	}
 }
