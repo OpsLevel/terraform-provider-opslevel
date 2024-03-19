@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -121,7 +122,8 @@ func filterTiers(tiers []opslevel.Tier, filter FilterModel) (*opslevel.Tier, err
 				return &tier, nil
 			}
 		case "index":
-			if filter.Value.Equal(types.Int64Value(int64(tier.Index))) {
+			index := strconv.Itoa(int(tier.Index))
+			if filter.Value.Equal(types.StringValue(index)) {
 				return &tier, nil
 			}
 		case "name":
