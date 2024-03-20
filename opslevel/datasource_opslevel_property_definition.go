@@ -55,7 +55,7 @@ func (d *PropertyDefinitionDataSource) Metadata(ctx context.Context, req datasou
 func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "PropertyDefinition data source",
+		MarkdownDescription: "Data source for Property Definitions",
 
 		Attributes: map[string]schema.Attribute{
 			"allowed_in_config_files": schema.BoolAttribute{
@@ -68,7 +68,7 @@ func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasourc
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{
-				MarkdownDescription: "The id or alias of the property definition to find.",
+				MarkdownDescription: "The id or alias of the property definition",
 				Required:            true,
 			},
 			"id": schema.StringAttribute{

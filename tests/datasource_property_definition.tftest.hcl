@@ -30,7 +30,7 @@ run "datasource_property_definition_mocked_fields" {
 
   assert {
     condition     = data.opslevel_property_definition.mock_property_definition.name == "mock-property-definition-name"
-    error_message = "wrong name in mock opslevel_property_definition mock"
+    error_message = "wrong name in mock opslevel_property_definition"
   }
 
   assert {
