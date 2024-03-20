@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -63,8 +61,7 @@ func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasourc
 				Computed:            true,
 			},
 			"description": schema.StringAttribute{
-				MarkdownDescription: "The display name of the property definition.",
-				Optional:            true,
+				MarkdownDescription: "The description of the property definition.",
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{
@@ -80,12 +77,8 @@ func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasourc
 				Computed:            true,
 			},
 			"property_display_status": schema.StringAttribute{
-				MarkdownDescription: "The display name of the property definition.",
-				Validators: []validator.String{
-					stringvalidator.OneOf(opslevel.AllPropertyDisplayStatusEnum...),
-				},
-				Optional: true,
-				Computed: true,
+				MarkdownDescription: "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
+				Computed:            true,
 			},
 			"schema": schema.StringAttribute{
 				MarkdownDescription: "The schema of the property definition.",

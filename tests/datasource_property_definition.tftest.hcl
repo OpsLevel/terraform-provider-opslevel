@@ -34,6 +34,11 @@ run "datasource_property_definition_mocked_fields" {
   }
 
   assert {
+    condition     = data.opslevel_property_definition.mock_property_definition.property_display_status == "visible"
+    error_message = "wrong property_display_status in mock opslevel_property_definition"
+  }
+
+  assert {
     condition = data.opslevel_property_definition.mock_property_definition.schema == jsonencode(
       {
         "$ref" : "#/$defs/MyProp",
