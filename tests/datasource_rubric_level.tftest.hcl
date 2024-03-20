@@ -19,8 +19,8 @@ run "datasource_rubric_level_mocked_fields" {
   }
 
   assert {
-    condition     = data.opslevel_rubric_level.id_filter.index == 0
-    error_message = "index in opslevel_rubric_level should default to int type 0"
+    condition     = data.opslevel_rubric_level.id_filter.index == 321
+    error_message = "wrong index in opslevel_rubric_level"
   }
 
   assert {

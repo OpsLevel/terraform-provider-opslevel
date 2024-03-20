@@ -19,8 +19,8 @@ run "datasource_tier_mocked_fields" {
   }
 
   assert {
-    condition     = data.opslevel_tier.mock_tier.index == 0
-    error_message = "index in opslevel_tier should default to int type 0"
+    condition     = data.opslevel_tier.mock_tier.index == 321
+    error_message = "wrong index in opslevel_tier"
   }
 
   assert {
