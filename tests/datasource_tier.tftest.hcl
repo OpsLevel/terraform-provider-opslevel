@@ -63,6 +63,22 @@ run "datasource_tier_filter_by_id" {
 
 }
 
+run "datasource_tier_filter_by_index" {
+  providers = {
+    opslevel = opslevel.fake
+  }
+
+  assert {
+    condition     = data.opslevel_tier.index_filter.filter.field == "index"
+    error_message = "filter field should be id"
+  }
+
+  assert {
+    condition     = tonumber(data.opslevel_tier.index_filter.filter.value) == 123
+    error_message = "filter value for opslevel_tier.index_filter should be 123"
+  }
+
+}
 run "datasource_tier_filter_by_name" {
   providers = {
     opslevel = opslevel.fake

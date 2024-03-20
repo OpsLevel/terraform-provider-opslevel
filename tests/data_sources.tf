@@ -30,8 +30,39 @@ data "opslevel_filter" "mock_filter" {
 }
 
 # PropertyDefinition data sources
+
 data "opslevel_property_definition" "mock_property_definition" {
   identifier = "mock-property_definition-alias"
+}
+
+# rubric Level data sources
+
+data "opslevel_rubric_level" "alias_filter" {
+  filter {
+    field = "alias"
+    value = "alias-value"
+  }
+}
+
+data "opslevel_rubric_level" "id_filter" {
+  filter {
+    field = "id"
+    value = "Z2lkOi8vb3BzbGV2ZWwvVGllci8yMTAw"
+  }
+}
+
+data "opslevel_rubric_level" "index_filter" {
+  filter {
+    field = "index"
+    value = 123
+  }
+}
+
+data "opslevel_rubric_level" "name_filter" {
+  filter {
+    field = "name"
+    value = "name-value"
+  }
 }
 
 # Tier data sources
