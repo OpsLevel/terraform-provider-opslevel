@@ -34,7 +34,7 @@ run "datasource_property_definition_mocked_fields" {
   }
 
   assert {
-    condition     = data.opslevel_property_definition.mock_property_definition.schema == jsonencode(
+    condition = data.opslevel_property_definition.mock_property_definition.schema == jsonencode(
       {
         "$ref" : "#/$defs/MyProp",
         "$defs" : {
