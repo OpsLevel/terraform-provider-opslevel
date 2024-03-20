@@ -70,7 +70,7 @@ run "datasource_rubric_level_filter_by_index" {
 
   assert {
     condition     = data.opslevel_rubric_level.index_filter.filter.field == "index"
-    error_message = "filter field should be id"
+    error_message = "filter field should be index"
   }
 
   assert {
