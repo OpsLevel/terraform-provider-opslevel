@@ -106,7 +106,6 @@ func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &tierDataModel)...)
 }
 
-// func filterTiers(levels []opslevel.Tier, field string, value string) (*opslevel.Tier, error) {
 func filterTiers(tiers []opslevel.Tier, filter FilterBlockModel) (*opslevel.Tier, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
