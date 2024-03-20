@@ -1,8 +1,12 @@
+# Domain data sources
+
 data "opslevel_domain" "mock_domain" {
   identifier = "example"
 }
 
 data "opslevel_domains" "all" {}
+
+# Filter data sources
 
 data "opslevel_filter" "name_filter" {
   filter {
@@ -24,6 +28,13 @@ data "opslevel_filter" "mock_filter" {
     value = "stuff"
   }
 }
+
+# PropertyDefinition data sources
+data "opslevel_property_definition" "mock_property_definition" {
+  identifier = "mock-property_definition-alias"
+}
+
+# Tier data sources
 
 data "opslevel_tier" "mock_tier" {
   filter {
