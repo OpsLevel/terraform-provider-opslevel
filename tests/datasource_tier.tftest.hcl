@@ -19,8 +19,8 @@ run "datasource_tier_mocked_fields" {
   }
 
   assert {
-    condition     = data.opslevel_tier.mock_tier.index == 0
-    error_message = "index in opslevel_tier should default to int type 0"
+    condition     = data.opslevel_tier.mock_tier.index == 321
+    error_message = "wrong index in opslevel_tier"
   }
 
   assert {
@@ -63,6 +63,22 @@ run "datasource_tier_filter_by_id" {
 
 }
 
+run "datasource_tier_filter_by_index" {
+  providers = {
+    opslevel = opslevel.fake
+  }
+
+  assert {
+    condition     = data.opslevel_tier.index_filter.filter.field == "index"
+    error_message = "filter field should be id"
+  }
+
+  assert {
+    condition     = tonumber(data.opslevel_tier.index_filter.filter.value) == 123
+    error_message = "filter value for opslevel_tier.index_filter should be 123"
+  }
+
+}
 run "datasource_tier_filter_by_name" {
   providers = {
     opslevel = opslevel.fake

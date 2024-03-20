@@ -50,24 +50,23 @@ func (d *TierDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 func (d *TierDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	validFieldNames := []string{"alias", "id", "index", "name"}
 	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Tier data source",
 
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
-				MarkdownDescription: "Terraform specific identifier.",
+				MarkdownDescription: "The human-friendly, unique identifier for the tier.",
 				Computed:            true,
 			},
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Terraform specific identifier.",
+				MarkdownDescription: "The unique identifier for the tier.",
 				Computed:            true,
 			},
 			"index": schema.Int64Attribute{
-				MarkdownDescription: "Terraform specific identifier.",
+				MarkdownDescription: "The numerical representation of the tier.",
 				Computed:            true,
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the domain.",
+				Description: "The display name of the tier.",
 				Computed:    true,
 			},
 		},
