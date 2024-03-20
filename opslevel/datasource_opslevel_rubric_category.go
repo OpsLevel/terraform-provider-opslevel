@@ -1,73 +1,113 @@
 package opslevel
 
-// import (
-// 	"fmt"
+import (
+	"context"
+	"fmt"
 
-// 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// )
+// Ensure CategoryDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &CategoryDataSource{}
 
-// func datasourceRubricCategory() *schema.Resource {
-// 	return &schema.Resource{
-// 		Read: wrap(datasourceRubricCategoryRead),
-// 		Schema: map[string]*schema.Schema{
-// 			"filter": getDatasourceFilter(true, []string{"id", "name"}),
-// 			"name": {
-// 				Type:     schema.TypeString,
-// 				Computed: true,
-// 			},
-// 		},
-// 	}
-// }
+func NewCategoryDataSource() datasource.DataSource {
+	return &CategoryDataSource{}
+}
 
-// func filterRubricCategories(levels *opslevel.CategoryConnection, field string, value string) (*opslevel.Category, error) {
-// 	if value == "" {
-// 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
-// 	}
+// CategoryDataSource manages a Category data source.
+type CategoryDataSource struct {
+	CommonDataSourceClient
+}
 
-// 	var output opslevel.Category
-// 	found := false
-// 	for _, item := range levels.Nodes {
-// 		switch field {
-// 		case "id":
-// 			if string(item.Id) == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		case "name":
-// 			if item.Name == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		}
-// 		if found {
-// 			break
-// 		}
-// 	}
+// CategoryDataSourceModel describes the data source data model.
+type CategoryDataSourceModel struct {
+	Filter FilterBlockModel `tfsdk:"filter"`
+	Id     types.String     `tfsdk:"id"`
+	Name   types.String     `tfsdk:"name"`
+}
 
-// 	if !found {
-// 		return nil, fmt.Errorf("Unable to find category with: %s==%s", field, value)
-// 	}
-// 	return &output, nil
-// }
+func NewCategoryDataSourceModel(ctx context.Context, category opslevel.Category, filter FilterBlockModel) CategoryDataSourceModel {
+	return CategoryDataSourceModel{
+		Filter: filter,
+		Id:     types.StringValue(string(category.Id)),
+		Name:   types.StringValue(category.Name),
+	}
+}
 
-// func datasourceRubricCategoryRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	results, err := client.ListCategories(nil)
-// 	if err != nil {
-// 		return err
-// 	}
+func (d *CategoryDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_rubric_category"
+}
 
-// 	field := d.Get("filter.0.field").(string)
-// 	value := d.Get("filter.0.value").(string)
+func (d *CategoryDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	validFieldNames := []string{"id", "name"}
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Rubric Category data source",
 
-// 	item, itemErr := filterRubricCategories(results, field, value)
-// 	if itemErr != nil {
-// 		return itemErr
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The ID of this resource.",
+				Computed:            true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name of the rubric category.",
+				Computed:    true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"filter": getDatasourceFilter(validFieldNames),
+		},
+	}
+}
 
-// 	d.SetId(string(item.Id))
-// 	d.Set("name", item.Name)
+func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data CategoryDataSourceModel
 
-// 	return nil
-// }
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	categories, err := d.client.ListCategories(nil)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read rubric_category datasource, got error: %s", err))
+		return
+	}
+
+	category, err := filterRubricCategories(categories.Nodes, data.Filter)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_category datasource, got error: %s", err))
+		return
+	}
+
+	categoryDataModel := NewCategoryDataSourceModel(ctx, *category, data.Filter)
+
+	// Save data into Terraform state
+	tflog.Trace(ctx, "read an OpsLevel Rubric Category data source")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &categoryDataModel)...)
+}
+
+func filterRubricCategories(categories []opslevel.Category, filter FilterBlockModel) (*opslevel.Category, error) {
+	if filter.Value.Equal(types.StringValue("")) {
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
+	}
+	for _, category := range categories {
+		switch filter.Field.ValueString() {
+		case "id":
+			if filter.Value.Equal(types.StringValue(string(category.Id))) {
+				return &category, nil
+			}
+		case "name":
+			if filter.Value.Equal(types.StringValue(category.Name)) {
+				return &category, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("unable to find category with: %s==%s", filter.Field, filter.Value)
+}

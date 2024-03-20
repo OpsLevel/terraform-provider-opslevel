@@ -29,6 +29,20 @@ data "opslevel_filter" "mock_filter" {
   }
 }
 
+data "opslevel_rubric_category" "name_filter" {
+  filter {
+    field = "name"
+    value = "name-value"
+  }
+}
+
+data "opslevel_rubric_category" "id_filter" {
+  filter {
+    field = "id"
+    value = "Z2lkOi8vb3BzbGV2ZWwvVGllci8yMTAw"
+  }
+}
+
 # PropertyDefinition data sources
 
 data "opslevel_property_definition" "mock_property_definition" {
