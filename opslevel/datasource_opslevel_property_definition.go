@@ -72,7 +72,7 @@ func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasourc
 				Required:            true,
 			},
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Terraform specific identifier.",
+				MarkdownDescription: "The ID of this resource.",
 				Computed:            true,
 			},
 			"name": schema.StringAttribute{
