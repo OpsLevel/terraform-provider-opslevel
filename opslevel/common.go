@@ -358,25 +358,25 @@ func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
 	}
 }
 
-// func flattenTag(tag opslevel.Tag) string {
-// 	return fmt.Sprintf("%s:%s", tag.Key, tag.Value)
-// }
+func flattenTag(tag opslevel.Tag) string {
+	return fmt.Sprintf("%s:%s", tag.Key, tag.Value)
+}
 
-// func flattenTagArray(tags []opslevel.Tag) []string {
-// 	output := []string{}
-// 	for _, tag := range tags {
-// 		output = append(output, flattenTag(tag))
-// 	}
-// 	return output
-// }
+func flattenTagArray(tags []opslevel.Tag) []string {
+	output := []string{}
+	for _, tag := range tags {
+		output = append(output, flattenTag(tag))
+	}
+	return output
+}
 
-// func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryConnection) []string {
-// 	output := []string{}
-// 	for _, rep := range repositories.Edges {
-// 		output = append(output, string(rep.Node.Id))
-// 	}
-// 	return output
-// }
+func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryConnection) []string {
+	output := []string{}
+	for _, rep := range repositories.Edges {
+		output = append(output, string(rep.Node.Id))
+	}
+	return output
+}
 
 // func flattenMembersArray(members *opslevel.UserConnection) []string {
 // 	output := []string{}

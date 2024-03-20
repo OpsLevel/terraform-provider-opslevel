@@ -163,6 +163,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewDomainDataSourcesAll,
 		NewFilterDataSource,
 		NewPropertyDefinitionDataSource,
+		NewServiceDataSource,
 		NewTierDataSource,
 	}
 }
