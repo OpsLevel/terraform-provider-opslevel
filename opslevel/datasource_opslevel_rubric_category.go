@@ -94,7 +94,7 @@ func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 func filterRubricCategories(categories []opslevel.Category, filter FilterBlockModel) (*opslevel.Category, error) {
 	if filter.Value.Equal(types.StringValue("")) {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 	for _, category := range categories {
 		switch filter.Field.ValueString() {
@@ -109,5 +109,5 @@ func filterRubricCategories(categories []opslevel.Category, filter FilterBlockMo
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find category with: %s==%s", filter.Field, filter.Value)
+	return nil, fmt.Errorf("unable to find category with: %s==%s", filter.Field, filter.Value)
 }
