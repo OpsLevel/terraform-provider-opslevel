@@ -72,12 +72,12 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Computed:            true,
 			},
 			"id": schema.StringAttribute{
-				Description: "Terraform specific identifier.",
+		        	Description: "The ID of this resource."
 				Computed:    true,
 			},
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the System.",
-				Optional:    true,
+                                Required:    true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the System.",
