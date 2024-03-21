@@ -44,8 +44,19 @@ data "opslevel_rubric_category" "id_filter" {
 }
 
 # PropertyDefinition data sources
+
 data "opslevel_property_definition" "mock_property_definition" {
   identifier = "mock-property_definition-alias"
+}
+
+# Service data sources
+
+data "opslevel_service" "mock_service_with_alias" {
+  alias = "mock-service-alias"
+}
+
+data "opslevel_service" "mock_service_with_id" {
+  id = "Z2lkOi8vmock123"
 }
 
 # Tier data sources
