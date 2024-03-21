@@ -66,9 +66,7 @@ func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service) (S
 	diags = append(diags, svcDiags...)
 	serviceDataSourceModel.Aliases = serviceAliases
 
-	if service.PreferredApiDocumentSource == nil {
-		serviceDataSourceModel.PreferredApiDocumentSource = types.StringNull()
-	} else {
+	if service.PreferredApiDocumentSource != nil {
 		serviceDataSourceModel.PreferredApiDocumentSource = types.StringValue(string(*service.PreferredApiDocumentSource))
 	}
 
