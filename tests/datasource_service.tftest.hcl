@@ -53,7 +53,7 @@ run "datasource_service_defaults" {
   }
 
   assert {
-    condition     = data.opslevel_service.mock_service_with_id.api_document_path ==  "mock-api-document-path"
+    condition     = data.opslevel_service.mock_service_with_id.api_document_path == "mock-api-document-path"
     error_message = "wrong api_document_path in opslevel_service mock"
   }
 
