@@ -9,7 +9,7 @@ run "datasource_system" {
   }
 
   assert {
-    condition     = data.opslevel_system.mock_system.aliases[0] == "my_system" && data.opslevel_system.mock_system.aliases[1] == "my_sys"
+    condition     = data.opslevel_system.mock_system.aliases == tolist(["my_system", "my_sys"])
     error_message = "wrong aliases in opslevel_system.aliases"
   }
 
