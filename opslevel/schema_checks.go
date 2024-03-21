@@ -144,7 +144,7 @@ func setCheckCreateInput(d *schema.ResourceData, p opslevel.CheckCreateInputProv
 }
 
 func getCheckUpdateInputFrom(d *schema.ResourceData) opslevel.CheckUpdateInput {
-	checkUpdateInput := opslevel.CheckUpdateInput{}
+	checkUpdateInput := opslevel.CheckUpdateInput{Id: opslevel.ID(d.Id())}
 	checkUpdateInput.Name = d.Get("name").(string)
 	if value, ok := d.GetOk("enabled"); ok {
 		checkUpdateInput.Enabled = opslevel.RefOf(value.(bool))
