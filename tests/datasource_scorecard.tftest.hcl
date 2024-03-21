@@ -10,7 +10,7 @@ run "datasource_scorecard_mocked_fields" {
 
   assert {
     condition     = data.opslevel_scorecard.mock_scorecard.affects_overall_service_levels == true
-    error_message = "wrong id in opslevel_scorecard mock"
+    error_message = "affects_overall_service_levels should be true in opslevel_scorecard mock"
   }
 
   assert {
