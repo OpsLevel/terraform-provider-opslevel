@@ -89,6 +89,12 @@ data "opslevel_rubric_level" "name_filter" {
   }
 }
 
+# Scorecard data sources
+
+data "opslevel_scorecard" "mock_scorecard" {
+  identifier = "mock-scorecard-alias"
+}
+
 # Tier data sources
 
 data "opslevel_tier" "mock_tier" {
