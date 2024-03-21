@@ -59,6 +59,7 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 
 		Attributes: map[string]schema.Attribute{
 			"aliases": schema.ListAttribute{
+				ElementType:         types.StringType,
 				MarkdownDescription: "All of the aliases attached to the System.",
 				Computed:            true,
 			},
