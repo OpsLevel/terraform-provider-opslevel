@@ -57,6 +57,7 @@ data "opslevel_service" "mock_service_with_alias" {
 
 data "opslevel_service" "mock_service_with_id" {
   id = "Z2lkOi8vmock123"
+}
 
 # rubric Level data sources
 
