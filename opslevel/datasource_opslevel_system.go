@@ -72,12 +72,12 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Computed:            true,
 			},
 			"id": schema.StringAttribute{
-		        	Description: "The ID of this resource."
+				Description: "The ID of this System.",
 				Computed:    true,
 			},
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the System.",
-                                Required:    true,
+				Required:    true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the System.",
