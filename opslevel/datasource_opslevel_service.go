@@ -109,7 +109,7 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
-				Description: " An alias of the service to find by.",
+				Description: "An alias of the service to find by.",
 				Optional:    true,
 			},
 			"aliases": schema.ListAttribute{
@@ -217,7 +217,7 @@ func (d *ServiceDataSource) getService(data ServiceDataSourceModel) (opslevel.Se
 	} else if alias != "" {
 		service, err = d.client.GetServiceWithAlias(alias)
 	} else {
-		return opslevel.Service{}, fmt.Errorf("Unable to read config for service datasource. service must have an alias or id.")
+		return opslevel.Service{}, fmt.Errorf("unable to read config for service datasource - must have alias or id")
 	}
 	if err != nil {
 		return opslevel.Service{}, err

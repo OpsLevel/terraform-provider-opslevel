@@ -31,7 +31,7 @@ run "datasource_service_given_id" {
   }
 
   assert {
-    condition     = startswith(data.opslevel_service.mock_service_with_id.id, "Z2lk")
+    condition     = startswith(data.opslevel_service.mock_service_with_id.id, "Z2lkOi8v")
     error_message = "wrong id prefix in opslevel_service mock"
   }
 

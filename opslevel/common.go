@@ -371,7 +371,7 @@ func flattenTagArray(tags []opslevel.Tag) []string {
 }
 
 func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryConnection) []string {
-	output := []string{}
+	output := make([]string, len(repositories.Edges))
 	for _, rep := range repositories.Edges {
 		output = append(output, string(rep.Node.Id))
 	}
