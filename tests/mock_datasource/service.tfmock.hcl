@@ -1,11 +1,9 @@
 mock_data "opslevel_service" {
   defaults = {
-    # alias intentionally omitted - optional input
     aliases           = ["alias-one", "alias-two"]
     api_document_path = "mock-api-document-path"
     description       = "mock-service-description"
     framework         = "mock-framework"
-    # id intentionally omitted - optional input
     language                      = "mock-language"
     lifecycle_alias               = "alpha"
     name                          = "mock-service-name"

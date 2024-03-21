@@ -52,11 +52,11 @@ data "opslevel_property_definition" "mock_property_definition" {
 # Service data sources
 
 data "opslevel_service" "mock_service_with_alias" {
-  alias = "mock-service-alias"
+  identifier = "mock-service-alias"
 }
 
 data "opslevel_service" "mock_service_with_id" {
-  id = "Z2lkOi8vmock123"
+  identifier = "Z2lkOi8vmock123"
 }
 
 # rubric Level data sources

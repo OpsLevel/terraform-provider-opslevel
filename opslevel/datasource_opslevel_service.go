@@ -26,12 +26,11 @@ type ServiceDataSource struct {
 
 // ServiceDataSourceModel describes the data source data model.
 type ServiceDataSourceModel struct {
-	Alias                      types.String `tfsdk:"alias"`
 	Aliases                    types.List   `tfsdk:"aliases"`
 	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
 	Description                types.String `tfsdk:"description"`
 	Framework                  types.String `tfsdk:"framework"`
-	Id                         types.String `tfsdk:"id"`
+	Identifier                 types.String `tfsdk:"identifier"`
 	Language                   types.String `tfsdk:"language"`
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
@@ -45,14 +44,14 @@ type ServiceDataSourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service) (ServiceDataSourceModel, diag.Diagnostics) {
+func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, identifier string) (ServiceDataSourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	serviceDataSourceModel := ServiceDataSourceModel{
 		ApiDocumentPath: types.StringValue(service.ApiDocumentPath),
 		Description:     types.StringValue(service.Description),
-		Id:              types.StringValue(string(service.Id)),
 		Framework:       types.StringValue(service.Framework),
+		Identifier:      types.StringValue(identifier),
 		Language:        types.StringValue(service.Language),
 		LifecycleAlias:  types.StringValue(service.Lifecycle.Alias),
 		Name:            types.StringValue(service.Name),
@@ -106,10 +105,6 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		MarkdownDescription: "Service data source",
 
 		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				Description: "An alias of the service to find by.",
-				Optional:    true,
-			},
 			"aliases": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "The aliases of the service.",
@@ -127,9 +122,9 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "The primary software development framework that the service uses.",
 				Computed:    true,
 			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The id of the service to find.",
-				Optional:            true,
+			"identifier": schema.StringAttribute{
+				Description: "The id or alias of the service to find.",
+				Required:    true,
 			},
 			"language": schema.StringAttribute{
 				Description: "The primary programming language that the service is written in.",
@@ -196,7 +191,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service datasource, got error: %s", err))
 		return
 	}
-	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service)
+	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Identifier.ValueString())
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state
@@ -207,22 +202,19 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 func (d *ServiceDataSource) getService(data ServiceDataSourceModel) (opslevel.Service, error) {
 	var err error
 	var service *opslevel.Service
-	alias := data.Alias.ValueString()
-	id := data.Id.ValueString()
 
-	if id != "" {
-		service, err = d.client.GetService(opslevel.ID(id))
-	} else if alias != "" {
-		service, err = d.client.GetServiceWithAlias(alias)
+	identifier := data.Identifier.ValueString()
+	if opslevel.IsID(identifier) {
+		service, err = d.client.GetService(opslevel.ID(identifier))
 	} else {
-		return opslevel.Service{}, fmt.Errorf("unable to read config for service datasource - must have alias or id")
+		service, err = d.client.GetServiceWithAlias(identifier)
 	}
 	if err != nil {
 		return opslevel.Service{}, err
 	}
 
 	if service == nil || service.Id == "" {
-		return opslevel.Service{}, fmt.Errorf("unable to find repository with alias=`%s` or id=`%s`", alias, id)
+		return opslevel.Service{}, fmt.Errorf("unable to find repository with identifier=`%s`", identifier)
 	}
 
 	return *service, nil
