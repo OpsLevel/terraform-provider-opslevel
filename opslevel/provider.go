@@ -168,6 +168,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewServiceDataSource,
 		NewSystemDataSource,
 		NewTierDataSource,
+		NewUserDataSource,
 	}
 }
 

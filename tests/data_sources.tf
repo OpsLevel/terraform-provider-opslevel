@@ -137,3 +137,9 @@ data "opslevel_tier" "name_filter" {
     value = "name-value"
   }
 }
+
+# User data sources
+
+data "opslevel_user" "mock_user" {
+  identifier = "mock-user-name@example.com"
+}
