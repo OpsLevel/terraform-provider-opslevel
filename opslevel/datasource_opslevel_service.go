@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -67,22 +70,6 @@ func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, id
 
 	if service.PreferredApiDocumentSource != nil {
 		serviceDataSourceModel.PreferredApiDocumentSource = types.StringValue(string(*service.PreferredApiDocumentSource))
-	}
-
-	if service.Properties == nil {
-		serviceDataSourceModel.Properties = types.ListNull(types.StringType)
-	} else {
-		serviceProperties, propsDiags := types.ListValueFrom(ctx, types.StringType, service.Properties.Nodes)
-		serviceDataSourceModel.Properties = serviceProperties
-		diags = append(diags, propsDiags...)
-	}
-
-	if service.Repositories == nil {
-		serviceDataSourceModel.Repositories = types.ListNull(types.StringType)
-	} else {
-		repositories, tagsDiags := types.ListValueFrom(ctx, types.StringType, flattenServiceRepositoriesArray(service.Repositories))
-		serviceDataSourceModel.Repositories = repositories
-		diags = append(diags, tagsDiags...)
 	}
 
 	if service.Tags == nil {
@@ -155,8 +142,8 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:    true,
 			},
 			"properties": schema.ListAttribute{
-				ElementType: types.StringType,
 				Description: "Custom properties assigned to this service.",
+				ElementType: opslevelPropertyObjectType,
 				Computed:    true,
 			},
 			"repositories": schema.ListAttribute{
@@ -186,7 +173,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	service, err := d.getService(data)
+	service, err := getService(*d.client, data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service datasource, got error: %s", err))
 		return
@@ -194,20 +181,60 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Identifier.ValueString())
 	resp.Diagnostics.Append(diags...)
 
+	// NOTE: service's hydrate does not populate properties
+	serviceDataModel.Properties, diags = getServiceProperties(ctx, d.client, service)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	if service.Repositories == nil {
+		serviceDataModel.Repositories = types.ListNull(types.StringType)
+	} else {
+		serviceDataModel.Repositories, diags = types.ListValueFrom(
+			ctx,
+			types.StringType,
+			flattenServiceRepositoriesArray(service.Repositories),
+		)
+	}
+
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Service data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &serviceDataModel)...)
 }
 
-func (d *ServiceDataSource) getService(data ServiceDataSourceModel) (opslevel.Service, error) {
+func getServiceProperties(ctx context.Context, client *opslevel.Client, service opslevel.Service) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	properties, err := service.GetProperties(client, nil)
+	if err != nil {
+		diags.AddAttributeError(
+			path.Root("properties"),
+			"OpsLevel Client Error",
+			fmt.Sprintf("unable to read Properties for service, got error: %s", err),
+		)
+		return types.ListNull(opslevelPropertyObjectType), diags
+	}
+	if properties == nil {
+		return types.ListNull(opslevelPropertyObjectType), diags
+	}
+
+	serviceProperties, diags := opslevelPropertiesToListValue(ctx, properties.Nodes)
+	if diags.HasError() {
+		return types.ListNull(opslevelPropertyObjectType), diags
+	}
+	return serviceProperties, diags
+}
+
+func getService(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
 	var err error
 	var service *opslevel.Service
 
 	identifier := data.Identifier.ValueString()
 	if opslevel.IsID(identifier) {
-		service, err = d.client.GetService(opslevel.ID(identifier))
+		service, err = client.GetService(opslevel.ID(identifier))
 	} else {
-		service, err = d.client.GetServiceWithAlias(identifier)
+		service, err = client.GetServiceWithAlias(identifier)
 	}
 	if err != nil {
 		return opslevel.Service{}, err
@@ -218,4 +245,40 @@ func (d *ServiceDataSource) getService(data ServiceDataSourceModel) (opslevel.Se
 	}
 
 	return *service, nil
+}
+
+func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []opslevel.Property) (basetypes.ListValue, diag.Diagnostics) {
+	properties := make([]attr.Value, len(opslevelProperties))
+	for i, property := range opslevelProperties {
+		propertyObject, diags := opslevelPropertyToObject(property)
+		if diags != nil && diags.HasError() {
+			return basetypes.NewListNull(domainObjectType), diags
+		}
+		properties[i] = propertyObject
+	}
+
+	result, diags := types.ListValueFrom(ctx, opslevelPropertyObjectType, properties)
+	if diags != nil && diags.HasError() {
+		return basetypes.NewListNull(domainObjectType), diags
+	}
+
+	return result, nil
+}
+
+func opslevelPropertyToObject(opslevelProperty opslevel.Property) (basetypes.ObjectValue, diag.Diagnostics) {
+	propertyAttrs := make(map[string]attr.Value)
+
+	propertyAttrs["definition"] = types.StringValue(string(opslevelProperty.Definition.Id))
+	propertyAttrs["owner"] = types.StringValue(string(opslevelProperty.Owner.Id()))
+	if opslevelProperty.Value == nil {
+		propertyAttrs["value"] = basetypes.NewStringNull()
+	} else {
+		propertyAttrs["value"] = types.StringValue(string(*opslevelProperty.Value))
+	}
+
+	parsedProperty, diags := types.ObjectValue(opslevelPropertyObjectType.AttrTypes, propertyAttrs)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	return parsedProperty, nil
 }
