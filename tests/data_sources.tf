@@ -115,3 +115,9 @@ data "opslevel_tier" "name_filter" {
     value = "name-value"
   }
 }
+
+# Webhook Action data sources
+
+data "opslevel_webhook_action" "mock_webhook_action" {
+  identifier = "mock-webhook-action-alias"
+}
