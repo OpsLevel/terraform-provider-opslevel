@@ -203,6 +203,14 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &serviceDataModel)...)
 }
 
+var opslevelPropertyObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"definition": types.StringType,
+		"owner":      types.StringType,
+		"value":      types.StringType,
+	},
+}
+
 func getServiceProperties(ctx context.Context, client *opslevel.Client, service opslevel.Service) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
