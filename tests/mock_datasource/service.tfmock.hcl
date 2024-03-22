@@ -11,9 +11,20 @@ mock_data "opslevel_service" {
     owner_id                      = "Z2lkOi8vmockowner123"
     preferred_api_document_source = "PULL"
     product                       = "mock-product"
-    properties                    = ["prop-one", "prop-two"]
-    repositories                  = ["repo-one", "repo-two"]
-    tags                          = ["key1:value2", "key2:value2"]
-    tier_alias                    = "mock-tier-alias"
+    properties = [
+      {
+        "definition" = "mock-definition-one",
+        "owner"      = "mock-owner-one",
+        "value"      = "mock-value-one",
+      },
+      {
+        "definition" = "mock-definition-two",
+        "owner"      = "mock-owner-two",
+        "value"      = "mock-value-two",
+      }
+    ]
+    repositories = ["repo-one", "repo-two"]
+    tags         = ["key1:value2", "key2:value2"]
+    tier_alias   = "mock-tier-alias"
   }
 }

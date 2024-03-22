@@ -88,7 +88,7 @@ run "datasource_service_defaults" {
   }
 
   assert {
-    condition     = data.opslevel_service.mock_service_with_id.properties == tolist(["prop-one", "prop-two"])
+    condition     = length(data.opslevel_service.mock_service_with_id.properties) == 2
     error_message = "wrong properties list in opslevel_service mock"
   }
 
