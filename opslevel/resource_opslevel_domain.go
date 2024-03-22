@@ -198,6 +198,7 @@ func (r *DomainResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete domain, got error: %s", err))
 		return
 	}
+	tflog.Trace(ctx, "deleted a domain resource")
 }
 
 func (r *DomainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

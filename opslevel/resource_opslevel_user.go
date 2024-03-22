@@ -1,123 +1,189 @@
 package opslevel
 
-// import (
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+import (
+	"context"
+	"fmt"
 
-// func resourceUser() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a User",
-// 		Create:      wrap(resourceUserCreate),
-// 		Read:        wrap(resourceUserRead),
-// 		Update:      wrap(resourceUserUpdate),
-// 		Delete:      wrap(resourceUserDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The name of the user.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"email": {
-// 				Type:        schema.TypeString,
-// 				Description: "The email address of the user.",
-// 				ForceNew:    true,
-// 				Required:    true,
-// 			},
-// 			"role": {
-// 				Type:         schema.TypeString,
-// 				Description:  "The access role (e.g. user vs admin) of the user.",
-// 				ForceNew:     false,
-// 				Optional:     true,
-// 				ValidateFunc: validation.StringInSlice(opslevel.AllUserRole, false),
-// 			},
-// 			// There is no way to read this value from a User resource and no way
-// 			// to set it in the terraform state. Do not remove it because some
-// 			// customers rely on this feature regardless.
-// 			"skip_welcome_email": {
-// 				Type:        schema.TypeBool,
-// 				Description: "Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.",
-// 				Default:     false,
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 		},
-// 	}
-// }
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourceUserCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	email := d.Get("email").(string)
-// 	input := opslevel.UserInput{
-// 		Name:             opslevel.RefOf(d.Get("name").(string)),
-// 		Role:             opslevel.RefOf(opslevel.UserRole(d.Get("role").(string))),
-// 		SkipWelcomeEmail: opslevel.RefOf(d.Get("skip_welcome_email").(bool)),
-// 	}
-// 	resource, err := client.InviteUser(email, input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
+var _ resource.ResourceWithConfigure = &UserResource{}
 
-// 	return resourceUserRead(d, client)
-// }
+var _ resource.ResourceWithImportState = &UserResource{}
 
-// func resourceUserRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func NewUserResource() resource.Resource {
+	return &UserResource{}
+}
 
-// 	resource, err := client.GetUser(id)
-// 	if err != nil {
-// 		return err
-// 	}
+// UserResource defines the resource implementation.
+type UserResource struct {
+	CommonResourceClient
+}
 
-// 	if err := d.Set("name", resource.Name); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("email", resource.Email); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("role", resource.Role); err != nil {
-// 		return err
-// 	}
+// UserResourceModel describes the User managed resource.
+type UserResourceModel struct {
+	Email            types.String `tfsdk:"email"`
+	Id               types.String `tfsdk:"id"`
+	LastUpdated      types.String `tfsdk:"last_updated"`
+	Name             types.String `tfsdk:"name"`
+	Role             types.String `tfsdk:"role"`
+	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"` // not usable but kept for backwards compatibility
+}
 
-// 	return nil
-// }
+func NewUserResourceModel(user opslevel.User) UserResourceModel {
+	return UserResourceModel{
+		Email:            types.StringValue(user.Email),
+		Id:               types.StringValue(string(user.Id)),
+		LastUpdated:      types.StringValue(timeLastUpdated()),
+		Name:             types.StringValue(user.Name),
+		Role:             types.StringValue(string(user.Role)),
+		SkipWelcomeEmail: types.BoolNull(),
+	}
+}
 
-// func resourceUserUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	input := opslevel.UserInput{}
+func (r *UserResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_user"
+}
 
-// 	if d.HasChange("name") {
-// 		input.Name = opslevel.RefOf(d.Get("name").(string))
-// 	}
-// 	if d.HasChange("role") {
-// 		input.Role = opslevel.RefOf(opslevel.UserRole(d.Get("role").(string)))
-// 	}
+func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "User Resource",
 
-// 	_, err := client.UpdateUser(id, input)
-// 	if err != nil {
-// 		return err
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"email": schema.StringAttribute{
+				Description: "The email address of the user.",
+				Required:    true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The ID of the user.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name of the user.",
+				Required:    true,
+			},
+			"role": schema.StringAttribute{
+				Description: "The access role (e.g. user or admin) of the user.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllUserRole...),
+				},
+			},
+			"skip_welcome_email": schema.BoolAttribute{
+				DeprecationMessage: "The skip_welcome_email attribute is deprecated and only kept for backward compatibility.",
+				Description:        "Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.",
+				Optional:           true,
+			},
+		},
+	}
+}
 
-// 	d.Set("last_updated", timeLastUpdated())
-// 	return resourceUserRead(d, client)
-// }
+func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data UserResourceModel
 
-// func resourceUserDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeleteUser(id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	user, err := r.client.InviteUser(data.Email.ValueString(), opslevel.UserInput{
+		Name: opslevel.RefOf(data.Name.ValueString()),
+		Role: opslevel.RefOf(opslevel.UserRole(data.Role.ValueString())),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
+		return
+	}
+	createdUserResourceModel := NewUserResourceModel(*user)
+
+	tflog.Trace(ctx, "created a user resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdUserResourceModel)...)
+}
+
+func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data UserResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	user, err := r.client.GetUser(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read user, got error: %s", err))
+		return
+	}
+
+	data.Email = types.StringValue(user.Email)
+	data.Id = types.StringValue(string(user.Id))
+	data.Name = types.StringValue(user.Name)
+	data.Role = types.StringValue(string(user.Role))
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data UserResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resource, err := r.client.UpdateUser(data.Id.ValueString(), opslevel.UserInput{
+		Name: opslevel.RefOf(data.Name.ValueString()),
+		Role: opslevel.RefOf(opslevel.UserRole(data.Role.ValueString())),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update user, got error: %s", err))
+		return
+	}
+	updatedUserResourceModel := NewUserResourceModel(*resource)
+
+	tflog.Trace(ctx, "updated a user resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedUserResourceModel)...)
+}
+
+func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data UserResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteUser(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete user, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a user resource")
+}
+
+func (r *UserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
