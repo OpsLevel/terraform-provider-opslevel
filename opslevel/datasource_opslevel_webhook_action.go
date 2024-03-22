@@ -38,8 +38,9 @@ type WebhookActionDataSourceModel struct {
 func jsonToMap(json map[string]any) map[string]attr.Value {
 	jsonAttrs := make(map[string]attr.Value)
 	for k, v := range json {
-		jsonAttrs[k] = types.StringValue(v.(string))
-		if v == nil {
+		if value, ok := v.(string); ok {
+			jsonAttrs[k] = types.StringValue(value)
+		} else {
 			jsonAttrs[k] = types.StringNull()
 		}
 	}
