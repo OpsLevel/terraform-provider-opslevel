@@ -13,14 +13,26 @@ mock_data "opslevel_service" {
     product                       = "mock-product"
     properties = [
       {
-        "definition" = "mock-definition-one",
-        "owner"      = "mock-owner-one",
-        "value"      = "mock-value-one",
+        "definition" = {
+          aliases = [
+            "mock-one",
+            "mock-two",
+            "mock-three",
+          ]
+          id = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8yODk"
+        }
+        "value" = "mock-property-definition",
       },
       {
-        "definition" = "mock-definition-two",
-        "owner"      = "mock-owner-two",
-        "value"      = "mock-value-two",
+        "definition" = {
+          aliases = [
+            "mock-foo",
+            "mock-bar",
+            "mock-baz",
+          ]
+          id = "Z2LKOI8VB3BZBGV2ZWWVUHJVCGVYDGLLCZO6RGVMAW5PDGLVBI8YODK"
+        }
+        "value" = "mock-value-two",
       }
     ]
     repositories = ["repo-one", "repo-two"]

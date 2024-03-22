@@ -88,11 +88,6 @@ run "datasource_service_defaults" {
   }
 
   assert {
-    condition     = length(data.opslevel_service.mock_service_with_id.properties) == 2
-    error_message = "wrong properties list in opslevel_service mock"
-  }
-
-  assert {
     condition     = data.opslevel_service.mock_service_with_id.repositories == tolist(["repo-one", "repo-two"])
     error_message = "wrong repositories list in opslevel_service mock"
   }
@@ -101,4 +96,31 @@ run "datasource_service_defaults" {
     condition     = data.opslevel_service.mock_service_with_id.tags == tolist(["key1:value2", "key2:value2"])
     error_message = "wrong tags list in opslevel_service mock"
   }
+}
+
+run "datasource_service_properties" {
+  providers = {
+    opslevel = opslevel.fake
+  }
+
+  assert {
+    condition     = data.opslevel_service.mock_service_with_id.properties[0].definition.id == "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8yODk"
+    error_message = "wrong definition.id in properties.definition in opslevel_service mock"
+  }
+
+  assert {
+    condition     = data.opslevel_service.mock_service_with_id.properties[0].value == "mock-property-definition"
+    error_message = "wrong value in properties list in opslevel_service mock"
+  }
+
+  assert {
+    condition     = length(data.opslevel_service.mock_service_with_id.properties) == 2
+    error_message = "wrong properties list in opslevel_service mock"
+  }
+
+  assert {
+    condition     = length(data.opslevel_service.mock_service_with_id.properties[0].definition.aliases) == 3
+    error_message = "wrong count of aliases in properties.definition list in opslevel_service mock"
+  }
+
 }
