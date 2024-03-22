@@ -49,6 +49,16 @@ data "opslevel_property_definition" "mock_property_definition" {
   identifier = "mock-property_definition-alias"
 }
 
+# Service data sources
+
+data "opslevel_service" "mock_service_with_alias" {
+  identifier = "mock-service-alias"
+}
+
+data "opslevel_service" "mock_service_with_id" {
+  identifier = "Z2lkOi8vmock123"
+}
+
 # rubric Level data sources
 
 data "opslevel_rubric_level" "alias_filter" {
@@ -77,6 +87,18 @@ data "opslevel_rubric_level" "name_filter" {
     field = "name"
     value = "name-value"
   }
+}
+
+# Scorecard data sources
+
+data "opslevel_scorecard" "mock_scorecard" {
+  identifier = "mock-scorecard-alias"
+}
+
+# System data sources
+
+data "opslevel_system" "mock_system" {
+  identifier = "my_system"
 }
 
 # Tier data sources
