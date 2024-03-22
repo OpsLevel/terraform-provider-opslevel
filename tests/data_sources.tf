@@ -143,3 +143,9 @@ data "opslevel_tier" "name_filter" {
 data "opslevel_webhook_action" "mock_webhook_action" {
   identifier = "mock-webhook-action-alias"
 }
+
+# User data sources
+
+data "opslevel_user" "mock_user" {
+  identifier = "mock-user-name@example.com"
+}
