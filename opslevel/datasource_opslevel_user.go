@@ -87,7 +87,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	user, err := d.client.GetUser(data.Identifier.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read user, got error: %s", err))
 		return
 	}
 	userDataModel := NewUserDataSourceModel(ctx, *user, data.Identifier.ValueString())
