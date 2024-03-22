@@ -166,6 +166,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewPropertyDefinitionDataSource,
 		NewScorecardDataSource,
 		NewServiceDataSource,
+		NewSystemDataSource,
 		NewTierDataSource,
 	}
 }

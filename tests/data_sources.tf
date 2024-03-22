@@ -95,6 +95,12 @@ data "opslevel_scorecard" "mock_scorecard" {
   identifier = "mock-scorecard-alias"
 }
 
+# System data sources
+
+data "opslevel_system" "mock_system" {
+  identifier = "my_system"
+}
+
 # Tier data sources
 
 data "opslevel_tier" "mock_tier" {
