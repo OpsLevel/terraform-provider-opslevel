@@ -183,7 +183,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// NOTE: service's hydrate does not populate properties
 	serviceDataModel.Properties, diags = getServiceProperties(ctx, d.client, service)
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
@@ -220,7 +220,7 @@ func getServiceProperties(ctx context.Context, client *opslevel.Client, service 
 	}
 
 	serviceProperties, diags := opslevelPropertiesToListValue(ctx, properties.Nodes)
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
 		return types.ListNull(opslevelPropertyObjectType), diags
 	}
 	return serviceProperties, diags
