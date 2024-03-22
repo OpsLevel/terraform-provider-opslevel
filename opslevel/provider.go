@@ -169,6 +169,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewSystemDataSource,
 		NewTierDataSource,
 		NewUserDataSource,
+		NewWebhookActionDataSource,
 	}
 }
 
