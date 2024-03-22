@@ -205,9 +205,16 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 var opslevelPropertyObjectType = types.ObjectType{
 	AttrTypes: map[string]attr.Type{
-		"definition": types.StringType,
-		"owner":      types.StringType,
+		"definition": identifierObjectType,
 		"value":      types.StringType,
+	},
+}
+
+// identifierObjectType used as nested object
+var identifierObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"aliases": types.ListType{ElemType: types.StringType},
+		"id":      types.StringType,
 	},
 }
 
@@ -258,7 +265,7 @@ func getService(client opslevel.Client, data ServiceDataSourceModel) (opslevel.S
 func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []opslevel.Property) (basetypes.ListValue, diag.Diagnostics) {
 	properties := make([]attr.Value, len(opslevelProperties))
 	for i, property := range opslevelProperties {
-		propertyObject, diags := opslevelPropertyToObject(property)
+		propertyObject, diags := opslevelPropertyToObject(ctx, property)
 		if diags != nil && diags.HasError() {
 			return basetypes.NewListNull(domainObjectType), diags
 		}
@@ -273,11 +280,24 @@ func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []ops
 	return result, nil
 }
 
-func opslevelPropertyToObject(opslevelProperty opslevel.Property) (basetypes.ObjectValue, diag.Diagnostics) {
+func opslevelPropertyToObject(ctx context.Context, opslevelProperty opslevel.Property) (basetypes.ObjectValue, diag.Diagnostics) {
+	identifierAttrs := make(map[string]attr.Value)
 	propertyAttrs := make(map[string]attr.Value)
 
-	propertyAttrs["definition"] = types.StringValue(string(opslevelProperty.Definition.Id))
-	propertyAttrs["owner"] = types.StringValue(string(opslevelProperty.Owner.Id()))
+	propertyDefinitionAliases, diags := types.ListValueFrom(ctx, types.StringType, opslevelProperty.Definition.Aliases)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+
+	identifierAttrs["aliases"] = propertyDefinitionAliases
+	identifierAttrs["id"] = types.StringValue(string(opslevelProperty.Definition.Id))
+
+	parsedPropertyDefinition, diags := types.ObjectValue(identifierObjectType.AttrTypes, identifierAttrs)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	propertyAttrs["definition"] = parsedPropertyDefinition
+
 	if opslevelProperty.Value == nil {
 		propertyAttrs["value"] = basetypes.NewStringNull()
 	} else {
