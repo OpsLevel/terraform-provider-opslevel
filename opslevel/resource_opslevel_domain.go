@@ -43,7 +43,7 @@ type DomainResourceModel struct {
 func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain) (DomainResourceModel, diag.Diagnostics) {
 	var domainResourceModel DomainResourceModel
 
-	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.ManagedAliases)
+	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
 	domainResourceModel.Aliases = domainAliases
 	domainResourceModel.Description = types.StringValue(string(domain.Description))
 	domainResourceModel.Id = types.StringValue(string(domain.Id))
