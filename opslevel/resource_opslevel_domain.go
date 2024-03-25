@@ -50,7 +50,6 @@ func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain) (Domain
 	domainResourceModel.Name = types.StringValue(string(domain.Name))
 	domainResourceModel.Note = types.StringValue(string(domain.Note))
 	domainResourceModel.Owner = types.StringValue(string(domain.Owner.Id()))
-	domainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
 
 	return domainResourceModel, diags
 }
@@ -123,6 +122,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
+	createdDomainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
 
 	tflog.Trace(ctx, "created a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdDomainResourceModel)...)
@@ -143,17 +143,11 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}
-	domainAliases, d := types.ListValueFrom(ctx, types.StringType, resource.ManagedAliases)
-	resp.Diagnostics.Append(d...)
-
-	data.Aliases = domainAliases
-	data.Description = types.StringValue(resource.Description)
-	data.Name = types.StringValue(string(resource.Name))
-	data.Note = types.StringValue(resource.Note)
-	data.Owner = types.StringValue(string(resource.Owner.Id()))
+	readDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readDomainResourceModel)...)
 }
 
 func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -178,6 +172,7 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
+	updatedDomainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
 
 	tflog.Trace(ctx, "updated a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)
