@@ -43,7 +43,7 @@ func NewUserResourceModel(user opslevel.User) UserResourceModel {
 	return UserResourceModel{
 		Email:            types.StringValue(user.Email),
 		Id:               types.StringValue(string(user.Id)),
-		LastUpdated:      types.StringValue(timeLastUpdated()),
+		LastUpdated:      timeLastUpdated(),
 		Name:             types.StringValue(user.Name),
 		Role:             types.StringValue(string(user.Role)),
 		SkipWelcomeEmail: types.BoolNull(),

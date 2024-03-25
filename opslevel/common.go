@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+
 	// "sort"
 	"strconv"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	// "github.com/mitchellh/mapstructure"
 	// "github.com/rs/zerolog/log"
@@ -97,8 +99,8 @@ func timeID() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
-func timeLastUpdated() string {
-	return time.Now().Format(time.RFC850)
+func timeLastUpdated() basetypes.StringValue {
+	return types.StringValue(time.Now().Format(time.RFC850))
 }
 
 // func wrap(handler func(data *schema.ResourceData, client *opslevel.Client) error) func(d *schema.ResourceData, meta interface{}) error {

@@ -122,7 +122,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
-	createdDomainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
+	createdDomainResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdDomainResourceModel)...)
@@ -172,7 +172,7 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
-	updatedDomainResourceModel.LastUpdated = types.StringValue(timeLastUpdated())
+	updatedDomainResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)
