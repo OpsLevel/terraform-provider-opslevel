@@ -62,7 +62,7 @@ func (r *SecretResource) Schema(ctx context.Context, req resource.SchemaRequest,
 
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
-				Description: "The alias for this secret.",
+				Description: "The alias for this secret. Can only be set at create time.",
 				Required:    true,
 			},
 			"created_at": schema.StringAttribute{

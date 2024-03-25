@@ -19,7 +19,7 @@ run "resource_secret" {
   }
 
   assert {
-    condition = contains([-1, 0], timecmp(opslevel_secret.mock_secret.created_at, opslevel_secret.mock_secret.updated_at))
+    condition     = contains([-1, 0], timecmp(opslevel_secret.mock_secret.created_at, opslevel_secret.mock_secret.updated_at))
     error_message = "created_at timestamp should not be after updated_at timestamp in opslevel_secret"
   }
 
