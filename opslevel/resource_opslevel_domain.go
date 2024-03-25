@@ -77,7 +77,7 @@ func resourceDomainRead(d *schema.ResourceData, client *opslevel.Client) error {
 		return err
 	}
 
-	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
+	if err := d.Set("aliases", resource.Aliases); err != nil {
 		return err
 	}
 	if err := d.Set("name", resource.Name); err != nil {
