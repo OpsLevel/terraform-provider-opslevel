@@ -68,6 +68,8 @@ tasks:
     internal: true
     cmds:
       - task: terraform-build
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.SETUP_DIR}}" }
     requires:
@@ -78,6 +80,17 @@ tasks:
     aliases: ["apply"]
     cmds:
       - task: setup-terraform
+      - task: terraform-command
+        vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-reapply:
+    desc: Keep terraform state, build code fresh, run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
+    aliases: ["reapply", "re-apply"]
+    cmds:
+      - task: terraform-build
+      - task: terraform-clean-keep-state
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform-command
         vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -121,6 +134,12 @@ tasks:
       - task: terraform-clean-no-prompt
         vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
 
+  terraform-clean-keep-state:
+    internal: true
+    dir: "{{.WORKSPACE_DIR}}"
+    cmds:
+      - cmd: rm -rf .terraform.lock.hcl .terraform/
+
   terraform-clean-no-prompt:
     internal: true
     cmds:
@@ -141,6 +160,8 @@ tasks:
     desc: Initialize terraform workspace
     aliases: ["init"]
     cmds:
+      - task: terraform-clean-no-prompt
+        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -148,8 +169,6 @@ tasks:
     dir: "{{.INIT_DIR}}"
     internal: true
     cmds:
-      - task: terraform-clean-no-prompt
-        vars: { CLEAN_DIR: "{{.INIT_DIR}}" }
       - './make_backend_tf.sh'
       - touch main.tf
       - task: terraform-command
