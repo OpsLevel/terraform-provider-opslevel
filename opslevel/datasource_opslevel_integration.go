@@ -1,77 +1,113 @@
 package opslevel
 
-// import (
-// 	"fmt"
+import (
+	"context"
+	"fmt"
 
-// 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// )
+// Ensure IntegrationDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &IntegrationDataSource{}
 
-// func datasourceIntegration() *schema.Resource {
-// 	return &schema.Resource{
-// 		Read: wrap(datasourceIntegrationRead),
-// 		Schema: map[string]*schema.Schema{
-// 			"filter": getDatasourceFilter(true, []string{"id", "name"}),
-// 			"name": {
-// 				Type:     schema.TypeString,
-// 				Computed: true,
-// 			},
-// 		},
-// 	}
-// }
+func NewIntegrationDataSource() datasource.DataSource {
+	return &IntegrationDataSource{}
+}
 
-// func filterIntegrations(data []opslevel.Integration, field string, value string) (*opslevel.Integration, error) {
-// 	if value == "" {
-// 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
-// 	}
+// IntegrationDataSource manages an Integration data source.
+type IntegrationDataSource struct {
+	CommonDataSourceClient
+}
 
-// 	var output opslevel.Integration
-// 	found := false
-// 	for _, item := range data {
-// 		switch field {
-// 		case "id":
-// 			if string(item.Id) == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		case "name":
-// 			if item.Name == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		}
-// 		if found {
-// 			break
-// 		}
-// 	}
+// IntegrationDataSourceModel describes the data source data model.
+type IntegrationDataSourceModel struct {
+	Filter FilterBlockModel `tfsdk:"filter"`
+	Id     types.String     `tfsdk:"id"`
+	Name   types.String     `tfsdk:"name"`
+}
 
-// 	if !found {
-// 		return nil, fmt.Errorf("Unable to find integration with: %s==%s", field, value)
-// 	}
-// 	return &output, nil
-// }
+func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter FilterBlockModel) IntegrationDataSourceModel {
+	return IntegrationDataSourceModel{
+		Filter: filter,
+		Id:     types.StringValue(string(integration.Id)),
+		Name:   types.StringValue(integration.Name),
+	}
+}
 
-// func datasourceIntegrationRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	resp, err := client.ListIntegrations(nil)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if resp == nil {
-// 		return fmt.Errorf("unexpected: listing integrations returned nil")
-// 	}
-// 	results := resp.Nodes
+func (i *IntegrationDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_integration"
+}
 
-// 	field := d.Get("filter.0.field").(string)
-// 	value := d.Get("filter.0.value").(string)
+func (i *IntegrationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	validFieldNames := []string{"id", "name"}
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Integration data source",
 
-// 	item, itemErr := filterIntegrations(results, field, value)
-// 	if itemErr != nil {
-// 		return itemErr
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of this Integration.",
+				Computed:    true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name of the Integration.",
+				Computed:    true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"filter": getDatasourceFilter(validFieldNames),
+		},
+	}
+}
 
-// 	d.SetId(string(item.Id))
-// 	d.Set("names", item.Name)
+func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data IntegrationDataSourceModel
 
-// 	return nil
-// }
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	integrations, err := i.client.ListIntegrations(nil)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list integrations, got error: %s", err))
+		return
+	}
+
+	integration, err := filterIntegrations(integrations.Nodes, data.Filter)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to filter integrations, got error: %s", err))
+		return
+	}
+
+	integrationDataModel := NewIntegrationDataSourceModel(ctx, *integration, data.Filter)
+
+	// Save data into Terraform state
+	tflog.Trace(ctx, "read an OpsLevel Integration data source")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &integrationDataModel)...)
+}
+
+func filterIntegrations(data []opslevel.Integration, filter FilterBlockModel) (*opslevel.Integration, error) {
+	if filter.Value.Equal(types.StringValue("")) {
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
+	}
+	for _, integration := range data {
+		switch filter.Field.ValueString() {
+		case "id":
+			if filter.Value.Equal(types.StringValue(string(integration.Id))) {
+				return &integration, nil
+			}
+		case "name":
+			if filter.Value.Equal(types.StringValue(integration.Name)) {
+				return &integration, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("unable to find integration with: %s==%s", filter.Field, filter.Value)
+}
