@@ -1,94 +1,141 @@
 package opslevel
 
-// import (
-// 	"fmt"
-// 	"strconv"
+import (
+	"context"
+	"fmt"
+	"strconv"
 
-// 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// )
+// Ensure LifecycleDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &LifecycleDataSource{}
 
-// func datasourceLifecycle() *schema.Resource {
-// 	return &schema.Resource{
-// 		Read: wrap(datasourceLifecycleRead),
-// 		Schema: map[string]*schema.Schema{
-// 			"filter": getDatasourceFilter(true, []string{"alias", "id", "index", "name"}),
-// 			"alias": {
-// 				Type:     schema.TypeString,
-// 				Computed: true,
-// 			},
-// 			"index": {
-// 				Type:     schema.TypeInt,
-// 				Computed: true,
-// 			},
-// 			"name": {
-// 				Type:     schema.TypeString,
-// 				Computed: true,
-// 			},
-// 		},
-// 	}
-// }
+func NewLifecycleDataSource() datasource.DataSource {
+	return &LifecycleDataSource{}
+}
 
-// func filterLifecycles(data []opslevel.Lifecycle, field string, value string) (*opslevel.Lifecycle, error) {
-// 	if value == "" {
-// 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
-// 	}
+// LifecycleDataSource manages a Lifecycle data source.
+type LifecycleDataSource struct {
+	CommonDataSourceClient
+}
 
-// 	var output opslevel.Lifecycle
-// 	found := false
-// 	for _, item := range data {
-// 		switch field {
-// 		case "alias":
-// 			if item.Alias == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		case "id":
-// 			if string(item.Id) == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		case "index":
-// 			if v, err := strconv.Atoi(value); err == nil && item.Index == v {
-// 				output = item
-// 				found = true
-// 			}
-// 		case "name":
-// 			if item.Name == value {
-// 				output = item
-// 				found = true
-// 			}
-// 		}
-// 		if found {
-// 			break
-// 		}
-// 	}
+// LifecycleDataSourceModel describes the data source data model.
+type LifecycleDataSourceModel struct {
+	Alias       types.String     `tfsdk:"alias"`
+	Description types.String     `tfsdk:"description"`
+	Filter      FilterBlockModel `tfsdk:"filter"`
+	Id          types.String     `tfsdk:"id"`
+	Index       types.Int64      `tfsdk:"index"`
+	Name        types.String     `tfsdk:"name"`
+}
 
-// 	if !found {
-// 		return nil, fmt.Errorf("Unable to find lifecycle with: %s==%s", field, value)
-// 	}
-// 	return &output, nil
-// }
+func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter FilterBlockModel) LifecycleDataSourceModel {
+	return LifecycleDataSourceModel{
+		Alias:       types.StringValue(lifecycle.Alias),
+		Description: types.StringValue(lifecycle.Description),
+		Filter:      filter,
+		Id:          types.StringValue(string(lifecycle.Id)),
+		Index:       types.Int64Value(int64(lifecycle.Index)),
+		Name:        types.StringValue(lifecycle.Name),
+	}
+}
 
-// func datasourceLifecycleRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	results, err := client.ListLifecycles()
-// 	if err != nil {
-// 		return err
-// 	}
+func (sys *LifecycleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_lifecycle"
+}
 
-// 	field := d.Get("filter.0.field").(string)
-// 	value := d.Get("filter.0.value").(string)
+func (sys *LifecycleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	validFieldNames := []string{"alias", "id", "index", "name"}
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Lifecycle data source",
 
-// 	item, itemErr := filterLifecycles(results, field, value)
-// 	if itemErr != nil {
-// 		return itemErr
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"alias": schema.StringAttribute{
+				MarkdownDescription: "The alias attached to the Lifecycle.",
+				Computed:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "The description for the Lifecycle.",
+				Computed:            true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The unique identifier for the Lifecycle.",
+				Computed:    true,
+			},
+			"index": schema.Int64Attribute{
+				Description: "The numerical representation of the Lifecycle.",
+				Computed:    true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name of the Lifecycle.",
+				Computed:    true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"filter": getDatasourceFilter(validFieldNames),
+		},
+	}
+}
 
-// 	d.SetId(string(item.Id))
-// 	d.Set("alias", item.Alias)
-// 	d.Set("index", item.Index)
-// 	d.Set("name", item.Name)
+func (sys *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data LifecycleDataSourceModel
 
-// 	return nil
-// }
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	lifecycles, err := sys.client.ListLifecycles()
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list lifecycles, got error: %s", err))
+		return
+	}
+
+	lifecycle, err := filterLifecycles(lifecycles, data.Filter)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to filter lifecycle, got error: %s", err))
+		return
+	}
+
+	lifecycleDataModel := NewLifecycleDataSourceModel(ctx, *lifecycle, data.Filter)
+
+	// Save data into Terraform state
+	tflog.Trace(ctx, "read an OpsLevel Lifecycle data source")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &lifecycleDataModel)...)
+}
+
+func filterLifecycles(tiers []opslevel.Lifecycle, filter FilterBlockModel) (*opslevel.Lifecycle, error) {
+	if filter.Value.Equal(types.StringValue("")) {
+		return nil, fmt.Errorf("please provide a non-empty value for lifecycle's value")
+	}
+	for _, lifecycle := range tiers {
+		switch filter.Field.ValueString() {
+		case "alias":
+			if filter.Value.Equal(types.StringValue(lifecycle.Alias)) {
+				return &lifecycle, nil
+			}
+		case "id":
+			if filter.Value.Equal(types.StringValue(string(lifecycle.Id))) {
+				return &lifecycle, nil
+			}
+		case "index":
+			index := strconv.Itoa(lifecycle.Index)
+			if filter.Value.Equal(types.StringValue(index)) {
+				return &lifecycle, nil
+			}
+		case "name":
+			if filter.Value.Equal(types.StringValue(lifecycle.Name)) {
+				return &lifecycle, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("unable to find lifecycle with: %s==%s", filter.Field, filter.Value)
+}

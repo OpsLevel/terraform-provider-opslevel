@@ -103,6 +103,36 @@ data "opslevel_rubric_level" "name_filter" {
   }
 }
 
+# lifecycle
+
+data "opslevel_lifecycle" "alias_filter" {
+  filter {
+    field = "alias"
+    value = "generally_available"
+  }
+}
+
+data "opslevel_lifecycle" "id_filter" {
+  filter {
+    field = "id"
+    value = "Z2lkOi8vb3BzbGV2ZWwvTGlmZWN5Y2xlLzQ"
+  }
+}
+
+data "opslevel_lifecycle" "index_filter" {
+  filter {
+    field = "index"
+    value = 123
+  }
+}
+
+data "opslevel_lifecycle" "name_filter" {
+  filter {
+    field = "name"
+    value = "Generally Available"
+  }
+}
+
 # Scorecard data sources
 
 data "opslevel_scorecard" "mock_scorecard" {
