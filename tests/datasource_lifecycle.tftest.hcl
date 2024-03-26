@@ -10,7 +10,7 @@ run "datasource_lifecycle_filter_by_id" {
 
   assert {
     condition     = data.opslevel_lifecycle.id_filter.alias == "generally_available"
-    error_message = "id in opslevel_lifecycle mock was not set"
+    error_message = "wrong alias in opslevel_lifecycle mock"
   }
 
   assert {
@@ -42,7 +42,7 @@ run "datasource_lifecycle_filter_by_name" {
 
   assert {
     condition     = data.opslevel_lifecycle.name_filter.alias == "generally_available"
-    error_message = "id in opslevel_lifecycle mock was not set"
+    error_message = "wrong alias in opslevel_lifecycle mock"
   }
 
   assert {
@@ -64,7 +64,7 @@ run "datasource_lifecycle_filter_by_index" {
 
   assert {
     condition     = data.opslevel_lifecycle.index_filter.alias == "generally_available"
-    error_message = "id in opslevel_lifecycle mock was not set"
+    error_message = "wrong alias in opslevel_lifecycle mock"
   }
 
   assert {
@@ -86,7 +86,7 @@ run "datasource_lifecycle_filter_by_alias" {
 
   assert {
     condition     = data.opslevel_lifecycle.index_filter.alias == "generally_available"
-    error_message = "id in opslevel_lifecycle mock was not set"
+    error_message = "wrong alias in opslevel_lifecycle mock"
   }
 
   assert {
