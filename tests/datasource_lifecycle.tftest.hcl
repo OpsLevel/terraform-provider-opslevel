@@ -9,6 +9,11 @@ run "datasource_lifecycle_filter_by_id" {
   }
 
   assert {
+    condition     = data.opslevel_lifecycle.id_filter.alias == "generally_available"
+    error_message = "id in opslevel_lifecycle mock was not set"
+  }
+
+  assert {
     condition     = data.opslevel_lifecycle.id_filter.id != ""
     error_message = "id in opslevel_lifecycle mock was not set"
   }
@@ -36,6 +41,11 @@ run "datasource_lifecycle_filter_by_name" {
   }
 
   assert {
+    condition     = data.opslevel_lifecycle.name_filter.alias == "generally_available"
+    error_message = "id in opslevel_lifecycle mock was not set"
+  }
+
+  assert {
     condition     = data.opslevel_lifecycle.name_filter.filter.field == "name"
     error_message = "filter field should be name"
   }
@@ -53,6 +63,11 @@ run "datasource_lifecycle_filter_by_index" {
   }
 
   assert {
+    condition     = data.opslevel_lifecycle.index_filter.alias == "generally_available"
+    error_message = "id in opslevel_lifecycle mock was not set"
+  }
+
+  assert {
     condition     = data.opslevel_lifecycle.index_filter.filter.field == "index"
     error_message = "filter field should be index"
   }
@@ -67,6 +82,11 @@ run "datasource_lifecycle_filter_by_index" {
 run "datasource_lifecycle_filter_by_alias" {
   providers = {
     opslevel = opslevel.fake
+  }
+
+  assert {
+    condition     = data.opslevel_lifecycle.index_filter.alias == "generally_available"
+    error_message = "id in opslevel_lifecycle mock was not set"
   }
 
   assert {

@@ -45,11 +45,11 @@ func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecyc
 	}
 }
 
-func (sys *LifecycleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (lifecycleDataSource *LifecycleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_lifecycle"
 }
 
-func (sys *LifecycleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	validFieldNames := []string{"alias", "id", "index", "name"}
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -83,7 +83,7 @@ func (sys *LifecycleDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (sys *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data LifecycleDataSourceModel
 
 	// Read Terraform configuration data into the model
@@ -92,7 +92,7 @@ func (sys *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	lifecycles, err := sys.client.ListLifecycles()
+	lifecycles, err := lifecycleDataSource.client.ListLifecycles()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list lifecycles, got error: %s", err))
 		return
@@ -111,11 +111,11 @@ func (sys *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &lifecycleDataModel)...)
 }
 
-func filterLifecycles(tiers []opslevel.Lifecycle, filter FilterBlockModel) (*opslevel.Lifecycle, error) {
+func filterLifecycles(lifecycles []opslevel.Lifecycle, filter FilterBlockModel) (*opslevel.Lifecycle, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for lifecycle's value")
 	}
-	for _, lifecycle := range tiers {
+	for _, lifecycle := range lifecycles {
 		switch filter.Field.ValueString() {
 		case "alias":
 			if filter.Value.Equal(types.StringValue(lifecycle.Alias)) {
