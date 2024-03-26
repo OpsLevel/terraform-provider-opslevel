@@ -83,17 +83,6 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
-  terraform-reapply:
-    desc: Keep terraform state, build code fresh, run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
-    aliases: ["reapply", "re-apply"]
-    cmds:
-      - task: terraform-build
-      - task: terraform-clean-keep-state
-      - task: terraform-init-from
-        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
-      - task: terraform-command
-        vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
   terraform-build:
     desc: Build local opslevel terraform provider
     aliases: ["build"]
