@@ -29,6 +29,20 @@ data "opslevel_filter" "mock_filter" {
   }
 }
 
+data "opslevel_integration" "name_filter" {
+  filter {
+    field = "name"
+    value = "My Integration I Got By Filtering Name"
+  }
+}
+
+data "opslevel_integration" "id_filter" {
+  filter {
+    field = "id"
+    value = "Z2lkOi8vb3BzbGV2ZWwvSW50ZWdyYXRpb25zOjpTbGFja0ludGVncmF0aW9uLzI2"
+  }
+}
+
 data "opslevel_rubric_category" "name_filter" {
   filter {
     field = "name"
