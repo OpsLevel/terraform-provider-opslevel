@@ -68,8 +68,8 @@ tasks:
     internal: true
     cmds:
       - task: terraform-build
-      - task: terraform-clean-no-prompt
-        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform-rm-local-provider-no-prompt
+        vars: { CLEAN_DIR: "{{.SETUP_DIR}}" }
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.SETUP_DIR}}" }
     requires:
@@ -131,22 +131,10 @@ tasks:
     aliases: ["clean"]
     prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
     cmds:
-      - task: terraform-clean-no-prompt
+      - task: terraform-rm-local-provider-no-prompt
         vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
-
-  terraform-clean-keep-state:
-    internal: true
-    dir: "{{.WORKSPACE_DIR}}"
-    cmds:
-      - cmd: rm -rf .terraform.lock.hcl .terraform/
-
-  terraform-clean-no-prompt:
-    internal: true
-    cmds:
-      - cmd: rm -rf {{.CLEAN_DIR}}/*.tfstate {{.CLEAN_DIR}}/.terraform.lock.hcl {{.CLEAN_DIR}}/./terraform.* {{.CLEAN_DIR}}/.terraform/
+      - cmd: rm -rf {{.WORKSPACE_DIR}}/*.tfstate*
         ignore_error: true
-    requires:
-      vars: [CLEAN_DIR]
 
   terraform-destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -160,7 +148,7 @@ tasks:
     desc: Initialize terraform workspace
     aliases: ["init"]
     cmds:
-      - task: terraform-clean-no-prompt
+      - task: terraform-rm-local-provider-no-prompt
         vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
@@ -183,6 +171,14 @@ tasks:
       - task: setup-terraform
       - task: terraform-command
         vars: { TF_COMMAND: 'plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-rm-local-provider-no-prompt:
+    internal: true
+    cmds:
+      - cmd: rm -rf {{.CLEAN_DIR}}/.terraform.lock.hcl {{.CLEAN_DIR}}/.terraform/
+        ignore_error: true
+    requires:
+      vars: [CLEAN_DIR]
 
   test:
     desc: Run tests
