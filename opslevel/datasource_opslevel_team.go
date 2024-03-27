@@ -27,18 +27,16 @@ type TeamDataSource struct {
 type TeamDataSourceModel struct {
 	Alias       types.String   `tfsdk:"alias"`
 	Id          types.String   `tfsdk:"id"`
-	Identifier  types.String   `tfsdk:"identifier"`
 	Members     types.ListType `tfsdk:"members"`
 	Name        types.String   `tfsdk:"name"`
 	ParentAlias types.String   `tfsdk:"parent_alias"`
 	ParentId    types.String   `tfsdk:"parent_id"`
 }
 
-func NewTeamDataSourceModel(ctx context.Context, team opslevel.Team, identifier types.String) TeamDataSourceModel {
+func NewTeamDataSourceModel(ctx context.Context, team opslevel.Team) TeamDataSourceModel {
 	return TeamDataSourceModel{
-		Alias:      types.StringValue(team.Alias),
-		Id:         types.StringValue(string(team.Id)),
-		Identifier: identifier,
+		Alias: types.StringValue(team.Alias),
+		Id:    types.StringValue(string(team.Id)),
 		// TODO: members
 		Name:        types.StringValue(team.Name),
 		ParentAlias: types.StringValue(team.ParentTeam.Alias),
@@ -56,33 +54,27 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		MarkdownDescription: "Team data source",
 
 		Attributes: map[string]schema.Attribute{
-			"aliases": schema.ListAttribute{
-				ElementType:         types.StringType,
-				MarkdownDescription: "All of the aliases attached to the Team.",
+			"alias": schema.StringAttribute{
+				MarkdownDescription: "The alias attached to the Team.",
 				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The description of the Team.",
-				Computed:            true,
-			},
-			"domain": schema.StringAttribute{
-				MarkdownDescription: "ID of the parent domain of the Team.",
-				Computed:            true,
+				Optional:            true,
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of this Team.",
 				Computed:    true,
-			},
-			"identifier": schema.StringAttribute{
-				Description: "The id or alias of the Team.",
-				Required:    true,
+				Optional:    true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the Team.",
 				Computed:    true,
 			},
-			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the Team.",
+			// TODO: members
+			"parent_alias": schema.StringAttribute{
+				Description: "The alias of the parent team.",
+				Computed:    true,
+			},
+			"parent_id": schema.StringAttribute{
+				Description: "The id of the parent team.",
 				Computed:    true,
 			},
 		},
@@ -100,22 +92,29 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 
 	var err error
 	var team *opslevel.Team
-	if opslevel.IsID(data.Identifier.ValueString()) {
-		team, err = teamDataSource.client.GetTeam(opslevel.ID(data.Identifier.ValueString()))
+	if data.Alias.ValueString() != "" {
+		team, err = teamDataSource.client.GetTeamWithAlias(data.Alias.ValueString())
+	} else if data.Id.ValueString() != "" {
+		team, err = teamDataSource.client.GetTeam(opslevel.ID(data.Id.ValueString()))
 	} else {
-		team, err = teamDataSource.client.GetTeamWithAlias(data.Identifier.ValueString())
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read team datasource, got error: %s", err))
+		return
 	}
-
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read team, got error: %s", err))
+		return
+	}
+	if team == nil || team.Id == "" {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to find team with alias=`%s` or id=`%s`", data.Alias.ValueString(), data.Id.ValueString()))
 		return
 	}
 
 	// TODO: members
 
-	teamDataModel := NewTeamDataSourceModel(ctx, *team, data.Identifier)
+	teamDataModel := NewTeamDataSourceModel(ctx, *team)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Team data source")
+	resp.Diagnostics.Append(resp.Diagnostics...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &teamDataModel)...)
 }
