@@ -48,10 +48,12 @@ func (d *RepositoryDataSource) Schema(ctx context.Context, req datasource.Schema
 			"alias": schema.StringAttribute{
 				MarkdownDescription: "The human-friendly, unique identifier for the repository.",
 				Optional:            true,
+				Computed:            true,
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The unique identifier for the repository.",
 				Optional:            true,
+				Computed:            true,
 			},
 		},
 	}
