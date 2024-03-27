@@ -73,6 +73,15 @@ data "opslevel_service" "mock_service_with_id" {
   identifier = "Z2lkOi8vmock123"
 }
 
+# repository
+
+data "opslevel_repository" "mock_repository_with_alias" {
+}
+
+data "opslevel_repository" "mock_repository_with_id" {
+  id = "Z2lkOi8vb3BzbGV2ZWwvUmVwb3NpdG9yaWVzOjpHaXRodWIvMTU2Mzk"
+}
+
 # rubric Level data sources
 
 data "opslevel_rubric_level" "alias_filter" {
