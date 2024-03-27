@@ -19,6 +19,11 @@ run "datasource_lifecycle_filter_by_id" {
   }
 
   assert {
+    condition     = data.opslevel_lifecycle.id_filter.index == 123
+    error_message = "wrong index in opslevel_lifecycle"
+  }
+
+  assert {
     condition     = data.opslevel_lifecycle.id_filter.name == "Generally Available"
     error_message = "wrong name in opslevel_lifecycle"
   }
