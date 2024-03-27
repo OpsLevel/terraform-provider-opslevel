@@ -26,22 +26,20 @@ type LifecycleDataSource struct {
 
 // LifecycleDataSourceModel describes the data source data model.
 type LifecycleDataSourceModel struct {
-	Alias       types.String     `tfsdk:"alias"`
-	Description types.String     `tfsdk:"description"`
-	Filter      FilterBlockModel `tfsdk:"filter"`
-	Id          types.String     `tfsdk:"id"`
-	Index       types.Int64      `tfsdk:"index"`
-	Name        types.String     `tfsdk:"name"`
+	Alias  types.String     `tfsdk:"alias"`
+	Filter FilterBlockModel `tfsdk:"filter"`
+	Id     types.String     `tfsdk:"id"`
+	Index  types.Int64      `tfsdk:"index"`
+	Name   types.String     `tfsdk:"name"`
 }
 
 func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter FilterBlockModel) LifecycleDataSourceModel {
 	return LifecycleDataSourceModel{
-		Alias:       types.StringValue(lifecycle.Alias),
-		Description: types.StringValue(lifecycle.Description),
-		Filter:      filter,
-		Id:          types.StringValue(string(lifecycle.Id)),
-		Index:       types.Int64Value(int64(lifecycle.Index)),
-		Name:        types.StringValue(lifecycle.Name),
+		Alias:  types.StringValue(lifecycle.Alias),
+		Filter: filter,
+		Id:     types.StringValue(string(lifecycle.Id)),
+		Index:  types.Int64Value(int64(lifecycle.Index)),
+		Name:   types.StringValue(lifecycle.Name),
 	}
 }
 
@@ -58,10 +56,6 @@ func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req 
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
 				MarkdownDescription: "The alias attached to the Lifecycle.",
-				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The description for the Lifecycle.",
 				Computed:            true,
 			},
 			"id": schema.StringAttribute{
