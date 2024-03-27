@@ -17,11 +17,6 @@ run "datasource_repository_with_alias" {
     condition     = data.opslevel_repository.mock_repository_with_alias.id != null && data.opslevel_repository.mock_repository_with_alias.id != ""
     error_message = "empty id on opslevel_repository"
   }
-
-  assert {
-    condition     = data.opslevel_repository.mock_repository_with_alias.name == "opslevel-go"
-    error_message = "wrong name on opslevel_repository"
-  }
 }
 
 run "datasource_repository_with_id" {
@@ -37,10 +32,5 @@ run "datasource_repository_with_id" {
   assert {
     condition     = data.opslevel_repository.mock_repository_with_id.id != null && data.opslevel_repository.mock_repository_with_id.id != ""
     error_message = "empty id on opslevel_repository"
-  }
-
-  assert {
-    condition     = data.opslevel_repository.mock_repository_with_id.name == "opslevel-go"
-    error_message = "wrong name on opslevel_repository"
   }
 }

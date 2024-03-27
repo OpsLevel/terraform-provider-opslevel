@@ -28,7 +28,6 @@ type RepositoryDataSourceModel struct {
 	Alias      types.String `tfsdk:"alias"`
 	Id         types.String `tfsdk:"id"`
 	Identifier types.String `tfsdk:"identifier"`
-	Name       types.String `tfsdk:"name"`
 }
 
 func NewRepositoryDataSourceModel(ctx context.Context, repository opslevel.Repository, identifier string) RepositoryDataSourceModel {
@@ -36,7 +35,6 @@ func NewRepositoryDataSourceModel(ctx context.Context, repository opslevel.Repos
 		Alias:      types.StringValue(repository.DefaultAlias),
 		Id:         types.StringValue(string(repository.Id)),
 		Identifier: types.StringValue(identifier),
-		Name:       types.StringValue(repository.Name),
 	}
 }
 
@@ -60,10 +58,6 @@ func (d *RepositoryDataSource) Schema(ctx context.Context, req datasource.Schema
 			"identifier": schema.StringAttribute{
 				MarkdownDescription: "The alias or id of the repository.",
 				Required:            true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The display name of the repository.",
-				Computed:    true,
 			},
 		},
 	}
