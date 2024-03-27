@@ -77,10 +77,12 @@ data "opslevel_service" "mock_service_with_id" {
 
 data "opslevel_repository" "mock_repository_with_alias" {
   alias = "github.com:OpsLevel/opslevel-go"
+  id    = "Z2lkOi8vb3BzbGV2ZWwvUmVwb3NpdG9yaWVzOjpHaXRodWIvMTU2Mzk"
 }
 
 data "opslevel_repository" "mock_repository_with_id" {
   alias = "github.com:OpsLevel/opslevel-go"
+  id    = "Z2lkOi8vb3BzbGV2ZWwvUmVwb3NpdG9yaWVzOjpHaXRodWIvMTU2Mzk"
 }
 
 # rubric Level data sources
