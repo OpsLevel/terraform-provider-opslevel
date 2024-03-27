@@ -72,7 +72,6 @@ func (d *RepositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	if data.Alias.ValueString() != "" {
 		repository, err = d.client.GetRepositoryWithAlias(data.Alias.ValueString())
 	} else if data.Id.ValueString() != "" {
-		// use id
 		repository, err = d.client.GetRepository(opslevel.ID(data.Id.ValueString()))
 	} else {
 		resp.Diagnostics.AddError("Config Error", "please provide a value for alias or id")
@@ -91,6 +90,6 @@ func (d *RepositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Repository data source")
-	// resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.Diagnostics...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &repositoryDataModel)...)
 }
