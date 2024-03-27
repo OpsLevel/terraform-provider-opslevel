@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,19 +28,41 @@ type TeamDataSource struct {
 
 // TeamDataSourceModel describes the data source data model.
 type TeamDataSourceModel struct {
-	Alias       types.String   `tfsdk:"alias"`
-	Id          types.String   `tfsdk:"id"`
-	Members     types.ListType `tfsdk:"members"`
-	Name        types.String   `tfsdk:"name"`
-	ParentAlias types.String   `tfsdk:"parent_alias"`
-	ParentId    types.String   `tfsdk:"parent_id"`
+	Alias       types.String `tfsdk:"alias"`
+	Id          types.String `tfsdk:"id"`
+	Members     types.List   `tfsdk:"members"`
+	Name        types.String `tfsdk:"name"`
+	ParentAlias types.String `tfsdk:"parent_alias"`
+	ParentId    types.String `tfsdk:"parent_id"`
+}
+
+var memberObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"email": types.StringType,
+		"role":  types.StringType,
+	},
+}
+
+func membershipsToListValue(ctx context.Context, members *opslevel.TeamMembershipConnection) basetypes.ListValue {
+	if members == nil {
+		return basetypes.NewListNull(memberObjectType)
+	}
+
+	output := make([]attr.Value, len(members.Nodes))
+	for i, membership := range members.Nodes {
+		object := make(map[string]attr.Value)
+		object["email"] = basetypes.NewStringValue(membership.User.Email)
+		object["role"] = basetypes.NewStringValue(membership.Role)
+		output[i] = types.ObjectValueMust(memberObjectType.AttrTypes, object)
+	}
+	return types.ListValueMust(memberObjectType, output)
 }
 
 func NewTeamDataSourceModel(ctx context.Context, team opslevel.Team) TeamDataSourceModel {
 	return TeamDataSourceModel{
-		Alias: types.StringValue(team.Alias),
-		Id:    types.StringValue(string(team.Id)),
-		// TODO: members
+		Alias:       types.StringValue(team.Alias),
+		Id:          types.StringValue(string(team.Id)),
+		Members:     membershipsToListValue(ctx, team.Memberships),
 		Name:        types.StringValue(team.Name),
 		ParentAlias: types.StringValue(team.ParentTeam.Alias),
 		ParentId:    types.StringValue(string(team.ParentTeam.Id)),
@@ -68,7 +93,11 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 				Description: "The name of the Team.",
 				Computed:    true,
 			},
-			// TODO: members
+			"members": schema.ListAttribute{
+				Description: "List of team members on the team.",
+				ElementType: memberObjectType,
+				Computed:    true,
+			},
 			"parent_alias": schema.StringAttribute{
 				Description: "The alias of the parent team.",
 				Computed:    true,
@@ -108,8 +137,6 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to find team with alias=`%s` or id=`%s`", data.Alias.ValueString(), data.Id.ValueString()))
 		return
 	}
-
-	// TODO: members
 
 	teamDataModel := NewTeamDataSourceModel(ctx, *team)
 

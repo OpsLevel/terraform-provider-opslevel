@@ -32,6 +32,16 @@ run "datasource_team_with_alias" {
     condition     = data.opslevel_team.mock_team_with_alias.parent_id == "Z2lkOi8vb3BzbGV2ZWwvVGVhbS8xMDI0Mg"
     error_message = "wrong parent_id on opslevel_team"
   }
+
+  assert {
+    condition     = data.opslevel_team.mock_team_with_alias.members[0].email == "person1@opslevel.com" && data.opslevel_team.mock_team_with_alias.members[0].role == "manager" && data.opslevel_team.mock_team_with_alias.members[1].email == "person2@opslevel.com" && data.opslevel_team.mock_team_with_alias.members[1].role == "contributor"
+    error_message = "wrong members data on opslevel_team"
+  }
+
+  assert {
+    condition     = length(data.opslevel_team.mock_team_with_alias.members) == 2
+    error_message = "wrong members length on opslevel_team"
+  }
 }
 
 run "datasource_team_with_id" {
