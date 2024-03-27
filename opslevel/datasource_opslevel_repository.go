@@ -25,16 +25,14 @@ type RepositoryDataSource struct {
 
 // RepositoryDataSourceModel describes the data source data model.
 type RepositoryDataSourceModel struct {
-	Alias      types.String `tfsdk:"alias"`
-	Id         types.String `tfsdk:"id"`
-	Identifier types.String `tfsdk:"identifier"`
+	Alias types.String `tfsdk:"alias"`
+	Id    types.String `tfsdk:"id"`
 }
 
-func NewRepositoryDataSourceModel(ctx context.Context, repository opslevel.Repository, identifier string) RepositoryDataSourceModel {
+func NewRepositoryDataSourceModel(ctx context.Context, repository opslevel.Repository) RepositoryDataSourceModel {
 	return RepositoryDataSourceModel{
-		Alias:      types.StringValue(repository.DefaultAlias),
-		Id:         types.StringValue(string(repository.Id)),
-		Identifier: types.StringValue(identifier),
+		Alias: types.StringValue(repository.DefaultAlias),
+		Id:    types.StringValue(string(repository.Id)),
 	}
 }
 
@@ -49,15 +47,11 @@ func (d *RepositoryDataSource) Schema(ctx context.Context, req datasource.Schema
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
 				MarkdownDescription: "The human-friendly, unique identifier for the repository.",
-				Computed:            true,
+				Optional:            true,
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The unique identifier for the repository.",
-				Computed:            true,
-			},
-			"identifier": schema.StringAttribute{
-				MarkdownDescription: "The alias or id of the repository.",
-				Required:            true,
+				Optional:            true,
 			},
 		},
 	}
@@ -74,17 +68,26 @@ func (d *RepositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	var err error
 	var repository *opslevel.Repository
-	if opslevel.IsID(data.Identifier.ValueString()) {
-		repository, err = d.client.GetRepository(opslevel.ID(data.Identifier.ValueString()))
+
+	if data.Alias.ValueString() != "" {
+		repository, err = d.client.GetRepositoryWithAlias(data.Alias.ValueString())
+	} else if data.Id.ValueString() != "" {
+		// use id
+		repository, err = d.client.GetRepository(opslevel.ID(data.Id.ValueString()))
 	} else {
-		repository, err = d.client.GetRepositoryWithAlias(data.Identifier.ValueString())
+		resp.Diagnostics.AddError("Config Error", "please provide a value for alias or id")
+		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read repository datasource, got error: %s", err))
 		return
 	}
+	if repository == nil || repository.Id == "" {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to find repository with alias=`%s` or id=`%s`", data.Alias.ValueString(), data.Id.ValueString()))
+		return
+	}
 
-	repositoryDataModel := NewRepositoryDataSourceModel(ctx, *repository, data.Identifier.ValueString())
+	repositoryDataModel := NewRepositoryDataSourceModel(ctx, *repository)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Repository data source")
