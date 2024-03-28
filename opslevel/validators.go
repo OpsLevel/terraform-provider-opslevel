@@ -8,7 +8,7 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-// Non Empty String Validator
+// OpsLevel ID String Validator
 type idStringValidator struct{}
 
 // Description describes the validation in plain text formatting.
