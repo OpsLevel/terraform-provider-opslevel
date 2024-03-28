@@ -66,11 +66,11 @@ data "opslevel_property_definition" "mock_property_definition" {
 # Service data sources
 
 data "opslevel_service" "mock_service_with_alias" {
-  identifier = "mock-service-alias"
+  alias = "mock-service-alias"
 }
 
 data "opslevel_service" "mock_service_with_id" {
-  identifier = "Z2lkOi8vmock123"
+  id = "Z2lkOi8vmock123"
 }
 
 # repository

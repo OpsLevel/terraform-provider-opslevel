@@ -9,7 +9,7 @@ run "datasource_service_given_alias" {
   }
 
   assert {
-    condition     = data.opslevel_service.mock_service_with_alias.identifier == "mock-service-alias"
+    condition     = data.opslevel_service.mock_service_with_alias.alias == "mock-service-alias"
     error_message = "alias in opslevel_service mock was not set"
   }
 
@@ -21,12 +21,12 @@ run "datasource_service_given_id" {
   }
 
   assert {
-    condition     = startswith(data.opslevel_service.mock_service_with_id.identifier, "Z2lkOi8v")
+    condition     = startswith(data.opslevel_service.mock_service_with_id.id, "Z2lkOi8v")
     error_message = "wrong id prefix in opslevel_service mock"
   }
 
   assert {
-    condition     = data.opslevel_service.mock_service_with_id.identifier == "Z2lkOi8vmock123"
+    condition     = data.opslevel_service.mock_service_with_id.id == "Z2lkOi8vmock123"
     error_message = "wrong id in opslevel_service mock"
   }
 

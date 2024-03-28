@@ -29,11 +29,12 @@ type ServiceDataSource struct {
 
 // ServiceDataSourceModel describes the data source data model.
 type ServiceDataSourceModel struct {
+	Alias                      types.String `tfsdk:"alias"`
 	Aliases                    types.List   `tfsdk:"aliases"`
 	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
 	Description                types.String `tfsdk:"description"`
 	Framework                  types.String `tfsdk:"framework"`
-	Identifier                 types.String `tfsdk:"identifier"`
+	Id                         types.String `tfsdk:"id"`
 	Language                   types.String `tfsdk:"language"`
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
@@ -47,14 +48,14 @@ type ServiceDataSourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, identifier string) (ServiceDataSourceModel, diag.Diagnostics) {
+func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, alias string) (ServiceDataSourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	serviceDataSourceModel := ServiceDataSourceModel{
 		ApiDocumentPath: types.StringValue(service.ApiDocumentPath),
 		Description:     types.StringValue(service.Description),
 		Framework:       types.StringValue(service.Framework),
-		Identifier:      types.StringValue(identifier),
+		Id:              types.StringValue(string(service.Id)),
 		Language:        types.StringValue(service.Language),
 		LifecycleAlias:  types.StringValue(service.Lifecycle.Alias),
 		Name:            types.StringValue(service.Name),
@@ -62,6 +63,10 @@ func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, id
 		OwnerId:         types.StringValue(string(service.Owner.Id)),
 		Product:         types.StringValue(service.Product),
 		TierAlias:       types.StringValue(service.Tier.Alias),
+	}
+
+	if alias != "" {
+		serviceDataSourceModel.Alias = types.StringValue(alias)
 	}
 
 	serviceAliases, svcDiags := types.ListValueFrom(ctx, types.StringType, service.Aliases)
@@ -92,6 +97,11 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		MarkdownDescription: "Service data source",
 
 		Attributes: map[string]schema.Attribute{
+			"alias": schema.StringAttribute{
+				Description: "An alias of the service to find by.",
+				Computed:    true,
+				Optional:    true,
+			},
 			"aliases": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "The aliases of the service.",
@@ -109,9 +119,10 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "The primary software development framework that the service uses.",
 				Computed:    true,
 			},
-			"identifier": schema.StringAttribute{
-				Description: "The id or alias of the service to find.",
-				Required:    true,
+			"id": schema.StringAttribute{
+				Description: "The id of the service to find",
+				Computed:    true,
+				Optional:    true,
 			},
 			"language": schema.StringAttribute{
 				Description: "The primary programming language that the service is written in.",
@@ -166,6 +177,8 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data ServiceDataSourceModel
+	var service opslevel.Service
+	var err error
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -173,12 +186,20 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	service, err := getService(*d.client, data)
+	if opslevel.IsID(data.Id.ValueString()) {
+		service, err = getServiceWithId(*d.client, data)
+	} else if data.Alias.ValueString() != "" {
+		service, err = getServiceWithAlias(*d.client, data)
+	} else {
+		resp.Diagnostics.AddError("Config Error", "'alias' or valid 'id' for opslevel_service datasource must be set")
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service datasource, got error: %s", err))
 		return
 	}
-	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Identifier.ValueString())
+
+	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Alias.ValueString())
 	resp.Diagnostics.Append(diags...)
 
 	// NOTE: service's hydrate does not populate properties
@@ -241,24 +262,19 @@ func getServiceProperties(ctx context.Context, client *opslevel.Client, service 
 	return serviceProperties, diags
 }
 
-func getService(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
-	var err error
-	var service *opslevel.Service
-
-	identifier := data.Identifier.ValueString()
-	if opslevel.IsID(identifier) {
-		service, err = client.GetService(opslevel.ID(identifier))
-	} else {
-		service, err = client.GetServiceWithAlias(identifier)
-	}
+func getServiceWithAlias(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
+	service, err := client.GetServiceWithAlias(data.Alias.ValueString())
 	if err != nil {
 		return opslevel.Service{}, err
 	}
+	return *service, nil
+}
 
-	if service == nil || service.Id == "" {
-		return opslevel.Service{}, fmt.Errorf("unable to find repository with identifier=`%s`", identifier)
+func getServiceWithId(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
+	service, err := client.GetService(opslevel.ID(data.Id.ValueString()))
+	if err != nil {
+		return opslevel.Service{}, err
 	}
-
 	return *service, nil
 }
 
