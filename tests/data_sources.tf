@@ -154,6 +154,16 @@ data "opslevel_system" "mock_system" {
   identifier = "my_system"
 }
 
+# team
+
+data "opslevel_team" "mock_team_with_id" {
+  id = "Z2lkOi8vb3BzbGV2ZWwvVGVhbS8xNjc4"
+}
+
+data "opslevel_team" "mock_team_with_alias" {
+  alias = "platform"
+}
+
 # Tier data sources
 
 data "opslevel_tier" "mock_tier" {
