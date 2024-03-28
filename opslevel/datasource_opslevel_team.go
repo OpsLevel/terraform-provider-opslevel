@@ -94,7 +94,7 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 				Computed:    true,
 			},
 			"members": schema.ListAttribute{
-				Description: "List of team members on the team.",
+				Description: "List of team members on the team with email address and role.",
 				ElementType: memberObjectType,
 				Computed:    true,
 			},
