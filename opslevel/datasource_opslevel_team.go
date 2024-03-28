@@ -43,7 +43,7 @@ var memberObjectType = types.ObjectType{
 	},
 }
 
-func membershipsToListValue(ctx context.Context, members *opslevel.TeamMembershipConnection) basetypes.ListValue {
+func membershipsToListValue(members *opslevel.TeamMembershipConnection) basetypes.ListValue {
 	if members == nil {
 		return basetypes.NewListNull(memberObjectType)
 	}
@@ -58,11 +58,11 @@ func membershipsToListValue(ctx context.Context, members *opslevel.TeamMembershi
 	return types.ListValueMust(memberObjectType, output)
 }
 
-func NewTeamDataSourceModel(ctx context.Context, team opslevel.Team) TeamDataSourceModel {
+func NewTeamDataSourceModel(team opslevel.Team) TeamDataSourceModel {
 	return TeamDataSourceModel{
 		Alias:       types.StringValue(team.Alias),
 		Id:          types.StringValue(string(team.Id)),
-		Members:     membershipsToListValue(ctx, team.Memberships),
+		Members:     membershipsToListValue(team.Memberships),
 		Name:        types.StringValue(team.Name),
 		ParentAlias: types.StringValue(team.ParentTeam.Alias),
 		ParentId:    types.StringValue(string(team.ParentTeam.Id)),
@@ -123,10 +123,10 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 	var team *opslevel.Team
 	if data.Alias.ValueString() != "" {
 		team, err = teamDataSource.client.GetTeamWithAlias(data.Alias.ValueString())
-	} else if data.Id.ValueString() != "" {
+	} else if opslevel.IsID(data.Id.ValueString()) {
 		team, err = teamDataSource.client.GetTeam(opslevel.ID(data.Id.ValueString()))
 	} else {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read team datasource, got error: %s", err))
+		resp.Diagnostics.AddError("Config Error", "'alias' or 'id' for opslevel_team datasource must be set")
 		return
 	}
 	if err != nil {
@@ -138,7 +138,7 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	teamDataModel := NewTeamDataSourceModel(ctx, *team)
+	teamDataModel := NewTeamDataSourceModel(*team)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Team data source")
