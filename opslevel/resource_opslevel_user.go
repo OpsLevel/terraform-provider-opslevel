@@ -62,7 +62,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		Attributes: map[string]schema.Attribute{
 			"email": schema.StringAttribute{
 				Description: "The email address of the user.",
-				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Required: true,
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the user.",
