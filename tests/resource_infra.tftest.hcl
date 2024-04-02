@@ -20,7 +20,7 @@ run "resource_infra_small" {
 
   assert {
     condition = opslevel_infrastructure.small_infra.data == jsonencode({
-      name = "big-query"
+      name = "small-query"
     })
     error_message = "wrong data in opslevel_infrastructure.small_infra"
   }
