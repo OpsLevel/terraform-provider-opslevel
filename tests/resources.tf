@@ -10,6 +10,10 @@ resource "opslevel_domain" "fancy" {
 # Infrastructure resources
 
 resource "opslevel_infrastructure" "small_infra" {
+  data = jsonencode({
+    name = "small-query"
+  })
+  owner  = var.test_id
   schema = "Small Database"
 }
 

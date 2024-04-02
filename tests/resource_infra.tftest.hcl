@@ -10,12 +10,24 @@ run "resource_infra_small" {
 
   assert {
     condition     = !contains([null, ""], opslevel_infrastructure.small_infra.id)
-    error_message = "opslevel_infrastructure id should not be empty"
+    error_message = "opslevel_infrastructure.small_infra id should not be empty"
   }
 
   assert {
     condition     = !contains([null, ""], opslevel_infrastructure.small_infra.last_updated)
-    error_message = "opslevel_infrastructure last_updated should not be empty"
+    error_message = "opslevel_infrastructure.small_infra last_updated should not be empty"
+  }
+
+  assert {
+    condition = opslevel_infrastructure.small_infra.data == jsonencode({
+      name = "big-query"
+    })
+    error_message = "wrong data in opslevel_infrastructure.small_infra"
+  }
+
+  assert {
+    condition     = opslevel_infrastructure.small_infra.owner == var.test_id
+    error_message = "wrong owner for opslevel_infrastructure.small_infra"
   }
 
   assert {
@@ -46,7 +58,7 @@ run "resource_infra_big" {
         value = 700
       }
     })
-    error_message = "wrong data in opslevel_infrastructure.data"
+    error_message = "wrong data in opslevel_infrastructure.big_infra"
   }
 
   assert {
@@ -61,7 +73,7 @@ run "resource_infra_big" {
       type    = "BigQuery"
       url     = "https://console.cloud.google.com/"
     }
-    error_message = "wrong provider_data in opslevel_infrastructure.data"
+    error_message = "wrong provider_data in opslevel_infrastructure.big_infra"
   }
 
   assert {

@@ -18,7 +18,7 @@ data "opslevel_filter" "name_filter" {
 data "opslevel_filter" "id_filter" {
   filter {
     field = "id"
-    value = "Z2lkOi8vb3BzbGV2ZWwvVGllci8yMTAw"
+    value = var.test_id
   }
 }
 

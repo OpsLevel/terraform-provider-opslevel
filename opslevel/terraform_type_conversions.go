@@ -1,6 +1,9 @@
 package opslevel
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -9,7 +12,7 @@ import (
 
 // Returns value wrapped in a types.StringValue, even if blank string given
 func RequiredStringValue(value string) basetypes.StringValue {
-	return types.StringValue(value)
+	return types.StringValue(unquote(value))
 }
 
 // Returns value wrapped in a types.StringValue, or types.StringNull if blank
@@ -17,7 +20,7 @@ func OptionalStringValue(value string) basetypes.StringValue {
 	if value == "" {
 		return types.StringNull()
 	}
-	return types.StringValue(value)
+	return types.StringValue(unquote(value))
 }
 
 // Syntactic sugar for OptionalStringValue
@@ -33,4 +36,14 @@ func OptionalStringListValue(ctx context.Context, value []string) (basetypes.Lis
 		return types.ListNull(types.StringType), diag.Diagnostics{}
 	}
 	return types.ListValueFrom(ctx, types.StringType, value)
+}
+
+// unquotes unwanted quotes from strings in maps, returns original value in most cases
+func unquote(value string) string {
+	if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
+		if unquotedValue, err := strconv.Unquote(value); err == nil {
+			return unquotedValue
+		}
+	}
+	return value
 }
