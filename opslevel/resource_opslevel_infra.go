@@ -230,6 +230,12 @@ func (r *InfrastructureResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	updatedInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *updatedInfrastructure)
+
+	if data.ProviderData == nil && updatedInfrastructureResourceModel.ProviderData != nil {
+		resp.Diagnostics.AddError("Known error", "Unable to unset 'provider_data' field for now. We have a planned fix for this.")
+		return
+	}
+
 	resp.Diagnostics.Append(diags...)
 	updatedInfrastructureResourceModel.Aliases = data.Aliases
 	updatedInfrastructureResourceModel.LastUpdated = timeLastUpdated()
