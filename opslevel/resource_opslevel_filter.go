@@ -50,20 +50,22 @@ type filterPredicate struct {
 
 func convertPredicate(predicate opslevel.FilterPredicate) filterPredicate {
 	convertedFilterPredicate := filterPredicate{
-		Key:     types.StringValue(string(predicate.Key)),
-		KeyData: types.StringValue(predicate.KeyData),
-		Type:    types.StringValue(string(predicate.Type)),
-		Value:   types.StringValue(predicate.Value),
+		CaseSensitive:   types.BoolNull(),
+		CaseInsensitive: types.BoolNull(),
+		Key:             RequiredStringValue(string(predicate.Key)),
+		KeyData:         OptionalStringValue(predicate.KeyData),
+		Type:            RequiredStringValue(string(predicate.Type)),
+		Value:           OptionalStringValue(predicate.Value),
 	}
-	if predicate.CaseSensitive == nil {
-		convertedFilterPredicate.CaseSensitive = types.BoolNull()
-		convertedFilterPredicate.CaseInsensitive = types.BoolNull()
-	} else if *predicate.CaseSensitive {
-		convertedFilterPredicate.CaseSensitive = types.BoolValue(true)
-		convertedFilterPredicate.CaseInsensitive = types.BoolValue(false)
-	} else {
-		convertedFilterPredicate.CaseSensitive = types.BoolValue(false)
-		convertedFilterPredicate.CaseInsensitive = types.BoolValue(true)
+	if predicate.CaseSensitive != nil {
+		isCaseSensitive := *predicate.CaseSensitive
+		if isCaseSensitive {
+			convertedFilterPredicate.CaseSensitive = types.BoolValue(true)
+			convertedFilterPredicate.CaseInsensitive = types.BoolValue(false)
+		} else {
+			convertedFilterPredicate.CaseSensitive = types.BoolValue(false)
+			convertedFilterPredicate.CaseInsensitive = types.BoolValue(true)
+		}
 	}
 	return convertedFilterPredicate
 }
@@ -74,7 +76,7 @@ func NewFilterResourceModel(filter opslevel.Filter) FilterResourceModel {
 		filterPredicates = append(filterPredicates, convertPredicate(predicate))
 	}
 	return FilterResourceModel{
-		Connective: types.StringValue(string(filter.Connective)),
+		Connective: OptionalStringValue(string(filter.Connective)),
 		Id:         types.StringValue(string(filter.Id)),
 		Name:       types.StringValue(filter.Name),
 		Predicate:  filterPredicates,
@@ -113,10 +115,10 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Description: "The filter's display name.",
 				Required:    true,
 			},
-			"predicate": schema.ListNestedAttribute{
-				Description: "The list of predicates used to select which services apply to the filter.",
-				Optional:    true,
-				NestedObject: schema.NestedAttributeObject{
+		},
+		Blocks: map[string]schema.Block{
+			"predicate": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"case_insensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
@@ -215,6 +217,10 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return
 	}
+	tflog.Info(ctx, fmt.Sprintf("predicate 0 key: %s", filter.Predicates[0].Key))
+	tflog.Info(ctx, fmt.Sprintf("predicate 0 key data: %s", filter.Predicates[0].KeyData))
+	tflog.Info(ctx, fmt.Sprintf("predicate 0 type: %s", filter.Predicates[0].Type))
+	tflog.Info(ctx, fmt.Sprintf("predicate 0 value: %s", filter.Predicates[0].Value))
 	readFilterResourceModel := NewFilterResourceModel(*filter)
 
 	// Save updated data into Terraform state
@@ -230,11 +236,23 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	updatedFilter, err := r.client.UpdateFilter(opslevel.FilterUpdateInput{})
+	predicates, err := getFilterPredicates(data.Predicate)
+	if err != nil {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("misconfigured filter predicate, got error: %s", err))
+		return
+	}
+
+	updatedFilter, err := r.client.UpdateFilter(opslevel.FilterUpdateInput{
+		Id:         opslevel.ID(data.Id.ValueString()),
+		Name:       data.Name.ValueStringPointer(),
+		Predicates: predicates,
+		Connective: getConnectiveEnum(data.Connective.ValueString()),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update filter, got error: %s", err))
 		return
 	}
+
 	updatedFilterResourceModel := NewFilterResourceModel(*updatedFilter)
 	updatedFilterResourceModel.LastUpdated = timeLastUpdated()
 
@@ -294,7 +312,10 @@ func getFilterPredicates(predicates []filterPredicate) (*[]opslevel.FilterPredic
 
 		filterPredicateInputs = append(filterPredicateInputs, tmpPredicateInput)
 	}
-	return &filterPredicateInputs, nil
+	if len(filterPredicateInputs) > 0 {
+		return &filterPredicateInputs, nil
+	}
+	return nil, nil
 }
 
 // import (

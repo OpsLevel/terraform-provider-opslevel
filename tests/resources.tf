@@ -16,19 +16,17 @@ resource "opslevel_filter" "small" {
 resource "opslevel_filter" "big" {
   connective = var.connective_enum
   name       = "Big Filter"
-  predicate = [
-    {
-      key  = var.predicate_key_enum
-      type = var.predicate_type_enum
-    },
-    {
-      case_sensitive = true
-      key            = "lifecycle_index"
-      key_data       = "big_predicate"
-      type           = "ends_with"
-      value          = "1"
-    }
-  ]
+  predicate {
+    key  = var.predicate_key_enum
+    type = var.predicate_type_enum
+  }
+  predicate {
+    case_sensitive = true
+    key            = "lifecycle_index"
+    key_data       = "big_predicate"
+    type           = "ends_with"
+    value          = "1"
+  }
 }
 
 # Infrastructure resources
