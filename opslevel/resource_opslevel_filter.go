@@ -275,7 +275,7 @@ func getConnectiveEnum(connective string) *opslevel.ConnectiveEnum {
 }
 
 func getFilterPredicates(predicates []filterPredicate) (*[]opslevel.FilterPredicateInput, error) {
-	filterPredicateInputs := make([]opslevel.FilterPredicateInput, len(predicates))
+	filterPredicateInputs := []opslevel.FilterPredicateInput{}
 	for _, predicate := range predicates {
 		tmpPredicateInput := opslevel.FilterPredicateInput{
 			Key:     opslevel.PredicateKeyEnum(predicate.Key.ValueString()),
