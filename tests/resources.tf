@@ -7,6 +7,30 @@ resource "opslevel_domain" "fancy" {
   note        = "This is an example"
 }
 
+# Filter resources
+
+resource "opslevel_filter" "small" {
+  name = "Blank Filter"
+}
+
+resource "opslevel_filter" "big" {
+  connective = var.connective_enum
+  name       = "Big Filter"
+  predicate = [
+    {
+      key  = var.predicate_key_enum
+      type = var.predicate_type_enum
+    },
+    {
+      case_sensitive = true
+      key            = "lifecycle_index"
+      key_data       = "big_predicate"
+      type           = "ends_with"
+      value          = "1"
+    }
+  ]
+}
+
 # Infrastructure resources
 
 resource "opslevel_infrastructure" "small_infra" {

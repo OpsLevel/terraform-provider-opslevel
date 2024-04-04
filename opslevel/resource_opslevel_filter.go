@@ -106,7 +106,7 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Computed:    true,
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true, // TODO: make sure all last_updated are both Optional and Computed
+				Optional: true,
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
@@ -135,8 +135,14 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 							// },
 						},
 						"key": schema.StringAttribute{
-							Description: "The condition key used by the predicate.",
-							Required:    true,
+							Description: fmt.Sprintf(
+								"The condition key used by the predicate. Valid values are `%s`",
+								strings.Join(opslevel.AllPredicateKeyEnum, "`, `"),
+							),
+							Required: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(opslevel.AllPredicateKeyEnum...),
+							},
 						},
 						"key_data": schema.StringAttribute{
 							Description: "Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.",
