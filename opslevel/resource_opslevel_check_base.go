@@ -76,10 +76,10 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 	return output
 }
 
+// TODO: move these helpers somewhere else
 func AsID(input types.String) opslevel.ID {
 	return *opslevel.NewID(input.ValueString())
 }
-
 func AsISO8601(input timetypes.RFC3339) (*iso8601.Time, diag.Diagnostics) {
 	t, diags := input.ValueRFC3339Time()
 	return &iso8601.Time{Time: t}, diags
