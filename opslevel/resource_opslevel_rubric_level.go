@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -73,10 +71,8 @@ func (r *RubricLevelResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"index": schema.Int64Attribute{
 				Description: "An integer allowing this level to be inserted between others. Must be unique per rubric.",
+				Computed:    true,
 				Optional:    true,
-				Validators: []validator.Int64{
-					int64validator.AtMost(6),
-				},
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},

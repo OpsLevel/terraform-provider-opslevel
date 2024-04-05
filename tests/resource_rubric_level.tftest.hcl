@@ -9,8 +9,13 @@ run "resource_rubric_level_small" {
   }
 
   assert {
-    condition     = opslevel_rubric_level.small.id != null && opslevel_rubric_level.small.id != ""
-    error_message = "opslevel_rubric_level.small id should not be empty"
+    condition     = can(opslevel_rubric_level.small.id)
+    error_message = "id attribute missing from filter in opslevel_rubric_level.small"
+  }
+
+  assert {
+    condition     = opslevel_rubric_level.small.index == 2
+    error_message = "wrong index for opslevel_rubric_level.small"
   }
 
   assert {
