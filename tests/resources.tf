@@ -40,6 +40,12 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Rubric Category resources
+
+resource "opslevel_rubric_category" "mock_category" {
+  name = "Mock Category"
+}
+
 # Rubric Level resources
 
 resource "opslevel_rubric_level" "big" {
