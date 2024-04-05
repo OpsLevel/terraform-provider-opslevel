@@ -54,7 +54,7 @@ func (r *RubricCategoryResource) Schema(ctx context.Context, req resource.Schema
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The ID of the rubricCategory.",
+				Description: "The ID of the Rubric Category.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
