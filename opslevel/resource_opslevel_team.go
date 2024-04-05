@@ -7,12 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
+	"slices"
 )
 
 var _ resource.ResourceWithConfigure = &TeamResource{}
@@ -51,7 +51,7 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 }
 
 func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, team.Aliases)
+	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
 	if diags != nil && diags.HasError() {
 		return TeamResourceModel{}, diags
 	}
@@ -61,15 +61,21 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResource
 			teamMembers = append(teamMembers, convertTeamMember(mem))
 		}
 	}
+	teamResourceModel := TeamResourceModel{
+		Aliases: aliases,
+		Id:      types.StringValue(string(team.Id)),
+		Member:  teamMembers,
+		Name:    types.StringValue(team.Name),
+	}
+	// TODO: how do we handle id or alias?
+	if team.ParentTeam.Alias != "" && team.ParentTeam.Id != "" {
+		teamResourceModel.Parent = types.StringValue(team.ParentTeam.Alias)
+	}
+	if team.Responsibilities != "" {
+		teamResourceModel.Responsibilities = types.StringValue(team.Responsibilities)
+	}
 
-	return TeamResourceModel{
-		Aliases:          aliases,
-		Id:               types.StringValue(string(team.Id)),
-		Member:           teamMembers,
-		Name:             types.StringValue(team.Name),
-		Parent:           types.StringValue(team.ParentTeam.Alias),
-		Responsibilities: types.StringValue(team.Responsibilities),
-	}, diags
+	return teamResourceModel, diags
 }
 
 func (teamResource *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -140,19 +146,29 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
 		return
 	}
-	team, err := teamResource.client.CreateTeam(opslevel.TeamCreateInput{
+	teamCreateInput := opslevel.TeamCreateInput{
 		Members:          &members,
 		Name:             data.Name.ValueString(),
-		ParentTeam:       opslevel.NewIdentifier(data.Parent.ValueString()),
 		Responsibilities: data.Responsibilities.ValueStringPointer(),
-	})
-	if err != nil {
+	}
+	if data.Parent.ValueString() != "" {
+		teamCreateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())
+	}
+	team, err := teamResource.client.CreateTeam(teamCreateInput)
+	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
+		return
+	}
+	if err = teamResource.reconcileTeamAliases(team, data); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
 
 	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team)
 	resp.Diagnostics.Append(diags...)
+	if data.Aliases.IsNull() && createdTeamResourceModel.Aliases.IsNull() {
+		createdTeamResourceModel.Aliases = types.ListNull(types.StringType)
+	}
 	createdTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamResourceModel)...)
@@ -189,15 +205,22 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
 		return
 	}
-	updatedTeam, err := teamResource.client.UpdateTeam(opslevel.TeamUpdateInput{
+	teamUpdateInput := opslevel.TeamUpdateInput{
 		Id:               opslevel.NewID(data.Id.ValueString()),
 		Members:          &members,
 		Name:             data.Name.ValueStringPointer(),
-		ParentTeam:       opslevel.NewIdentifier(data.Parent.ValueString()),
 		Responsibilities: data.Responsibilities.ValueStringPointer(),
-	})
-	if err != nil {
+	}
+	if data.Parent.ValueString() != "" {
+		teamUpdateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())
+	}
+	updatedTeam, err := teamResource.client.UpdateTeam(teamUpdateInput)
+	if err != nil || updatedTeam == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
+		return
+	}
+	if err = teamResource.reconcileTeamAliases(updatedTeam, data); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
 
@@ -239,4 +262,36 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 		return memberInputs, nil
 	}
 	return nil, nil
+}
+
+func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data TeamResourceModel) error {
+	// get list of expected aliases from terraform
+	tmp := data.Aliases.Elements()
+	expectedAliases := make([]string, len(tmp))
+	for i, alias := range tmp {
+		expectedAliases[i] = unquote(alias.String())
+	}
+	// get list of existing aliases from OpsLevel
+	existingAliases := team.ManagedAliases
+
+	// if an existing alias is not supposed to be there, delete it
+	for _, existingAlias := range existingAliases {
+		if !slices.Contains(expectedAliases, existingAlias) {
+			err := teamResource.client.DeleteTeamAlias(existingAlias)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	// if an alias does not exist but is supposed to, create it
+	for _, expectedAlias := range expectedAliases {
+		if !slices.Contains(existingAliases, expectedAlias) {
+			_, err := teamResource.client.CreateAliases(team.Id, []string{expectedAlias})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	team.ManagedAliases = expectedAliases
+	return nil
 }
