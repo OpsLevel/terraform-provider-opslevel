@@ -81,7 +81,6 @@ func AsID(input types.String) opslevel.ID {
 }
 
 func AsISO8601(input timetypes.RFC3339) (*iso8601.Time, diag.Diagnostics) {
-	// TODO: covering up a diagnostics error :(
 	t, diags := input.ValueRFC3339Time()
 	return &iso8601.Time{Time: t}, diags
 }
