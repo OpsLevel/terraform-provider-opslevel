@@ -159,6 +159,11 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
 		return
 	}
+	err = team.Hydrate(teamResource.client)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
+		return
+	}
 	if err = teamResource.reconcileTeamAliases(team, data); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
@@ -182,8 +187,13 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	team, err := teamResource.client.GetTeam(opslevel.ID(data.Id.ValueString()))
-	if err != nil {
+	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team, got error: %s", err))
+		return
+	}
+	err = team.Hydrate(teamResource.client)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
 
@@ -217,6 +227,11 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	updatedTeam, err := teamResource.client.UpdateTeam(teamUpdateInput)
 	if err != nil || updatedTeam == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
+		return
+	}
+	err = updatedTeam.Hydrate(teamResource.client)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
 	if err = teamResource.reconcileTeamAliases(updatedTeam, data); err != nil {
