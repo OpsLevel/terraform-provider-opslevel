@@ -154,6 +154,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewDomainResource,
 		NewInfrastructureResource,
+		NewRubricLevelResource,
 		NewSecretResource,
 		NewUserResource,
 	}

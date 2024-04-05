@@ -40,6 +40,18 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Rubric Level resources
+
+resource "opslevel_rubric_level" "big" {
+  description = "big rubric description"
+  index       = 5
+  name        = "big rubric level"
+}
+
+resource "opslevel_rubric_level" "small" {
+  name = "small rubric level"
+}
+
 # Secret resources
 
 resource "opslevel_secret" "mock_secret" {

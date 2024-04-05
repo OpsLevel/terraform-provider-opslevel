@@ -47,3 +47,8 @@ func unquote(value string) string {
 	}
 	return value
 }
+
+// Returns value wrapped in a types.Int64Value
+func RequiredInt64Value(value int) basetypes.Int64Value {
+	return types.Int64Value(int64(value))
+}
