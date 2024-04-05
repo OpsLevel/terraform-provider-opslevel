@@ -152,6 +152,7 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewCheckManualResource,
 		NewDomainResource,
 		NewInfrastructureResource,
 		NewSecretResource,
