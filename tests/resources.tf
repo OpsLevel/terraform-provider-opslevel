@@ -69,15 +69,15 @@ resource "opslevel_secret" "mock_secret" {
 # Service resources
 
 resource "opslevel_service" "big" {
-  aliases                       = ["Secret Alias"]
+  aliases                       = ["service-1", "service-2"]
   api_document_path             = "api-document-path"
   description                   = "Scorecard Description"
   framework                     = "Scorecard Framework"
   language                      = "Scorecard Language"
   lifecycle_alias               = "alpha"
-  name                          = "Scorecard Name"
+  name                          = "Big Scorecard"
   owner                         = "team-alias"
-  owner_id                      = "team-alias"
+  owner_id                      = var.test_id
   preferred_api_document_source = "PULL"
   product                       = "Mock Product"
   tags                          = ["key1:value1"]
@@ -85,7 +85,7 @@ resource "opslevel_service" "big" {
 }
 
 resource "opslevel_service" "small" {
-  name = "Big Scorecard"
+  name = "Small Scorecard"
 }
 
 # Scorecard resources

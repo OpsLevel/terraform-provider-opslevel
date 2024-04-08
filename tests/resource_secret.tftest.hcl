@@ -39,4 +39,3 @@ run "resource_secret" {
   }
 
 }
-
