@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
-	"slices"
 )
 
 var _ resource.ResourceWithConfigure = &TeamResource{}
