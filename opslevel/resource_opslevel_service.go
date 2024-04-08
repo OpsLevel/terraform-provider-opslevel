@@ -87,7 +87,7 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 
 	// TODO: revist this after adding support for 'preferred_api_document_source'
 	// if service.PreferredApiDocumentSource != nil {
-	// 	apiDocSource := *&service.PreferredApiDocumentSource
+	// 	apiDocSource := service.PreferredApiDocumentSource
 	// 	serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
 	// }
 
@@ -213,7 +213,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service aliases: '%s'", givenAliases))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'", givenAliases))
 		return
 	}
 
@@ -224,7 +224,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	err = reconcileTags(*r.client, givenTags, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service tags: '%s'", givenTags))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s'", givenTags))
 		return
 	}
 
@@ -330,7 +330,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service aliases: '%s'", givenAliases))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'", givenAliases))
 		return
 	}
 
@@ -341,7 +341,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	err = reconcileTags(*r.client, givenTags, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service tags: '%s'", givenTags))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s'", givenTags))
 		return
 	}
 
