@@ -54,17 +54,18 @@ type ServiceResourceModel struct {
 func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
-		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
-		Description:     OptionalStringValue(service.Description),
-		Framework:       OptionalStringValue(service.Framework),
-		Id:              ComputedStringValue(string(service.Id)),
-		Language:        OptionalStringValue(service.Language),
-		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
-		Name:            RequiredStringValue(service.Name),
-		Owner:           OptionalStringValue(service.Owner.Alias),
-		OwnerId:         OptionalStringValue(string(service.Owner.Id)),
-		Product:         OptionalStringValue(service.Product),
-		TierAlias:       OptionalStringValue(service.Tier.Alias),
+		// TODO: revist this after adding support for 'api_document_path'
+		// ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
+		Description:    OptionalStringValue(service.Description),
+		Framework:      OptionalStringValue(service.Framework),
+		Id:             ComputedStringValue(string(service.Id)),
+		Language:       OptionalStringValue(service.Language),
+		LifecycleAlias: OptionalStringValue(service.Lifecycle.Alias),
+		Name:           RequiredStringValue(service.Name),
+		Owner:          OptionalStringValue(service.Owner.Alias),
+		OwnerId:        OptionalStringValue(string(service.Owner.Id)),
+		Product:        OptionalStringValue(service.Product),
+		TierAlias:      OptionalStringValue(service.Tier.Alias),
 	}
 	if len(service.ManagedAliases) == 0 {
 		serviceResourceModel.Aliases = types.ListNull(types.StringType)
@@ -84,10 +85,11 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		serviceResourceModel.Tags = types.ListNull(types.StringType)
 	}
 
-	if service.PreferredApiDocumentSource != nil {
-		apiDocSource := *&service.PreferredApiDocumentSource
-		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
-	}
+	// TODO: revist this after adding support for 'preferred_api_document_source'
+	// if service.PreferredApiDocumentSource != nil {
+	// 	apiDocSource := *&service.PreferredApiDocumentSource
+	// 	serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
+	// }
 
 	return serviceResourceModel, diags
 }
@@ -227,6 +229,25 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	createdServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
+
+	// TODO: remove this override after adding support for 'api_document_path'
+	if data.ApiDocumentPath.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
+		)
+		createdServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
+	}
+
+	// TODO: remove this override after adding support for 'preferred_api_document_source'
+	if data.PreferredApiDocumentSource.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
+		)
+		createdServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
+	}
+
 	createdServiceResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
@@ -251,6 +272,24 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 	readServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
 
+	// TODO: remove this override after adding support for 'api_document_path'
+	if data.ApiDocumentPath.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
+		)
+		readServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
+	}
+
+	// TODO: remove this override after adding support for 'preferred_api_document_source'
+	if data.PreferredApiDocumentSource.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
+		)
+		readServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readServiceResourceModel)...)
 }
@@ -274,6 +313,10 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Product:        data.Product.ValueStringPointer(),
 		TierAlias:      data.TierAlias.ValueStringPointer(),
 	}
+	if data.Owner.ValueString() != "" {
+		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(data.Owner.ValueString())
+	}
+
 	service, err := r.client.UpdateService(serviceUpdateInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service, got error: %s", err))
@@ -305,6 +348,24 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	updatedServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	updatedServiceResourceModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
+
+	// TODO: remove this override after adding support for 'api_document_path'
+	if data.ApiDocumentPath.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
+		)
+		updatedServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
+	}
+
+	// TODO: remove this override after adding support for 'preferred_api_document_source'
+	if data.PreferredApiDocumentSource.ValueString() != "" {
+		resp.Diagnostics.AddWarning(
+			"Known config issue",
+			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
+		)
+		updatedServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
+	}
 
 	tflog.Trace(ctx, "updated a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedServiceResourceModel)...)
