@@ -42,8 +42,30 @@ resource "opslevel_infrastructure" "big_infra" {
 
 # Rubric Category resources
 
-resource "opslevel_rubric_category" "mock_category" {
+resource "opslevel_scorecard" "small" {
   name = "Mock Category"
+}
+
+# Scorecard resources
+
+resource "opslevel_scorecard" "big" {
+  aliases                       = ["Secret Alias"]
+  api_document_path             = "api-document-path"
+  description                   = "Scorecard Description"
+  framework                     = "Scorecard Framework"
+  language                      = "Scorecard Language"
+  lifecycle_alias               = "alpha"
+  name                          = "Scorecard Name"
+  owner                         = "team-alias"
+  owner_id                      = "team-alias"
+  preferred_api_document_source = "PULL"
+  product                       = "Mock Product"
+  tags                          = ["key1:value1"]
+  tier_alias                    = "Scorecard Tier"
+}
+
+resource "opslevel_scorecard" "small" {
+  name = "Big Scorecard"
 }
 
 

@@ -47,3 +47,13 @@ func unquote(value string) string {
 	}
 	return value
 }
+
+// Converts a basetypes.ListValue to a []string
+func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
+	dataAsSlice := []string{}
+	if listValue.IsNull() {
+		return dataAsSlice, nil
+	}
+	diags := listValue.ElementsAs(ctx, &dataAsSlice, false)
+	return dataAsSlice, diags
+}
