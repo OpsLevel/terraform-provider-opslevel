@@ -46,6 +46,17 @@ resource "opslevel_rubric_category" "mock_category" {
   name = "Mock Category"
 }
 
+# Rubric Level resources
+
+resource "opslevel_rubric_level" "big" {
+  description = "big rubric description"
+  index       = 5
+  name        = "big rubric level"
+}
+
+resource "opslevel_rubric_level" "small" {
+  name = "small rubric level"
+}
 
 # Secret resources
 
