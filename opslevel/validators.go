@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -101,4 +103,47 @@ func (v jsonHasNameKeyValidator) ValidateString(ctx context.Context, request val
 
 func JsonHasNameKeyValidator() validator.String {
 	return jsonHasNameKeyValidator{}
+}
+
+var _ validator.List = tagFormatValidator{}
+
+// tagFormatValidator validates that list contains items with tag format.
+type tagFormatValidator struct {
+	max int
+}
+
+// Description describes the validation in plain text formatting.
+func (v tagFormatValidator) Description(_ context.Context) string {
+	return "list must contain elements with 'key:value' format"
+}
+
+// MarkdownDescription describes the validation in Markdown formatting.
+func (v tagFormatValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// Validate performs the validation.
+func (v tagFormatValidator) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	elems := req.ConfigValue.Elements()
+	for _, elem := range elems {
+		elemAsString := unquote(elem.String())
+		parts := strings.Split(elemAsString, ":")
+		if len(parts) == 2 && len(parts[0]) > 0 && len(parts[1]) > 0 {
+			continue
+		}
+
+		resp.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+			req.Path,
+			v.Description(ctx),
+			fmt.Sprintf("%d", len(elems)),
+		))
+	}
+}
+
+func TagFormatValidator() validator.List {
+	return tagFormatValidator{}
 }
