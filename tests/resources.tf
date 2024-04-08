@@ -42,7 +42,7 @@ resource "opslevel_infrastructure" "big_infra" {
 
 # Rubric Category resources
 
-resource "opslevel_scorecard" "small" {
+resource "opslevel_rubric_category" "mock_category" {
   name = "Mock Category"
 }
 

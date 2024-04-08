@@ -54,6 +54,6 @@ func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) 
 	if listValue.IsNull() {
 		return dataAsSlice, nil
 	}
-	diags := listValue.ElementsAs(ctx, &dataAsSlice, false)
+	diags := listValue.ElementsAs(ctx, &dataAsSlice, true)
 	return dataAsSlice, diags
 }
