@@ -66,6 +66,22 @@ resource "opslevel_secret" "mock_secret" {
   owner = "Developers"
 }
 
+# Scorecard resources
+
+resource "opslevel_scorecard" "big" {
+  affects_overall_service_levels = false
+  description                    = "This is a big scorecard"
+  filter_id                      = var.test_id
+  name                           = "Big Scorecard"
+  owner_id                       = var.test_id
+}
+
+resource "opslevel_scorecard" "small" {
+  affects_overall_service_levels = true
+  name                           = "Small Scorecard"
+  owner_id                       = var.test_id
+}
+
 # User resources
 
 resource "opslevel_user" "mock_user" {

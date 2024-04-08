@@ -156,6 +156,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewInfrastructureResource,
 		NewRubricCategoryResource,
 		NewRubricLevelResource,
+		NewScorecardResource,
 		NewSecretResource,
 		NewUserResource,
 	}
