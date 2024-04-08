@@ -46,9 +46,29 @@ resource "opslevel_scorecard" "small" {
   name = "Mock Category"
 }
 
-# Scorecard resources
+# Rubric Level resources
 
-resource "opslevel_scorecard" "big" {
+resource "opslevel_rubric_level" "big" {
+  description = "big rubric description"
+  index       = 5
+  name        = "big rubric level"
+}
+
+resource "opslevel_rubric_level" "small" {
+  name = "small rubric level"
+}
+
+# Secret resources
+
+resource "opslevel_secret" "mock_secret" {
+  alias = "secret-alias"
+  value = "too_many_passwords"
+  owner = "Developers"
+}
+
+# Service resources
+
+resource "opslevel_service" "big" {
   aliases                       = ["Secret Alias"]
   api_document_path             = "api-document-path"
   description                   = "Scorecard Description"
@@ -64,17 +84,24 @@ resource "opslevel_scorecard" "big" {
   tier_alias                    = "Scorecard Tier"
 }
 
-resource "opslevel_scorecard" "small" {
+resource "opslevel_service" "small" {
   name = "Big Scorecard"
 }
 
+# Scorecard resources
 
-# Secret resources
+resource "opslevel_scorecard" "big" {
+  affects_overall_service_levels = false
+  description                    = "This is a big scorecard"
+  filter_id                      = var.test_id
+  name                           = "Big Scorecard"
+  owner_id                       = var.test_id
+}
 
-resource "opslevel_secret" "mock_secret" {
-  alias = "secret-alias"
-  value = "too_many_passwords"
-  owner = "Developers"
+resource "opslevel_scorecard" "small" {
+  affects_overall_service_levels = true
+  name                           = "Small Scorecard"
+  owner_id                       = var.test_id
 }
 
 # User resources

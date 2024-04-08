@@ -1,5 +1,10 @@
 mock_resource "opslevel_scorecard" {
-  # placeholder - only computed fields here are "id" and "last_updated"
-  defaults = {}
+  defaults = {
+    # id intentionally omitted - will be assigned a random string
+    aliases        = ["scorecard-one", "scorecard-two"]
+    passing_checks = 7
+    service_count  = 3
+    total_checks   = 10
+  }
 }
 
