@@ -22,7 +22,7 @@ var checkBaseAttributes = map[string]schema.Attribute{
 	},
 	"description": schema.StringAttribute{
 		Description: "The description the check.",
-		Optional:    true,
+		Computed:    true,
 	},
 	"enabled": schema.BoolAttribute{
 		Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
@@ -95,14 +95,14 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
 	enabledOn, diags := asISO8601(model.EnableOn)
 	input := opslevel.CheckCreateInput{
-		Category: *opslevel.NewID(model.Category.ValueString()),
+		Category: asID(model.Category),
 		Enabled:  model.Enabled.ValueBoolPointer(),
 		EnableOn: enabledOn,
-		Filter:   opslevel.NewID(model.Filter.ValueString()),
-		Level:    *opslevel.NewID(model.Level.ValueString()),
+		Filter:   opslevel.RefOf(asID(model.Filter)),
+		Level:    asID(model.Level),
 		Name:     model.Name.ValueString(),
 		Notes:    model.Notes.ValueStringPointer(),
-		Owner:    opslevel.NewID(model.Owner.ValueString()),
+		Owner:    opslevel.RefOf(asID(model.Owner)),
 	}
 	return opslevel.NewCheckCreateInputTypeOf[T](input), diags
 }
@@ -110,15 +110,15 @@ func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics)
 func NewCheckUpdateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
 	enabledOn, diags := asISO8601(model.EnableOn)
 	input := opslevel.CheckUpdateInput{
-		Category: *opslevel.NewID(model.Category.ValueString()),
+		Category: asID(model.Category),
 		Enabled:  model.Enabled.ValueBoolPointer(),
 		EnableOn: enabledOn,
-		Filter:   opslevel.NewID(model.Filter.ValueString()),
-		Level:    *opslevel.NewID(model.Level.ValueString()),
-		Id:       *opslevel.NewID(model.Id.ValueString()),
+		Filter:   opslevel.RefOf(asID(model.Filter)),
+		Level:    asID(model.Level),
+		Id:       asID(model.Id),
 		Name:     model.Name.ValueString(),
 		Notes:    model.Notes.ValueStringPointer(),
-		Owner:    opslevel.NewID(model.Owner.ValueString()),
+		Owner:    opslevel.RefOf(asID(model.Owner)),
 	}
 	return opslevel.NewCheckUpdateInputTypeOf[T](input), diags
 }

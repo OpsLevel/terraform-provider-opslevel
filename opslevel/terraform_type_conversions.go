@@ -53,7 +53,7 @@ func unquote(value string) string {
 
 // asID converts a types.String to an opslevel.ID
 func asID(input types.String) opslevel.ID {
-	return *opslevel.NewID(input.ValueString())
+	return opslevel.ID(input.ValueString())
 }
 
 // asISO8601 convert timetypes.RFC3339 to opslevel go's iso8601 time
