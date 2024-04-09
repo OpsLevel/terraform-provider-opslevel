@@ -1,16 +1,15 @@
 package opslevel
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/opslevel/opslevel-go/v2024"
-	"github.com/relvacode/iso8601"
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/relvacode/iso8601"
 	"golang.org/x/net/context"
 )
 
