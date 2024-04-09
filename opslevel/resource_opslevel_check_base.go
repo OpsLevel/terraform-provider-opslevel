@@ -85,11 +85,10 @@ type CheckBaseModel struct {
 }
 
 func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	output := checkBaseAttributes
-	for key, value := range attrs {
-		output[key] = value
+	for key, value := range checkBaseAttributes {
+		attrs[key] = value
 	}
-	return output
+	return attrs
 }
 
 func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
