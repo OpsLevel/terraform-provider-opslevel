@@ -86,3 +86,15 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+# Figure out a way to test assert problem using enabled & enable_on
+#resource "opslevel_check_manual" "error" {
+#  name      = "foo"
+#  enabled = true
+#  enable_on = "2022-05-23T14:14:18.782000Z"
+#  category  = var.test_id
+#  level     = var.test_id
+#  owner     = var.test_id
+#  filter    = var.test_id
+#  update_requires_comment = true
+#}

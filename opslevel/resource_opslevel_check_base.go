@@ -2,7 +2,10 @@ package opslevel
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,13 +27,15 @@ var checkBaseAttributes = map[string]schema.Attribute{
 		Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
 		Optional:    true,
 		Computed:    true,
+		Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("enable_on"))},
 	},
 	"enable_on": schema.StringAttribute{
 		Description: `The date when the check will be automatically enabled.
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.
  `,
-		Optional: true,
+		Optional:   true,
+		Validators: []validator.String{stringvalidator.ConflictsWith(path.MatchRoot("enabled"))},
 	},
 	"filter": schema.StringAttribute{
 		Description: "The id of the filter of the check.",
