@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -39,7 +38,7 @@ type CheckManualResourceModel struct {
 	UpdateRequiresComment types.Bool           `tfsdk:"update_requires_comment"`
 }
 
-func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check) (CheckManualResourceModel, diag.Diagnostics) {
+func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check) CheckManualResourceModel {
 	var model CheckManualResourceModel
 
 	ApplyCheckBaseModel(check, &model.CheckBaseModel)
@@ -50,7 +49,7 @@ func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check) (Che
 		Value:        types.Int64Value(int64(check.UpdateFrequency.FrequencyValue)),
 	}
 
-	return model, diag.Diagnostics{}
+	return model
 }
 
 func (r *CheckManualResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,9 +66,7 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description: "Whether the check requires a comment or not.",
 				Required:    true,
 			},
-		}),
-		Blocks: map[string]schema.Block{
-			"update_frequency": schema.SingleNestedBlock{
+			"update_frequency": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"starting_date": schema.StringAttribute{
 						Description: "The date that the check will start to evaluate.",
@@ -88,7 +85,7 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 
@@ -117,8 +114,7 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	created, diags := NewCheckManualResourceModel(ctx, *data)
-	resp.Diagnostics.Append(diags...)
+	created := NewCheckManualResourceModel(ctx, *data)
 
 	tflog.Trace(ctx, "created a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &created)...)
@@ -134,13 +130,12 @@ func (r *CheckManualResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	data, err := r.client.GetCheck(AsID(model.Id))
+	data, err := r.client.GetCheck(asID(model.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check manual, got error: %s", err))
 		return
 	}
-	readDomainResourceModel, diags := NewCheckManualResourceModel(ctx, *data)
-	resp.Diagnostics.Append(diags...)
+	readDomainResourceModel := NewCheckManualResourceModel(ctx, *data)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readDomainResourceModel)...)
@@ -160,7 +155,7 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(diags...)
 	input.UpdateRequiresComment = model.UpdateRequiresComment.ValueBoolPointer()
 	// TODO: this is fucking ugly
-	startingDate, diags := AsISO8601(model.UpdateFrequency.StartingDate)
+	startingDate, diags := asISO8601(model.UpdateFrequency.StartingDate)
 	timescale := opslevel.FrequencyTimeScale(model.UpdateFrequency.TimeScale.ValueString())
 	value := int(model.UpdateFrequency.Value.ValueInt64())
 	input.UpdateFrequency = &opslevel.ManualCheckFrequencyUpdateInput{
@@ -176,8 +171,7 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	created, diags := NewCheckManualResourceModel(ctx, *data)
-	resp.Diagnostics.Append(diags...)
+	created := NewCheckManualResourceModel(ctx, *data)
 
 	tflog.Trace(ctx, "updated a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &created)...)

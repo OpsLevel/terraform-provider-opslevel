@@ -1,6 +1,9 @@
 package opslevel
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/relvacode/iso8601"
 	"strconv"
 	"strings"
 
@@ -46,4 +49,15 @@ func unquote(value string) string {
 		}
 	}
 	return value
+}
+
+// asID converts a types.String to an opslevel.ID
+func asID(input types.String) opslevel.ID {
+	return *opslevel.NewID(input.ValueString())
+}
+
+// asISO8601 convert timetypes.RFC3339 to opslevel go's iso8601 time
+func asISO8601(input timetypes.RFC3339) (*iso8601.Time, diag.Diagnostics) {
+	t, diags := input.ValueRFC3339Time()
+	return &iso8601.Time{Time: t}, diags
 }
