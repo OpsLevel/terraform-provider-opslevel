@@ -70,7 +70,7 @@ resource "opslevel_secret" "mock_secret" {
 
 resource "opslevel_service" "big" {
   aliases                       = ["service-1", "service-2"]
-  api_document_path             = "api-document-path"
+  api_document_path             = "api/doc/path.yaml"
   description                   = "Scorecard Description"
   framework                     = "Scorecard Framework"
   language                      = "Scorecard Language"

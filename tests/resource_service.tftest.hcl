@@ -14,7 +14,7 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.api_document_path == "api-document-path"
+    condition     = opslevel_service.big.api_document_path == "api/doc/path.yaml"
     error_message = "wrong api_document_path in opslevel_service.big"
   }
 
