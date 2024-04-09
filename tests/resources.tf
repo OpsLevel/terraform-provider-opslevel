@@ -71,20 +71,20 @@ resource "opslevel_secret" "mock_secret" {
 resource "opslevel_service" "big" {
   aliases                       = ["service-1", "service-2"]
   api_document_path             = "api/doc/path.yaml"
-  description                   = "Scorecard Description"
-  framework                     = "Scorecard Framework"
-  language                      = "Scorecard Language"
+  description                   = "Service Description"
+  framework                     = "Service Framework"
+  language                      = "Service Language"
   lifecycle_alias               = "alpha"
-  name                          = "Big Scorecard"
+  name                          = "Big Service"
   owner                         = "team-alias"
   preferred_api_document_source = "PULL"
   product                       = "Mock Product"
-  tags                          = ["key1:value1"]
-  tier_alias                    = "Scorecard Tier"
+  tags                          = ["key1:value1", "key2:value2"]
+  tier_alias                    = "Service Tier"
 }
 
 resource "opslevel_service" "small" {
-  name = "Small Scorecard"
+  name = "Small Service"
 }
 
 # Scorecard resources

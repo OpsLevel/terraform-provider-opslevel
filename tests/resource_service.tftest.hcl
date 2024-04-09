@@ -19,17 +19,17 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.description == "Scorecard Description"
+    condition     = opslevel_service.big.description == "Service Description"
     error_message = "wrong description in opslevel_service.big"
   }
 
   assert {
-    condition     = opslevel_service.big.framework == "Scorecard Framework"
+    condition     = opslevel_service.big.framework == "Service Framework"
     error_message = "wrong framework in opslevel_service.big"
   }
 
   assert {
-    condition     = opslevel_service.big.language == "Scorecard Language"
+    condition     = opslevel_service.big.language == "Service Language"
     error_message = "wrong language in opslevel_service.big"
   }
 
@@ -39,7 +39,7 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.name == "Big Scorecard"
+    condition     = opslevel_service.big.name == "Big Service"
     error_message = "wrong name in opslevel_service.big"
   }
 
@@ -59,12 +59,12 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.tags == tolist(["key1:value1"])
+    condition     = opslevel_service.big.tags == tolist(["key1:value1", "key2:value2"])
     error_message = "wrong tags in opslevel_service.big"
   }
 
   assert {
-    condition     = opslevel_service.big.tier_alias == "Scorecard Tier"
+    condition     = opslevel_service.big.tier_alias == "Service Tier"
     error_message = "wrong tier_alias in opslevel_service.big"
   }
 
@@ -81,7 +81,7 @@ run "resource_service_small" {
   }
 
   assert {
-    condition     = opslevel_service.small.name == "Small Scorecard"
+    condition     = opslevel_service.small.name == "Small Service"
     error_message = "wrong name in opslevel_service.small"
   }
 }
