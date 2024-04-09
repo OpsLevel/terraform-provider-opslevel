@@ -40,8 +40,6 @@ run "resource_scorecard_big" {
 
 }
 
-
-
 run "resource_scorecard_small" {
   providers = {
     opslevel = opslevel.fake
@@ -68,5 +66,3 @@ run "resource_scorecard_small" {
   }
 
 }
-
-
