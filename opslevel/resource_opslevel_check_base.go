@@ -4,10 +4,66 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/opslevel/opslevel-go/v2024"
 	"time"
 )
+
+var checkBaseAttributes = map[string]schema.Attribute{
+	"category": schema.StringAttribute{
+		Description: "The id of the category the check belongs to.",
+		Required:    true,
+		Validators:  []validator.String{IdStringValidator()},
+	},
+	"description": schema.StringAttribute{
+		Description: "The description the check.",
+		Optional:    true,
+	},
+	"enabled": schema.BoolAttribute{
+		Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
+		Optional:    true,
+		Computed:    true,
+	},
+	"enable_on": schema.StringAttribute{
+		Description: `The date when the check will be automatically enabled.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+ `,
+		Optional: true,
+	},
+	"filter": schema.StringAttribute{
+		Description: "The id of the filter of the check.",
+		Optional:    true,
+		Validators:  []validator.String{IdStringValidator()},
+	},
+	"id": schema.StringAttribute{
+		Description: "The id of the check.",
+		Computed:    true,
+	},
+	"level": schema.StringAttribute{
+		Description: "The id of the level the check belongs to.",
+		Required:    true,
+		Validators:  []validator.String{IdStringValidator()},
+	},
+	"name": schema.StringAttribute{
+		Description: "The display name of the check.",
+		Required:    true,
+	},
+	"notes": schema.StringAttribute{
+		Description: "Additional information to display to the service owner about the check.",
+		Optional:    true,
+	},
+	"owner": schema.StringAttribute{
+		Description: "The id of the team that owns the check.",
+		Optional:    true,
+		Validators:  []validator.String{IdStringValidator()},
+	},
+	"last_updated": schema.StringAttribute{
+		Optional: true,
+		Computed: true,
+	},
+}
 
 type CheckBaseModel struct {
 	Category    types.String      `tfsdk:"category"`
@@ -24,55 +80,7 @@ type CheckBaseModel struct {
 }
 
 func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	output := map[string]schema.Attribute{
-		"category": schema.StringAttribute{
-			Description: "The id of the category the check belongs to.",
-			Required:    true,
-		},
-		"description": schema.StringAttribute{
-			Description: "The description the check.",
-			Optional:    true,
-		},
-		"enabled": schema.BoolAttribute{
-			Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
-			Optional:    true,
-		},
-		"enable_on": schema.StringAttribute{
-			Description: `The date when the check will be automatically enabled.
- If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
- See example in opslevel_check_manual for proper configuration.
- `,
-			Optional: true,
-		},
-		"filter": schema.StringAttribute{
-			Description: "The id of the filter of the check.",
-			Optional:    true,
-		},
-		"id": schema.StringAttribute{
-			Description: "The id of the check.",
-			Computed:    true,
-		},
-		"level": schema.StringAttribute{
-			Description: "The id of the level the check belongs to.",
-			Required:    true,
-		},
-		"name": schema.StringAttribute{
-			Description: "The display name of the check.",
-			Required:    true,
-		},
-		"notes": schema.StringAttribute{
-			Description: "Additional information to display to the service owner about the check.",
-			Optional:    true,
-		},
-		"owner": schema.StringAttribute{
-			Description: "The id of the team that owns the check.",
-			Optional:    true,
-		},
-		"last_updated": schema.StringAttribute{
-			Optional: true,
-			Computed: true,
-		},
-	}
+	output := checkBaseAttributes
 	for key, value := range attrs {
 		output[key] = value
 	}

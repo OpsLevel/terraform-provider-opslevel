@@ -67,6 +67,8 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required:    true,
 			},
 			"update_frequency": schema.SingleNestedAttribute{
+				Description: "Defines the minimum frequency of the updates.",
+				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"starting_date": schema.StringAttribute{
 						Description: "The date that the check will start to evaluate.",
