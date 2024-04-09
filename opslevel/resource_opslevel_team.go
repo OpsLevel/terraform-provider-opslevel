@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -51,7 +52,7 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 	}
 }
 
-func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResourceModel, diag.Diagnostics) {
+func NewTeamResourceModel(ctx context.Context, team opslevel.Team, data TeamResourceModel) (TeamResourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
 	if diags != nil && diags.HasError() {
 		return TeamResourceModel{}, diags
@@ -62,15 +63,25 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResource
 			teamMembers = append(teamMembers, convertTeamMember(mem))
 		}
 	}
+	// TODO: not working - lexicographically sort members based on email to prevent unnecessary diffs
+	slices.SortFunc(teamMembers, func(a, b TeamMember) int {
+		return strings.Compare(a.Email.ValueString(), b.Email.ValueString())
+	})
+	tflog.Info(ctx, fmt.Sprintf("members list is: %+v", teamMembers))
 	teamResourceModel := TeamResourceModel{
 		Aliases: aliases,
 		Id:      types.StringValue(string(team.Id)),
 		Member:  teamMembers,
 		Name:    types.StringValue(team.Name),
 	}
-	// TODO: how do we handle id or alias?
 	if team.ParentTeam.Alias != "" && team.ParentTeam.Id != "" {
-		teamResourceModel.Parent = types.StringValue(team.ParentTeam.Alias)
+		// use an ID or alias for this field based on what is currently in the state
+		if opslevel.IsID(data.Parent.ValueString()) {
+			teamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
+		} else {
+			// TODO: there is a case where the user is using an alias from the parent team that is not the default alias
+			teamResourceModel.Parent = types.StringValue(team.ParentTeam.Alias)
+		}
 	}
 	if team.Responsibilities != "" {
 		teamResourceModel.Responsibilities = types.StringValue(team.Responsibilities)
@@ -121,7 +132,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
-							Description: "The email address of the team member.",
+							Description: "The email address of the team member. Used for lexicographically sorting members.",
 							Required:    true,
 						},
 						"role": schema.StringAttribute{
@@ -170,7 +181,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team)
+	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data)
 	resp.Diagnostics.Append(diags...)
 	if data.Aliases.IsNull() && createdTeamResourceModel.Aliases.IsNull() {
 		createdTeamResourceModel.Aliases = types.ListNull(types.StringType)
@@ -198,9 +209,8 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team)
+	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data)
 	resp.Diagnostics.Append(diags...)
-	readTeamResourceModel.Aliases = data.Aliases
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
 }
 
@@ -240,7 +250,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam)
+	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam, data)
 	resp.Diagnostics.Append(diags...)
 	updatedTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team resource")
