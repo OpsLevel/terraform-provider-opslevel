@@ -3,9 +3,11 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -54,18 +56,17 @@ type ServiceResourceModel struct {
 func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
-		// TODO: revist this after adding support for 'api_document_path'
-		// ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
-		Description:    OptionalStringValue(service.Description),
-		Framework:      OptionalStringValue(service.Framework),
-		Id:             ComputedStringValue(string(service.Id)),
-		Language:       OptionalStringValue(service.Language),
-		LifecycleAlias: OptionalStringValue(service.Lifecycle.Alias),
-		Name:           RequiredStringValue(service.Name),
-		Owner:          OptionalStringValue(service.Owner.Alias),
-		OwnerId:        OptionalStringValue(string(service.Owner.Id)),
-		Product:        OptionalStringValue(service.Product),
-		TierAlias:      OptionalStringValue(service.Tier.Alias),
+		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
+		Description:     OptionalStringValue(service.Description),
+		Framework:       OptionalStringValue(service.Framework),
+		Id:              ComputedStringValue(string(service.Id)),
+		Language:        OptionalStringValue(service.Language),
+		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
+		Name:            RequiredStringValue(service.Name),
+		Owner:           OptionalStringValue(service.Owner.Alias),
+		OwnerId:         OptionalStringValue(string(service.Owner.Id)),
+		Product:         OptionalStringValue(service.Product),
+		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
 	if len(service.ManagedAliases) == 0 {
 		serviceResourceModel.Aliases = types.ListNull(types.StringType)
@@ -85,11 +86,10 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		serviceResourceModel.Tags = types.ListNull(types.StringType)
 	}
 
-	// TODO: revist this after adding support for 'preferred_api_document_source'
-	// if service.PreferredApiDocumentSource != nil {
-	// 	apiDocSource := service.PreferredApiDocumentSource
-	// 	serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
-	// }
+	if service.PreferredApiDocumentSource != nil {
+		apiDocSource := service.PreferredApiDocumentSource
+		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
+	}
 
 	return serviceResourceModel, diags
 }
@@ -108,10 +108,19 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the service.",
 				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.UniqueValues(),
+				},
 			},
 			"api_document_path": schema.StringAttribute{
 				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`.+\.(json|ya?ml)$`),
+						"ends with '.json', '.yml', or '.yaml'",
+					),
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "A brief description of the service.",
@@ -213,7 +222,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'", givenAliases))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s', got error: %s", givenAliases, err))
 		return
 	}
 
@@ -224,30 +233,31 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	err = reconcileTags(*r.client, givenTags, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s'", givenTags))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s', got error: %s", givenTags, err))
+		return
+	}
+	if data.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := data.ApiDocumentPath.ValueString()
+		if data.PreferredApiDocumentSource.IsNull() {
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s for service. error: %s", apiDocPath, err))
+				return
+			}
+		} else {
+			sourceEnum := opslevel.ApiDocumentSourceEnum(data.PreferredApiDocumentSource.ValueString())
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s", apiDocPath, sourceEnum, err))
+				return
+			}
+		}
+	}
+	service, err = r.client.GetService(opslevel.ID(service.Id))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
 		return
 	}
 
 	createdServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
-
-	// TODO: remove this override after adding support for 'api_document_path'
-	if data.ApiDocumentPath.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
-		)
-		createdServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
-	}
-
-	// TODO: remove this override after adding support for 'preferred_api_document_source'
-	if data.PreferredApiDocumentSource.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
-		)
-		createdServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
-	}
-
 	createdServiceResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
@@ -271,24 +281,6 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 	readServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
-
-	// TODO: remove this override after adding support for 'api_document_path'
-	if data.ApiDocumentPath.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
-		)
-		readServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
-	}
-
-	// TODO: remove this override after adding support for 'preferred_api_document_source'
-	if data.PreferredApiDocumentSource.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
-		)
-		readServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
-	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readServiceResourceModel)...)
@@ -330,7 +322,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'", givenAliases))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases '%s', go error: %s", givenAliases, err))
 		return
 	}
 
@@ -341,31 +333,42 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	err = reconcileTags(*r.client, givenTags, service)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s'", givenTags))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
+		return
+	}
+	if data.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := data.ApiDocumentPath.ValueString()
+		if data.PreferredApiDocumentSource.IsNull() {
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
+				resp.Diagnostics.AddError("opslevel client error",
+					fmt.Sprintf(
+						"Unable to set provided 'api_document_path' %s for service. error: %s",
+						apiDocPath, err),
+				)
+				return
+			}
+		} else {
+			sourceEnum := opslevel.ApiDocumentSourceEnum(data.PreferredApiDocumentSource.ValueString())
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
+				resp.Diagnostics.AddError("opslevel client error",
+					fmt.Sprintf(
+						"Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s",
+						apiDocPath, sourceEnum, err),
+				)
+				return
+			}
+		}
+	}
+
+	service, err = r.client.GetService(opslevel.ID(service.Id))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return
 	}
 
 	updatedServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	updatedServiceResourceModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
-
-	// TODO: remove this override after adding support for 'api_document_path'
-	if data.ApiDocumentPath.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'api_document_path' attribute is ignored for now, we have a planned fix",
-		)
-		updatedServiceResourceModel.ApiDocumentPath = data.ApiDocumentPath
-	}
-
-	// TODO: remove this override after adding support for 'preferred_api_document_source'
-	if data.PreferredApiDocumentSource.ValueString() != "" {
-		resp.Diagnostics.AddWarning(
-			"Known config issue",
-			"The opslevel_service 'preferred_api_document_source' attribute is ignored for now, we have a planned fix",
-		)
-		updatedServiceResourceModel.PreferredApiDocumentSource = data.PreferredApiDocumentSource
-	}
 
 	tflog.Trace(ctx, "updated a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedServiceResourceModel)...)
