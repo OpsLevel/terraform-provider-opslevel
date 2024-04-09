@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -14,8 +15,10 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &CheckManualResource{}
-var _ resource.ResourceWithImportState = &CheckManualResource{}
+var (
+	_ resource.ResourceWithConfigure   = &CheckManualResource{}
+	_ resource.ResourceWithImportState = &CheckManualResource{}
+)
 
 func NewCheckManualResource() resource.Resource {
 	return &CheckManualResource{}

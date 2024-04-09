@@ -1,6 +1,8 @@
 package opslevel
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -10,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/opslevel/opslevel-go/v2024"
-	"time"
 )
 
 var checkBaseAttributes = map[string]schema.Attribute{
