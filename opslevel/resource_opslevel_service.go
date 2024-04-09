@@ -154,7 +154,7 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required:    true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The team that owns the service. ID or Alias my be used.",
+				Description: "The team that owns the service. ID or Alias may be used.",
 				Optional:    true,
 			},
 			"owner_id": schema.StringAttribute{
