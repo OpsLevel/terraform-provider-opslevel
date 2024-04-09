@@ -58,7 +58,7 @@ run "resource_check_manual" {
   }
 
   assert {
-    condition = opslevel_check_manual.example.update_requires_comment == false
+    condition     = opslevel_check_manual.example.update_requires_comment == false
     error_message = "wrong value for update_requires_comment in opslevel_check_manual.example"
   }
 }
