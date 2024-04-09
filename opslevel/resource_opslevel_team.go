@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -63,11 +62,6 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, data TeamReso
 			teamMembers = append(teamMembers, convertTeamMember(mem))
 		}
 	}
-	// TODO: not working - lexicographically sort members based on email to prevent unnecessary diffs
-	slices.SortFunc(teamMembers, func(a, b TeamMember) int {
-		return strings.Compare(a.Email.ValueString(), b.Email.ValueString())
-	})
-	tflog.Info(ctx, fmt.Sprintf("members list is: %+v", teamMembers))
 	teamResourceModel := TeamResourceModel{
 		Aliases: aliases,
 		Id:      types.StringValue(string(team.Id)),
@@ -132,7 +126,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
-							Description: "The email address of the team member. Used for lexicographically sorting members.",
+							Description: "The email address of the team member. Must be sorted by email address.",
 							Required:    true,
 						},
 						"role": schema.StringAttribute{
