@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/opslevel/opslevel-go/v2024"
-	"github.com/relvacode/iso8601"
 	"time"
 )
 
@@ -49,6 +48,10 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 			Description: "The id of the filter of the check.",
 			Optional:    true,
 		},
+		"id": schema.StringAttribute{
+			Description: "The id of the check.",
+			Computed:    true,
+		},
 		"level": schema.StringAttribute{
 			Description: "The id of the level the check belongs to.",
 			Required:    true,
@@ -76,17 +79,8 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 	return output
 }
 
-// TODO: move these helpers somewhere else
-func AsID(input types.String) opslevel.ID {
-	return *opslevel.NewID(input.ValueString())
-}
-func AsISO8601(input timetypes.RFC3339) (*iso8601.Time, diag.Diagnostics) {
-	t, diags := input.ValueRFC3339Time()
-	return &iso8601.Time{Time: t}, diags
-}
-
 func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
-	enabledOn, diags := AsISO8601(model.EnableOn)
+	enabledOn, diags := asISO8601(model.EnableOn)
 	input := opslevel.CheckCreateInput{
 		Category: *opslevel.NewID(model.Category.ValueString()),
 		Enabled:  model.Enabled.ValueBoolPointer(),
@@ -101,7 +95,7 @@ func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics)
 }
 
 func NewCheckUpdateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
-	enabledOn, diags := AsISO8601(model.EnableOn)
+	enabledOn, diags := asISO8601(model.EnableOn)
 	input := opslevel.CheckUpdateInput{
 		Category: *opslevel.NewID(model.Category.ValueString()),
 		Enabled:  model.Enabled.ValueBoolPointer(),
