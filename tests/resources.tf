@@ -77,7 +77,6 @@ resource "opslevel_service" "big" {
   lifecycle_alias               = "alpha"
   name                          = "Big Scorecard"
   owner                         = "team-alias"
-  owner_id                      = var.test_id
   preferred_api_document_source = "PULL"
   product                       = "Mock Product"
   tags                          = ["key1:value1"]

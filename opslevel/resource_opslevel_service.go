@@ -46,7 +46,6 @@ type ServiceResourceModel struct {
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
 	Owner                      types.String `tfsdk:"owner"`
-	OwnerId                    types.String `tfsdk:"owner_id"`
 	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
 	Product                    types.String `tfsdk:"product"`
 	Tags                       types.List   `tfsdk:"tags"`
@@ -63,11 +62,15 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
-		Owner:           OptionalStringValue(service.Owner.Alias),
-		OwnerId:         OptionalStringValue(string(service.Owner.Id)),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
+	if opslevel.IsID(string(service.Owner.Id)) {
+		serviceResourceModel.Owner = OptionalStringValue(string(service.Owner.Id))
+	} else {
+		serviceResourceModel.Owner = OptionalStringValue(service.Owner.Alias)
+	}
+
 	if len(service.ManagedAliases) == 0 {
 		serviceResourceModel.Aliases = types.ListNull(types.StringType)
 	} else {
@@ -155,10 +158,6 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 			"owner": schema.StringAttribute{
 				Description: "The team that owns the service. ID or Alias may be used.",
-				Optional:    true,
-			},
-			"owner_id": schema.StringAttribute{
-				Description: "The team ID that owns the service.",
 				Optional:    true,
 			},
 			"preferred_api_document_source": schema.StringAttribute{
@@ -257,6 +256,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
+	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
+		service.Owner.Id = opslevel.ID("")
+	}
+
 	createdServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	createdServiceResourceModel.LastUpdated = timeLastUpdated()
 
@@ -279,6 +283,12 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
+
+	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
+	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
+		service.Owner.Id = opslevel.ID("")
+	}
+
 	readServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
 
@@ -364,6 +374,11 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return
+	}
+
+	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
+	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
+		service.Owner.Id = opslevel.ID("")
 	}
 
 	updatedServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)

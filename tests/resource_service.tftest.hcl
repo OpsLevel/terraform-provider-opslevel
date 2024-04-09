@@ -49,11 +49,6 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.owner_id == var.test_id
-    error_message = "wrong owner_id in opslevel_service.big"
-  }
-
-  assert {
     condition     = opslevel_service.big.preferred_api_document_source == "PULL"
     error_message = "wrong preferred_api_document_source in opslevel_service.big"
   }
