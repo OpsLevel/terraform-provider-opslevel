@@ -173,3 +173,14 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+# Repo Search
+
+resource "opslevel_check_git_branch_protection" "example" {
+  name      = "foo"
+  enable_on = "2022-05-23T14:14:18.782000Z"
+  category  = var.test_id
+  level     = var.test_id
+  owner     = var.test_id
+  filter    = var.test_id
+}
