@@ -174,6 +174,22 @@ resource "opslevel_team" "small" {
   name = "Small Team"
 }
 
+# Team Contact
+
+resource "opslevel_team_contact" "tc_1" {
+  name  = "Internal Slack Channel"
+  team  = "team_platform_3"
+  type  = "slack"
+  value = "#platform-3"
+}
+
+resource "opslevel_team_contact" "tc_2" {
+  name  = "Team Email Internal"
+  team  = "Z2lkOi8vb3BzbGV2ZWwvVGVhbS8xNzQxMg"
+  type  = "email"
+  value = "team-platform-3-3-3@opslevel.com"
+}
+
 # Team Tag resources
 
 resource "opslevel_team_tag" "using_team_id" {
