@@ -72,14 +72,12 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, parent string
 		Name:             types.StringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
-	if team.ParentTeam.Alias != "" && team.ParentTeam.Id != "" {
-		// use an ID or alias for this field based on what is currently in the state
-		if opslevel.IsID(parent) {
-			teamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
-		} else {
-			// TODO: there is a case where the user is using an alias from the parent team that is not the default alias
-			teamResourceModel.Parent = types.StringValue(team.ParentTeam.Alias)
-		}
+	// if parent is set, use an ID or alias for this field based on what is currently in the state
+	if opslevel.IsID(parent) {
+		teamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
+	} else {
+		// TODO: error thrown if config has alias from the parent team that is not the default alias
+		teamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
 	}
 
 	return teamResourceModel, diags
