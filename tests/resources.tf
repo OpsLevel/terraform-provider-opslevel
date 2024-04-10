@@ -173,3 +173,12 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+resource "opslevel_check_has_recent_deploy" "example" {
+  name     = "foo"
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+  days     = 14
+}
