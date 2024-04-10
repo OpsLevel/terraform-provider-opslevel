@@ -118,34 +118,34 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var model CheckManualResourceModel
+	var planModel CheckManualResourceModel
 
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(model.EnableOn.ValueString())
+	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("error", err.Error())
 	}
 	input := opslevel.CheckManualCreateInput{
-		CategoryId: asID(model.Category),
-		Enabled:    model.Enabled.ValueBoolPointer(),
+		CategoryId: asID(planModel.Category),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
 		EnableOn:   &iso8601.Time{Time: enabledOn},
-		FilterId:   opslevel.RefOf(asID(model.Filter)),
-		LevelId:    asID(model.Level),
-		Name:       model.Name.ValueString(),
-		Notes:      model.Notes.ValueStringPointer(),
-		OwnerId:    opslevel.RefOf(asID(model.Owner)),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		LevelId:    asID(planModel.Level),
+		Name:       planModel.Name.ValueString(),
+		Notes:      planModel.Notes.ValueStringPointer(),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
-	input.UpdateRequiresComment = model.UpdateRequiresComment.ValueBool()
+	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBool()
 	input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
-		timetypes.NewRFC3339ValueMust(model.UpdateFrequency.StartingDate.ValueString()).String(),
-		opslevel.FrequencyTimeScale(model.UpdateFrequency.TimeScale.ValueString()),
-		int(model.UpdateFrequency.Value.ValueInt64()),
+		timetypes.NewRFC3339ValueMust(planModel.UpdateFrequency.StartingDate.ValueString()).String(),
+		opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
+		int(planModel.UpdateFrequency.Value.ValueInt64()),
 	)
 
 	data, err := r.client.CreateCheckManual(input)
@@ -154,68 +154,70 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	state := NewCheckManualResourceModel(ctx, *data)
+	stateModel := NewCheckManualResourceModel(ctx, *data)
+	stateModel.EnableOn = planModel.EnableOn
+	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
 
 	tflog.Trace(ctx, "created a check manual resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckManualResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var model CheckManualResourceModel
+	var planModel CheckManualResourceModel
 
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &model)...)
+	// Read Terraform prior stateModel data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(model.Id))
+	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check manual, got error: %s", err))
 		return
 	}
-	state := NewCheckManualResourceModel(ctx, *data)
+	stateModel := NewCheckManualResourceModel(ctx, *data)
 
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	// Save updated data into Terraform stateModel
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var model CheckManualResourceModel
+	var planModel CheckManualResourceModel
 
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(model.EnableOn.ValueString())
+	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("error", err.Error())
 		return
 	}
 	input := opslevel.CheckManualUpdateInput{
-		CategoryId: opslevel.RefOf(asID(model.Category)),
-		Enabled:    model.Enabled.ValueBoolPointer(),
+		CategoryId: opslevel.RefOf(asID(planModel.Category)),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
 		EnableOn:   &iso8601.Time{Time: enabledOn},
-		FilterId:   opslevel.RefOf(asID(model.Filter)),
-		LevelId:    opslevel.RefOf(asID(model.Level)),
-		Id:         asID(model.Id),
-		Name:       opslevel.RefOf(model.Name.ValueString()),
-		Notes:      model.Notes.ValueStringPointer(),
-		OwnerId:    opslevel.RefOf(asID(model.Owner)),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
+		Id:         asID(planModel.Id),
+		Name:       opslevel.RefOf(planModel.Name.ValueString()),
+		Notes:      planModel.Notes.ValueStringPointer(),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
-	input.UpdateRequiresComment = model.UpdateRequiresComment.ValueBoolPointer()
+	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBoolPointer()
 	// TODO: this is fucking ugly
-	startingDate, err := iso8601.ParseString(model.UpdateFrequency.StartingDate.ValueString())
+	startingDate, err := iso8601.ParseString(planModel.UpdateFrequency.StartingDate.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("error", err.Error())
 		return
 	}
-	timescale := opslevel.FrequencyTimeScale(model.UpdateFrequency.TimeScale.ValueString())
-	value := int(model.UpdateFrequency.Value.ValueInt64())
+	timescale := opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString())
+	value := int(planModel.UpdateFrequency.Value.ValueInt64())
 	input.UpdateFrequency = &opslevel.ManualCheckFrequencyUpdateInput{
 		StartingDate:       &iso8601.Time{Time: startingDate},
 		FrequencyTimeScale: &timescale,
@@ -228,23 +230,25 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	state := NewCheckManualResourceModel(ctx, *data)
+	stateModel := NewCheckManualResourceModel(ctx, *data)
+	stateModel.EnableOn = planModel.EnableOn
+	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
 
 	tflog.Trace(ctx, "updated a check manual resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckManualResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var model CheckManualResourceModel
+	var planModel CheckManualResourceModel
 
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &model)...)
+	// Read Terraform prior state data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(model.Id))
+	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check manual, got error: %s", err))
 		return
