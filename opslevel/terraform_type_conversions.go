@@ -69,4 +69,8 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 		mapAsJson[k] = v
 	}
 	return mapAsJson, diags
+
+// asID converts a types.String to an opslevel.ID
+func asID(input types.String) opslevel.ID {
+	return opslevel.ID(input.ValueString())
 }
