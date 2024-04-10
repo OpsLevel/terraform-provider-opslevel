@@ -1,146 +1,204 @@
 package opslevel
 
-// import (
-// 	"strings"
+import (
+	"context"
+	"fmt"
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourceTeamContact() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a team contact",
-// 		Create:      wrap(resourceTeamContactCreate),
-// 		Read:        wrap(resourceTeamContactRead),
-// 		Update:      wrap(resourceTeamContactUpdate),
-// 		Delete:      wrap(resourceTeamContactDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"team": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id or alias of the team the contact belongs to.",
-// 				ForceNew:    true,
-// 				Required:    true,
-// 			},
-// 			"type": {
-// 				Type:         schema.TypeString,
-// 				Description:  "The method of contact [email, slack, slack_handle, web].",
-// 				ForceNew:     false,
-// 				Required:     true,
-// 				ValidateFunc: validation.StringInSlice(opslevel.AllContactType, false),
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The name shown in the UI for the contact.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"value": {
-// 				Type:        schema.TypeString,
-// 				Description: "The contact value. Examples: support@company.com for type email, https://opslevel.com for type web, #devs for type slack",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 		},
-// 	}
-// }
+var _ resource.ResourceWithConfigure = &TeamContactResource{}
 
-// func resourceTeamContactCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	input := opslevel.ContactInput{
-// 		Type:        opslevel.ContactType(d.Get("type").(string)),
-// 		DisplayName: opslevel.RefOf(d.Get("name").(string)),
-// 		Address:     d.Get("value").(string),
-// 	}
-// 	resource, err := client.AddContact(d.Get("team").(string), input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
+var _ resource.ResourceWithImportState = &TeamContactResource{}
 
-// 	return resourceTeamContactRead(d, client)
-// }
+type TeamContactResource struct {
+	CommonResourceClient
+}
 
-// func resourceTeamContactRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func NewTeamContactResource() resource.Resource {
+	return &TeamContactResource{}
+}
 
-// 	// Handle Import by spliting the ID into the 2 parts
-// 	parts := strings.SplitN(id, ":", 2)
-// 	if len(parts) == 2 {
-// 		d.Set("team", parts[0])
-// 		id = parts[1]
-// 		d.SetId(id)
-// 	}
+type TeamContactResourceModel struct {
+	Id          types.String `tfsdk:"id"`
+	LastUpdated types.String `tfsdk:"last_updated"`
+	Name        types.String `tfsdk:"name"`
+	Team        types.String `tfsdk:"team"`
+	Type        types.String `tfsdk:"type"`
+	Value       types.String `tfsdk:"value"`
+}
 
-// 	identifier := d.Get("team").(string)
-// 	var err error
-// 	var team *opslevel.Team
-// 	if opslevel.IsID(identifier) {
-// 		team, err = client.GetTeam(*opslevel.NewID(identifier))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	} else {
-// 		team, err = client.GetTeamWithAlias(identifier)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+func NewTeamContactResourceModel(teamContact opslevel.Contact, teamIdentifier string) TeamContactResourceModel {
+	teamResourceModel := TeamContactResourceModel{
+		Id:    types.StringValue(string(teamContact.Id)),
+		Name:  RequiredStringValue(teamContact.DisplayName),
+		Team:  types.StringValue(teamIdentifier),
+		Type:  types.StringValue(string(teamContact.Type)),
+		Value: types.StringValue(teamContact.Address),
+	}
+	return teamResourceModel
+}
 
-// 	var resource *opslevel.Contact
-// 	for _, t := range team.Contacts {
-// 		if string(t.Id) == id {
-// 			resource = &t
-// 			break
-// 		}
-// 	}
-// 	if resource == nil {
-// 		d.SetId("")
-// 		return nil
-// 	}
+func (teamContactResource *TeamContactResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_team_contact"
+}
 
-// 	if err := d.Set("type", resource.Type); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("name", resource.DisplayName); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("value", resource.Address); err != nil {
-// 		return err
-// 	}
+func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Team Contact Resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of this resource.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name shown in the UI for the contact.",
+				Required:    true,
+			},
+			"team": schema.StringAttribute{
+				Description: "The id or alias of the team the contact belongs to.",
+				Required:    true,
+			},
+			"type": schema.StringAttribute{
+				Description: "The method of contact [email, slack, slack_handle, web].",
+				Required:    true,
+			},
+			"value": schema.StringAttribute{
+				Description: "The contact value. Examples: support@company.com for type email, https://opslevel.com for type web, #devs for type slack",
+				Required:    true,
+			},
+		},
+	}
+}
 
-// 	return nil
-// }
+func (teamContactResource *TeamContactResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data TeamContactResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// func resourceTeamContactUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	input := opslevel.ContactInput{
-// 		Type:        opslevel.ContactType(d.Get("type").(string)),
-// 		DisplayName: opslevel.RefOf(d.Get("name").(string)),
-// 		Address:     d.Get("value").(string),
-// 	}
-// 	_, err := client.UpdateContact(opslevel.ID(id), input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.Set("last_updated", timeLastUpdated())
+	contactCreateInput := opslevel.ContactInput{
+		Address:     data.Value.ValueString(),
+		DisplayName: data.Name.ValueStringPointer(),
+		Type:        opslevel.ContactType(data.Type.ValueString()),
+	}
 
-// 	return resourceTeamContactRead(d, client)
-// }
+	teamIdentifier := data.Team.ValueString()
 
-// func resourceTeamContactDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.RemoveContact(opslevel.ID(id))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
+	contact, err := teamContactResource.client.AddContact(teamIdentifier, contactCreateInput)
+	if err != nil || contact == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to add contact on team (%s), got error: %s", teamIdentifier, err))
+		return
+	}
+
+	createdTeamContactModel := NewTeamContactResourceModel(*contact, teamIdentifier)
+	createdTeamContactModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, "created a team contact resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamContactModel)...)
+}
+
+func (teamContactResource *TeamContactResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data TeamContactResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	teamIdentifier := data.Team.ValueString()
+	contactID := data.Id.ValueString()
+
+	var team *opslevel.Team
+	var err error
+	if opslevel.IsID(teamIdentifier) {
+		team, err = teamContactResource.client.GetTeam(opslevel.ID(teamIdentifier))
+	} else {
+		team, err = teamContactResource.client.GetTeamWithAlias(teamIdentifier)
+	}
+	if err != nil || team == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
+		return
+	}
+	err = team.Hydrate(teamContactResource.client)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team (%s), got error: %s", teamIdentifier, err))
+	}
+
+	var teamContact *opslevel.Contact
+	for _, readContact := range team.Contacts {
+		if string(readContact.Id) == contactID {
+			teamContact = &readContact
+			break
+		}
+	}
+	if teamContact == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team contact (with ID '%s') not found on team (%s)", contactID, teamIdentifier))
+		return
+	}
+
+	readTeamContactResourceModel := NewTeamContactResourceModel(*teamContact, teamIdentifier)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamContactResourceModel)...)
+}
+
+func (teamContactResource *TeamContactResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data TeamContactResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	contactCreateInput := opslevel.ContactInput{
+		Address:     data.Value.ValueString(),
+		DisplayName: data.Name.ValueStringPointer(),
+		Type:        opslevel.ContactType(data.Type.ValueString()),
+	}
+
+	teamIdentifier := data.Team.ValueString()
+	contactID := opslevel.ID(data.Id.ValueString())
+
+	contact, err := teamContactResource.client.UpdateContact(contactID, contactCreateInput)
+	if err != nil || contact == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update contact (with ID '%s') on team (%s), got error: %s", contactID, teamIdentifier, err))
+		return
+	}
+
+	updatedTeamContactResourceModel := NewTeamContactResourceModel(*contact, teamIdentifier)
+	updatedTeamContactResourceModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, "updated a team contact resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamContactResourceModel)...)
+}
+
+func (teamContactResource *TeamContactResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data TeamContactResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	contactID := opslevel.ID(data.Id.ValueString())
+
+	err := teamContactResource.client.RemoveContact(contactID)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to remove team contact (with id '%s'), got error: %s", contactID, err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a team contact resource")
+}
+
+func (teamContactResource *TeamContactResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
