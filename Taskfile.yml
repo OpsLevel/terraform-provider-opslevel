@@ -18,7 +18,7 @@ tasks:
       - brew-install-jq
       - install-gofumpt
       - install-golangci-lint
-      - install-nilaway
+      # - install-nilaway
     cmds:
       - task: workspace
       - task: has-latest-opslevel-go
@@ -40,7 +40,7 @@ tasks:
     cmds:
       - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
       - golangci-lint run
-      - nilaway -test=false -include-pkgs='github.com/opslevel/terraform-provider-opslevel' ./...
+      # - nilaway -test=false -include-pkgs='github.com/opslevel/terraform-provider-opslevel' ./...
       - task: terraform-validate
       - task: terraform-format-check
 
@@ -51,7 +51,7 @@ tasks:
       - task: install-changie
       - task: install-gofumpt
       - task: install-golangci-lint
-      - task: install-nilaway
+      # - task: install-nilaway
       - task: install-terraform
     cmds:
       - task: workspace

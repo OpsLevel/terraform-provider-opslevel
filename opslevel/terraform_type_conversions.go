@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/opslevel/opslevel-go/v2024"
 	"golang.org/x/net/context"
 )
 
@@ -46,4 +47,26 @@ func unquote(value string) string {
 		}
 	}
 	return value
+}
+
+// Converts a basetypes.ListValue to a []string
+func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
+	dataAsSlice := []string{}
+	if listValue.IsNull() {
+		return dataAsSlice, nil
+	}
+	diags := listValue.ElementsAs(ctx, &dataAsSlice, true)
+	return dataAsSlice, diags
+}
+
+// Converts a basetypes.MapValue to an opslevel.JSON
+func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (opslevel.JSON, diag.Diagnostics) {
+	mapAsJson := opslevel.JSON{}
+	stringMap := map[string]string{}
+
+	diags := mapValue.ElementsAs(ctx, &stringMap, false)
+	for k, v := range stringMap {
+		mapAsJson[k] = v
+	}
+	return mapAsJson, diags
 }

@@ -62,12 +62,67 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Rubric Category resources
+
+resource "opslevel_rubric_category" "mock_category" {
+  name = "Mock Category"
+}
+
+# Rubric Level resources
+
+resource "opslevel_rubric_level" "big" {
+  description = "big rubric description"
+  index       = 5
+  name        = "big rubric level"
+}
+
+resource "opslevel_rubric_level" "small" {
+  name = "small rubric level"
+}
+
 # Secret resources
 
 resource "opslevel_secret" "mock_secret" {
   alias = "secret-alias"
   value = "too_many_passwords"
   owner = "Developers"
+}
+
+# Service resources
+
+resource "opslevel_service" "big" {
+  aliases                       = ["service-1", "service-2"]
+  api_document_path             = "api/doc/path.yaml"
+  description                   = "Service Description"
+  framework                     = "Service Framework"
+  language                      = "Service Language"
+  lifecycle_alias               = "alpha"
+  name                          = "Big Service"
+  owner                         = "team-alias"
+  preferred_api_document_source = "PULL"
+  product                       = "Mock Product"
+  tags                          = ["key1:value1", "key2:value2"]
+  tier_alias                    = "Service Tier"
+}
+
+resource "opslevel_service" "small" {
+  name = "Small Service"
+}
+
+# Scorecard resources
+
+resource "opslevel_scorecard" "big" {
+  affects_overall_service_levels = false
+  description                    = "This is a big scorecard"
+  filter_id                      = var.test_id
+  name                           = "Big Scorecard"
+  owner_id                       = var.test_id
+}
+
+resource "opslevel_scorecard" "small" {
+  affects_overall_service_levels = true
+  name                           = "Small Scorecard"
+  owner_id                       = var.test_id
 }
 
 # User resources
@@ -87,4 +142,36 @@ resource "opslevel_user" "mock_user_admin" {
   name  = "Mock User"
   email = "mock_user@mock.com"
   role  = "admin"
+}
+
+# Webhook Action resources
+
+resource "opslevel_webhook_action" "mock" {
+  description = "Pages the On Call"
+  headers = {
+    accept        = "application/vnd.pagerduty+json;version=2"
+    authorization = "Token token=XXXXXXXXXXXXXX"
+    content-type  = "application/json"
+    from          = "foo@opslevel.com"
+  }
+  method  = "POST"
+  name    = "Small Webhook Action"
+  payload = <<EOT
+{
+    "incident":
+    {
+        "type": "incident",
+        "title": "{{manualInputs.IncidentTitle}}",
+        "service": {
+        "id": "{{ service | tag_value: 'pd_id' }}",
+        "type": "service_reference"
+        },
+        "body": {
+        "type": "incident_body",
+        "details": "Incident triggered from OpsLevel by {{user.name}} with the email {{user.email}}. {{manualInputs.IncidentDescription}}"
+        }
+    }
+}
+  EOT
+  url     = "https://api.pagerduty.com/incidents"
 }
