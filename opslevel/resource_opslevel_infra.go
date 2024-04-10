@@ -330,7 +330,6 @@ func expandInfraProviderData(providerData InfraProviderData) *opslevel.InfraProv
 	}
 }
 
-// func reconcileInfraAliases(d *schema.ResourceData, resource *opslevel.InfrastructureResource, client *opslevel.Client) error {
 func reconcileInfraAliases(client opslevel.Client, aliasesFromConfig []string, infra *opslevel.InfrastructureResource) error {
 	// delete aliases found in infrastructure resource but not listed in Terraform config
 	for _, alias := range infra.Aliases {
