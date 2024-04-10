@@ -1,17 +1,11 @@
 package opslevel
 
 import (
-	"time"
-
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/opslevel/opslevel-go/v2024"
 )
 
 var checkBaseAttributes = map[string]schema.Attribute{
@@ -71,67 +65,9 @@ var checkBaseAttributes = map[string]schema.Attribute{
 	},
 }
 
-type CheckBaseModel struct {
-	Category    types.String      `tfsdk:"category"`
-	Description types.String      `tfsdk:"description"`
-	Enabled     types.Bool        `tfsdk:"enabled"`
-	EnableOn    timetypes.RFC3339 `tfsdk:"enable_on"`
-	Filter      types.String      `tfsdk:"filter"`
-	Id          types.String      `tfsdk:"id"`
-	Level       types.String      `tfsdk:"level"`
-	Name        types.String      `tfsdk:"name"`
-	Notes       types.String      `tfsdk:"notes"`
-	Owner       types.String      `tfsdk:"owner"`
-	LastUpdated timetypes.RFC3339 `tfsdk:"last_updated"`
-}
-
 func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
 	for key, value := range checkBaseAttributes {
 		attrs[key] = value
 	}
 	return attrs
-}
-
-func NewCheckCreateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
-	enabledOn, diags := asISO8601(model.EnableOn)
-	input := opslevel.CheckCreateInput{
-		Category: asID(model.Category),
-		Enabled:  model.Enabled.ValueBoolPointer(),
-		EnableOn: enabledOn,
-		Filter:   opslevel.RefOf(asID(model.Filter)),
-		Level:    asID(model.Level),
-		Name:     model.Name.ValueString(),
-		Notes:    model.Notes.ValueStringPointer(),
-		Owner:    opslevel.RefOf(asID(model.Owner)),
-	}
-	return opslevel.NewCheckCreateInputTypeOf[T](input), diags
-}
-
-func NewCheckUpdateInputFrom[T any](model CheckBaseModel) (*T, diag.Diagnostics) {
-	enabledOn, diags := asISO8601(model.EnableOn)
-	input := opslevel.CheckUpdateInput{
-		Category: asID(model.Category),
-		Enabled:  model.Enabled.ValueBoolPointer(),
-		EnableOn: enabledOn,
-		Filter:   opslevel.RefOf(asID(model.Filter)),
-		Level:    asID(model.Level),
-		Id:       asID(model.Id),
-		Name:     model.Name.ValueString(),
-		Notes:    model.Notes.ValueStringPointer(),
-		Owner:    opslevel.RefOf(asID(model.Owner)),
-	}
-	return opslevel.NewCheckUpdateInputTypeOf[T](input), diags
-}
-
-func ApplyCheckBaseModel(check opslevel.Check, model *CheckBaseModel) {
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = timetypes.NewRFC3339TimeValue(check.EnableOn.Time)
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timetypes.NewRFC3339TimeValue(time.Now())
 }

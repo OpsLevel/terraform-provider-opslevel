@@ -4,12 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/opslevel/opslevel-go/v2024"
-	"github.com/relvacode/iso8601"
 	"golang.org/x/net/context"
 )
 
@@ -76,10 +74,4 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 // asID converts a types.String to an opslevel.ID
 func asID(input types.String) opslevel.ID {
 	return opslevel.ID(input.ValueString())
-}
-
-// asISO8601 convert timetypes.RFC3339 to opslevel go's iso8601 time
-func asISO8601(input timetypes.RFC3339) (*iso8601.Time, diag.Diagnostics) {
-	t, diags := input.ValueRFC3339Time()
-	return &iso8601.Time{Time: t}, diags
 }
