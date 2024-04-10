@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"github.com/relvacode/iso8601"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -14,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/relvacode/iso8601"
 )
 
 var (
