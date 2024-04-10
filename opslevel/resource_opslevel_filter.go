@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -76,8 +78,8 @@ func NewFilterResourceModel(filter opslevel.Filter) FilterResourceModel {
 	}
 	return FilterResourceModel{
 		Connective: OptionalStringValue(string(filter.Connective)),
-		Id:         types.StringValue(string(filter.Id)),
-		Name:       types.StringValue(filter.Name),
+		Id:         ComputedStringValue(string(filter.Id)),
+		Name:       RequiredStringValue(filter.Name),
 		Predicate:  filterPredicates,
 	}
 }
@@ -105,6 +107,9 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"id": schema.StringAttribute{
 				Description: "The ID of the filter.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"last_updated": schema.StringAttribute{
 				Optional: true,
@@ -189,9 +194,7 @@ func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	stateModel := NewFilterResourceModel(*filter)
-	if planModel.Connective.ValueString() == "" {
-		stateModel.Connective = planModel.Connective
-	}
+	stateModel.Connective = planModel.Connective
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a filter resource")
@@ -214,9 +217,7 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 	stateModel := NewFilterResourceModel(*filter)
-	if planModel.Connective.ValueString() == "" {
-		stateModel.Connective = planModel.Connective
-	}
+	stateModel.Connective = planModel.Connective
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -253,9 +254,7 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	stateModel := NewFilterResourceModel(*updatedFilter)
-	if planModel.Connective.ValueString() == "" {
-		stateModel.Connective = planModel.Connective
-	}
+	stateModel.Connective = planModel.Connective
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a filter resource")
