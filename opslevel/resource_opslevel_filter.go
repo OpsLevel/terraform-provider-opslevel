@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	// "github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -123,18 +122,12 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"case_insensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
-							// NOTE: uncomment later if we want to enforce one field or the other
-							// Validators: []validator.Bool{
-							// 	boolvalidator.ConflictsWith(path.MatchRelative().AtName("case_sensitive")),
-							// },
+							Computed:    true,
 						},
 						"case_sensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
-							// NOTE: uncomment later if we want to enforce one field or the other
-							// Validators: []validator.Bool{
-							// 	boolvalidator.ConflictsWith(path.MatchRelative().AtName("case_insensitive")),
-							// },
+							Computed:    true,
 						},
 						"key": schema.StringAttribute{
 							Description: fmt.Sprintf(
@@ -172,104 +165,113 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data FilterResourceModel
+	var planModel FilterResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicates, err := getFilterPredicates(data.Predicate)
+	predicates, err := getFilterPredicates(planModel.Predicate)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("misconfigured filter predicate, got error: %s", err))
 		return
 	}
 
 	filter, err := r.client.CreateFilter(opslevel.FilterCreateInput{
-		Name:       data.Name.ValueString(),
+		Name:       planModel.Name.ValueString(),
 		Predicates: predicates,
-		Connective: getConnectiveEnum(data.Connective.ValueString()),
+		Connective: getConnectiveEnum(planModel.Connective.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create filter, got error: %s", err))
 		return
 	}
-	createdFilterResourceModel := NewFilterResourceModel(*filter)
-	createdFilterResourceModel.LastUpdated = timeLastUpdated()
+	stateModel := NewFilterResourceModel(*filter)
+	if planModel.Connective.ValueString() == "" {
+		stateModel.Connective = planModel.Connective
+	}
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a filter resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &createdFilterResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data FilterResourceModel
+	var planModel FilterResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	filter, err := r.client.GetFilter(opslevel.ID(data.Id.ValueString()))
+	filter, err := r.client.GetFilter(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return
 	}
-	tflog.Info(ctx, fmt.Sprintf("predicate 0 key: %s", filter.Predicates[0].Key))
-	tflog.Info(ctx, fmt.Sprintf("predicate 0 key data: %s", filter.Predicates[0].KeyData))
-	tflog.Info(ctx, fmt.Sprintf("predicate 0 type: %s", filter.Predicates[0].Type))
-	tflog.Info(ctx, fmt.Sprintf("predicate 0 value: %s", filter.Predicates[0].Value))
-	readFilterResourceModel := NewFilterResourceModel(*filter)
+	stateModel := NewFilterResourceModel(*filter)
+	if planModel.Connective.ValueString() == "" {
+		stateModel.Connective = planModel.Connective
+	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &readFilterResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data FilterResourceModel
+	var planModel FilterResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	predicates, err := getFilterPredicates(data.Predicate)
+	predicates, err := getFilterPredicates(planModel.Predicate)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("misconfigured filter predicate, got error: %s", err))
 		return
 	}
 
 	updatedFilter, err := r.client.UpdateFilter(opslevel.FilterUpdateInput{
-		Id:         opslevel.ID(data.Id.ValueString()),
-		Name:       data.Name.ValueStringPointer(),
+		Id:         opslevel.ID(planModel.Id.ValueString()),
+		Name:       planModel.Name.ValueStringPointer(),
 		Predicates: predicates,
-		Connective: getConnectiveEnum(data.Connective.ValueString()),
+		Connective: getConnectiveEnum(planModel.Connective.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update filter, got error: %s", err))
 		return
 	}
+	if planModel.Connective.ValueString() != "" {
+		connectiveEnum := getConnectiveEnum(planModel.Connective.ValueString())
+		updatedFilter.Connective = *connectiveEnum
+	}
 
-	updatedFilterResourceModel := NewFilterResourceModel(*updatedFilter)
-	updatedFilterResourceModel.LastUpdated = timeLastUpdated()
+	stateModel := NewFilterResourceModel(*updatedFilter)
+	if planModel.Connective.ValueString() == "" {
+		stateModel.Connective = planModel.Connective
+	}
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a filter resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedFilterResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *FilterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data FilterResourceModel
+	var planModel FilterResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteFilter(opslevel.ID(data.Id.ValueString()))
+	err := r.client.DeleteFilter(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete filter, got error: %s", err))
 		return
