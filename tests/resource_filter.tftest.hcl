@@ -39,6 +39,11 @@ run "resource_filter_big_predicate_one" {
   }
 
   assert {
+    condition     = opslevel_filter.big.predicate[0].case_insensitive == null
+    error_message = "expected 'case_insensitive' to be null for opslevel_filter.big.predicate[0]"
+  }
+
+  assert {
     condition     = opslevel_filter.big.predicate[0].case_sensitive == null
     error_message = "expected 'case_sensitive' to be null for opslevel_filter.big.predicate[0]"
   }
