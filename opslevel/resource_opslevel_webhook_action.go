@@ -41,14 +41,15 @@ type WebhookActionResourceModel struct {
 }
 
 func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction) WebhookActionResourceModel {
+	jsonAttrs := jsonToMap(webhookAction.Headers)
 	return WebhookActionResourceModel{
 		Description: types.StringValue(webhookAction.Description),
-		// Headers:     types.MapValue(),
-		Id:      types.StringValue(string(webhookAction.Id)),
-		Method:  types.StringValue(string(webhookAction.HTTPMethod)),
-		Name:    types.StringValue(webhookAction.Name),
-		Payload: types.StringValue(webhookAction.LiquidTemplate),
-		Url:     types.StringValue(webhookAction.WebhookURL),
+		Headers:     types.MapValueMust(types.StringType, jsonAttrs),
+		Id:          types.StringValue(string(webhookAction.Id)),
+		Method:      types.StringValue(string(webhookAction.HTTPMethod)),
+		Name:        types.StringValue(webhookAction.Name),
+		Payload:     types.StringValue(webhookAction.LiquidTemplate),
+		Url:         types.StringValue(webhookAction.WebhookURL),
 	}
 }
 
@@ -111,10 +112,14 @@ func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	var headersAsJson opslevel.JSON
-	data.Headers.ElementsAs(ctx, headersAsJson, false)
+	headersAsJson, diags := MapValueToOpslevelJson(ctx, data.Headers)
+	if diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", data.Headers))
+		return
+	}
+
 	webhookActionInput := opslevel.CustomActionsWebhookActionCreateInput{
-		Description:    data.Name.ValueStringPointer(),
+		Description:    data.Description.ValueStringPointer(),
 		Headers:        &headersAsJson,
 		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(data.Method.ValueString()),
 		LiquidTemplate: data.Payload.ValueStringPointer(),
@@ -163,11 +168,15 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	var headersAsJson opslevel.JSON
-	data.Headers.ElementsAs(ctx, headersAsJson, false)
+	headersAsJson, diags := MapValueToOpslevelJson(ctx, data.Headers)
+	if diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", data.Headers))
+		return
+	}
+
 	httpMethod := opslevel.CustomActionsHttpMethodEnum(data.Method.ValueString())
 	updateWebhookActionInput := opslevel.CustomActionsWebhookActionUpdateInput{
-		Description:    data.Name.ValueStringPointer(),
+		Description:    data.Description.ValueStringPointer(),
 		Headers:        &headersAsJson,
 		HttpMethod:     &httpMethod,
 		Id:             opslevel.ID(data.Id.ValueString()),
