@@ -51,10 +51,13 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 	}
 }
 
-func NewTeamResourceModel(ctx context.Context, team opslevel.Team, data TeamResourceModel) (TeamResourceModel, diag.Diagnostics) {
+func NewTeamResourceModel(ctx context.Context, team opslevel.Team, parent string) (TeamResourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
 	if diags != nil && diags.HasError() {
 		return TeamResourceModel{}, diags
+	}
+	if len(aliases.Elements()) == 0 {
+		aliases = types.ListNull(types.StringType)
 	}
 	teamMembers := make([]TeamMember, 0)
 	if team.Memberships != nil {
@@ -70,7 +73,7 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, data TeamReso
 	}
 	if team.ParentTeam.Alias != "" && team.ParentTeam.Id != "" {
 		// use an ID or alias for this field based on what is currently in the state
-		if opslevel.IsID(data.Parent.ValueString()) {
+		if opslevel.IsID(parent) {
 			teamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
 		} else {
 			// TODO: there is a case where the user is using an alias from the parent team that is not the default alias
@@ -175,7 +178,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data)
+	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if data.Aliases.IsNull() && createdTeamResourceModel.Aliases.IsNull() {
 		createdTeamResourceModel.Aliases = types.ListNull(types.StringType)
@@ -203,7 +206,7 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data)
+	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, data.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
 }
@@ -228,6 +231,8 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	}
 	if data.Parent.ValueString() != "" {
 		teamUpdateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())
+	} else {
+		teamUpdateInput.ParentTeam = opslevel.NewIdentifier()
 	}
 	updatedTeam, err := teamResource.client.UpdateTeam(teamUpdateInput)
 	if err != nil || updatedTeam == nil {
@@ -244,7 +249,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam, data)
+	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam, data.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	updatedTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team resource")
