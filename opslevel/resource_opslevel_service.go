@@ -65,11 +65,6 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
-	if opslevel.IsID(string(service.Owner.Id)) {
-		serviceResourceModel.Owner = OptionalStringValue(string(service.Owner.Id))
-	} else {
-		serviceResourceModel.Owner = OptionalStringValue(service.Owner.Alias)
-	}
 
 	if len(service.ManagedAliases) == 0 {
 		serviceResourceModel.Aliases = types.ListNull(types.StringType)
@@ -186,26 +181,26 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 }
 
 func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ServiceResourceModel
+	var planModel ServiceResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	serviceCreateInput := opslevel.ServiceCreateInput{
-		Description:    data.Description.ValueStringPointer(),
-		Framework:      data.Framework.ValueStringPointer(),
-		Language:       data.Language.ValueStringPointer(),
-		LifecycleAlias: data.LifecycleAlias.ValueStringPointer(),
-		Name:           data.Name.ValueString(),
-		Product:        data.Product.ValueStringPointer(),
-		TierAlias:      data.TierAlias.ValueStringPointer(),
+		Description:    planModel.Description.ValueStringPointer(),
+		Framework:      planModel.Framework.ValueStringPointer(),
+		Language:       planModel.Language.ValueStringPointer(),
+		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
+		Name:           planModel.Name.ValueString(),
+		Product:        planModel.Product.ValueStringPointer(),
+		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
 
-	if data.Owner.ValueString() != "" {
-		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(data.Owner.ValueString())
+	if planModel.Owner.ValueString() != "" {
+		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
 	}
 
 	service, err := r.client.CreateService(serviceCreateInput)
@@ -214,9 +209,9 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	givenAliases, diags := ListValueToStringSlice(ctx, data.Aliases)
+	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", data.Aliases))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
@@ -225,9 +220,9 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	givenTags, diags := ListValueToStringSlice(ctx, data.Tags)
+	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", data.Tags))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
 	err = reconcileTags(*r.client, givenTags, service)
@@ -235,15 +230,15 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s', got error: %s", givenTags, err))
 		return
 	}
-	if data.ApiDocumentPath.ValueString() != "" {
-		apiDocPath := data.ApiDocumentPath.ValueString()
-		if data.PreferredApiDocumentSource.IsNull() {
+	if planModel.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := planModel.ApiDocumentPath.ValueString()
+		if planModel.PreferredApiDocumentSource.IsNull() {
 			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
 				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s for service. error: %s", apiDocPath, err))
 				return
 			}
 		} else {
-			sourceEnum := opslevel.ApiDocumentSourceEnum(data.PreferredApiDocumentSource.ValueString())
+			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
 			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
 				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s", apiDocPath, sourceEnum, err))
 				return
@@ -256,67 +251,86 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
-	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
-		service.Owner.Id = opslevel.ID("")
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+		)
+		return
 	}
-
-	createdServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
-	createdServiceResourceModel.LastUpdated = timeLastUpdated()
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &createdServiceResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data ServiceResourceModel
+	var planModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	service, err := r.client.GetService(opslevel.ID(data.Id.ValueString()))
+	service, err := r.client.GetService(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
 
 	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
-	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
+	if planModel.Owner.ValueString() != "" && !opslevel.IsID(planModel.Owner.ValueString()) {
 		service.Owner.Id = opslevel.ID("")
 	}
 
-	readServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+		)
+		return
+	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &readServiceResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data ServiceResourceModel
+	var planModel ServiceResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	serviceUpdateInput := opslevel.ServiceUpdateInput{
-		Description:    data.Description.ValueStringPointer(),
-		Framework:      data.Framework.ValueStringPointer(),
-		Id:             opslevel.NewID(data.Id.ValueString()),
-		Language:       data.Language.ValueStringPointer(),
-		LifecycleAlias: data.LifecycleAlias.ValueStringPointer(),
-		Name:           data.Name.ValueStringPointer(),
-		Product:        data.Product.ValueStringPointer(),
-		TierAlias:      data.TierAlias.ValueStringPointer(),
+		Description:    planModel.Description.ValueStringPointer(),
+		Framework:      planModel.Framework.ValueStringPointer(),
+		Id:             opslevel.NewID(planModel.Id.ValueString()),
+		Language:       planModel.Language.ValueStringPointer(),
+		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
+		Name:           planModel.Name.ValueStringPointer(),
+		Product:        planModel.Product.ValueStringPointer(),
+		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
-	if data.Owner.ValueString() != "" {
-		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(data.Owner.ValueString())
+	if planModel.Owner.ValueString() != "" {
+		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
@@ -325,9 +339,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	givenAliases, diags := ListValueToStringSlice(ctx, data.Aliases)
+	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", data.Aliases))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
 	}
 	err = reconcileServiceAliases(*r.client, givenAliases, service)
@@ -336,9 +350,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	givenTags, diags := ListValueToStringSlice(ctx, data.Tags)
+	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", data.Tags))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
 	err = reconcileTags(*r.client, givenTags, service)
@@ -346,9 +360,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
 		return
 	}
-	if data.ApiDocumentPath.ValueString() != "" {
-		apiDocPath := data.ApiDocumentPath.ValueString()
-		if data.PreferredApiDocumentSource.IsNull() {
+	if planModel.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := planModel.ApiDocumentPath.ValueString()
+		if planModel.PreferredApiDocumentSource.IsNull() {
 			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
 				resp.Diagnostics.AddError("opslevel client error",
 					fmt.Sprintf(
@@ -358,7 +372,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 				return
 			}
 		} else {
-			sourceEnum := opslevel.ApiDocumentSourceEnum(data.PreferredApiDocumentSource.ValueString())
+			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
 			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
 				resp.Diagnostics.AddError("opslevel client error",
 					fmt.Sprintf(
@@ -377,28 +391,41 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
-	if data.Owner.ValueString() != "" && !opslevel.IsID(data.Owner.ValueString()) {
+	if planModel.Owner.ValueString() != "" && !opslevel.IsID(planModel.Owner.ValueString()) {
 		service.Owner.Id = opslevel.ID("")
 	}
 
-	updatedServiceResourceModel, diags := NewServiceResourceModel(ctx, *service)
-	updatedServiceResourceModel.LastUpdated = timeLastUpdated()
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+		)
+		return
+	}
+
 	tflog.Trace(ctx, "updated a service resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedServiceResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data ServiceResourceModel
+	var planModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteService(data.Id.ValueString())
+	err := r.client.DeleteService(planModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
 		return
