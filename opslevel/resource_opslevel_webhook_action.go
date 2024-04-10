@@ -80,7 +80,7 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"method": schema.StringAttribute{
 				Description: "The http method used to call the Webhook Action.",
-				Computed:    true,
+				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllCustomActionsHttpMethodEnum...),
 				},
@@ -91,11 +91,11 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 			},
 			"payload": schema.StringAttribute{
 				Description: "Template that can be used to generate a webhook payload.",
-				Optional:    true,
+				Required:    true,
 			},
 			"url": schema.StringAttribute{
 				Description: "The URL of the Webhook Action.",
-				Optional:    true,
+				Required:    true,
 			},
 		},
 	}
