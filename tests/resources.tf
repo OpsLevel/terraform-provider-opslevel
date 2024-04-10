@@ -121,3 +121,35 @@ resource "opslevel_user" "mock_user_admin" {
   email = "mock_user@mock.com"
   role  = "admin"
 }
+
+# Webhook Action resources
+
+resource "opslevel_webhook_action" "mock" {
+  description = "Pages the On Call"
+  headers = {
+    accept        = "application/vnd.pagerduty+json;version=2"
+    authorization = "Token token=XXXXXXXXXXXXXX"
+    content-type  = "application/json"
+    from          = "foo@opslevel.com"
+  }
+  method  = "POST"
+  name    = "Small Webhook Action"
+  payload = <<EOT
+{
+    "incident":
+    {
+        "type": "incident",
+        "title": "{{manualInputs.IncidentTitle}}",
+        "service": {
+        "id": "{{ service | tag_value: 'pd_id' }}",
+        "type": "service_reference"
+        },
+        "body": {
+        "type": "incident_body",
+        "details": "Incident triggered from OpsLevel by {{user.name}} with the email {{user.email}}. {{manualInputs.IncidentDescription}}"
+        }
+    }
+}
+  EOT
+  url     = "https://api.pagerduty.com/incidents"
+}

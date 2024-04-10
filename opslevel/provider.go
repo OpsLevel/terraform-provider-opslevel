@@ -160,6 +160,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewSecretResource,
 		NewServiceResource,
 		NewUserResource,
+		NewWebhookActionResource,
 	}
 }
 
