@@ -103,6 +103,54 @@ resource "opslevel_scorecard" "small" {
   owner_id                       = var.test_id
 }
 
+# Trigger Definition resources
+
+resource "opslevel_trigger_definition" "big" {
+  access_control           = "everyone"
+  action                   = var.test_id
+  description              = "Pages the On Call"
+  entity_type              = "SERVICE"
+  extended_team_access     = ["team_1", "team_2"]
+  filter                   = var.test_id
+  manual_inputs_definition = <<EOT
+---
+version: 1
+inputs:
+  - identifier: IncidentTitle
+    displayName: Title
+    description: Title of the incident to trigger
+    type: text_input
+    required: true
+    maxLength: 60
+    defaultValue: Service Incident Manual Trigger
+  - identifier: IncidentDescription
+    displayName: Incident Description
+    description: The description of the incident
+    type: text_area
+    required: true
+  EOT
+  response_template        = <<EOT
+{% if response.status >= 200 and response.status < 300 %}
+## Congratulations!
+Your request for {{ service.name }} has succeeded. See the incident here: {{response.body.incident.html_url}}
+{% else %}
+## Oops something went wrong!
+Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
+{% endif %}
+  EOT
+  name                     = "Big Trigger Definition"
+  owner                    = var.test_id
+  published                = false
+}
+
+resource "opslevel_trigger_definition" "small" {
+  access_control = "everyone"
+  action         = var.test_id
+  name           = "Small Trigger Definition"
+  owner          = var.test_id
+  published      = true
+}
+
 # User resources
 
 resource "opslevel_user" "mock_user" {
