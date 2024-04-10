@@ -66,10 +66,11 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, parent string
 		}
 	}
 	teamResourceModel := TeamResourceModel{
-		Aliases: aliases,
-		Id:      types.StringValue(string(team.Id)),
-		Member:  teamMembers,
-		Name:    types.StringValue(team.Name),
+		Aliases:          aliases,
+		Id:               types.StringValue(string(team.Id)),
+		Member:           teamMembers,
+		Name:             types.StringValue(team.Name),
+		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 	if team.ParentTeam.Alias != "" && team.ParentTeam.Id != "" {
 		// use an ID or alias for this field based on what is currently in the state
@@ -79,9 +80,6 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, parent string
 			// TODO: there is a case where the user is using an alias from the parent team that is not the default alias
 			teamResourceModel.Parent = types.StringValue(team.ParentTeam.Alias)
 		}
-	}
-	if team.Responsibilities != "" {
-		teamResourceModel.Responsibilities = types.StringValue(team.Responsibilities)
 	}
 
 	return teamResourceModel, diags
