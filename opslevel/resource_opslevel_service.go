@@ -286,11 +286,6 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
-	if planModel.Owner.ValueString() != "" && !opslevel.IsID(planModel.Owner.ValueString()) {
-		service.Owner.Id = opslevel.ID("")
-	}
-
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
 	switch planModel.Owner.ValueString() {
@@ -388,11 +383,6 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return
-	}
-
-	// Set Owner.Id to empty if service Owner is not ID. Needed in NewServiceResourceModel
-	if planModel.Owner.ValueString() != "" && !opslevel.IsID(planModel.Owner.ValueString()) {
-		service.Owner.Id = opslevel.ID("")
 	}
 
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
