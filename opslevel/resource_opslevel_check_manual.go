@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/relvacode/iso8601"
 	"time"
 
@@ -143,7 +142,7 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBool()
 	input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
-		timetypes.NewRFC3339ValueMust(planModel.UpdateFrequency.StartingDate.ValueString()).String(),
+		planModel.UpdateFrequency.StartingDate.ValueString(),
 		opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
 		int(planModel.UpdateFrequency.Value.ValueInt64()),
 	)
@@ -157,6 +156,7 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 	stateModel := NewCheckManualResourceModel(ctx, *data)
 	stateModel.EnableOn = planModel.EnableOn
 	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -178,6 +178,8 @@ func (r *CheckManualResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 	stateModel := NewCheckManualResourceModel(ctx, *data)
+	stateModel.EnableOn = planModel.EnableOn
+	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
 
 	// Save updated data into Terraform stateModel
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -210,19 +212,11 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBoolPointer()
-	// TODO: this is fucking ugly
-	startingDate, err := iso8601.ParseString(planModel.UpdateFrequency.StartingDate.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
-	timescale := opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString())
-	value := int(planModel.UpdateFrequency.Value.ValueInt64())
-	input.UpdateFrequency = &opslevel.ManualCheckFrequencyUpdateInput{
-		StartingDate:       &iso8601.Time{Time: startingDate},
-		FrequencyTimeScale: &timescale,
-		FrequencyValue:     &value,
-	}
+	input.UpdateFrequency = opslevel.NewManualCheckFrequencyUpdateInput(
+		planModel.UpdateFrequency.StartingDate.ValueString(),
+		opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
+		int(planModel.UpdateFrequency.Value.ValueInt64()),
+	)
 
 	data, err := r.client.UpdateCheckManual(input)
 	if err != nil {
@@ -233,6 +227,7 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 	stateModel := NewCheckManualResourceModel(ctx, *data)
 	stateModel.EnableOn = planModel.EnableOn
 	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
