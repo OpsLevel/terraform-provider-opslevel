@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/opslevel/opslevel-go/v2024"
 )
 
 var checkBaseAttributes = map[string]schema.Attribute{
@@ -70,4 +72,34 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 		attrs[key] = value
 	}
 	return attrs
+}
+
+type PredicateModel struct {
+	Type  types.String `tfsdk:"type"`
+	Value types.String `tfsdk:"value"`
+}
+
+func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {
+	return &PredicateModel{
+		Type:  types.StringValue(string(predicate.Type)),
+		Value: types.StringValue(predicate.Value),
+	}
+}
+
+func PredicateSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Description: "A condition that should be satisfied.",
+		Optional:    true,
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Description: "A condition that should be satisfied.",
+				Required:    true,
+				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+			},
+			"value": schema.StringAttribute{
+				Description: "The condition value used by the predicate.",
+				Optional:    true,
+			},
+		},
+	}
 }
