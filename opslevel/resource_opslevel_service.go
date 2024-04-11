@@ -259,7 +259,10 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	default:
 		resp.Diagnostics.AddError(
 			"opslevel client error",
-			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
+				stateModel.Owner.ValueString(),
+				planModel.Owner.ValueString(),
+			),
 		)
 		return
 	}
