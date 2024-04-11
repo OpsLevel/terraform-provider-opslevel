@@ -1,5 +1,5 @@
 data "opslevel_property_definition" "pd1" {
-  id = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8zNjg"
+  identifier = "id_or_alias"
 }
 
 output "pd_schema" {

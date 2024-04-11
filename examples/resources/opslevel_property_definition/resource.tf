@@ -1,8 +1,8 @@
 resource "opslevel_property_definition" "color_picker" {
-  name   = "Color Picker"
+  name = "Color Picker"
   schema = jsonencode({
-    "type": "string",
-    "enum": [
+    "type" : "string",
+    "enum" : [
       "red",
       "green",
       "blue",
