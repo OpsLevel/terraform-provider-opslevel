@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -47,24 +46,34 @@ type CheckAlertSourceUsageResourceModel struct {
 	AlertNamePredicate *PredicateModel `tfsdk:"alert_name_predicate"`
 }
 
-func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.Check) CheckAlertSourceUsageResourceModel {
-	var model CheckAlertSourceUsageResourceModel
+func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.Check, planModel CheckAlertSourceUsageResourceModel) CheckAlertSourceUsageResourceModel {
+	var stateModel CheckAlertSourceUsageResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.AlertType = types.StringValue(string(check.AlertSourceType))
-	model.AlertNamePredicate = NewPredicateModel(check.AlertSourceNamePredicate)
+	stateModel.AlertType = types.StringValue(string(check.AlertSourceType))
+	if planModel.AlertNamePredicate != nil {
+		stateModel.AlertNamePredicate = NewPredicateModel(check.AlertSourceNamePredicate)
+	}
 
-	return model
+	return stateModel
 }
 
 func (r *CheckAlertSourceUsageResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -97,27 +106,26 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckAlertSourceUsageCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
 
 	input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(planModel.AlertType.ValueString()))
 	if planModel.AlertNamePredicate != nil {
-		input.AlertSourceNamePredicate = &opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.AlertNamePredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.AlertNamePredicate.Value.String()),
-		}
+		input.AlertSourceNamePredicate = planModel.AlertNamePredicate.ToCreateInput()
 	}
 
 	data, err := r.client.CreateCheckAlertSourceUsage(input)
@@ -126,8 +134,7 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check alert source usage resource")
@@ -149,7 +156,7 @@ func (r *CheckAlertSourceUsageResource) Read(ctx context.Context, req resource.R
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check alert source usage, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data)
+	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -165,29 +172,27 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckAlertSourceUsageUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(planModel.AlertType.ValueString()))
 	if planModel.AlertNamePredicate != nil {
-		input.AlertSourceNamePredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.AlertNamePredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.AlertNamePredicate.Value.String()),
-		}
+		input.AlertSourceNamePredicate = planModel.AlertNamePredicate.ToUpdateInput()
 	}
 
 	data, err := r.client.UpdateCheckAlertSourceUsage(input)
@@ -196,8 +201,7 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check alert source usage resource")
