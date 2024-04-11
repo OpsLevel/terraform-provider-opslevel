@@ -173,3 +173,14 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+# Check Service Configuration
+
+resource "opslevel_check_service_configuration" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+}
