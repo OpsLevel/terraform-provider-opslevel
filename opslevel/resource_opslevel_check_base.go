@@ -93,6 +93,20 @@ func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {
 	}
 }
 
+func (s PredicateModel) ToCreateInput() *opslevel.PredicateInput {
+	return &opslevel.PredicateInput{
+		Type:  opslevel.PredicateTypeEnum(s.Type.ValueString()),
+		Value: opslevel.RefOf(s.Value.ValueString()),
+	}
+}
+
+func (s PredicateModel) ToUpdateInput() *opslevel.PredicateUpdateInput {
+	return &opslevel.PredicateUpdateInput{
+		Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(s.Type.ValueString())),
+		Value: opslevel.RefOf(s.Value.ValueString()),
+	}
+}
+
 func PredicateSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		Description: "A condition that should be satisfied.",
