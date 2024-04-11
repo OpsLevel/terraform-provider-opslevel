@@ -174,6 +174,20 @@ resource "opslevel_team" "small" {
   name = "Small Team"
 }
 
+# Team Tag resources
+
+resource "opslevel_team_tag" "using_team_id" {
+  key   = "hello_with_id"
+  value = "world_with_id"
+  team  = "Z2lkOi8vb3BzbGV2ZWwvVGVhbS8xNzQxMg"
+}
+
+resource "opslevel_team_tag" "using_team_alias" {
+  key        = "hello_with_alias"
+  value      = "world_with_alias"
+  team_alias = "team_platform_3"
+}
+
 # Trigger Definition resources
 
 resource "opslevel_trigger_definition" "big" {
