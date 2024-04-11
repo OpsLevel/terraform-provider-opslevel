@@ -45,12 +45,12 @@ func NewSystemResourceModel(ctx context.Context, system opslevel.System) (System
 	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
 	systemDataSourceModel := SystemResourceModel{
 		Aliases:     aliases,
-		Description: types.StringValue(system.Description),
-		Domain:      types.StringValue(string(system.Parent.Id)),
-		Id:          types.StringValue(string(system.Id)),
-		Name:        types.StringValue(system.Name),
-		Note:        types.StringValue(system.Note),
-		Owner:       types.StringValue(string(system.Owner.Id())),
+		Description: OptionalStringValue(system.Description),
+		Domain:      OptionalStringValue(string(system.Parent.Id)),
+		Id:          ComputedStringValue(string(system.Id)),
+		Name:        RequiredStringValue(system.Name),
+		Note:        OptionalStringValue(system.Note),
+		Owner:       OptionalStringValue(string(system.Owner.Id())),
 	}
 	return systemDataSourceModel, diags
 }
@@ -117,13 +117,16 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	system, err := r.client.CreateSystem(opslevel.SystemInput{
+	systemInput := opslevel.SystemInput{
 		Name:        planModel.Name.ValueStringPointer(),
 		Description: planModel.Description.ValueStringPointer(),
 		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
-		Parent:      opslevel.NewIdentifier(planModel.Domain.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
-	})
+	}
+	if planModel.Domain.ValueString() != "" {
+		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+	}
+	system, err := r.client.CreateSystem(systemInput)
 	if err != nil || system == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create system, got error: %s", err))
 		return
@@ -173,13 +176,18 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), opslevel.SystemInput{
+	systemInput := opslevel.SystemInput{
 		Name:        planModel.Name.ValueStringPointer(),
 		Description: planModel.Description.ValueStringPointer(),
 		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
-		Parent:      opslevel.NewIdentifier(planModel.Domain.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
-	})
+	}
+	if planModel.Domain.IsNull() {
+		systemInput.Parent = opslevel.NewIdentifier("")
+	} else {
+		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+	}
+	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), systemInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update system, got error: %s", err))
 		return
