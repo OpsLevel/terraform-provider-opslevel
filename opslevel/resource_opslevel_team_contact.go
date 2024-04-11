@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -35,13 +37,12 @@ type TeamContactResourceModel struct {
 	Value       types.String `tfsdk:"value"`
 }
 
-func NewTeamContactResourceModel(teamContact opslevel.Contact, teamIdentifier string) TeamContactResourceModel {
+func NewTeamContactResourceModel(teamContact opslevel.Contact) TeamContactResourceModel {
 	teamResourceModel := TeamContactResourceModel{
-		Id:    types.StringValue(string(teamContact.Id)),
+		Id:    RequiredStringValue(string(teamContact.Id)),
 		Name:  RequiredStringValue(teamContact.DisplayName),
-		Team:  types.StringValue(teamIdentifier),
-		Type:  types.StringValue(string(teamContact.Type)),
-		Value: types.StringValue(teamContact.Address),
+		Type:  RequiredStringValue(string(teamContact.Type)),
+		Value: RequiredStringValue(teamContact.Address),
 	}
 	return teamResourceModel
 }
@@ -62,7 +63,6 @@ func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req 
 				},
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
@@ -76,6 +76,9 @@ func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req 
 			"type": schema.StringAttribute{
 				Description: "The method of contact [email, slack, slack_handle, web].",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllContactType...),
+				},
 			},
 			"value": schema.StringAttribute{
 				Description: "The contact value. Examples: support@company.com for type email, https://opslevel.com for type web, #devs for type slack",
@@ -106,7 +109,8 @@ func (teamContactResource *TeamContactResource) Create(ctx context.Context, req 
 		return
 	}
 
-	createdTeamContactModel := NewTeamContactResourceModel(*contact, teamIdentifier)
+	createdTeamContactModel := NewTeamContactResourceModel(*contact)
+	createdTeamContactModel.Team = RequiredStringValue(teamIdentifier)
 	createdTeamContactModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team contact resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamContactModel)...)
@@ -150,7 +154,8 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 		return
 	}
 
-	readTeamContactResourceModel := NewTeamContactResourceModel(*teamContact, teamIdentifier)
+	readTeamContactResourceModel := NewTeamContactResourceModel(*teamContact)
+	readTeamContactResourceModel.Team = RequiredStringValue(teamIdentifier)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamContactResourceModel)...)
 }
 
@@ -176,7 +181,8 @@ func (teamContactResource *TeamContactResource) Update(ctx context.Context, req 
 		return
 	}
 
-	updatedTeamContactResourceModel := NewTeamContactResourceModel(*contact, teamIdentifier)
+	updatedTeamContactResourceModel := NewTeamContactResourceModel(*contact)
+	updatedTeamContactResourceModel.Team = RequiredStringValue(teamIdentifier)
 	updatedTeamContactResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team contact resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamContactResourceModel)...)
