@@ -73,7 +73,9 @@ func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryFileCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryFileCheckFragment.Filepaths)
 	stateModel.Filepaths = data
-	stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryFileCheckFragment.FileContentsPredicate)
+	if check.RepositoryFileCheckFragment.FileContentsPredicate != nil {
+		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryFileCheckFragment.FileContentsPredicate)
+	}
 	stateModel.UseAbsoluteRoot = RequiredBoolValue(check.RepositoryFileCheckFragment.UseAbsoluteRoot)
 
 	return stateModel, diags
