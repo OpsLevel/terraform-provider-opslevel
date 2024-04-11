@@ -174,7 +174,7 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 	}
 	input := opslevel.PropertyDefinitionInput{
 		AllowedInConfigFiles:  planModel.AllowedInConfigFiles.ValueBoolPointer(),
-		Description:           planModel.Description.ValueStringPointer(),
+		Description:           opslevel.RefOf(planModel.Description.ValueString()),
 		Name:                  planModel.Name.ValueStringPointer(),
 		PropertyDisplayStatus: propertyDisplayStatus,
 		Schema:                definitionSchema,
