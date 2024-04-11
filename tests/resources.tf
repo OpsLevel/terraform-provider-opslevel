@@ -63,6 +63,13 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Repository resources
+
+resource "opslevel_repository" "mock_repo" {
+  identifier = "github.com:rocktavious/autopilot"
+  owner      = "developers"
+}
+
 # Rubric Category resources
 
 resource "opslevel_rubric_category" "mock_category" {
