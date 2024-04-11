@@ -173,3 +173,20 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+# Check Alert Source
+
+resource "opslevel_check_alert_source_usage" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+
+  alert_type = "pagerduty" # one of: "pagerduty", "datadog", "opsgenie"
+  alert_name_predicate = {
+    type  = "contains"
+    value = "dev"
+  }
+}
