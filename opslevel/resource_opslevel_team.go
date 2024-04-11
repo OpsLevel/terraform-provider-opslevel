@@ -56,9 +56,6 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, parent string
 	if diags != nil && diags.HasError() {
 		return TeamResourceModel{}, diags
 	}
-	if len(aliases.Elements()) == 0 {
-		aliases = types.ListNull(types.StringType)
-	}
 	teamMembers := make([]TeamMember, 0)
 	if team.Memberships != nil {
 		for _, mem := range team.Memberships.Nodes {
