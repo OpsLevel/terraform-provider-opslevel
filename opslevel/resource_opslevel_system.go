@@ -1,162 +1,214 @@
 package opslevel
 
-// import (
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+import (
+	"context"
+	"fmt"
 
-// func resourceSystem() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a system",
-// 		Create:      wrap(resourceSystemCreate),
-// 		Read:        wrap(resourceSystemRead),
-// 		Update:      wrap(resourceSystemUpdate),
-// 		Delete:      wrap(resourceSystemDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"aliases": {
-// 				Type:        schema.TypeList,
-// 				Description: "The aliases of the system.",
-// 				Computed:    true,
-// 				Elem:        &schema.Schema{Type: schema.TypeString},
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The name for the system.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"description": {
-// 				Type:        schema.TypeString,
-// 				Description: "The description for the system.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 			"owner": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the team that owns the system.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 			"domain": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the parent domain this system is a child for.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 			"note": {
-// 				Type:        schema.TypeString,
-// 				Description: "Additional information about the system.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 		},
-// 	}
-// }
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourceSystemCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	input := opslevel.SystemInput{
-// 		Name:        GetString(d, "name"),
-// 		Description: GetString(d, "description"),
-// 		Note:        GetString(d, "note"),
-// 	}
-// 	if owner := d.Get("owner"); owner != "" {
-// 		input.OwnerId = opslevel.NewID(owner.(string))
-// 	}
-// 	if domain := d.Get("domain"); domain != "" {
-// 		input.Parent = opslevel.NewIdentifier(domain.(string))
-// 	}
+var _ resource.ResourceWithConfigure = &SystemResource{}
 
-// 	resource, err := client.CreateSystem(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
-// 	return resourceSystemRead(d, client)
-// }
+var _ resource.ResourceWithImportState = &SystemResource{}
 
-// func resourceSystemRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func NewSystemResource() resource.Resource {
+	return &SystemResource{}
+}
 
-// 	resource, err := client.GetSystem(id)
-// 	if err != nil {
-// 		return err
-// 	}
+// SystemResource defines the resource implementation.
+type SystemResource struct {
+	CommonResourceClient
+}
 
-// 	if err := d.Set("aliases", resource.Aliases); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("name", resource.Name); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("description", resource.Description); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("note", resource.Note); err != nil {
-// 		return err
-// 	}
+// SystemResourceModel describes the System managed resource.
+type SystemResourceModel struct {
+	Aliases     types.List   `tfsdk:"aliases"`
+	Description types.String `tfsdk:"description"`
+	Domain      types.String `tfsdk:"domain"`
+	Id          types.String `tfsdk:"id"`
+	LastUpdated types.String `tfsdk:"last_updated"`
+	Name        types.String `tfsdk:"name"`
+	Note        types.String `tfsdk:"note"`
+	Owner       types.String `tfsdk:"owner"`
+}
 
-// 	// only read in changes to optional fields if they have been set before
-// 	if owner, ok := d.GetOk("owner"); ok || owner != "" {
-// 		if err := d.Set("owner", resource.Owner.Id()); err != nil {
-// 			return err
-// 		}
-// 	}
-// 	if domain, ok := d.GetOk("domain"); ok || domain != "" {
-// 		if err := d.Set("domain", resource.Parent.Id); err != nil {
-// 			return err
-// 		}
-// 	}
+func NewSystemResourceModel(ctx context.Context, system opslevel.System) (SystemResourceModel, diag.Diagnostics) {
+	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
+	systemDataSourceModel := SystemResourceModel{
+		Aliases:     aliases,
+		Description: OptionalStringValue(system.Description),
+		Domain:      OptionalStringValue(string(system.Parent.Id)),
+		Id:          ComputedStringValue(string(system.Id)),
+		Name:        RequiredStringValue(system.Name),
+		Note:        OptionalStringValue(system.Note),
+		Owner:       OptionalStringValue(string(system.Owner.Id())),
+	}
+	return systemDataSourceModel, diags
+}
 
-// 	return nil
-// }
+func (r *SystemResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_system"
+}
 
-// func resourceSystemUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func (r *SystemResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "System Resource",
 
-// 	input := opslevel.SystemInput{
-// 		Name:        GetString(d, "name"),
-// 		Description: GetString(d, "description"),
-// 		Note:        GetString(d, "note"),
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"aliases": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "The aliases of the system.",
+				Computed:    true,
+			},
+			"description": schema.StringAttribute{
+				Description: "The description for the system.",
+				Optional:    true,
+			},
+			"domain": schema.StringAttribute{
+				Description: "The id of the parent domain this system is a child for.",
+				Optional:    true,
+				Validators:  []validator.String{IdStringValidator()},
+			},
+			"id": schema.StringAttribute{
+				Description: "The ID of the system.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name for the system.",
+				Required:    true,
+			},
+			"note": schema.StringAttribute{
+				Description: "Additional information about the system.",
+				Optional:    true,
+			},
+			"owner": schema.StringAttribute{
+				Description: "The id of the team that owns the system.",
+				Optional:    true,
+				Validators:  []validator.String{IdStringValidator()},
+			},
+		},
+	}
+}
 
-// 	if d.HasChange("owner") {
-// 		if owner := d.Get("owner"); owner != "" {
-// 			input.OwnerId = opslevel.NewID(owner.(string))
-// 		} else {
-// 			input.OwnerId = opslevel.NewID("")
-// 		}
-// 	}
-// 	if d.HasChange("domain") {
-// 		if domain := d.Get("domain"); domain != "" {
-// 			input.Parent = opslevel.NewIdentifier(domain.(string))
-// 		} else {
-// 			input.Parent = opslevel.NewIdentifier()
-// 		}
-// 	}
+func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel SystemResourceModel
 
-// 	_, err := client.UpdateSystem(id, input)
-// 	if err != nil {
-// 		return err
-// 	}
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
-// 	d.Set("last_updated", timeLastUpdated())
-// 	return resourceSystemRead(d, client)
-// }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// func resourceSystemDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeleteSystem(id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
+	systemInput := opslevel.SystemInput{
+		Name:        planModel.Name.ValueStringPointer(),
+		Description: planModel.Description.ValueStringPointer(),
+		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		Note:        planModel.Note.ValueStringPointer(),
+	}
+	if planModel.Domain.ValueString() != "" {
+		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+	}
+	system, err := r.client.CreateSystem(systemInput)
+	if err != nil || system == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create system, got error: %s", err))
+		return
+	}
+	stateModel, diags := NewSystemResourceModel(ctx, *system)
+	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
+
+	tflog.Trace(ctx, "created a system resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *SystemResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var planModel SystemResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	readSystem, err := r.client.GetSystem(planModel.Id.ValueString())
+	if err != nil || readSystem == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read system, got error: %s", err))
+		return
+	}
+	stateModel, diags := NewSystemResourceModel(ctx, *readSystem)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel SystemResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	systemInput := opslevel.SystemInput{
+		Name:        opslevel.RefOf(planModel.Name.ValueString()),
+		Description: opslevel.RefOf(planModel.Description.ValueString()),
+		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		Note:        opslevel.RefOf(planModel.Note.ValueString()),
+		Parent:      opslevel.NewIdentifier(planModel.Domain.ValueString()),
+	}
+	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), systemInput)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update system, got error: %s", err))
+		return
+	}
+	stateModel, diags := NewSystemResourceModel(ctx, *system)
+	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
+
+	tflog.Trace(ctx, "updated a system resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *SystemResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel SystemResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := r.client.DeleteSystem(planModel.Id.ValueString()); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete system, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a system resource")
+}
+
+func (r *SystemResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
