@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -47,24 +46,32 @@ type CheckHasDocumentationResourceModel struct {
 	DocumentSubtype types.String `tfsdk:"document_subtype"`
 }
 
-func NewCheckHasDocumentationResourceModel(ctx context.Context, check opslevel.Check) CheckHasDocumentationResourceModel {
-	var model CheckHasDocumentationResourceModel
+func NewCheckHasDocumentationResourceModel(ctx context.Context, check opslevel.Check, planModel CheckHasDocumentationResourceModel) CheckHasDocumentationResourceModel {
+	var stateModel CheckHasDocumentationResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.DocumentType = types.StringValue(string(check.DocumentType))
-	model.DocumentSubtype = types.StringValue(string(check.DocumentSubtype))
+	stateModel.DocumentType = types.StringValue(string(check.DocumentType))
+	stateModel.DocumentSubtype = types.StringValue(string(check.DocumentSubtype))
 
-	return model
+	return stateModel
 }
 
 func (r *CheckHasDocumentationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -101,19 +108,21 @@ func (r *CheckHasDocumentationResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckHasDocumentationCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.DocumentType = opslevel.HasDocumentationTypeEnum(planModel.DocumentType.ValueString())
@@ -125,8 +134,7 @@ func (r *CheckHasDocumentationResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check has documentation resource")
@@ -148,7 +156,7 @@ func (r *CheckHasDocumentationResource) Read(ctx context.Context, req resource.R
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check has documentation, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data)
+	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data, planModel)
 	stateModel.EnableOn = planModel.EnableOn
 
 	// Save updated data into Terraform state
@@ -165,22 +173,24 @@ func (r *CheckHasDocumentationResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckHasDocumentationUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
+
 	input.DocumentType = opslevel.RefOf(opslevel.HasDocumentationTypeEnum(planModel.DocumentType.ValueString()))
 	input.DocumentSubtype = opslevel.RefOf(opslevel.HasDocumentationSubtypeEnum(planModel.DocumentSubtype.ValueString()))
 
@@ -190,7 +200,7 @@ func (r *CheckHasDocumentationResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data)
+	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "updated a check has documentation resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
