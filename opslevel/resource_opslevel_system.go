@@ -132,11 +132,8 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	stateModel, diags := NewSystemResourceModel(ctx, *system)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
 	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a system resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -177,15 +174,11 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	systemInput := opslevel.SystemInput{
-		Name:        planModel.Name.ValueStringPointer(),
-		Description: planModel.Description.ValueStringPointer(),
+		Name:        opslevel.RefOf(planModel.Name.ValueString()),
+		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
-		Note:        planModel.Note.ValueStringPointer(),
-	}
-	if planModel.Domain.IsNull() {
-		systemInput.Parent = opslevel.NewIdentifier("")
-	} else {
-		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+		Note:        opslevel.RefOf(planModel.Note.ValueString()),
+		Parent:      opslevel.NewIdentifier(planModel.Domain.ValueString()),
 	}
 	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), systemInput)
 	if err != nil {
@@ -193,11 +186,8 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	stateModel, diags := NewSystemResourceModel(ctx, *system)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
 	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a system resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
