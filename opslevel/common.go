@@ -415,13 +415,13 @@ func flattenServiceRepositoriesArray(repositories *opslevel.ServiceRepositoryCon
 // 	return output
 // }
 
-// func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
-// 	output := []string{}
-// 	for _, team := range teams.Nodes {
-// 		output = append(output, team.Alias)
-// 	}
-// 	return output
-// }
+func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
+	output := []string{}
+	for _, team := range teams.Nodes {
+		output = append(output, team.Alias)
+	}
+	return output
+}
 
 // type (
 // 	reconcileStringArrayAdd    func(v string) error
