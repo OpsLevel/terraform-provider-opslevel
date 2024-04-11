@@ -50,6 +50,7 @@ func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.C
 	var stateModel CheckAlertSourceUsageResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
 	if planModel.Enabled.IsNull() {
 		stateModel.Enabled = types.BoolValue(false)
 	} else {
