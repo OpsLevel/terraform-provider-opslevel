@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -49,31 +48,42 @@ type CheckManualResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 	LastUpdated types.String `tfsdk:"last_updated"`
 
-	UpdateFrequency       CheckUpdateFrequency `tfsdk:"update_frequency"`
-	UpdateRequiresComment types.Bool           `tfsdk:"update_requires_comment"`
+	UpdateFrequency       *CheckUpdateFrequency `tfsdk:"update_frequency"`
+	UpdateRequiresComment types.Bool            `tfsdk:"update_requires_comment"`
 }
 
-func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check) CheckManualResourceModel {
-	var model CheckManualResourceModel
+func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check, planModel CheckManualResourceModel) CheckManualResourceModel {
+	var stateModel CheckManualResourceModel
 
-	model.Category = RequiredStringValue(string(check.Category.Id))
-	model.Enabled = OptionalBoolValue(&check.Enabled)
-	model.EnableOn = OptionalStringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = OptionalStringValue(string(check.Filter.Id))
-	model.Id = ComputedStringValue(string(check.Id))
-	model.Level = RequiredStringValue(string(check.Level.Id))
-	model.Name = RequiredStringValue(check.Name)
-	model.Notes = OptionalStringValue(check.Notes)
-	model.Owner = OptionalStringValue(string(check.Owner.Team.Id))
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.UpdateRequiresComment = RequiredBoolValue(check.UpdateRequiresComment)
-	model.UpdateFrequency = CheckUpdateFrequency{
-		StartingDate: RequiredStringValue(check.UpdateFrequency.StartingDate.Time.Format(time.RFC3339)),
-		TimeScale:    RequiredStringValue(string(check.UpdateFrequency.FrequencyTimeScale)),
-		Value:        RequiredIntValue(check.UpdateFrequency.FrequencyValue),
+	stateModel.UpdateRequiresComment = RequiredBoolValue(check.UpdateRequiresComment)
+	if planModel.UpdateFrequency != nil {
+		stateModel.UpdateFrequency = &CheckUpdateFrequency{
+			StartingDate: planModel.UpdateFrequency.StartingDate,
+			TimeScale:    RequiredStringValue(string(check.UpdateFrequency.FrequencyTimeScale)),
+			Value:        RequiredIntValue(check.UpdateFrequency.FrequencyValue),
+		}
 	}
 
-	return model
+	return stateModel
 }
 
 func (r *CheckManualResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -125,26 +135,30 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckManualCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
 	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBool()
-	input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
-		planModel.UpdateFrequency.StartingDate.ValueString(),
-		opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
-		int(planModel.UpdateFrequency.Value.ValueInt64()),
-	)
+	if planModel.UpdateFrequency != nil {
+		input.UpdateFrequency = opslevel.NewManualCheckFrequencyInput(
+			planModel.UpdateFrequency.StartingDate.ValueString(),
+			opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
+			int(planModel.UpdateFrequency.Value.ValueInt64()),
+		)
+	}
 
 	data, err := r.client.CreateCheckManual(input)
 	if err != nil {
@@ -152,9 +166,7 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	stateModel := NewCheckManualResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
-	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
+	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check manual resource")
@@ -176,9 +188,7 @@ func (r *CheckManualResource) Read(ctx context.Context, req resource.ReadRequest
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check manual, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckManualResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
-	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
+	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
 
 	// Save updated data into Terraform stateModel
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -194,28 +204,31 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckManualUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
 	input.UpdateRequiresComment = planModel.UpdateRequiresComment.ValueBoolPointer()
-	input.UpdateFrequency = opslevel.NewManualCheckFrequencyUpdateInput(
-		planModel.UpdateFrequency.StartingDate.ValueString(),
-		opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
-		int(planModel.UpdateFrequency.Value.ValueInt64()),
-	)
+	if planModel.UpdateFrequency != nil {
+		input.UpdateFrequency = opslevel.NewManualCheckFrequencyUpdateInput(
+			planModel.UpdateFrequency.StartingDate.ValueString(),
+			opslevel.FrequencyTimeScale(planModel.UpdateFrequency.TimeScale.ValueString()),
+			int(planModel.UpdateFrequency.Value.ValueInt64()),
+		)
+	}
 
 	data, err := r.client.UpdateCheckManual(input)
 	if err != nil {
@@ -223,9 +236,7 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	stateModel := NewCheckManualResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
-	stateModel.UpdateFrequency.StartingDate = planModel.UpdateFrequency.StartingDate
+	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check manual resource")

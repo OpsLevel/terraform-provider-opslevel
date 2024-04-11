@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -26,6 +27,7 @@ var checkBaseAttributes = map[string]schema.Attribute{
 		Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
 		Optional:    true,
 		Computed:    true,
+		Default:     booldefault.StaticBool(false),
 		Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("enable_on"))},
 	},
 	"enable_on": schema.StringAttribute{
