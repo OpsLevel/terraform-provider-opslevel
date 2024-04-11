@@ -29,6 +29,24 @@ func ComputedStringValue(value string) basetypes.StringValue {
 	return OptionalStringValue(value)
 }
 
+// Returns value wrapped in a types.BoolValue
+func RequiredBoolValue(value bool) basetypes.BoolValue {
+	return types.BoolValue(value)
+}
+
+// Returns value wrapped in a types.BoolValue, or types.BoolNull if blank
+func OptionalBoolValue(value *bool) basetypes.BoolValue {
+	if value == nil {
+		return types.BoolNull()
+	}
+	return types.BoolValue(*value)
+}
+
+// Returns value wrapped in a types.Int64Value
+func RequiredIntValue(value int) basetypes.Int64Value {
+	return types.Int64Value(int64(value))
+}
+
 // Returns value wrapped in a types.StringValue, or types.ListNull if blank
 //
 // NOTE: an empty list is not the same as 'null'

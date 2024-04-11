@@ -56,22 +56,21 @@ type CheckManualResourceModel struct {
 func NewCheckManualResourceModel(ctx context.Context, check opslevel.Check) CheckManualResourceModel {
 	var model CheckManualResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	model.Category = RequiredStringValue(string(check.Category.Id))
+	model.Enabled = OptionalBoolValue(&check.Enabled)
+	model.EnableOn = OptionalStringValue(check.EnableOn.Time.Format(time.RFC3339))
+	model.Filter = OptionalStringValue(string(check.Filter.Id))
+	model.Id = ComputedStringValue(string(check.Id))
+	model.Level = RequiredStringValue(string(check.Level.Id))
+	model.Name = RequiredStringValue(check.Name)
+	model.Notes = OptionalStringValue(check.Notes)
+	model.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.UpdateRequiresComment = types.BoolValue(check.UpdateRequiresComment)
+	model.UpdateRequiresComment = RequiredBoolValue(check.UpdateRequiresComment)
 	model.UpdateFrequency = CheckUpdateFrequency{
-		StartingDate: types.StringValue(check.UpdateFrequency.StartingDate.Time.Format(time.RFC3339)),
-		TimeScale:    types.StringValue(string(check.UpdateFrequency.FrequencyTimeScale)),
-		Value:        types.Int64Value(int64(check.UpdateFrequency.FrequencyValue)),
+		StartingDate: RequiredStringValue(check.UpdateFrequency.StartingDate.Time.Format(time.RFC3339)),
+		TimeScale:    RequiredStringValue(string(check.UpdateFrequency.FrequencyTimeScale)),
+		Value:        RequiredIntValue(check.UpdateFrequency.FrequencyValue),
 	}
 
 	return model

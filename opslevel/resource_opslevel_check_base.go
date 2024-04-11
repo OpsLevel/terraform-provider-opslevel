@@ -86,8 +86,8 @@ type PredicateModel struct {
 
 func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {
 	return &PredicateModel{
-		Type:  types.StringValue(string(predicate.Type)),
-		Value: types.StringValue(predicate.Value),
+		Type:  RequiredStringValue(string(predicate.Type)),
+		Value: OptionalStringValue(predicate.Value),
 	}
 }
 
