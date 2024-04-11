@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -36,7 +37,10 @@ type RepositoryResourceModel struct {
 }
 
 func NewRepositoryResourceModel(ctx context.Context, repository opslevel.Repository) RepositoryResourceModel {
-	return RepositoryResourceModel{Id: ComputedStringValue(string(repository.Id))}
+	return RepositoryResourceModel{
+		Id:    ComputedStringValue(string(repository.Id)),
+		Owner: OptionalStringValue(string(repository.Owner.Id)),
+	}
 }
 
 func (r *RepositoryResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,8 +71,9 @@ func (r *RepositoryResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Computed: true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The owner of the repository.",
+				Description: "The ID of the owner of the repository.",
 				Optional:    true,
+				Validators:  []validator.String{IdStringValidator()},
 			},
 		},
 	}
@@ -123,22 +128,6 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Owner from plan can be an id or alias
-	switch planModel.Owner.ValueString() {
-	case string(updatedRepository.Owner.Id), updatedRepository.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("repository owner found '%s' did not match given owner '%s'",
-				stateModel.Owner.ValueString(),
-				planModel.Owner.ValueString(),
-			),
-		)
-		return
-	}
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a repository resource")
@@ -172,23 +161,6 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 				planModel.Identifier.ValueString(),
 				string(readRepository.Id),
 				readRepository.DefaultAlias,
-			),
-		)
-		return
-	}
-
-	// Owner from plan can be an id or alias
-	switch planModel.Owner.ValueString() {
-	case string(readRepository.Owner.Id), readRepository.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("repository owner found '%s' did not match given owner '%s'",
-				stateModel.Owner.ValueString(),
-				planModel.Owner.ValueString(),
 			),
 		)
 		return
