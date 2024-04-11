@@ -126,6 +126,20 @@ resource "opslevel_scorecard" "small" {
   owner_id                       = var.test_id
 }
 
+# System resources
+
+resource "opslevel_system" "big" {
+  description = "It's a big system"
+  domain      = var.test_id
+  name        = "Big System"
+  note        = "Note on System"
+  owner       = var.test_id
+}
+
+resource "opslevel_system" "small" {
+  name = "Small System"
+}
+
 # User resources
 
 resource "opslevel_user" "mock_user" {
