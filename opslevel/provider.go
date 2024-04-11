@@ -163,6 +163,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewServiceResource,
 		NewSystemResource,
 		NewTeamResource,
+		NewTeamContactResource,
 		NewTeamTagResource,
 		NewTriggerDefinitionResource,
 		NewUserResource,
