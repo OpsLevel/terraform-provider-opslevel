@@ -92,10 +92,16 @@ func (teamTagResource *TeamTagResource) Schema(ctx context.Context, req resource
 					stringvalidator.AtLeastOneOf(path.MatchRoot("team"),
 						path.MatchRoot("team_alias")),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"team_alias": schema.StringAttribute{
 				Description: "The alias of the team that this will be added to.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 		},
 	}
