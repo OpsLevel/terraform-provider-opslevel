@@ -1,125 +1,207 @@
 package opslevel
 
-// import (
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+import (
+	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"strings"
 
-// func resourcePropertyDefinition() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a property definition",
-// 		Create:      wrap(resourcePropertyDefinitionCreate),
-// 		Read:        wrap(resourcePropertyDefinitionRead),
-// 		Update:      wrap(resourcePropertyDefinitionUpdate),
-// 		Delete:      wrap(resourcePropertyDefinitionDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The display name of the property definition.",
-// 				Required:    true,
-// 			},
-// 			"description": {
-// 				Type:        schema.TypeString,
-// 				Description: "The description of the property definition.",
-// 				Optional:    true,
-// 			},
-// 			"schema": {
-// 				Type:        schema.TypeString,
-// 				Description: "The schema of the property definition.",
-// 				Required:    true,
-// 			},
-// 			"property_display_status": {
-// 				Type:         schema.TypeString,
-// 				Description:  "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
-// 				Default:      "visible",
-// 				Optional:     true,
-// 				ValidateFunc: validation.StringInSlice(opslevel.AllPropertyDisplayStatusEnum, false),
-// 			},
-// 		},
-// 	}
-// }
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourcePropertyDefinitionCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	input := opslevel.PropertyDefinitionInput{
-// 		Name:                  opslevel.RefOf(d.Get("name").(string)),
-// 		Description:           opslevel.RefOf(d.Get("description").(string)),
-// 		Schema:                newJSONSchema,
-// 		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
-// 	}
+var _ resource.ResourceWithConfigure = &PropertyDefinitionResource{}
 
-// 	resource, err := client.CreatePropertyDefinition(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
+type PropertyDefinitionResource struct {
+	CommonResourceClient
+}
 
-// 	return resourcePropertyDefinitionRead(d, client)
-// }
+func NewPropertyDefinitionResource() resource.Resource {
+	return &PropertyDefinitionResource{}
+}
 
-// func resourcePropertyDefinitionRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	resource, err := client.GetPropertyDefinition(id)
-// 	if err != nil {
-// 		return err
-// 	}
+// PropertyDefinitionResourceModel describes the Property Definition managed resource.
+type PropertyDefinitionResourceModel struct {
+	AllowedInConfigFiles  types.Bool   `tfsdk:"allowed_in_config_files"`
+	Description           types.String `tfsdk:"description"`
+	Id                    types.String `tfsdk:"id"`
+	LastUpdated           types.String `tfsdk:"last_updated"`
+	Name                  types.String `tfsdk:"name"`
+	PropertyDisplayStatus types.String `tfsdk:"property_display_status"`
+	Schema                types.String `tfsdk:"schema"`
+}
 
-// 	if err := d.Set("name", resource.Name); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("description", resource.Description); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("schema", resource.Schema.ToJSON()); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("property_display_status", string(resource.PropertyDisplayStatus)); err != nil {
-// 		return err
-// 	}
+func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition) PropertyDefinitionResourceModel {
+	model := PropertyDefinitionResourceModel{
+		AllowedInConfigFiles:  types.BoolValue(definition.AllowedInConfigFiles),
+		Description:           OptionalStringValue(definition.Description),
+		Id:                    ComputedStringValue(string(definition.Id)),
+		Name:                  RequiredStringValue(definition.Name),
+		PropertyDisplayStatus: RequiredStringValue(string(definition.PropertyDisplayStatus)),
+		Schema:                RequiredStringValue(definition.Schema.ToJSON()),
+	}
 
-// 	return nil
-// }
+	return model
+}
 
-// func resourcePropertyDefinitionUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	newJSONSchema, err := opslevel.NewJSONSchema(d.Get("schema").(string))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	input := opslevel.PropertyDefinitionInput{
-// 		Name:                  opslevel.RefOf(d.Get("name").(string)),
-// 		Description:           opslevel.RefOf(d.Get("description").(string)),
-// 		Schema:                newJSONSchema,
-// 		PropertyDisplayStatus: opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(d.Get("property_display_status").(string))),
-// 	}
+func (resource *PropertyDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_property_definition"
+}
 
-// 	if _, err = client.UpdatePropertyDefinition(id, input); err != nil {
-// 		return err
-// 	}
+func (resource *PropertyDefinitionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Property Definition Resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of this resource.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Computed: true,
+			},
+			"allowed_in_config_files": schema.BoolAttribute{
+				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
+				Required:    true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The display name of the property definition.",
+				Required:    true,
+			},
+			"schema": schema.StringAttribute{
+				Description: "The schema of the property definition.",
+				Required:    true,
+				Validators: []validator.String{
+					JsonObjectValidator(),
+				},
+			},
+			"description": schema.StringAttribute{
+				Description: "The description of the property definition.",
+				Optional:    true,
+			},
+			"property_display_status": schema.StringAttribute{
+				Description: fmt.Sprintf("The display status of a custom property on service pages. (Options: %s)", strings.Join(opslevel.AllPropertyDisplayStatusEnum, ", ")),
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllPropertyDisplayStatusEnum...),
+				},
+			},
+		},
+	}
+}
 
-// 	d.Set("last_updated", timeLastUpdated())
-// 	return resourcePropertyDefinitionRead(d, client)
-// }
+func (resource *PropertyDefinitionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel PropertyDefinitionResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// func resourcePropertyDefinitionDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeletePropertyDefinition(id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
+	definitionSchema, err := opslevel.NewJSONSchema(planModel.Schema.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to use definition schema '%s', got error: %s", planModel.Schema.ValueString(), err))
+		return
+	}
 
-// 	return nil
-// }
+	var propertyDisplayStatus *opslevel.PropertyDisplayStatusEnum
+	if planModel.PropertyDisplayStatus.ValueString() != "" {
+		propertyDisplayStatus = opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(planModel.PropertyDisplayStatus.ValueString()))
+	}
+	input := opslevel.PropertyDefinitionInput{
+		AllowedInConfigFiles:  planModel.AllowedInConfigFiles.ValueBoolPointer(),
+		Description:           planModel.Description.ValueStringPointer(),
+		Name:                  planModel.Name.ValueStringPointer(),
+		PropertyDisplayStatus: propertyDisplayStatus,
+		Schema:                definitionSchema,
+	}
+	definition, err := resource.client.CreatePropertyDefinition(input)
+	if err != nil || definition == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create definition with name '%s', got error: %s", *input.Name, err))
+		return
+	}
+
+	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	stateModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, fmt.Sprintf("created a definition resource with id '%s'", definition.Id))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (resource *PropertyDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var planModel PropertyDefinitionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := planModel.Id.ValueString()
+	definition, err := resource.client.GetPropertyDefinition(id)
+	if err != nil || definition == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read definition with id '%s', got error: %s", id, err))
+		return
+	}
+
+	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	tflog.Trace(ctx, fmt.Sprintf("read a definition resource with id '%s'", id))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (resource *PropertyDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel PropertyDefinitionResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	definitionSchema, err := opslevel.NewJSONSchema(planModel.Schema.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to use definition schema '%s', got error: %s", planModel.Schema.ValueString(), err))
+		return
+	}
+
+	id := planModel.Id.ValueString()
+	var propertyDisplayStatus *opslevel.PropertyDisplayStatusEnum
+	if planModel.PropertyDisplayStatus.ValueString() != "" {
+		propertyDisplayStatus = opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(planModel.PropertyDisplayStatus.ValueString()))
+	}
+	input := opslevel.PropertyDefinitionInput{
+		AllowedInConfigFiles:  planModel.AllowedInConfigFiles.ValueBoolPointer(),
+		Description:           planModel.Description.ValueStringPointer(),
+		Name:                  planModel.Name.ValueStringPointer(),
+		PropertyDisplayStatus: propertyDisplayStatus,
+		Schema:                definitionSchema,
+	}
+	definition, err := resource.client.UpdatePropertyDefinition(id, input)
+	if err != nil || definition == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update definition with id '%s', got error: %s", id, err))
+		return
+	}
+
+	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	stateModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, fmt.Sprintf("updated a definition resource with id '%s'", id))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (resource *PropertyDefinitionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel PropertyDefinitionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := planModel.Id.ValueString()
+	err := resource.client.DeletePropertyDefinition(id)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete definition (%s), got error: %s", id, err))
+		return
+	}
+	tflog.Trace(ctx, fmt.Sprintf("deleted a definition resource with id '%s'", id))
+}

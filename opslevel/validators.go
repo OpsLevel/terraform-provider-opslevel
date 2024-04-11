@@ -14,17 +14,14 @@ import (
 // OpsLevel ID String Validator
 type idStringValidator struct{}
 
-// Description describes the validation in plain text formatting.
 func (v idStringValidator) Description(_ context.Context) string {
-	return "id expected to be a string starting with 'Z2lkOi8v'"
+	return "id expected to be a string starting with 'Z2lkOi8v' (which is 'gid://' encoded in base64)"
 }
 
-// MarkdownDescription describes the validation in Markdown formatting.
 func (v idStringValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// ValidateString performs the validation.
 func (v idStringValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
@@ -40,20 +37,17 @@ func IdStringValidator() validator.String {
 	return idStringValidator{}
 }
 
-// OpsLevel ID String Validator
+// jsonStringValidator accepts any valid JSON (does not have to be an object), but not null and unknown
 type jsonStringValidator struct{}
 
-// Description describes the validation in plain text formatting.
 func (v jsonStringValidator) Description(_ context.Context) string {
 	return "field expected to be valid JSON"
 }
 
-// MarkdownDescription describes the validation in Markdown formatting.
 func (v jsonStringValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// ValidateString performs the validation.
 func (v jsonStringValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
@@ -70,20 +64,46 @@ func JsonStringValidator() validator.String {
 	return jsonStringValidator{}
 }
 
-// OpsLevel ID String Validator
-type jsonHasNameKeyValidator struct{}
+// jsonObjectValidator accepts any valid JSON object
+type jsonObjectValidator struct{}
 
-// Description describes the validation in plain text formatting.
-func (v jsonHasNameKeyValidator) Description(_ context.Context) string {
-	return "field expected to be valid JSON with a 'name' key to some value"
+func (v jsonObjectValidator) Description(_ context.Context) string {
+	return "field expected to be valid JSON object"
 }
 
-// MarkdownDescription describes the validation in Markdown formatting.
+func (v jsonObjectValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v jsonObjectValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := request.ConfigValue.ValueString()
+
+	result := make(map[string]any)
+	if err := json.Unmarshal([]byte(value), &result); err != nil {
+		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected a valid JSON object. '%s' was set to `%s`", request.Path, value))
+		return
+	}
+}
+
+func JsonObjectValidator() validator.String {
+	return jsonObjectValidator{}
+}
+
+// jsonHasNameKeyValidator accepts any valid JSON object with a 'name' key
+type jsonHasNameKeyValidator struct{}
+
+func (v jsonHasNameKeyValidator) Description(_ context.Context) string {
+	return "field expected to be a valid JSON object with a 'name' key to some value"
+}
+
 func (v jsonHasNameKeyValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// ValidateString performs the validation.
 func (v jsonHasNameKeyValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
@@ -93,11 +113,12 @@ func (v jsonHasNameKeyValidator) ValidateString(ctx context.Context, request val
 
 	result := make(map[string]any)
 	if err := json.Unmarshal([]byte(value), &result); err != nil {
-		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected valid JSON. '%s' was set to `%s`", request.Path, value))
+		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected a valid JSON object with 'name' key mapped to some value.\n'%s' was set to `%s`", request.Path, value))
 		return
 	}
 	if _, ok := result["name"]; !ok {
-		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected JSON with 'name' key mapped to some value.\n'%s' was set to `%s`", request.Path, value))
+		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected a valid JSON object with 'name' key mapped to some value.\n'%s' was set to `%s`", request.Path, value))
+		return
 	}
 }
 
@@ -112,17 +133,14 @@ type tagFormatValidator struct {
 	max int
 }
 
-// Description describes the validation in plain text formatting.
 func (v tagFormatValidator) Description(_ context.Context) string {
 	return "list must contain elements with 'key:value' format"
 }
 
-// MarkdownDescription describes the validation in Markdown formatting.
 func (v tagFormatValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// Validate performs the validation.
 func (v tagFormatValidator) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
