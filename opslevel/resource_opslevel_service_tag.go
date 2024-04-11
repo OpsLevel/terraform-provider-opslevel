@@ -10,12 +10,6 @@ package opslevel
 // 	"github.com/opslevel/opslevel-go/v2024"
 // )
 
-// // Tag key names are stored in OpsLevel as lowercase so we need to ensure the configuration is written as lowercase
-// var (
-// 	TagKeyRegex    = regexp.MustCompile(`\A[a-z][0-9a-z_\.\/\\-]*\z`)
-// 	TagKeyErrorMsg = "tag key name must start with a letter and be only lowercase alphanumerics, underscores, hyphens, periods, and slashes."
-// )
-
 // func resourceServiceTag() *schema.Resource {
 // 	return &schema.Resource{
 // 		Description:        "Manages a service tag",
