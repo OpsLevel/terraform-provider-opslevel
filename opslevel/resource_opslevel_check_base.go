@@ -22,6 +22,9 @@ var checkBaseAttributes = map[string]schema.Attribute{
 	"description": schema.StringAttribute{
 		Description: "The description the check.",
 		Computed:    true,
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.UseStateForUnknown(),
+		},
 	},
 	"enabled": schema.BoolAttribute{
 		Description: "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.",
