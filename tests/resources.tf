@@ -126,6 +126,29 @@ resource "opslevel_scorecard" "small" {
   owner_id                       = var.test_id
 }
 
+# Team resources
+
+resource "opslevel_team" "big" {
+  aliases          = ["the_big_team", "big_team"]
+  name             = "The Big Team"
+  parent           = "small_team"
+  responsibilities = "This is a big team"
+
+  member {
+    email = "alice@opslevel.com"
+    role  = "manager"
+  }
+
+  member {
+    email = "bob@opslevel.com"
+    role  = "contributor"
+  }
+}
+
+resource "opslevel_team" "small" {
+  name = "Small Team"
+}
+
 # Trigger Definition resources
 
 resource "opslevel_trigger_definition" "big" {

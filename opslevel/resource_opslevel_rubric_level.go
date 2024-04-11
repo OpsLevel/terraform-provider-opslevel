@@ -79,7 +79,6 @@ func (r *RubricLevelResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"last_updated": schema.StringAttribute{
 				Computed: true,
-				Optional: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The display name of the rubric level.",

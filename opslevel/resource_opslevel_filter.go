@@ -112,7 +112,6 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				},
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
