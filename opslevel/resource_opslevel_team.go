@@ -173,9 +173,6 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		// TODO: error thrown if config has alias from the parent team that is not the default alias
 		createdTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
 	}
-	if data.Aliases.IsNull() && createdTeamResourceModel.Aliases.IsNull() {
-		createdTeamResourceModel.Aliases = types.ListNull(types.StringType)
-	}
 	createdTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamResourceModel)...)
