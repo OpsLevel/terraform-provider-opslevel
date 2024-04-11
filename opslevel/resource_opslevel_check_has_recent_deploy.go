@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -44,23 +43,32 @@ type CheckHasRecentDeployResourceModel struct {
 	Days types.Int64 `tfsdk:"days"`
 }
 
-func NewCheckHasRecentDeployResourceModel(ctx context.Context, check opslevel.Check) CheckHasRecentDeployResourceModel {
-	var model CheckHasRecentDeployResourceModel
+func NewCheckHasRecentDeployResourceModel(ctx context.Context, check opslevel.Check, planModel CheckHasRecentDeployResourceModel) CheckHasRecentDeployResourceModel {
+	var stateModel CheckHasRecentDeployResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.Days = types.Int64Value(int64(check.Days))
+	stateModel.Days = types.Int64Value(int64(check.Days))
 
-	return model
+	return stateModel
 }
 
 func (r *CheckHasRecentDeployResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -91,19 +99,21 @@ func (r *CheckHasRecentDeployResource) Create(ctx context.Context, req resource.
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckHasRecentDeployCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 	input.Days = int(planModel.Days.ValueInt64())
 
@@ -113,8 +123,7 @@ func (r *CheckHasRecentDeployResource) Create(ctx context.Context, req resource.
 		return
 	}
 
-	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check has recent deploy resource")
@@ -136,8 +145,7 @@ func (r *CheckHasRecentDeployResource) Read(ctx context.Context, req resource.Re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check has recent deploy, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -153,21 +161,22 @@ func (r *CheckHasRecentDeployResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckHasRecentDeployUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.Days = opslevel.RefOf(int(planModel.Days.ValueInt64()))
@@ -178,8 +187,7 @@ func (r *CheckHasRecentDeployResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check has recent deploy resource")
