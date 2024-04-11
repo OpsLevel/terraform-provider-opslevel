@@ -169,7 +169,7 @@ func (teamContactResource *TeamContactResource) Update(ctx context.Context, req 
 
 	contactCreateInput := opslevel.ContactInput{
 		Address:     data.Value.ValueString(),
-		DisplayName: data.Name.ValueStringPointer(),
+		DisplayName: opslevel.RefOf(data.Name.ValueString()),
 		Type:        opslevel.ContactType(data.Type.ValueString()),
 	}
 
