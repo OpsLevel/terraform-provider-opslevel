@@ -59,6 +59,7 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"last_updated": schema.StringAttribute{
@@ -72,14 +73,14 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 				Description: "The custom property definition's ID or alias.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"owner": schema.StringAttribute{
 				Description: "The ID or alias of the entity (currently only supports service) that the property has been assigned to.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"value": schema.StringAttribute{
@@ -89,7 +90,7 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 					JsonStringValidator(),
 				},
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 		},
