@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -48,27 +47,36 @@ type CheckRepositoryFileResourceModel struct {
 	UseAbsoluteRoot       types.Bool      `tfsdk:"use_absolute_root"`
 }
 
-func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Check) (CheckRepositoryFileResourceModel, diag.Diagnostics) {
-	var model CheckRepositoryFileResourceModel
+func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryFileResourceModel) (CheckRepositoryFileResourceModel, diag.Diagnostics) {
+	var stateModel CheckRepositoryFileResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.DirectorySearch = types.BoolValue(check.RepositoryFileCheckFragment.DirectorySearch)
+	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryFileCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryFileCheckFragment.Filepaths)
-	model.Filepaths = data
-	model.FileContentsPredicate = NewPredicateModel(*check.RepositoryFileCheckFragment.FileContentsPredicate)
-	model.UseAbsoluteRoot = types.BoolValue(check.RepositoryFileCheckFragment.UseAbsoluteRoot)
+	stateModel.Filepaths = data
+	stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryFileCheckFragment.FileContentsPredicate)
+	stateModel.UseAbsoluteRoot = RequiredBoolValue(check.RepositoryFileCheckFragment.UseAbsoluteRoot)
 
-	return model, diags
+	return stateModel, diags
 }
 
 func (r *CheckRepositoryFileResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -109,27 +117,27 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckRepositoryFileCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
+
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = &opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.FileContentsPredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.FileContentsPredicate.Value.String()),
-		}
+		input.FileContentsPredicate = planModel.FileContentsPredicate.ToCreateInput()
 	}
 	input.UseAbsoluteRoot = planModel.UseAbsoluteRoot.ValueBoolPointer()
 
@@ -139,8 +147,7 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
@@ -163,7 +170,7 @@ func (r *CheckRepositoryFileResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository file, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data)
+	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 	stateModel.EnableOn = planModel.EnableOn
 	resp.Diagnostics.Append(diags...)
 
@@ -181,30 +188,28 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckRepositoryFileUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.FileContentsPredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.FileContentsPredicate.Value.String()),
-		}
+		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
 	}
 	input.UseAbsoluteRoot = planModel.UseAbsoluteRoot.ValueBoolPointer()
 
@@ -214,8 +219,7 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
