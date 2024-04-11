@@ -30,10 +30,8 @@ func ComputedStringValue(value string) basetypes.StringValue {
 }
 
 // Returns value wrapped in a types.StringValue, or types.ListNull if blank
-//
-// NOTE: an empty list is not the same as 'null'
 func OptionalStringListValue(ctx context.Context, value []string) (basetypes.ListValue, diag.Diagnostics) {
-	if value == nil {
+	if len(value) == 0 {
 		return types.ListNull(types.StringType), diag.Diagnostics{}
 	}
 	return types.ListValueFrom(ctx, types.StringType, value)
