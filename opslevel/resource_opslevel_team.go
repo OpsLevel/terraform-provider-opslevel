@@ -64,9 +64,9 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResource
 	}
 	teamResourceModel := TeamResourceModel{
 		Aliases:          aliases,
-		Id:               types.StringValue(string(team.Id)),
+		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
-		Name:             types.StringValue(team.Name),
+		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 
