@@ -65,9 +65,13 @@ resource "opslevel_infrastructure" "big_infra" {
 
 # Repository resources
 
-resource "opslevel_repository" "mock_repo" {
+resource "opslevel_repository" "with_alias" {
   identifier = "github.com:rocktavious/autopilot"
-  owner      = "developers"
+}
+
+resource "opslevel_repository" "with_id" {
+  identifier = var.test_id
+  owner      = var.test_id
 }
 
 # Rubric Category resources
