@@ -140,7 +140,6 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"lifecycle_alias": schema.StringAttribute{
