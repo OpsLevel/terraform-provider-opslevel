@@ -94,7 +94,6 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				},
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"name": schema.StringAttribute{

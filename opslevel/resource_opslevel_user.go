@@ -75,7 +75,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 			},
 			"last_updated": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"name": schema.StringAttribute{

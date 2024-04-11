@@ -62,7 +62,6 @@ func (r *RubricCategoryResource) Schema(ctx context.Context, req resource.Schema
 			},
 			"last_updated": schema.StringAttribute{
 				Computed: true,
-				Optional: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The display name of the rubric category.",
