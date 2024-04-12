@@ -212,3 +212,17 @@ resource "opslevel_check_repository_grep" "example" {
     value = "**/hello.go"
   }
 }
+
+# Has Documentation
+
+resource "opslevel_check_has_documentation" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+
+  document_type    = "api"
+  document_subtype = "openapi"
+}
