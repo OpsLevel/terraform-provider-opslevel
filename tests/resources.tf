@@ -137,6 +137,20 @@ resource "opslevel_service" "small" {
   name = "Small Service"
 }
 
+# Service Repository resources
+
+resource "opslevel_service_repository" "with_alias" {
+  base_directory   = "/home/opslevel"
+  name             = "Service Repo Name"
+  repository_alias = "github.com:OpsLevel/terraform-provider-opslevel"
+  service_alias    = "service-1"
+}
+
+resource "opslevel_service_repository" "with_id" {
+  repository = var.test_id
+  service    = var.test_id
+}
+
 # Scorecard resources
 
 resource "opslevel_scorecard" "big" {
