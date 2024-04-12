@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -68,10 +69,12 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	stateModel.DirectorySearch = types.BoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
+	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
 	stateModel.Filepaths = data
-	stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
+	if check.RepositoryGrepCheckFragment.FileContentsPredicate != nil {
+		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
+	}
 
 	return stateModel, diags
 }
@@ -110,28 +113,27 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckRepositoryGrepCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.FileContentsPredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.FileContentsPredicate.Value.String()),
-		}
+		input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
 	}
 
 	data, err := r.client.CreateCheckRepositoryGrep(input)
@@ -140,13 +142,11 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
-	// Custom Prop Overrides Here
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
-	tflog.Trace(ctx, "created a check repositorygrep resource")
+	tflog.Trace(ctx, "created a check repository grep resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
@@ -162,10 +162,10 @@ func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.Rea
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repositorygrep, got error: %s", err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository grep, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data)
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
@@ -182,30 +182,30 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckRepositoryGrepUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.FileContentsPredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.FileContentsPredicate.Value.String()),
-		}
+		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
+	} else {
+		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{}
 	}
 
 	data, err := r.client.UpdateCheckRepositoryGrep(input)
@@ -214,12 +214,11 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
-	tflog.Trace(ctx, "updated a check repositorygrep resource")
+	tflog.Trace(ctx, "updated a check repository grep resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
@@ -235,10 +234,10 @@ func (r *CheckRepositoryGrepResource) Delete(ctx context.Context, req resource.D
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repositorygrep, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository grep, got error: %s", err))
 		return
 	}
-	tflog.Trace(ctx, "deleted a check repositorygrep resource")
+	tflog.Trace(ctx, "deleted a check repository grep resource")
 }
 
 func (r *CheckRepositoryGrepResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
