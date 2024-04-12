@@ -1,13 +1,8 @@
 package opslevel
 
-// TODO: register resource to provider
-// TODO: write tests
-
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -50,26 +45,35 @@ type CheckRepositoryGrepResourceModel struct {
 	FileContentsPredicate *PredicateModel `tfsdk:"file_contents_predicate"`
 }
 
-func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
-	var model CheckRepositoryGrepResourceModel
+func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
+	var stateModel CheckRepositoryGrepResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.DirectorySearch = types.BoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
+	stateModel.DirectorySearch = types.BoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
-	model.Filepaths = data
-	model.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
+	stateModel.Filepaths = data
+	stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
 
-	return model, diags
+	return stateModel, diags
 }
 
 func (r *CheckRepositoryGrepResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
