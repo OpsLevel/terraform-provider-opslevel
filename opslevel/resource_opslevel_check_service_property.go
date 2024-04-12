@@ -88,7 +88,7 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"property": schema.StringAttribute{
-				Description: "",
+				Description: "The property of the service that the check will verify.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllServicePropertyTypeEnum...),
