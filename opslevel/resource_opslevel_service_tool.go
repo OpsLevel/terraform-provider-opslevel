@@ -1,197 +1,255 @@
 package opslevel
 
-// import (
-// 	"fmt"
-// 	"strings"
+import (
+	"context"
+	"fmt"
+	"slices"
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourceServiceTool() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description: "Manages a service tool",
-// 		Create:      wrap(resourceServiceToolCreate),
-// 		Read:        wrap(resourceServiceToolRead),
-// 		Update:      wrap(resourceServiceToolUpdate),
-// 		Delete:      wrap(resourceServiceToolDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"service": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the service that this will be added to.",
-// 				ForceNew:    true,
-// 				Optional:    true,
-// 			},
-// 			"service_alias": {
-// 				Type:        schema.TypeString,
-// 				Description: "The alias of the service that this will be added to.",
-// 				ForceNew:    true,
-// 				Optional:    true,
-// 			},
-// 			"name": {
-// 				Type:        schema.TypeString,
-// 				Description: "The display name of the tool.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"category": {
-// 				Type:         schema.TypeString,
-// 				Description:  "The category that the tool belongs to.",
-// 				ForceNew:     false,
-// 				Required:     true,
-// 				ValidateFunc: validation.StringInSlice(opslevel.AllToolCategory, false),
-// 			},
-// 			"url": {
-// 				Type:        schema.TypeString,
-// 				Description: "The URL of the tool.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 			"environment": {
-// 				Type:        schema.TypeString,
-// 				Description: "The environment that the tool belongs to.",
-// 				ForceNew:    false,
-// 				Optional:    true,
-// 			},
-// 		},
-// 	}
-// }
+var _ resource.ResourceWithConfigure = &ServiceToolResource{}
 
-// func resourceServiceToolCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	service, err := findService("service_alias", "service", d, client)
-// 	if err != nil {
-// 		return err
-// 	}
+var _ resource.ResourceWithImportState = &ServiceToolResource{}
 
-// 	input := opslevel.ToolCreateInput{
-// 		ServiceId: &service.Id,
+func NewServiceToolResource() resource.Resource {
+	return &ServiceToolResource{}
+}
 
-// 		DisplayName: d.Get("name").(string),
-// 		Category:    opslevel.ToolCategory(d.Get("category").(string)),
-// 		Url:         d.Get("url").(string),
-// 	}
-// 	if env := d.Get("environment"); env != nil {
-// 		input.Environment = opslevel.RefOf(env.(string))
-// 	}
-// 	resource, err := client.CreateTool(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
+// ServiceToolResource defines the resource implementation.
+type ServiceToolResource struct {
+	CommonResourceClient
+}
 
-// 	if err := d.Set("name", resource.DisplayName); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("category", string(resource.Category)); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("url", resource.Url); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("environment", resource.Environment); err != nil {
-// 		return err
-// 	}
+// ServiceToolResourceModel describes the ServiceTool managed resource.
+type ServiceToolResourceModel struct {
+	Category     types.String `tfsdk:"category"`
+	Environment  types.String `tfsdk:"environment"`
+	Id           types.String `tfsdk:"id"`
+	LastUpdated  types.String `tfsdk:"last_updated"`
+	Name         types.String `tfsdk:"name"`
+	Service      types.String `tfsdk:"service"`
+	ServiceAlias types.String `tfsdk:"service_alias"`
+	Url          types.String `tfsdk:"url"`
+}
 
-// 	return nil
-// }
+func NewServiceToolResourceModel(ctx context.Context, serviceTool opslevel.Tool, planModel ServiceToolResourceModel) ServiceToolResourceModel {
+	stateModel := ServiceToolResourceModel{
+		Category:    RequiredStringValue(string(serviceTool.Category)),
+		Environment: OptionalStringValue(serviceTool.Environment),
+		Id:          ComputedStringValue(string(serviceTool.Category)),
+		Name:        RequiredStringValue(serviceTool.DisplayName),
+		Url:         RequiredStringValue(serviceTool.Url),
+	}
+	if planModel.Service.ValueString() == string(serviceTool.Service.Id) {
+		stateModel.Service = OptionalStringValue(string(serviceTool.Service.Id))
+	}
+	if slices.Contains(serviceTool.Service.Aliases, planModel.ServiceAlias.ValueString()) {
+		stateModel.ServiceAlias = planModel.ServiceAlias
+	}
+	return stateModel
+}
 
-// func resourceServiceToolRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func (r *ServiceToolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_service_tool"
+}
 
-// 	// Handle Import by spliting the ID into the 2 parts
-// 	parts := strings.SplitN(id, ":", 2)
-// 	if len(parts) == 2 {
-// 		d.Set("service", parts[0])
-// 		id = parts[1]
-// 		d.SetId(id)
-// 	}
+func (r *ServiceToolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "ServiceTool Resource",
 
-// 	service, err := findService("service_alias", "service", d, client)
-// 	if err != nil {
-// 		return err
-// 	}
+		Attributes: map[string]schema.Attribute{
+			"category": schema.StringAttribute{
+				Description: "The category that the tool belongs to.",
+				Required:    true,
+				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
+			},
+			"environment": schema.StringAttribute{
+				Description: "The environment that the tool belongs to.",
+				Optional:    true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The ID of the serviceTool.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The display name of the tool.",
+				Required:    true,
+			},
+			"service": schema.StringAttribute{
+				Description: "The id of the service that this will be added to.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					IdStringValidator(),
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("service"),
+						path.MatchRoot("service_alias")),
+				},
+			},
+			"service_alias": schema.StringAttribute{
+				Description: "The alias of the service that this will be added to.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("service"),
+						path.MatchRoot("service_alias")),
+				},
+			},
+			"url": schema.StringAttribute{
+				Description: "The URL of the tool.",
+				Required:    true,
+			},
+		},
+	}
+}
 
-// 	var resource *opslevel.Tool
-// 	for _, t := range service.Tools.Nodes {
-// 		if string(t.Id) == id {
-// 			resource = &t
-// 			break
-// 		}
-// 	}
-// 	if resource == nil {
-// 		return fmt.Errorf("unable to find tool with id '%s' on service '%s'", id, service.Aliases[0])
-// 	}
+func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel ServiceToolResourceModel
 
-// 	if err := d.Set("name", resource.DisplayName); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("category", string(resource.Category)); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("url", resource.Url); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("environment", resource.Environment); err != nil {
-// 		return err
-// 	}
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// 	return nil
-// }
+	var err error
+	var service *opslevel.Service
+	serviceId := planModel.Service.ValueString()
+	if opslevel.IsID(serviceId) {
+		service, err = r.client.GetService(opslevel.ID(serviceId))
+	} else {
+		service, err = r.client.GetServiceWithAlias(planModel.ServiceAlias.ValueString())
+	}
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		return
+	}
 
-// func resourceServiceToolUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	input := opslevel.ToolUpdateInput{
-// 		Id: opslevel.ID(d.Id()),
-// 	}
+	serviceTool, err := r.client.CreateTool(opslevel.ToolCreateInput{
+		Category:    opslevel.ToolCategory(planModel.Category.ValueString()),
+		DisplayName: planModel.Name.ValueString(),
+		Environment: planModel.Environment.ValueStringPointer(),
+		ServiceId:   &service.Id,
+		Url:         planModel.Url.ValueString(),
+	})
+	if err != nil || serviceTool == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service tool, got error: %s", err))
+		return
+	}
+	stateModel := NewServiceToolResourceModel(ctx, *serviceTool, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
 
-// 	if d.HasChange("name") {
-// 		input.DisplayName = opslevel.RefOf(d.Get("name").(string))
-// 	}
-// 	if d.HasChange("category") {
-// 		input.Category = opslevel.RefOf(opslevel.ToolCategory(d.Get("category").(string)))
-// 	}
-// 	if d.HasChange("url") {
-// 		input.Url = opslevel.RefOf(d.Get("url").(string))
-// 	}
-// 	if d.HasChange("environment") {
-// 		input.Environment = opslevel.RefOf(d.Get("environment").(string))
-// 	}
+	tflog.Trace(ctx, "created a service tool resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
 
-// 	resource, err := client.UpdateTool(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.Set("last_updated", timeLastUpdated())
+func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var currentStateModel ServiceToolResourceModel
 
-// 	if err := d.Set("name", resource.DisplayName); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("category", string(resource.Category)); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("url", resource.Url); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("environment", resource.Environment); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// func resourceServiceToolDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeleteTool(opslevel.ID(id))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
+	var err error
+	var service *opslevel.Service
+	serviceIdentifier := currentStateModel.Service.ValueString()
+	if opslevel.IsID(serviceIdentifier) {
+		service, err = r.client.GetService(opslevel.ID(serviceIdentifier))
+	} else {
+		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
+	}
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		return
+	}
+
+	var serviceTool *opslevel.Tool
+	id := currentStateModel.Id.ValueString()
+	for _, tool := range service.Tools.Nodes {
+		if string(tool.Id) == id {
+			serviceTool = &tool
+			break
+		}
+	}
+	if serviceTool == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tool with id '%s' on service with id '%s'", id, service.Id))
+		return
+	}
+
+	verifiedStateModel := NewServiceToolResourceModel(ctx, *serviceTool, currentStateModel)
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
+}
+
+func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel ServiceToolResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	serviceTool, err := r.client.UpdateTool(opslevel.ToolUpdateInput{
+		Category:    opslevel.RefOf(opslevel.ToolCategory(planModel.Category.ValueString())),
+		DisplayName: planModel.Name.ValueStringPointer(),
+		Environment: planModel.Environment.ValueStringPointer(),
+		Id:          opslevel.ID(planModel.Id.ValueString()),
+		Url:         planModel.Url.ValueStringPointer(),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service tool, got error: %s", err))
+		return
+	}
+
+	stateModel := NewServiceToolResourceModel(ctx, *serviceTool, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
+
+	tflog.Trace(ctx, "updated a service tool resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *ServiceToolResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel ServiceToolResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := r.client.DeleteTool(opslevel.ID(planModel.Id.ValueString())); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service tool, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a serviceTool resource")
+}
+
+func (r *ServiceToolResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
