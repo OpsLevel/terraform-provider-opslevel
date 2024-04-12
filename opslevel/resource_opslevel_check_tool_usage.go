@@ -96,7 +96,7 @@ func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.Schema
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"tool_category": schema.StringAttribute{
-				Description: "",
+				Description: "The category that the tool belongs to.",
 				Required:    true,
 				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
 			},
