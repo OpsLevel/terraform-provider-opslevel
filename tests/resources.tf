@@ -254,3 +254,21 @@ resource "opslevel_check_has_recent_deploy" "example" {
   filter   = var.test_id
   days     = 14
 }
+
+# Repo File
+
+resource "opslevel_check_repository_file" "example" {
+  name             = "foo"
+  enabled          = true
+  category         = var.test_id
+  level            = var.test_id
+  owner            = var.test_id
+  filter           = var.test_id
+  directory_search = false
+  filepaths        = ["/src", "/tests"]
+  file_contents_predicate = {
+    type  = "equals"
+    value = "import shim"
+  }
+  use_absolute_root = false
+}
