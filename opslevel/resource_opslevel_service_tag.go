@@ -1,159 +1,248 @@
 package opslevel
 
-// import (
-// 	"fmt"
-// 	"regexp"
-// 	"strings"
+import (
+	"context"
+	"fmt"
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-// 	"github.com/opslevel/opslevel-go/v2024"
-// )
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
-// func resourceServiceTag() *schema.Resource {
-// 	return &schema.Resource{
-// 		Description:        "Manages a service tag",
-// 		DeprecationMessage: "This resource is deprecated. Please use `opslevel_tag` instead.",
-// 		Create:             wrap(resourceServiceTagCreate),
-// 		Read:               wrap(resourceServiceTagRead),
-// 		Update:             wrap(resourceServiceTagUpdate),
-// 		Delete:             wrap(resourceServiceTagDelete),
-// 		Importer: &schema.ResourceImporter{
-// 			State: schema.ImportStatePassthrough,
-// 		},
-// 		Schema: map[string]*schema.Schema{
-// 			"last_updated": {
-// 				Type:     schema.TypeString,
-// 				Optional: true,
-// 				Computed: true,
-// 			},
-// 			"service": {
-// 				Type:        schema.TypeString,
-// 				Description: "The id of the service that this will be added to.",
-// 				ForceNew:    true,
-// 				Optional:    true,
-// 			},
-// 			"service_alias": {
-// 				Type:        schema.TypeString,
-// 				Description: "The alias of the service that this will be added to.",
-// 				ForceNew:    true,
-// 				Optional:    true,
-// 			},
-// 			"key": {
-// 				Type:         schema.TypeString,
-// 				Description:  "The tag's key.",
-// 				ForceNew:     false,
-// 				Required:     true,
-// 				ValidateFunc: validation.StringMatch(TagKeyRegex, TagKeyErrorMsg),
-// 			},
-// 			"value": {
-// 				Type:        schema.TypeString,
-// 				Description: "The tag's value.",
-// 				ForceNew:    false,
-// 				Required:    true,
-// 			},
-// 		},
-// 	}
-// }
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func resourceServiceTagCreate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	service, err := findService("service_alias", "service", d, client)
-// 	if err != nil {
-// 		return err
-// 	}
+var _ resource.ResourceWithConfigure = &ServiceTagResource{}
 
-// 	input := opslevel.TagCreateInput{
-// 		Id: &service.Id,
+var _ resource.ResourceWithImportState = &ServiceTagResource{}
 
-// 		Key:   d.Get("key").(string),
-// 		Value: d.Get("value").(string),
-// 	}
-// 	resource, err := client.CreateTag(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId(string(resource.Id))
+type ServiceTagResource struct {
+	CommonResourceClient
+}
 
-// 	if err := d.Set("key", resource.Key); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("value", resource.Value); err != nil {
-// 		return err
-// 	}
+func NewServiceTagResource() resource.Resource {
+	return &ServiceTagResource{}
+}
 
-// 	return nil
-// }
+type ServiceTagResourceModel struct {
+	Id           types.String `tfsdk:"id"`
+	Key          types.String `tfsdk:"key"`
+	LastUpdated  types.String `tfsdk:"last_updated"`
+	Service      types.String `tfsdk:"service"`
+	ServiceAlias types.String `tfsdk:"service_alias"`
+	Value        types.String `tfsdk:"value"`
+}
 
-// func resourceServiceTagRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
+func NewServiceTagResourceModel(serviceTag opslevel.Tag) ServiceTagResourceModel {
+	serviceResourceModel := ServiceTagResourceModel{
+		Key:   RequiredStringValue(serviceTag.Key),
+		Value: RequiredStringValue(serviceTag.Value),
+		Id:    ComputedStringValue(string(serviceTag.Id)),
+	}
 
-// 	// Handle Import by spliting the ID into the 2 parts
-// 	parts := strings.SplitN(id, ":", 2)
-// 	if len(parts) == 2 {
-// 		d.Set("service", parts[0])
-// 		id = parts[1]
-// 		d.SetId(id)
-// 	}
+	return serviceResourceModel
+}
 
-// 	service, err := findService("service_alias", "service", d, client)
-// 	if err != nil {
-// 		return err
-// 	}
+func (serviceTagResource *ServiceTagResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_service_tag"
+}
 
-// 	var resource *opslevel.Tag
-// 	for _, t := range service.Tags.Nodes {
-// 		if string(t.Id) == id {
-// 			resource = &t
-// 			break
-// 		}
-// 	}
-// 	if resource == nil {
-// 		return fmt.Errorf("unable to find tag with id '%s' on service '%s'", id, service.Aliases[0])
-// 	}
+func (serviceTagResource *ServiceTagResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Service Tag Resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of this resource.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_updated": schema.StringAttribute{
+				Computed: true,
+			},
+			"key": schema.StringAttribute{
+				Description: "The tag's key.",
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(TagKeyRegex, TagKeyErrorMsg),
+				},
+			},
+			"value": schema.StringAttribute{
+				Description: "The tag's value.",
+				Required:    true,
+			},
+			"service": schema.StringAttribute{
+				Description: "The id of the service that this will be added to.",
+				Optional:    true,
+				Validators: []validator.String{
+					IdStringValidator(),
+					stringvalidator.AtLeastOneOf(path.MatchRoot("service"),
+						path.MatchRoot("service_alias")),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"service_alias": schema.StringAttribute{
+				Description: "The alias of the service that this will be added to.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+		},
+	}
+}
 
-// 	if err := d.Set("key", resource.Key); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("value", resource.Value); err != nil {
-// 		return err
-// 	}
+func (serviceTagResource *ServiceTagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data ServiceTagResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// 	return nil
-// }
+	tagCreateInput := opslevel.TagCreateInput{
+		Type:  opslevel.RefOf(opslevel.TaggableResourceService),
+		Key:   data.Key.ValueString(),
+		Value: data.Value.ValueString(),
+	}
 
-// func resourceServiceTagUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-// 	input := opslevel.TagUpdateInput{
-// 		Id: *opslevel.NewID(d.Id()),
-// 	}
+	// use either the service ID or alias based on what is used in the config
+	var serviceIdentifier string
+	if data.Service.ValueString() != "" {
+		serviceIdentifier = data.Service.ValueString()
+		tagCreateInput.Id = opslevel.NewID(serviceIdentifier)
+	} else {
+		serviceIdentifier = data.ServiceAlias.ValueString()
+		tagCreateInput.Alias = &serviceIdentifier
+	}
 
-// 	if d.HasChange("key") {
-// 		input.Key = opslevel.RefOf(d.Get("key").(string))
-// 	}
-// 	if d.HasChange("value") {
-// 		input.Value = opslevel.RefOf(d.Get("value").(string))
-// 	}
+	service, err := serviceTagResource.client.CreateTag(tagCreateInput)
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create service (%s) tag (with key '%s'), got error: %s", serviceIdentifier, data.Key.ValueString(), err))
+		return
+	}
 
-// 	resource, err := client.UpdateTag(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.Set("last_updated", timeLastUpdated())
+	createdServiceTagResourceModel := NewServiceTagResourceModel(*service)
+	// use either the service ID or alias based on what is used in the config
+	if opslevel.IsID(serviceIdentifier) {
+		createdServiceTagResourceModel.Service = OptionalStringValue(serviceIdentifier)
+	} else {
+		createdServiceTagResourceModel.ServiceAlias = OptionalStringValue(serviceIdentifier)
+	}
+	createdServiceTagResourceModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, "created a service tag resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdServiceTagResourceModel)...)
+}
 
-// 	if err := d.Set("key", resource.Key); err != nil {
-// 		return err
-// 	}
-// 	if err := d.Set("value", resource.Value); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data ServiceTagResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-// func resourceServiceTagDelete(d *schema.ResourceData, client *opslevel.Client) error {
-// 	id := d.Id()
-// 	err := client.DeleteTag(*opslevel.NewID(id))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.SetId("")
-// 	return nil
-// }
+	// use either the service ID or alias based on what is used in the config
+	var serviceIdentifier string
+	var service *opslevel.Service
+	var err error
+	if data.Service.ValueString() != "" {
+		serviceIdentifier = data.Service.ValueString()
+		service, err = serviceTagResource.client.GetService(opslevel.ID(serviceIdentifier))
+	} else {
+		serviceIdentifier = data.ServiceAlias.ValueString()
+		service, err = serviceTagResource.client.GetServiceWithAlias(serviceIdentifier)
+	}
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read service (%s), got error: %s", serviceIdentifier, err))
+		return
+	}
+	_, err = service.GetTags(serviceTagResource.client, nil)
+	if err != nil || service.Tags == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on service (%s), got error: %s", serviceIdentifier, err))
+	}
+	var serviceTag *opslevel.Tag
+	for _, readTag := range service.Tags.Nodes {
+		if readTag.Key == data.Key.ValueString() {
+			serviceTag = &readTag
+			break
+		}
+	}
+	if serviceTag == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
+		return
+	}
+
+	readServiceResourceModel := NewServiceTagResourceModel(*serviceTag)
+	// use either the service ID or alias based on what is used in the config
+	if opslevel.IsID(serviceIdentifier) {
+		readServiceResourceModel.Service = OptionalStringValue(serviceIdentifier)
+	} else {
+		readServiceResourceModel.ServiceAlias = OptionalStringValue(serviceIdentifier)
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readServiceResourceModel)...)
+}
+
+func (serviceTagResource *ServiceTagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data ServiceTagResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// use either the service ID or alias based on what is used in the config
+	var serviceIdentifier string
+	if data.Service.ValueString() != "" {
+		serviceIdentifier = data.Service.ValueString()
+	} else {
+		serviceIdentifier = data.ServiceAlias.ValueString()
+	}
+
+	tagUpdateInput := opslevel.TagUpdateInput{
+		Id:    opslevel.ID(data.Id.ValueString()),
+		Key:   data.Key.ValueStringPointer(),
+		Value: data.Value.ValueStringPointer(),
+	}
+
+	serviceTag, err := serviceTagResource.client.UpdateTag(tagUpdateInput)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update service tag (with id '%s'), got error: %s", data.Id.ValueString(), err))
+		return
+	}
+
+	updatedServiceTagResourceModel := NewServiceTagResourceModel(*serviceTag)
+	// use either the service ID or alias based on what is used in the config
+	if opslevel.IsID(serviceIdentifier) {
+		updatedServiceTagResourceModel.Service = OptionalStringValue(serviceIdentifier)
+	} else {
+		updatedServiceTagResourceModel.ServiceAlias = OptionalStringValue(serviceIdentifier)
+	}
+	updatedServiceTagResourceModel.LastUpdated = timeLastUpdated()
+	tflog.Trace(ctx, "updated a service tag")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedServiceTagResourceModel)...)
+}
+
+func (serviceTagResource *ServiceTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data ServiceTagResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := serviceTagResource.client.DeleteTag(opslevel.ID(data.Id.ValueString()))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete service tag (with id '%s'), got error: %s", data.Id.ValueString(), err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a service tag resource")
+}
+
+func (serviceTagResource *ServiceTagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
