@@ -345,3 +345,23 @@ resource "opslevel_check_tag_defined" "example" {
     value = "dev"
   }
 }
+
+# Check Tool Usage
+
+resource "opslevel_check_tool_usage" "example" {
+  name          = "foo"
+  enabled       = true
+  category      = var.test_id
+  level         = var.test_id
+  owner         = var.test_id
+  filter        = var.test_id
+  tool_category = "metrics"
+  tool_name_predicate = {
+    type  = "equals"
+    value = "datadog"
+  }
+  environment_predicate = {
+    type  = "equals"
+    value = "production"
+  }
+}
