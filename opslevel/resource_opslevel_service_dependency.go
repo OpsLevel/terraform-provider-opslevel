@@ -55,7 +55,7 @@ func (r *ServiceDependencyResource) Schema(ctx context.Context, req resource.Sch
 		Attributes: map[string]schema.Attribute{
 			"depends_upon": schema.StringAttribute{
 				Description: "The ID or alias of the service that is depended upon.",
-				Optional:    true,
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -76,7 +76,7 @@ func (r *ServiceDependencyResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"service": schema.StringAttribute{
 				Description: "The ID or alias of the service with the dependency.",
-				Optional:    true,
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
