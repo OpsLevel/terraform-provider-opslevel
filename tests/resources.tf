@@ -272,3 +272,19 @@ resource "opslevel_check_repository_file" "example" {
   }
   use_absolute_root = false
 }
+
+# Check Repo Search
+
+resource "opslevel_check_repository_search" "example" {
+  name            = "foo"
+  enabled         = true
+  category        = var.test_id
+  level           = var.test_id
+  owner           = var.test_id
+  filter          = var.test_id
+  file_extensions = ["sbt", "py"]
+  file_contents_predicate = {
+    type  = "contains"
+    value = "postgres"
+  }
+}
