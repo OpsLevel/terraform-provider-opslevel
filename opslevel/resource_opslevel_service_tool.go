@@ -46,7 +46,7 @@ func NewServiceToolResourceModel(ctx context.Context, serviceTool opslevel.Tool,
 	stateModel := ServiceToolResourceModel{
 		Category:    RequiredStringValue(string(serviceTool.Category)),
 		Environment: OptionalStringValue(serviceTool.Environment),
-		Id:          ComputedStringValue(string(serviceTool.Category)),
+		Id:          ComputedStringValue(string(serviceTool.Id)),
 		Name:        RequiredStringValue(serviceTool.DisplayName),
 		Url:         RequiredStringValue(serviceTool.Url),
 	}
