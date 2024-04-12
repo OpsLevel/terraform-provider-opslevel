@@ -77,6 +77,9 @@ func (r *ServiceDependencyResource) Schema(ctx context.Context, req resource.Sch
 			"service": schema.StringAttribute{
 				Description: "The ID or alias of the service with the dependency.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 		},
 	}
@@ -177,17 +180,8 @@ func extractServiceDependency(id string, serviceDependencies opslevel.ServiceDep
 }
 
 func (r *ServiceDependencyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ServiceDependencyResourceModel
-
-	// NOTE: there is no update function in the old code
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	tflog.Trace(ctx, "updated a service dependency resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &planModel)...)
+	resp.Diagnostics.AddError("terraform plugin error",
+		"property assignments should never be updated, only replaced.\nplease file a bug report including your .tf file at: github.com/OpsLevel/terraform-provider-opslevel")
 }
 
 func (r *ServiceDependencyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
