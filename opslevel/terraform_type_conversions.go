@@ -29,6 +29,24 @@ func ComputedStringValue(value string) basetypes.StringValue {
 	return OptionalStringValue(value)
 }
 
+// Returns value wrapped in a types.BoolValue
+func RequiredBoolValue(value bool) basetypes.BoolValue {
+	return types.BoolValue(value)
+}
+
+// Returns value wrapped in a types.BoolValue, or types.BoolNull if blank
+func OptionalBoolValue(value *bool) basetypes.BoolValue {
+	if value == nil {
+		return types.BoolNull()
+	}
+	return types.BoolValue(*value)
+}
+
+// Returns value wrapped in a types.Int64Value
+func RequiredIntValue(value int) basetypes.Int64Value {
+	return types.Int64Value(int64(value))
+}
+
 // Returns value wrapped in a types.StringValue, or types.ListNull if blank
 func OptionalStringListValue(ctx context.Context, value []string) (basetypes.ListValue, diag.Diagnostics) {
 	if len(value) == 0 {
@@ -67,4 +85,9 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 		mapAsJson[k] = v
 	}
 	return mapAsJson, diags
+}
+
+// asID converts a types.String to an opslevel.ID
+func asID(input types.String) opslevel.ID {
+	return opslevel.ID(input.ValueString())
 }
