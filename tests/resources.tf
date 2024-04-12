@@ -173,3 +173,28 @@ resource "opslevel_check_manual" "example" {
   update_requires_comment = false
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
+
+# Check Custom Event
+
+resource "opslevel_check_custom_event" "example" {
+  name              = "foo"
+  enabled           = true
+  category          = var.test_id
+  level             = var.test_id
+  owner             = var.test_id
+  filter            = var.test_id
+  integration       = var.test_id
+  pass_pending      = true
+  service_selector  = ".messages[] | .incident.service.id"
+  success_condition = ".messages[] |   select(.incident.service.id == $ctx.alias) | .incident.status == \"resolved\""
+  message           = <<-EOT
+  {% if check.passed %}
+    ### Check passed
+  {% else %}
+    ### Check failed
+    service **{{ data.messages[ctx.index].incident.service.id }}** has an unresolved incident.
+  {% endif %}
+  OpsLevel note: here you can fill in more details about this check. You can even include `data` from the payload, `params` specified in the URL and context `ctx` such as the service alias for the current evaluation.
+  EOT
+  notes             = "Optional additional info on why this check is run or how to fix it"
+}
