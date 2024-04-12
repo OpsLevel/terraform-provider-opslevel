@@ -3,43 +3,53 @@ mock_provider "opslevel" {
   source = "./mock_resource"
 }
 
-run "resource_check_service_dependency" {
+run "resource_service_dependency_with_alias" {
   providers = {
     opslevel = opslevel.fake
   }
 
   assert {
-    condition     = opslevel_check_service_dependency.example.name == "foo"
-    error_message = "wrong value name for opslevel_check_service_dependency.example"
+    condition     = opslevel_service_dependency.with_alias.depends_upon == var.test_id
+    error_message = "wrong depends_upon in opslevel_service_dependency.with_alias"
   }
 
   assert {
-    condition     = opslevel_check_service_dependency.example.enabled == true
-    error_message = "wrong value enabled on opslevel_check_service_dependency.example"
+    condition     = can(opslevel_service_dependency.with_alias.id)
+    error_message = "id attribute missing from filter in opslevel_service_dependency.with_alias"
   }
 
   assert {
-    condition     = can(opslevel_check_service_dependency.example.id)
-    error_message = "id attribute missing from in opslevel_check_service_dependency.example"
+    condition     = opslevel_service_dependency.with_alias.service == var.test_id
+    error_message = "wrong service in opslevel_service_dependency.with_alias"
+  }
+
+}
+
+run "resource_service_dependency_with_id" {
+  providers = {
+    opslevel = opslevel.fake
   }
 
   assert {
-    condition     = can(opslevel_check_service_dependency.example.owner)
-    error_message = "owner attribute missing from in opslevel_check_service_dependency.example"
+    condition     = opslevel_service_dependency.with_id.depends_upon == var.test_id
+    error_message = "wrong depends_upon in opslevel_service_dependency.with_id"
   }
 
   assert {
-    condition     = can(opslevel_check_service_dependency.example.filter)
-    error_message = "filter attribute missing from in opslevel_check_service_dependency.example"
+    condition     = can(opslevel_service_dependency.with_id.id)
+    error_message = "id attribute missing from filter in opslevel_service_dependency.with_id"
   }
 
   assert {
-    condition     = can(opslevel_check_service_dependency.example.category)
-    error_message = "category attribute missing from in opslevel_check_service_dependency.example"
+    condition     = opslevel_service_dependency.with_id.note == <<-EOT
+    This is an example of notes on a service dependency
+  EOT
+    error_message = "wrong note in opslevel_service_dependency.with_id"
   }
 
   assert {
-    condition     = can(opslevel_check_service_dependency.example.level)
-    error_message = "level attribute missing from in opslevel_check_service_dependency.example"
+    condition     = opslevel_service_dependency.with_id.service == var.test_id
+    error_message = "wrong service in opslevel_service_dependency.with_id"
   }
+
 }
