@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -42,14 +43,23 @@ type ServiceRepositoryResourceModel struct {
 	ServiceAlias    types.String `tfsdk:"service_alias"`
 }
 
-func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository opslevel.ServiceRepository) ServiceRepositoryResourceModel {
-	return ServiceRepositoryResourceModel{
-		BaseDirectory: ComputedStringValue(serviceRepository.BaseDirectory),
-		Service:       ComputedStringValue(string(serviceRepository.Service.Id)),
-		Repository:    ComputedStringValue(string(serviceRepository.Repository.Id)),
+func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository opslevel.ServiceRepository, planModel ServiceRepositoryResourceModel) ServiceRepositoryResourceModel {
+	stateModel := ServiceRepositoryResourceModel{
+		BaseDirectory: OptionalStringValue(serviceRepository.BaseDirectory),
 		Id:            ComputedStringValue(string(serviceRepository.Id)),
-		Name:          ComputedStringValue(serviceRepository.DisplayName),
+		LastUpdated:   planModel.LastUpdated,
+		Name:          OptionalStringValue(serviceRepository.DisplayName),
+		Repository:    OptionalStringValue(string(serviceRepository.Repository.Id)),
+		Service:       OptionalStringValue(string(serviceRepository.Service.Id)),
+		ServiceAlias:  planModel.ServiceAlias,
 	}
+	if planModel.RepositoryAlias.ValueString() == serviceRepository.Repository.DefaultAlias {
+		stateModel.RepositoryAlias = OptionalStringValue(serviceRepository.Repository.DefaultAlias)
+	}
+	if slices.Contains(serviceRepository.Service.Aliases, planModel.ServiceAlias.ValueString()) {
+		stateModel.ServiceAlias = planModel.ServiceAlias
+	}
+	return stateModel
 }
 
 func (r *ServiceRepositoryResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -64,7 +74,6 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 		Attributes: map[string]schema.Attribute{
 			"base_directory": schema.StringAttribute{
 				Description: "The directory in the repository containing opslevel.yml.",
-				Computed:    true,
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
@@ -85,12 +94,10 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"name": schema.StringAttribute{
 				Description: "The name displayed in the UI for the service repository.",
-				Computed:    true,
 				Optional:    true,
 			},
 			"repository": schema.StringAttribute{
 				Description: "The id of the repository that this will be added to.",
-				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -104,7 +111,6 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"repository_alias": schema.StringAttribute{
 				Description: "The alias of the repository that this will be added to.",
-				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -117,7 +123,6 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"service": schema.StringAttribute{
 				Description: "The id of the service that this will be added to.",
-				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -131,7 +136,6 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"service_alias": schema.StringAttribute{
 				Description: "The alias of the service that this will be added to.",
-				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -168,8 +172,8 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 		serviceIdentifier.Id = opslevel.NewID(planModel.Service.ValueString())
 	}
 	serviceRepository, err := r.client.CreateServiceRepository(opslevel.ServiceRepositoryCreateInput{
-		BaseDirectory: planModel.BaseDirectory.ValueStringPointer(),
-		DisplayName:   planModel.Name.ValueStringPointer(),
+		BaseDirectory: opslevel.RefOf(planModel.BaseDirectory.ValueString()),
+		DisplayName:   opslevel.RefOf(planModel.Name.ValueString()),
 		Repository:    repositoryIdentifier,
 		Service:       serviceIdentifier,
 	})
@@ -177,19 +181,7 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create serviceRepository, got error: %s", err))
 		return
 	}
-	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository)
-	if planModel.RepositoryAlias.IsUnknown() {
-		stateModel.RepositoryAlias = types.StringNull()
-	} else {
-		stateModel.RepositoryAlias = planModel.RepositoryAlias
-	}
-
-	if planModel.ServiceAlias.IsUnknown() {
-		stateModel.ServiceAlias = types.StringNull()
-	} else {
-		stateModel.ServiceAlias = planModel.ServiceAlias
-	}
-
+	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service repository resource")
@@ -197,21 +189,21 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel ServiceRepositoryResourceModel
+	var currentStateModel ServiceRepositoryResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var err error
 	var service *opslevel.Service
-	serviceId := planModel.Service.ValueString()
+	serviceId := currentStateModel.Service.ValueString()
 	if opslevel.IsID(serviceId) {
 		service, err = r.client.GetService(opslevel.ID(serviceId))
 	} else {
-		service, err = r.client.GetServiceWithAlias(planModel.ServiceAlias.ValueString())
+		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
@@ -221,7 +213,7 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 	var serviceRepository *opslevel.ServiceRepository
 	for _, edge := range service.Repositories.Edges {
 		for _, repository := range edge.ServiceRepositories {
-			if string(repository.Id) == planModel.Id.ValueString() {
+			if string(repository.Id) == currentStateModel.Id.ValueString() {
 				serviceRepository = &repository
 				break
 			}
@@ -231,12 +223,10 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 		}
 	}
 
-	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository)
-	stateModel.RepositoryAlias = planModel.RepositoryAlias
-	stateModel.ServiceAlias = planModel.ServiceAlias
+	verifiedStateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func extractServiceRepository(id string, serviceDependencies opslevel.ServiceDependenciesConnection) *opslevel.ServiceDependenciesEdge {
@@ -260,13 +250,17 @@ func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.Upd
 	serviceRepository, err := r.client.UpdateServiceRepository(opslevel.ServiceRepositoryUpdateInput{
 		BaseDirectory: opslevel.RefOf(planModel.BaseDirectory.ValueString()),
 		DisplayName:   opslevel.RefOf(planModel.Name.ValueString()),
-		Id:            *opslevel.NewID(planModel.Id.ValueString()),
+		Id:            opslevel.ID(planModel.Id.ValueString()),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update secret, got error: %s", err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service repository, got error: %s", err))
 		return
 	}
-	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository)
+	if planModel.Name.ValueString() == "" && serviceRepository.DisplayName != "" {
+		resp.Diagnostics.AddError("Known error", "Unable to unset 'name' field for now. We have a planned fix for this.")
+		return
+	}
+	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a service repository resource")
