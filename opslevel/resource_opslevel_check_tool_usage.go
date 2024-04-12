@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -49,26 +48,41 @@ type CheckToolUsageResourceModel struct {
 	EnvironmentPredicate *PredicateModel `tfsdk:"environment_predicate"`
 }
 
-func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check) CheckToolUsageResourceModel {
-	var model CheckToolUsageResourceModel
+func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, planModel CheckToolUsageResourceModel) CheckToolUsageResourceModel {
+	var stateModel CheckToolUsageResourceModel
 
-	model.Category = types.StringValue(string(check.Category.Id))
-	model.Enabled = types.BoolValue(check.Enabled)
-	model.EnableOn = types.StringValue(check.EnableOn.Time.Format(time.RFC3339))
-	model.Filter = types.StringValue(string(check.Filter.Id))
-	model.Id = types.StringValue(string(check.Id))
-	model.Level = types.StringValue(string(check.Level.Id))
-	model.Name = types.StringValue(check.Name)
-	model.Notes = types.StringValue(check.Notes)
-	model.Owner = types.StringValue(string(check.Owner.Team.Id))
-	model.LastUpdated = timeLastUpdated()
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	model.ToolCategory = types.StringValue(string(check.ToolCategory))
-	model.ToolNamePredicate = NewPredicateModel(*check.ToolNamePredicate)
-	model.ToolUrlPredicate = NewPredicateModel(*check.ToolUrlPredicate)
-	model.EnvironmentPredicate = NewPredicateModel(*check.EnvironmentPredicate)
+	stateModel.ToolCategory = RequiredStringValue(string(check.ToolCategory))
+	if check.ToolNamePredicate != nil {
+		stateModel.ToolNamePredicate = NewPredicateModel(*check.ToolNamePredicate)
+	}
+	if check.ToolUrlPredicate != nil {
+		stateModel.ToolUrlPredicate = NewPredicateModel(*check.ToolUrlPredicate)
+	}
+	if check.EnvironmentPredicate != nil {
+		stateModel.EnvironmentPredicate = NewPredicateModel(*check.EnvironmentPredicate)
+	}
 
-	return model
+	return stateModel
 }
 
 func (r *CheckToolUsageResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -103,39 +117,32 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-	}
 	input := opslevel.CheckToolUsageCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
 
 	input.ToolCategory = opslevel.ToolCategory(planModel.ToolCategory.ValueString())
 	if planModel.ToolNamePredicate != nil {
-		input.ToolNamePredicate = &opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.ToolNamePredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.ToolNamePredicate.Value.String()),
-		}
+		input.ToolNamePredicate = planModel.ToolNamePredicate.ToCreateInput()
 	}
 	if planModel.ToolUrlPredicate != nil {
-		input.ToolUrlPredicate = &opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.ToolUrlPredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.ToolUrlPredicate.Value.String()),
-		}
+		input.ToolUrlPredicate = planModel.ToolUrlPredicate.ToCreateInput()
 	}
 	if planModel.EnvironmentPredicate != nil {
-		input.EnvironmentPredicate = &opslevel.PredicateInput{
-			Type:  opslevel.PredicateTypeEnum(planModel.EnvironmentPredicate.Type.String()),
-			Value: opslevel.RefOf(planModel.EnvironmentPredicate.Value.String()),
-		}
+		input.EnvironmentPredicate = planModel.EnvironmentPredicate.ToCreateInput()
 	}
 
 	data, err := r.client.CreateCheckToolUsage(input)
@@ -144,8 +151,7 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	stateModel := NewCheckToolUsageResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check tool usage resource")
@@ -167,7 +173,7 @@ func (r *CheckToolUsageResource) Read(ctx context.Context, req resource.ReadRequ
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tool usage, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckToolUsageResourceModel(ctx, *data)
+	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -183,41 +189,39 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("error", err.Error())
-		return
-	}
 	input := opslevel.CheckToolUsageUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		EnableOn:   &iso8601.Time{Time: enabledOn},
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
 	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
 	if planModel.ToolNamePredicate != nil {
-		input.ToolNamePredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.ToolNamePredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.ToolNamePredicate.Value.String()),
-		}
+		input.ToolNamePredicate = planModel.ToolNamePredicate.ToUpdateInput()
+	} else {
+		input.ToolNamePredicate = &opslevel.PredicateUpdateInput{}
 	}
 	if planModel.ToolUrlPredicate != nil {
-		input.ToolUrlPredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.ToolUrlPredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.ToolUrlPredicate.Value.String()),
-		}
+		input.ToolUrlPredicate = planModel.ToolUrlPredicate.ToUpdateInput()
+	} else {
+		input.ToolUrlPredicate = &opslevel.PredicateUpdateInput{}
 	}
 	if planModel.EnvironmentPredicate != nil {
-		input.EnvironmentPredicate = &opslevel.PredicateUpdateInput{
-			Type:  opslevel.RefOf(opslevel.PredicateTypeEnum(planModel.EnvironmentPredicate.Type.String())),
-			Value: opslevel.RefOf(planModel.EnvironmentPredicate.Value.String()),
-		}
+		input.EnvironmentPredicate = planModel.EnvironmentPredicate.ToUpdateInput()
+	} else {
+		input.EnvironmentPredicate = &opslevel.PredicateUpdateInput{}
 	}
 
 	data, err := r.client.UpdateCheckToolUsage(input)
@@ -226,8 +230,7 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	stateModel := NewCheckToolUsageResourceModel(ctx, *data)
-	stateModel.EnableOn = planModel.EnableOn
+	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check tool usage resource")
