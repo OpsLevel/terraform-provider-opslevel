@@ -44,7 +44,7 @@ func NewServiceDependencyResourceModel(ctx context.Context, serviceDependency op
 }
 
 func (r *ServiceDependencyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_serviceDependency"
+	resp.TypeName = req.ProviderTypeName + "_service_dependency"
 }
 
 func (r *ServiceDependencyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
