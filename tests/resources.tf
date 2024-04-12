@@ -184,3 +184,14 @@ resource "opslevel_check_git_branch_protection" "example" {
   owner     = var.test_id
   filter    = var.test_id
 }
+
+# Repo Integrated
+
+resource "opslevel_check_repository_integrated" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+}
