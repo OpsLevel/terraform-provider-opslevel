@@ -390,3 +390,18 @@ resource "opslevel_check_custom_event" "example" {
   EOT
   notes             = "Optional additional info on why this check is run or how to fix it"
 }
+# Check Service Property
+
+resource "opslevel_check_service_property" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+  property = "language"
+  predicate = {
+    type  = "equals"
+    value = "python"
+  }
+}
