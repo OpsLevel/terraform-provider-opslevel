@@ -163,6 +163,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewCheckRepositorySearchResource,
 		NewCheckServiceConfigurationResource,
 		NewCheckServiceDependencyResource,
+		NewCheckServiceOwnershipResource,
 		NewDomainResource,
 		NewInfrastructureResource,
 		NewRubricCategoryResource,
