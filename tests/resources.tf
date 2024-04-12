@@ -122,6 +122,22 @@ resource "opslevel_rubric_level" "small" {
   name = "small rubric level"
 }
 
+# Scorecard resources
+
+resource "opslevel_scorecard" "big" {
+  affects_overall_service_levels = false
+  description                    = "This is a big scorecard"
+  filter_id                      = var.test_id
+  name                           = "Big Scorecard"
+  owner_id                       = var.test_id
+}
+
+resource "opslevel_scorecard" "small" {
+  affects_overall_service_levels = true
+  name                           = "Small Scorecard"
+  owner_id                       = var.test_id
+}
+
 # Secret resources
 
 resource "opslevel_secret" "mock_secret" {
@@ -180,20 +196,18 @@ resource "opslevel_service_dependency" "with_id" {
   service      = var.test_id
 }
 
-# Scorecard resources
+# Service Tag resources
 
-resource "opslevel_scorecard" "big" {
-  affects_overall_service_levels = false
-  description                    = "This is a big scorecard"
-  filter_id                      = var.test_id
-  name                           = "Big Scorecard"
-  owner_id                       = var.test_id
+resource "opslevel_service_tag" "using_service_id" {
+  key     = "hello_with_id"
+  value   = "world_with_id"
+  service = "Z2lkOi8vb3BzbGV2ZWwvVGVhbS8xNzQxMg"
 }
 
-resource "opslevel_scorecard" "small" {
-  affects_overall_service_levels = true
-  name                           = "Small Scorecard"
-  owner_id                       = var.test_id
+resource "opslevel_service_tag" "using_service_alias" {
+  key           = "hello_with_alias"
+  value         = "world_with_alias"
+  service_alias = "cart"
 }
 
 # System resources
