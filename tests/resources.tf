@@ -195,3 +195,20 @@ resource "opslevel_check_repository_integrated" "example" {
   owner    = var.test_id
   filter   = var.test_id
 }
+
+# Repo Grep
+
+resource "opslevel_check_repository_grep" "example" {
+  name             = "foo"
+  enabled          = true
+  category         = var.test_id
+  level            = var.test_id
+  owner            = var.test_id
+  filter           = var.test_id
+  directory_search = false
+  filepaths        = ["/src", "/tests"]
+  file_contents_predicate = {
+    type  = "contains"
+    value = "**/hello.go"
+  }
+}
