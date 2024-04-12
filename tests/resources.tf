@@ -63,6 +63,20 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Property Assignment
+
+resource "opslevel_property_assignment" "color_picker_using_aliases" {
+  owner      = "some_service"
+  definition = "some_definition"
+  value      = jsonencode("green")
+}
+
+resource "opslevel_property_assignment" "color_picker_using_id" {
+  owner      = "Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS85MzMyOQ"
+  definition = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8zNzU"
+  value      = jsonencode({ "hello" : "world", "key" : null })
+}
+
 # Property Definition
 
 resource "opslevel_property_definition" "color_picker" {
