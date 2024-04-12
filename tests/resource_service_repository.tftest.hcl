@@ -9,7 +9,7 @@ run "resource_service_repository_with_alias" {
   }
 
   assert {
-    condition     = opslevel_service_repository.with_alias.base_directory == "/home/opslevel"
+    condition     = opslevel_service_repository.with_alias.base_directory == "home/opslevel"
     error_message = "wrong base_directory for opslevel_service_repository.with_alias"
   }
 

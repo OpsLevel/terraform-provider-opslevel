@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -43,12 +44,11 @@ type ServiceRepositoryResourceModel struct {
 
 func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository opslevel.ServiceRepository) ServiceRepositoryResourceModel {
 	return ServiceRepositoryResourceModel{
-		BaseDirectory:   OptionalStringValue(serviceRepository.BaseDirectory),
-		Service:         OptionalStringValue(string(serviceRepository.Service.Id)),
-		Repository:      OptionalStringValue(string(serviceRepository.Repository.Id)),
-		RepositoryAlias: OptionalStringValue(serviceRepository.Repository.DefaultAlias),
-		Id:              ComputedStringValue(string(serviceRepository.Id)),
-		Name:            OptionalStringValue(serviceRepository.DisplayName),
+		BaseDirectory: ComputedStringValue(serviceRepository.BaseDirectory),
+		Service:       ComputedStringValue(string(serviceRepository.Service.Id)),
+		Repository:    ComputedStringValue(string(serviceRepository.Repository.Id)),
+		Id:            ComputedStringValue(string(serviceRepository.Id)),
+		Name:          ComputedStringValue(serviceRepository.DisplayName),
 	}
 }
 
@@ -64,7 +64,14 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 		Attributes: map[string]schema.Attribute{
 			"base_directory": schema.StringAttribute{
 				Description: "The directory in the repository containing opslevel.yml.",
+				Computed:    true,
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[^\/].*`),
+						"path must not start with '/'",
+					),
+				},
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the Service Repository.",
@@ -78,10 +85,12 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"name": schema.StringAttribute{
 				Description: "The name displayed in the UI for the service repository.",
+				Computed:    true,
 				Optional:    true,
 			},
 			"repository": schema.StringAttribute{
 				Description: "The id of the repository that this will be added to.",
+				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -95,6 +104,7 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"repository_alias": schema.StringAttribute{
 				Description: "The alias of the repository that this will be added to.",
+				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -107,6 +117,7 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"service": schema.StringAttribute{
 				Description: "The id of the service that this will be added to.",
+				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -120,6 +131,7 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 			},
 			"service_alias": schema.StringAttribute{
 				Description: "The alias of the service that this will be added to.",
+				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -144,7 +156,7 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	repositoryIdentifier := opslevel.IdentifierInput{
-		Alias: planModel.Repository.ValueStringPointer(),
+		Alias: planModel.RepositoryAlias.ValueStringPointer(),
 	}
 	if planModel.Repository.ValueString() != "" {
 		repositoryIdentifier.Id = opslevel.NewID(planModel.Repository.ValueString())
@@ -166,7 +178,18 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository)
-	stateModel.ServiceAlias = planModel.ServiceAlias
+	if planModel.RepositoryAlias.IsUnknown() {
+		stateModel.RepositoryAlias = types.StringNull()
+	} else {
+		stateModel.RepositoryAlias = planModel.RepositoryAlias
+	}
+
+	if planModel.ServiceAlias.IsUnknown() {
+		stateModel.ServiceAlias = types.StringNull()
+	} else {
+		stateModel.ServiceAlias = planModel.ServiceAlias
+	}
+
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service repository resource")
@@ -209,6 +232,7 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 	}
 
 	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository)
+	stateModel.RepositoryAlias = planModel.RepositoryAlias
 	stateModel.ServiceAlias = planModel.ServiceAlias
 
 	// Save updated data into Terraform state

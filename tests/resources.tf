@@ -140,7 +140,7 @@ resource "opslevel_service" "small" {
 # Service Repository resources
 
 resource "opslevel_service_repository" "with_alias" {
-  base_directory   = "/home/opslevel"
+  base_directory   = "home/opslevel"
   name             = "Service Repo Name"
   repository_alias = "github.com:OpsLevel/terraform-provider-opslevel"
   service_alias    = "service-1"
