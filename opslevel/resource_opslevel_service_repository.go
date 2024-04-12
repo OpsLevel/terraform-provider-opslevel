@@ -49,12 +49,15 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 		Id:            ComputedStringValue(string(serviceRepository.Id)),
 		LastUpdated:   planModel.LastUpdated,
 		Name:          OptionalStringValue(serviceRepository.DisplayName),
-		Repository:    OptionalStringValue(string(serviceRepository.Repository.Id)),
-		Service:       OptionalStringValue(string(serviceRepository.Service.Id)),
-		ServiceAlias:  planModel.ServiceAlias,
+	}
+	if planModel.Repository.ValueString() == string(serviceRepository.Repository.Id) {
+		stateModel.Repository = OptionalStringValue(string(serviceRepository.Repository.Id))
 	}
 	if planModel.RepositoryAlias.ValueString() == serviceRepository.Repository.DefaultAlias {
 		stateModel.RepositoryAlias = OptionalStringValue(serviceRepository.Repository.DefaultAlias)
+	}
+	if planModel.Service.ValueString() == string(serviceRepository.Service.Id) {
+		stateModel.Service = OptionalStringValue(string(serviceRepository.Service.Id))
 	}
 	if slices.Contains(serviceRepository.Service.Aliases, planModel.ServiceAlias.ValueString()) {
 		stateModel.ServiceAlias = planModel.ServiceAlias
@@ -247,6 +250,13 @@ func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	var nameBeforeUpdate types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &nameBeforeUpdate)...)
+	if !nameBeforeUpdate.IsNull() && planModel.Name.IsNull() {
+		resp.Diagnostics.AddError("Known error", "Unable to unset 'name' field for now. We have a planned fix for this.")
+		return
+	}
+
 	serviceRepository, err := r.client.UpdateServiceRepository(opslevel.ServiceRepositoryUpdateInput{
 		BaseDirectory: opslevel.RefOf(planModel.BaseDirectory.ValueString()),
 		DisplayName:   opslevel.RefOf(planModel.Name.ValueString()),
@@ -256,10 +266,7 @@ func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.Upd
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service repository, got error: %s", err))
 		return
 	}
-	if planModel.Name.ValueString() == "" && serviceRepository.DisplayName != "" {
-		resp.Diagnostics.AddError("Known error", "Unable to unset 'name' field for now. We have a planned fix for this.")
-		return
-	}
+
 	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
