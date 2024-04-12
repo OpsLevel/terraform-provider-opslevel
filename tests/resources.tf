@@ -152,6 +152,23 @@ resource "opslevel_service_dependency" "with_id" {
   service      = var.test_id
 }
 
+# Service Tool resources
+
+resource "opslevel_service_tool" "with_id" {
+  category = "metrics"
+  name     = "Datadog test"
+  service  = var.test_id
+  url      = "https://datadoghq.com"
+}
+
+resource "opslevel_service_tool" "with_alias" {
+  category      = "logs"
+  environment   = "Production"
+  name          = "Datadog test"
+  service_alias = "mock service"
+  url           = "https://datadoghq.com"
+}
+
 # Scorecard resources
 
 resource "opslevel_scorecard" "big" {
