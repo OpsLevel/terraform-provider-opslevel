@@ -243,3 +243,14 @@ resource "opslevel_check_alert_source_usage" "example" {
     value = "dev"
   }
 }
+
+# Check Recent Deploy
+
+resource "opslevel_check_has_recent_deploy" "example" {
+  name     = "foo"
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+  days     = 14
+}
