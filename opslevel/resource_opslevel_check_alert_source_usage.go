@@ -88,7 +88,7 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"alert_type": schema.StringAttribute{
-				Description: "",
+				Description: "The type of the alert source.",
 				Required:    true,
 				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllAlertSourceTypeEnum...)},
 			},
