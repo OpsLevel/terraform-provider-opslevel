@@ -151,6 +151,21 @@ resource "opslevel_service_repository" "with_id" {
   service    = var.test_id
 }
 
+# Service Dependency resources
+
+resource "opslevel_service_dependency" "with_alias" {
+  depends_upon = var.test_id
+  service      = var.test_id
+}
+
+resource "opslevel_service_dependency" "with_id" {
+  depends_upon = var.test_id
+  note         = <<-EOT
+    This is an example of notes on a service dependency
+  EOT
+  service      = var.test_id
+}
+
 # Scorecard resources
 
 resource "opslevel_scorecard" "big" {
