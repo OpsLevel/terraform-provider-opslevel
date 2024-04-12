@@ -299,3 +299,14 @@ resource "opslevel_check_service_configuration" "example" {
   owner    = var.test_id
   filter   = var.test_id
 }
+
+# Check Service Dependency
+
+resource "opslevel_check_service_dependency" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+}
