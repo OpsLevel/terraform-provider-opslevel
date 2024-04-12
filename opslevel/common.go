@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-
 	// "sort"
 	"strconv"
 	"time"

@@ -33,7 +33,7 @@ resource "opslevel_check_repository_search" "example" {
   owner           = data.opslevel_team.devs.id
   filter          = data.opslevel_filter.tier1.id
   file_extensions = ["sbt", "py"]
-  file_contents_predicate {
+  file_contents_predicate = {
     type  = "contains"
     value = "postgres"
   }
