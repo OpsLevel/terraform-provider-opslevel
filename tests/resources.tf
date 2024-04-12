@@ -629,3 +629,13 @@ resource "opslevel_check_tool_usage" "example" {
     value = "production"
   }
 }
+
+# Tag Resource
+
+resource "opslevel_tag" "example" {
+  resource_type       = "Service"
+  resource_identifier = "test-service"
+
+  key   = "yacht"
+  value = "racing"
+}
