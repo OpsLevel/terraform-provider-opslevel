@@ -335,6 +335,85 @@ resource "opslevel_webhook_action" "mock" {
 
 # Checks
 
+# Check Alert Source
+
+resource "opslevel_check_alert_source_usage" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+
+  alert_type = "pagerduty" # one of: "pagerduty", "datadog", "opsgenie"
+  alert_name_predicate = {
+    type  = "contains"
+    value = "dev"
+  }
+}
+
+# Check Custom Event
+
+resource "opslevel_check_custom_event" "example" {
+  name              = "foo"
+  enabled           = true
+  category          = var.test_id
+  level             = var.test_id
+  owner             = var.test_id
+  filter            = var.test_id
+  integration       = var.test_id
+  pass_pending      = true
+  service_selector  = ".messages[] | .incident.service.id"
+  success_condition = ".messages[] |   select(.incident.service.id == $ctx.alias) | .incident.status == \"resolved\""
+  message           = <<-EOT
+  {% if check.passed %}
+    ### Check passed
+  {% else %}
+    ### Check failed
+    service **{{ data.messages[ctx.index].incident.service.id }}** has an unresolved incident.
+  {% endif %}
+  OpsLevel note: here you can fill in more details about this check. You can even include `data` from the payload, `params` specified in the URL and context `ctx` such as the service alias for the current evaluation.
+  EOT
+  notes             = "Optional additional info on why this check is run or how to fix it"
+}
+
+
+# Repo Search
+
+resource "opslevel_check_git_branch_protection" "example" {
+  name      = "foo"
+  enable_on = "2022-05-23T14:14:18.782000Z"
+  category  = var.test_id
+  level     = var.test_id
+  owner     = var.test_id
+  filter    = var.test_id
+}
+
+# Has Documentation
+
+resource "opslevel_check_has_documentation" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+
+  document_type    = "api"
+  document_subtype = "openapi"
+}
+
+# Check Recent Deploy
+
+resource "opslevel_check_has_recent_deploy" "example" {
+  name     = "foo"
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+  days     = 14
+}
+
 # Check Manual
 
 resource "opslevel_check_manual" "example" {
@@ -353,26 +432,22 @@ resource "opslevel_check_manual" "example" {
   notes                   = "Optional additional info on why this check is run or how to fix it"
 }
 
-# Repo Search
+# Check Repo File
 
-resource "opslevel_check_git_branch_protection" "example" {
-  name      = "foo"
-  enable_on = "2022-05-23T14:14:18.782000Z"
-  category  = var.test_id
-  level     = var.test_id
-  owner     = var.test_id
-  filter    = var.test_id
-}
-
-# Repo Integrated
-
-resource "opslevel_check_repository_integrated" "example" {
-  name     = "foo"
-  enabled  = true
-  category = var.test_id
-  level    = var.test_id
-  owner    = var.test_id
-  filter   = var.test_id
+resource "opslevel_check_repository_file" "example" {
+  name             = "foo"
+  enabled          = true
+  category         = var.test_id
+  level            = var.test_id
+  owner            = var.test_id
+  filter           = var.test_id
+  directory_search = false
+  filepaths        = ["/src", "/tests"]
+  file_contents_predicate = {
+    type  = "equals"
+    value = "import shim"
+  }
+  use_absolute_root = false
 }
 
 # Repo Grep
@@ -392,64 +467,15 @@ resource "opslevel_check_repository_grep" "example" {
   }
 }
 
-# Has Documentation
+# Repo Integrated
 
-resource "opslevel_check_has_documentation" "example" {
+resource "opslevel_check_repository_integrated" "example" {
   name     = "foo"
   enabled  = true
   category = var.test_id
   level    = var.test_id
   owner    = var.test_id
   filter   = var.test_id
-
-  document_type    = "api"
-  document_subtype = "openapi"
-}
-
-# Check Alert Source
-
-resource "opslevel_check_alert_source_usage" "example" {
-  name     = "foo"
-  enabled  = true
-  category = var.test_id
-  level    = var.test_id
-  owner    = var.test_id
-  filter   = var.test_id
-
-  alert_type = "pagerduty" # one of: "pagerduty", "datadog", "opsgenie"
-  alert_name_predicate = {
-    type  = "contains"
-    value = "dev"
-  }
-}
-
-# Check Recent Deploy
-
-resource "opslevel_check_has_recent_deploy" "example" {
-  name     = "foo"
-  category = var.test_id
-  level    = var.test_id
-  owner    = var.test_id
-  filter   = var.test_id
-  days     = 14
-}
-
-# Repo File
-
-resource "opslevel_check_repository_file" "example" {
-  name             = "foo"
-  enabled          = true
-  category         = var.test_id
-  level            = var.test_id
-  owner            = var.test_id
-  filter           = var.test_id
-  directory_search = false
-  filepaths        = ["/src", "/tests"]
-  file_contents_predicate = {
-    type  = "equals"
-    value = "import shim"
-  }
-  use_absolute_root = false
 }
 
 # Check Repo Search
@@ -509,6 +535,22 @@ resource "opslevel_check_service_ownership" "example" {
   }
 }
 
+# Check Service Property
+
+resource "opslevel_check_service_property" "example" {
+  name     = "foo"
+  enabled  = true
+  category = var.test_id
+  level    = var.test_id
+  owner    = var.test_id
+  filter   = var.test_id
+  property = "language"
+  predicate = {
+    type  = "equals"
+    value = "python"
+  }
+}
+
 # Check Tag Defined
 
 resource "opslevel_check_tag_defined" "example" {
@@ -542,45 +584,5 @@ resource "opslevel_check_tool_usage" "example" {
   environment_predicate = {
     type  = "equals"
     value = "production"
-  }
-}
-
-# Check Custom Event
-
-resource "opslevel_check_custom_event" "example" {
-  name              = "foo"
-  enabled           = true
-  category          = var.test_id
-  level             = var.test_id
-  owner             = var.test_id
-  filter            = var.test_id
-  integration       = var.test_id
-  pass_pending      = true
-  service_selector  = ".messages[] | .incident.service.id"
-  success_condition = ".messages[] |   select(.incident.service.id == $ctx.alias) | .incident.status == \"resolved\""
-  message           = <<-EOT
-  {% if check.passed %}
-    ### Check passed
-  {% else %}
-    ### Check failed
-    service **{{ data.messages[ctx.index].incident.service.id }}** has an unresolved incident.
-  {% endif %}
-  OpsLevel note: here you can fill in more details about this check. You can even include `data` from the payload, `params` specified in the URL and context `ctx` such as the service alias for the current evaluation.
-  EOT
-  notes             = "Optional additional info on why this check is run or how to fix it"
-}
-# Check Service Property
-
-resource "opslevel_check_service_property" "example" {
-  name     = "foo"
-  enabled  = true
-  category = var.test_id
-  level    = var.test_id
-  owner    = var.test_id
-  filter   = var.test_id
-  property = "language"
-  predicate = {
-    type  = "equals"
-    value = "python"
   }
 }
