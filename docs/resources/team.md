@@ -43,11 +43,11 @@ output "team" {
 
 ### Required
 
-- `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
 - `name` (String) The team's display name.
 
 ### Optional
 
+- `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
 - `last_updated` (String)
 - `member` (Block List) List of members in the team with email address and role. (see [below for nested schema](#nestedblock--member))
 - `parent` (String) The id or alias of the parent team.

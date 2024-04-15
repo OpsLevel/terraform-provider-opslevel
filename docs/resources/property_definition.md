@@ -24,6 +24,7 @@ resource "opslevel_property_definition" "newpd" {
 
 ### Required
 
+- `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
 - `name` (String) The display name of the property definition.
 - `schema` (String) The schema of the property definition.
 

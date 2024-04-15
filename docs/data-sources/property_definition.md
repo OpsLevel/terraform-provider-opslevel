@@ -36,6 +36,7 @@ output "pd_schema" {
 
 ### Read-Only
 
+- `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
 - `id` (String) The ID of this resource.
 - `name` (String) The display name of the property definition.
 - `schema` (String) The schema of the property definition.

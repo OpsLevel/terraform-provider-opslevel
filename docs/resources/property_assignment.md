@@ -48,6 +48,7 @@ resource "opslevel_property_assignment" "example_3" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `locked` (Boolean) Locked = true if the property has been set in opslevel.yml.
 
 ## Import
 

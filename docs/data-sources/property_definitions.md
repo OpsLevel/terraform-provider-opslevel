@@ -26,6 +26,7 @@ output "all_schemas" {
 
 ### Read-Only
 
+- `allowed_in_config_files` (List of Boolean)
 - `descriptions` (List of String)
 - `id` (String) The ID of this resource.
 - `ids` (List of String)
