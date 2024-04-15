@@ -183,10 +183,10 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	input := opslevel.AWSIntegrationInput{
-		Name:                 planModel.Name.ValueStringPointer(),
-		IAMRole:              planModel.IamRole.ValueStringPointer(),
-		ExternalID:           planModel.ExternalID.ValueStringPointer(),
-		OwnershipTagOverride: planModel.OwnershipTagOverrides.ValueBoolPointer(),
+		Name:                 opslevel.RefOf(planModel.Name.ValueString()),
+		IAMRole:              opslevel.RefOf(planModel.IamRole.ValueString()),
+		ExternalID:           opslevel.RefOf(planModel.ExternalID.ValueString()),
+		OwnershipTagOverride: opslevel.RefOf(planModel.OwnershipTagOverrides.ValueBool()),
 		OwnershipTagKeys:     ownershipTagKeys,
 	}
 
