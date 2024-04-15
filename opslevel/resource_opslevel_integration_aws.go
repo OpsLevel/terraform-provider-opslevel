@@ -49,7 +49,7 @@ func NewIntegrationAwsResourceModel(ctx context.Context, awsIntegration opslevel
 		Name:                  OptionalStringValue(awsIntegration.Name),
 		OwnershipTagOverrides: types.BoolValue(awsIntegration.OwnershipTagOverride),
 	}
-	ownershipTagKeys, diags := types.ListValueFrom(ctx, types.StringType, awsIntegration.OwnershipTagKeys)
+	ownershipTagKeys, diags := OptionalStringListValue(ctx, awsIntegration.OwnershipTagKeys)
 	integrationAwsResourceModel.OwnershipTagKeys = ownershipTagKeys
 
 	return integrationAwsResourceModel, diags
