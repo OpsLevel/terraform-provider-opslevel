@@ -44,11 +44,11 @@ func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain) (Domain
 
 	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
 	domainResourceModel.Aliases = domainAliases
-	domainResourceModel.Description = types.StringValue(string(domain.Description))
-	domainResourceModel.Id = types.StringValue(string(domain.Id))
-	domainResourceModel.Name = types.StringValue(string(domain.Name))
-	domainResourceModel.Note = types.StringValue(string(domain.Note))
-	domainResourceModel.Owner = types.StringValue(string(domain.Owner.Id()))
+	domainResourceModel.Description = OptionalStringValue(domain.Description)
+	domainResourceModel.Id = ComputedStringValue(string(domain.Id))
+	domainResourceModel.Name = RequiredStringValue(domain.Name)
+	domainResourceModel.Note = OptionalStringValue(domain.Note)
+	domainResourceModel.Owner = OptionalStringValue(string(domain.Owner.Id()))
 
 	return domainResourceModel, diags
 }

@@ -51,17 +51,17 @@ type TriggerDefinitionResourceModel struct {
 
 func NewTriggerDefinitionResourceModel(triggerDefinition opslevel.CustomActionsTriggerDefinition, extendedTeams basetypes.ListValue) TriggerDefinitionResourceModel {
 	return TriggerDefinitionResourceModel{
-		AccessControl:          types.StringValue(string(triggerDefinition.AccessControl)),
-		Action:                 types.StringValue(string(triggerDefinition.Action.Id)),
-		Description:            types.StringValue(triggerDefinition.Description),
-		EntityType:             types.StringValue(string(triggerDefinition.EntityType)),
+		AccessControl:          RequiredStringValue(string(triggerDefinition.AccessControl)),
+		Action:                 RequiredStringValue(string(triggerDefinition.Action.Id)),
+		Description:            OptionalStringValue(triggerDefinition.Description),
+		EntityType:             OptionalStringValue(string(triggerDefinition.EntityType)),
 		ExtendedTeamAccess:     extendedTeams,
-		Filter:                 types.StringValue(string(triggerDefinition.Filter.Id)),
-		Id:                     types.StringValue(string(triggerDefinition.Id)),
-		ManualInputsDefinition: types.StringValue(triggerDefinition.ManualInputsDefinition),
-		Name:                   types.StringValue(triggerDefinition.Name),
-		Owner:                  types.StringValue(string(triggerDefinition.Owner.Id)),
-		ResponseTemplate:       types.StringValue(string(triggerDefinition.ResponseTemplate)),
+		Filter:                 OptionalStringValue(string(triggerDefinition.Filter.Id)),
+		Id:                     ComputedStringValue(string(triggerDefinition.Id)),
+		ManualInputsDefinition: OptionalStringValue(triggerDefinition.ManualInputsDefinition),
+		Name:                   RequiredStringValue(triggerDefinition.Name),
+		Owner:                  RequiredStringValue(string(triggerDefinition.Owner.Id)),
+		ResponseTemplate:       OptionalStringValue(triggerDefinition.ResponseTemplate),
 		Published:              types.BoolValue(triggerDefinition.Published),
 	}
 }
@@ -241,14 +241,14 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 		AccessControl:          &accessControl,
 		ActionId:               opslevel.NewID(planModel.Action.ValueString()),
 		Name:                   planModel.Name.ValueStringPointer(),
-		Description:            planModel.Description.ValueStringPointer(),
+		Description:            opslevel.RefOf(planModel.Description.ValueString()),
+		EntityType:             &entityType,
 		Id:                     opslevel.ID(planModel.Id.ValueString()),
 		OwnerId:                opslevel.NewID(planModel.Owner.ValueString()),
 		FilterId:               opslevel.NewID(planModel.Filter.ValueString()),
-		ManualInputsDefinition: planModel.ManualInputsDefinition.ValueStringPointer(),
-		Published:              planModel.Published.ValueBoolPointer(),
-		ResponseTemplate:       planModel.ResponseTemplate.ValueStringPointer(),
-		EntityType:             &entityType,
+		ManualInputsDefinition: opslevel.RefOf(planModel.ManualInputsDefinition.ValueString()),
+		Published:              opslevel.RefOf(planModel.Published.ValueBool()),
+		ResponseTemplate:       opslevel.RefOf(planModel.ResponseTemplate.ValueString()),
 	}
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
 	if diags.HasError() {

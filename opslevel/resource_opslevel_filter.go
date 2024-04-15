@@ -239,7 +239,7 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	updatedFilter, err := r.client.UpdateFilter(opslevel.FilterUpdateInput{
 		Id:         opslevel.ID(planModel.Id.ValueString()),
-		Name:       planModel.Name.ValueStringPointer(),
+		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Predicates: predicates,
 		Connective: getConnectiveEnum(planModel.Connective.ValueString()),
 	})

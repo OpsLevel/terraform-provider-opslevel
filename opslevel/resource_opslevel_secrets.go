@@ -42,12 +42,11 @@ type SecretResourceModel struct {
 
 func NewSecretResourceModel(secret opslevel.Secret, ownerIdentifier, sensitiveValue string) SecretResourceModel {
 	return SecretResourceModel{
-		Alias:     types.StringValue(secret.Alias),
-		CreatedAt: types.StringValue(secret.Timestamps.CreatedAt.Local().Format(time.RFC850)),
-		Id:        types.StringValue(string(secret.ID)),
-		Owner:     types.StringValue(ownerIdentifier),
-		UpdatedAt: types.StringValue(secret.Timestamps.UpdatedAt.Local().Format(time.RFC850)),
-		Value:     types.StringValue(sensitiveValue),
+		Alias:     RequiredStringValue(secret.Alias),
+		CreatedAt: ComputedStringValue(secret.Timestamps.CreatedAt.Local().Format(time.RFC850)),
+		Id:        ComputedStringValue(string(secret.ID)),
+		Owner:     RequiredStringValue(ownerIdentifier),
+		Value:     RequiredStringValue(sensitiveValue),
 	}
 }
 
@@ -118,7 +117,7 @@ func (r *SecretResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	createdSecretResourceModel := NewSecretResourceModel(*secret, data.Owner.ValueString(), data.Value.ValueString())
-	createdSecretResourceModel.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	createdSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a secret resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdSecretResourceModel)...)
@@ -163,7 +162,7 @@ func (r *SecretResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	updatedSecretResourceModel := NewSecretResourceModel(*updatedSecret, data.Owner.ValueString(), data.Value.ValueString())
-	updatedSecretResourceModel.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	updatedSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a secret resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedSecretResourceModel)...)

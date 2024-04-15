@@ -43,13 +43,13 @@ type WebhookActionResourceModel struct {
 func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction) WebhookActionResourceModel {
 	jsonAttrs := jsonToMap(webhookAction.Headers)
 	return WebhookActionResourceModel{
-		Description: types.StringValue(webhookAction.Description),
+		Description: OptionalStringValue(webhookAction.Description),
 		Headers:     types.MapValueMust(types.StringType, jsonAttrs),
-		Id:          types.StringValue(string(webhookAction.Id)),
-		Method:      types.StringValue(string(webhookAction.HTTPMethod)),
-		Name:        types.StringValue(webhookAction.Name),
-		Payload:     types.StringValue(webhookAction.LiquidTemplate),
-		Url:         types.StringValue(webhookAction.WebhookURL),
+		Id:          ComputedStringValue(string(webhookAction.Id)),
+		Method:      RequiredStringValue(string(webhookAction.HTTPMethod)),
+		Name:        RequiredStringValue(webhookAction.Name),
+		Payload:     RequiredStringValue(webhookAction.LiquidTemplate),
+		Url:         RequiredStringValue(webhookAction.WebhookURL),
 	}
 }
 
@@ -176,13 +176,13 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 
 	httpMethod := opslevel.CustomActionsHttpMethodEnum(data.Method.ValueString())
 	updateWebhookActionInput := opslevel.CustomActionsWebhookActionUpdateInput{
-		Description:    data.Description.ValueStringPointer(),
+		Description:    opslevel.RefOf(data.Description.ValueString()),
 		Headers:        &headersAsJson,
 		HttpMethod:     &httpMethod,
 		Id:             opslevel.ID(data.Id.ValueString()),
-		LiquidTemplate: data.Payload.ValueStringPointer(),
-		Name:           data.Name.ValueStringPointer(),
-		WebhookUrl:     data.Url.ValueStringPointer(),
+		LiquidTemplate: opslevel.RefOf(data.Payload.ValueString()),
+		Name:           opslevel.RefOf(data.Name.ValueString()),
+		WebhookUrl:     opslevel.RefOf(data.Url.ValueString()),
 	}
 	resource, err := r.client.UpdateWebhookAction(updateWebhookActionInput)
 	if err != nil {
