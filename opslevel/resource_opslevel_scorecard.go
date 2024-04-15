@@ -189,7 +189,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 
 	scorecard, err := r.client.UpdateScorecard(data.Id.ValueString(), opslevel.ScorecardInput{
 		AffectsOverallServiceLevels: data.AffectsOverallServiceLevels.ValueBoolPointer(),
-		Description:                 data.Description.ValueStringPointer(),
+		Description:                 opslevel.RefOf(data.Description.ValueString()),
 		FilterId:                    opslevel.NewID(data.FilterId.ValueString()),
 		Name:                        data.Name.ValueString(),
 		OwnerId:                     opslevel.ID(data.OwnerId.ValueString()),

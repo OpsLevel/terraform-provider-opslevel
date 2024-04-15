@@ -41,11 +41,10 @@ type UserResourceModel struct {
 
 func NewUserResourceModel(user opslevel.User) UserResourceModel {
 	return UserResourceModel{
-		Email:            types.StringValue(user.Email),
-		Id:               types.StringValue(string(user.Id)),
-		LastUpdated:      timeLastUpdated(),
-		Name:             types.StringValue(user.Name),
-		Role:             types.StringValue(string(user.Role)),
+		Email:            RequiredStringValue(user.Email),
+		Id:               ComputedStringValue(string(user.Id)),
+		Name:             RequiredStringValue(user.Name),
+		Role:             OptionalStringValue(string(user.Role)),
 		SkipWelcomeEmail: types.BoolNull(),
 	}
 }
@@ -116,6 +115,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 	createdUserResourceModel := NewUserResourceModel(*user)
+	createdUserResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdUserResourceModel)...)
@@ -164,6 +164,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 	updatedUserResourceModel := NewUserResourceModel(*resource)
+	updatedUserResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedUserResourceModel)...)

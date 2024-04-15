@@ -317,14 +317,14 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	serviceUpdateInput := opslevel.ServiceUpdateInput{
-		Description:    planModel.Description.ValueStringPointer(),
-		Framework:      planModel.Framework.ValueStringPointer(),
+		Description:    opslevel.RefOf(planModel.Description.ValueString()),
+		Framework:      opslevel.RefOf(planModel.Framework.ValueString()),
 		Id:             opslevel.NewID(planModel.Id.ValueString()),
-		Language:       planModel.Language.ValueStringPointer(),
-		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
+		Language:       opslevel.RefOf(planModel.Language.ValueString()),
+		LifecycleAlias: opslevel.RefOf(planModel.LifecycleAlias.ValueString()),
 		Name:           planModel.Name.ValueStringPointer(),
-		Product:        planModel.Product.ValueStringPointer(),
-		TierAlias:      planModel.TierAlias.ValueStringPointer(),
+		Product:        opslevel.RefOf(planModel.Product.ValueString()),
+		TierAlias:      opslevel.RefOf(planModel.TierAlias.ValueString()),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())

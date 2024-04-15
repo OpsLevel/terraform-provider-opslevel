@@ -149,7 +149,7 @@ func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	updatedRubricLevel, err := r.client.UpdateLevel(opslevel.LevelUpdateInput{
-		Description: data.Description.ValueStringPointer(),
+		Description: opslevel.RefOf(data.Description.ValueString()),
 		Id:          opslevel.ID(data.Id.ValueString()),
 		Name:        data.Name.ValueStringPointer(),
 	})
