@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -53,9 +52,7 @@ func NewServiceToolResourceModel(ctx context.Context, serviceTool opslevel.Tool,
 	if planModel.Service.ValueString() == string(serviceTool.Service.Id) {
 		stateModel.Service = OptionalStringValue(string(serviceTool.Service.Id))
 	}
-	if slices.Contains(serviceTool.Service.Aliases, planModel.ServiceAlias.ValueString()) {
-		stateModel.ServiceAlias = planModel.ServiceAlias
-	}
+	stateModel.ServiceAlias = planModel.ServiceAlias
 	return stateModel
 }
 
@@ -143,7 +140,7 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 		service, err = r.client.GetServiceWithAlias(planModel.ServiceAlias.ValueString())
 	}
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service during create, got error: %s", err))
 		return
 	}
 
@@ -154,7 +151,7 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 		ServiceId:   &service.Id,
 		Url:         planModel.Url.ValueString(),
 	})
-	if err != nil || serviceTool == nil {
+	if err != nil || serviceTool == nil || string(serviceTool.Id) == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service tool, got error: %s", err))
 		return
 	}
@@ -176,13 +173,12 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 
 	var err error
 	var service *opslevel.Service
-	serviceIdentifier := currentStateModel.Service.ValueString()
-	if opslevel.IsID(serviceIdentifier) {
-		service, err = r.client.GetService(opslevel.ID(serviceIdentifier))
+	if serviceId := currentStateModel.Service.ValueString(); opslevel.IsID(serviceId) {
+		service, err = r.client.GetService(opslevel.ID(serviceId))
 	} else {
-		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
+		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
-	if err != nil || service == nil {
+	if err != nil || service == nil || string(service.Id) == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
@@ -195,7 +191,7 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 			break
 		}
 	}
-	if serviceTool == nil {
+	if serviceTool == nil || string(serviceTool.Id) == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tool with id '%s' on service with id '%s'", id, service.Id))
 		return
 	}
@@ -218,7 +214,7 @@ func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateReq
 	serviceTool, err := r.client.UpdateTool(opslevel.ToolUpdateInput{
 		Category:    opslevel.RefOf(opslevel.ToolCategory(planModel.Category.ValueString())),
 		DisplayName: planModel.Name.ValueStringPointer(),
-		Environment: planModel.Environment.ValueStringPointer(),
+		Environment: opslevel.RefOf(planModel.Environment.ValueString()),
 		Id:          opslevel.ID(planModel.Id.ValueString()),
 		Url:         planModel.Url.ValueStringPointer(),
 	})
