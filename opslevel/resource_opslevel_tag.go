@@ -41,7 +41,7 @@ type TagResourceModel struct {
 	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
-func NewTagResourceModel(ctx context.Context, tag opslevel.Tag, planModel TagResourceModel) (TagResourceModel, diag.Diagnostics) {
+func NewTagResourceModel(ctx context.Context, tag opslevel.Tag, planModel TagResourceModel) TagResourceModel {
 	var stateModel TagResourceModel
 
 	stateModel.TargetResource = RequiredStringValue(planModel.TargetResource.ValueString())
@@ -50,7 +50,7 @@ func NewTagResourceModel(ctx context.Context, tag opslevel.Tag, planModel TagRes
 	stateModel.Value = RequiredStringValue(tag.Value)
 	stateModel.Id = types.StringValue(string(tag.Id))
 
-	return stateModel, diag.Diagnostics{}
+	return stateModel
 }
 
 func (r *TagResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -130,8 +130,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create tag, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewTagResourceModel(ctx, *data, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewTagResourceModel(ctx, *data, planModel)
 	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a tag resource")
@@ -173,8 +172,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	stateModel, diags := NewTagResourceModel(ctx, *tag, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewTagResourceModel(ctx, *tag, planModel)
 
 	// Save updated planModel into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
