@@ -63,6 +63,16 @@ resource "opslevel_infrastructure" "big_infra" {
   schema = "Big Database"
 }
 
+# Integration AWS resources
+
+resource "opslevel_integration_aws" "example" {
+  external_id             = "mock-external-id"
+  iam_role                = "arn:aws:ecr:us-east-1:mock-iam-role"
+  name                    = "dev"
+  ownership_tag_overrides = true
+  ownership_tag_keys      = ["owner", "team", "group"]
+}
+
 # Property Assignment
 
 resource "opslevel_property_assignment" "color_picker_using_aliases" {
