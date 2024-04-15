@@ -60,7 +60,7 @@ func (r *TagResource) Metadata(ctx context.Context, req resource.MetadataRequest
 func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Domain Resource",
+		MarkdownDescription: "Tag Resource",
 
 		Attributes: map[string]schema.Attribute{
 			"resource_identifier": schema.StringAttribute{
