@@ -10,6 +10,14 @@ permissions:
   contents: write
 
 jobs:
+  dump_workflow_run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github.event.client_payload) }}
+        run: echo "$GITHUB_CONTEXT"
+
   release:
     runs-on: ubuntu-latest
     steps:
