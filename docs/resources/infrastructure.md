@@ -3,12 +3,12 @@
 page_title: "opslevel_infrastructure Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages an infrastructure resource
+  Infrastructure Resource
 ---
 
 # opslevel_infrastructure (Resource)
 
-Manages an infrastructure resource
+Infrastructure Resource
 
 ## Example Usage
 
@@ -20,7 +20,8 @@ data "opslevel_team" "foo" {
 // Minimum example
 resource "opslevel_infrastructure" "example_1" {
   schema = "Database"
-  provider_data {
+  owner  = data.opslevel_team.foo.id
+  provider_data = {
     account = "dev"
   }
   data = jsonencode({
@@ -32,7 +33,7 @@ resource "opslevel_infrastructure" "example_1" {
 resource "opslevel_infrastructure" "example_2" {
   schema = "Database"
   owner  = data.opslevel_team.foo.id
-  provider_data {
+  provider_data = {
     account = "dev"
     name    = "google cloud"
     type    = "BigQuery"
@@ -65,21 +66,21 @@ resource "opslevel_infrastructure" "example_2" {
 
 ### Required
 
+- `data` (String) The data of the infrastructure resource in JSON format.
+- `owner` (String) The id of the team that owns the infrastructure resource. Does not support aliases!
 - `schema` (String) The schema of the infrastructure resource that determines its data specification.
 
 ### Optional
 
-- `aliases` (List of String) The aliases of the infrastructure resource.
-- `data` (String) The data of the infrastructure resource in JSON format.
-- `last_updated` (String)
-- `owner` (String) The id of the team that owns the infrastructure resource. Does not support aliases!
-- `provider_data` (Block List, Max: 1) The provider specific data for the infrastructure resource. (see [below for nested schema](#nestedblock--provider_data))
+- `aliases` (List of String) The aliases for the infrastructure resource.
+- `provider_data` (Attributes) The provider specific data for the infrastructure resource. (see [below for nested schema](#nestedatt--provider_data))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the infrastructure.
+- `last_updated` (String)
 
-<a id="nestedblock--provider_data"></a>
+<a id="nestedatt--provider_data"></a>
 ### Nested Schema for `provider_data`
 
 Required:

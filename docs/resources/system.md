@@ -3,12 +3,12 @@
 page_title: "opslevel_system Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a system
+  System Resource
 ---
 
 # opslevel_system (Resource)
 
-Manages a system
+System Resource
 
 ## Example Usage
 
@@ -51,7 +51,7 @@ resource "opslevel_system" "example" {
 ### Read-Only
 
 - `aliases` (List of String) The aliases of the system.
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the system.
 
 ## Import
 

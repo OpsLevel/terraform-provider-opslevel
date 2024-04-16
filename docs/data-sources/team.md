@@ -3,12 +3,12 @@
 page_title: "opslevel_team Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  Team data source
 ---
 
 # opslevel_team (Data Source)
 
-
+Team data source
 
 ## Example Usage
 
@@ -27,13 +27,13 @@ data "opslevel_team" "devs" {
 
 ### Optional
 
-- `alias` (String) An alias of the team to find by.
-- `id` (String) The id of the team to find.
+- `alias` (String) The alias attached to the Team.
+- `id` (String) The ID of this Team.
 
 ### Read-Only
 
-- `members` (List of Object) List of members in the team with email address and role. (see [below for nested schema](#nestedatt--members))
-- `name` (String) The name of the team.
+- `members` (List of Object) List of team members on the team with email address and role. (see [below for nested schema](#nestedatt--members))
+- `name` (String) The name of the Team.
 - `parent_alias` (String) The alias of the parent team.
 - `parent_id` (String) The id of the parent team.
 

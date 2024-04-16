@@ -3,12 +3,12 @@
 page_title: "opslevel_domains Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  List of all Domain data sources
 ---
 
 # opslevel_domains (Data Source)
 
-
+List of all Domain data sources
 
 ## Example Usage
 
@@ -26,11 +26,17 @@ output "found" {
 
 ### Read-Only
 
+- `domains` (List of Object) List of domain data sources (see [below for nested schema](#nestedatt--domains))
+
+<a id="nestedatt--domains"></a>
+### Nested Schema for `domains`
+
+Read-Only:
+
 - `aliases` (List of String)
-- `descriptions` (List of String)
-- `id` (String) The ID of this resource.
-- `ids` (List of String)
-- `names` (List of String)
-- `owners` (List of String)
+- `description` (String)
+- `id` (String)
+- `name` (String)
+- `owner` (String)
 
 

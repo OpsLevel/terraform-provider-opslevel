@@ -1,4 +1,0 @@
-kind: Refactor
-body: 'TF config: "provider_data" field in opslevel_infrastructure resource uses equal
-  sign'
-time: 2024-04-16T08:42:58.685833-05:00

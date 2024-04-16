@@ -3,12 +3,12 @@
 page_title: "opslevel_check_custom_event Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a custom event check.
+  Check Custom Event Resource
 ---
 
 # opslevel_check_custom_event (Resource)
 
-Manages a custom event check.
+Check Custom Event Resource
 
 ## Example Usage
 
@@ -76,7 +76,6 @@ resource "opslevel_check_custom_event" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `integration` (String) The integration id this check will use.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
@@ -87,17 +86,19 @@ resource "opslevel_check_custom_event" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
 - `message` (String) The check result message template. It is compiled with Liquid and formatted in Markdown.
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
 ## Import
 

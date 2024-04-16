@@ -3,12 +3,12 @@
 page_title: "opslevel_rubric_category Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a rubric category
+  Rubric Category Resource
 ---
 
 # opslevel_rubric_category (Resource)
 
-Manages a rubric category
+Rubric Category Resource
 
 ## Example Usage
 
@@ -27,15 +27,12 @@ output "category" {
 
 ### Required
 
-- `name` (String) The display name of the category.
-
-### Optional
-
-- `last_updated` (String)
+- `name` (String) The display name of the rubric category.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the rubric category.
+- `last_updated` (String)
 
 ## Import
 

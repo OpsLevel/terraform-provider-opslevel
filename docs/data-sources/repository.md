@@ -3,12 +3,12 @@
 page_title: "opslevel_repository Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  Repository data source
 ---
 
 # opslevel_repository (Data Source)
 
-
+Repository data source
 
 ## Example Usage
 
@@ -27,7 +27,7 @@ data "opslevel_repository" "bar" {
 
 ### Optional
 
-- `alias` (String) A human-friendly, unique identifier for the repository.
-- `id` (String) The id of the repository to find.
+- `alias` (String) The human-friendly, unique identifier for the repository.
+- `id` (String) The unique identifier for the repository.
 
 

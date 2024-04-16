@@ -3,12 +3,12 @@
 page_title: "opslevel_check_alert_source_usage Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages an alert source usage check
+  Check Alert Source Usage Resource
 ---
 
 # opslevel_check_alert_source_usage (Resource)
 
-Manages an alert source usage check
+Check Alert Source Usage Resource
 
 ## Example Usage
 
@@ -64,26 +64,27 @@ resource "opslevel_check_alert_source_usage" "example" {
 
 - `alert_type` (String) The type of the alert source.
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 
 ### Optional
 
-- `alert_name_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--alert_name_predicate))
+- `alert_name_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--alert_name_predicate))
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--alert_name_predicate"></a>
+<a id="nestedatt--alert_name_predicate"></a>
 ### Nested Schema for `alert_name_predicate`
 
 Required:

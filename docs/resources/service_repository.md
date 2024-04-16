@@ -3,12 +3,12 @@
 page_title: "opslevel_service_repository Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a service repository
+  ServiceRepository Resource
 ---
 
 # opslevel_service_repository (Resource)
 
-Manages a service repository
+ServiceRepository Resource
 
 ## Example Usage
 
@@ -44,16 +44,16 @@ resource "opslevel_service_repository" "bar" {
 ### Optional
 
 - `base_directory` (String) The directory in the repository containing opslevel.yml.
-- `last_updated` (String)
 - `name` (String) The name displayed in the UI for the service repository.
-- `repository` (String) The id of the service that this will be added to.
-- `repository_alias` (String) The alias of the service that this will be added to.
+- `repository` (String) The id of the repository that this will be added to.
+- `repository_alias` (String) The alias of the repository that this will be added to.
 - `service` (String) The id of the service that this will be added to.
 - `service_alias` (String) The alias of the service that this will be added to.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the Service Repository.
+- `last_updated` (String)
 
 ## Import
 

@@ -3,12 +3,12 @@
 page_title: "opslevel_scorecard Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  Scorecard data source
 ---
 
 # opslevel_scorecard (Data Source)
 
-
+Scorecard data source
 
 ## Example Usage
 
@@ -37,7 +37,7 @@ data "opslevel_scorecard" "bar" {
 - `filter_id` (String) The scorecard's filter.
 - `id` (String) The ID of this resource.
 - `name` (String) The scorecard's name.
-- `owner_id` (String) The scorecard's owner.
+- `owner_id` (String) The scorecard's owner id.
 - `passing_checks` (Number) The scorecard's number of checks that are passing.
 - `service_count` (Number) The scorecard's number of services matched.
 - `total_checks` (Number) The scorecard's total number of checks.

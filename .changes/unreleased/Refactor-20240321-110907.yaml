@@ -1,3 +1,0 @@
-kind: Refactor
-body: datasource opslevel_service takes identifier, replaces id or alias
-time: 2024-03-21T11:09:07.280845-05:00

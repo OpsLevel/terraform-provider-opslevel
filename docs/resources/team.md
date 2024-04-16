@@ -3,12 +3,12 @@
 page_title: "opslevel_team Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a team
+  Team Resource
 ---
 
 # opslevel_team (Resource)
 
-Manages a team
+Team Resource
 
 ## Example Usage
 
@@ -48,21 +48,21 @@ output "team" {
 ### Optional
 
 - `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
-- `last_updated` (String)
-- `member` (Block List) List of members in the team with email address and role. (see [below for nested schema](#nestedblock--member))
+- `member` (Block List) (see [below for nested schema](#nestedblock--member))
 - `parent` (String) The id or alias of the parent team.
 - `responsibilities` (String) A description of what the team is responsible for.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 <a id="nestedblock--member"></a>
 ### Nested Schema for `member`
 
 Required:
 
-- `email` (String) The email address of the team member.
+- `email` (String) The email address of the team member. Must be sorted by email address.
 - `role` (String) The role of the team member.
 
 ## Import

@@ -3,12 +3,12 @@
 page_title: "opslevel_trigger_definition Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a webhook action
+  Trigger Definition Resource
 ---
 
 # opslevel_trigger_definition (Resource)
 
-Manages a webhook action
+Trigger Definition Resource
 
 ## Example Usage
 
@@ -113,7 +113,7 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the trigger definition.
 
 ## Import
 

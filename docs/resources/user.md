@@ -3,12 +3,12 @@
 page_title: "opslevel_user Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a User
+  User Resource
 ---
 
 # opslevel_user (Resource)
 
-Manages a User
+User Resource
 
 ## Example Usage
 
@@ -30,13 +30,13 @@ resource "opslevel_user" "john" {
 
 ### Optional
 
-- `last_updated` (String)
-- `role` (String) The access role (e.g. user vs admin) of the user.
-- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.
+- `role` (String) The access role (e.g. user or admin) of the user.
+- `skip_welcome_email` (Boolean, Deprecated) Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the user.
+- `last_updated` (String)
 
 ## Import
 

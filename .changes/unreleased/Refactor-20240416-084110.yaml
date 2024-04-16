@@ -1,4 +1,0 @@
-kind: Refactor
-body: 'TF config: "update_frequency" field in opslevel_check_manual resource uses equal
-  sign'
-time: 2024-04-16T08:41:10.854947-05:00

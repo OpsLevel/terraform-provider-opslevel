@@ -3,12 +3,12 @@
 page_title: "opslevel_domain Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a domain
+  Domain Resource
 ---
 
 # opslevel_domain (Resource)
 
-Manages a domain
+Domain Resource
 
 ## Example Usage
 
@@ -30,19 +30,19 @@ resource "opslevel_domain" "example" {
 
 ### Required
 
-- `name` (String) The name for the domain.
+- `name` (String) The name of the domain.
 
 ### Optional
 
-- `description` (String) The description for the domain.
-- `last_updated` (String)
+- `description` (String) The description of the domain.
 - `note` (String) Additional information about the domain.
 - `owner` (String) The id of the team that owns the domain.
 
 ### Read-Only
 
 - `aliases` (List of String) The aliases of the domain.
-- `id` (String) The ID of this resource.
+- `id` (String) Example identifier
+- `last_updated` (String)
 
 ## Import
 

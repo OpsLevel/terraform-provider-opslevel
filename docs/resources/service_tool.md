@@ -3,12 +3,12 @@
 page_title: "opslevel_service_tool Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a service tool
+  ServiceTool Resource
 ---
 
 # opslevel_service_tool (Resource)
 
-Manages a service tool
+ServiceTool Resource
 
 ## Example Usage
 
@@ -48,13 +48,13 @@ resource "opslevel_service_tool" "bar_datadog" {
 ### Optional
 
 - `environment` (String) The environment that the tool belongs to.
-- `last_updated` (String)
 - `service` (String) The id of the service that this will be added to.
 - `service_alias` (String) The alias of the service that this will be added to.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the serviceTool.
+- `last_updated` (String)
 
 ## Import
 

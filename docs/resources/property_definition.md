@@ -3,19 +3,28 @@
 page_title: "opslevel_property_definition Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a property definition
+  Property Definition Resource
 ---
 
 # opslevel_property_definition (Resource)
 
-Manages a property definition
+Property Definition Resource
 
 ## Example Usage
 
 ```terraform
-resource "opslevel_property_definition" "newpd" {
-  name   = "Friends Property"
-  schema = jsonencode({ "$ref" : "#/$defs/MyProp", "$defs" : { "MyProp" : { "properties" : { "name" : { "type" : "string", "title" : "the new name", "description" : "The name of a friend", "default" : "alex", "examples" : ["joe", "lucy"] } }, "additionalProperties" : false, "type" : "object", "required" : ["name"] } } })
+resource "opslevel_property_definition" "color_picker" {
+  name = "Color Picker"
+  schema = jsonencode({
+    "type" : "string",
+    "enum" : [
+      "red",
+      "green",
+      "blue",
+    ]
+  })
+  allowed_in_config_files = false
+  property_display_status = "visible"
 }
 ```
 
@@ -26,17 +35,17 @@ resource "opslevel_property_definition" "newpd" {
 
 - `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
 - `name` (String) The display name of the property definition.
+- `property_display_status` (String) The display status of a custom property on service pages. (Options: hidden, visible)
 - `schema` (String) The schema of the property definition.
 
 ### Optional
 
 - `description` (String) The description of the property definition.
-- `last_updated` (String)
-- `property_display_status` (String) The display status of a custom property on service pages. (Options: 'visible' or 'hidden')
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 ## Import
 

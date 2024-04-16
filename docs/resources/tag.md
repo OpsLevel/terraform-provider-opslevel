@@ -3,12 +3,12 @@
 page_title: "opslevel_tag Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a tag. Only uses API's 'tag create', not 'tag assign'.
+  Tag Resource
 ---
 
 # opslevel_tag (Resource)
 
-Manages a tag. Only uses API's 'tag create', not 'tag assign'.
+Tag Resource
 
 ## Example Usage
 
@@ -93,13 +93,9 @@ resource "opslevel_tag" "foo_user" {
 - `resource_type` (String) The resource type that the tag applies to.
 - `value` (String) The value of the tag.
 
-### Optional
-
-- `last_updated` (String)
-
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `returned_resource` (String)
+- `id` (String) The id of the tag created.
+- `last_updated` (String)
 
 

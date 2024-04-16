@@ -3,12 +3,12 @@
 page_title: "opslevel_integration_aws Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a AWS Integration
+  AWS Integration resource
 ---
 
 # opslevel_integration_aws (Resource)
 
-Manages a AWS Integration
+AWS Integration resource
 
 ## Example Usage
 
@@ -127,12 +127,12 @@ resource "opslevel_integration_aws" "dev" {
 
 ### Optional
 
-- `last_updated` (String)
 - `ownership_tag_keys` (List of String) An Array of tag keys used to associate ownership from an integration. Max 5
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the AWS integration.
+- `last_updated` (String)
 
 ## Import
 

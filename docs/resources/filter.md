@@ -3,12 +3,12 @@
 page_title: "opslevel_filter Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a filter
+  Filter Resource
 ---
 
 # opslevel_filter (Resource)
 
-Manages a filter
+Filter Resource
 
 ## Example Usage
 
@@ -68,21 +68,21 @@ resource "opslevel_filter" "case_sensitive" {
 
 ### Optional
 
-- `connective` (String) The logical operator to be used in conjunction with predicates.
-- `last_updated` (String)
-- `predicate` (Block List) The list of predicates used to select which services apply to the filter. (see [below for nested schema](#nestedblock--predicate))
+- `connective` (String) The logical operator to be used in conjunction with predicates. Valid values are `and`, `or`
+- `predicate` (Block List) (see [below for nested schema](#nestedblock--predicate))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the filter.
+- `last_updated` (String)
 
 <a id="nestedblock--predicate"></a>
 ### Nested Schema for `predicate`
 
 Required:
 
-- `key` (String) The condition key used by the predicate.
-- `type` (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `matches`, `does_not_match`, `satisfies_jq_expression`
+- `key` (String) The condition key used by the predicate. Valid values are `tier_index`, `lifecycle_index`, `language`, `framework`, `product`, `name`, `tags`, `owner_id`, `group_ids`, `owner_ids`, `creation_source`, `repository_ids`, `filter_id`, `aliases`, `domain_id`, `system_id`, `properties`
+- `type` (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression`
 
 Optional:
 

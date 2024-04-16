@@ -3,12 +3,12 @@
 page_title: "opslevel_service Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  Service data source
 ---
 
 # opslevel_service (Data Source)
 
-
+Service data source
 
 ## Example Usage
 
@@ -28,11 +28,11 @@ data "opslevel_service" "bar" {
 ### Optional
 
 - `alias` (String) An alias of the service to find by.
-- `id` (String) The id of the service to find.
+- `id` (String) The id of the service to find
 
 ### Read-Only
 
-- `aliases` (List of String) A list of human-friendly, unique identifiers for the service
+- `aliases` (List of String) The aliases of the service.
 - `api_document_path` (String) The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.
 - `description` (String) A brief description of the service.
 - `framework` (String) The primary software development framework that the service uses.
@@ -40,7 +40,6 @@ data "opslevel_service" "bar" {
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `name` (String) The display name of the service.
 - `owner` (String) The team that owns the service.
-- `owner_alias` (String, Deprecated) The team that owns the service.
 - `owner_id` (String) The team ID that owns the service.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
@@ -54,8 +53,15 @@ data "opslevel_service" "bar" {
 
 Read-Only:
 
-- `definition` (String)
-- `owner` (String)
+- `definition` (Object) (see [below for nested schema](#nestedobjatt--properties--definition))
 - `value` (String)
+
+<a id="nestedobjatt--properties--definition"></a>
+### Nested Schema for `properties.definition`
+
+Read-Only:
+
+- `aliases` (List of String)
+- `id` (String)
 
 

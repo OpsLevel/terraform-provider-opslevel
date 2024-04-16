@@ -3,12 +3,12 @@
 page_title: "opslevel_webhook_action Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a webhook action
+  WebhookAction resource
 ---
 
 # opslevel_webhook_action (Resource)
 
-Manages a webhook action
+WebhookAction resource
 
 ## Example Usage
 
@@ -61,7 +61,7 @@ resource "opslevel_webhook_action" "example" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the Webhook Action.
 
 ## Import
 

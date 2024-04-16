@@ -3,12 +3,12 @@
 page_title: "opslevel_property_assignment Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages properties assigned to entities (like Services)
+  Property Assignment Resource
 ---
 
 # opslevel_property_assignment (Resource)
 
-Manages properties assigned to entities (like Services)
+Property Assignment Resource
 
 ## Example Usage
 
@@ -38,17 +38,17 @@ resource "opslevel_property_assignment" "example_3" {
 ### Required
 
 - `definition` (String) The custom property definition's ID or alias.
-- `owner` (String) The ID or alias of the entity that the property has been assigned to.
-- `value` (String) The value of the custom property.
+- `owner` (String) The ID or alias of the entity (currently only supports service) that the property has been assigned to.
 
 ### Optional
 
-- `last_updated` (String)
+- `value` (String) The value of the custom property (must be a valid JSON value or null or object).
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `locked` (Boolean) Locked = true if the property has been set in opslevel.yml.
+- `last_updated` (String)
+- `locked` (Boolean) If locked = true, the property has been set in opslevel.yml and cannot be modified in Terraform!
 
 ## Import
 

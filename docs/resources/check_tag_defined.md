@@ -3,12 +3,12 @@
 page_title: "opslevel_check_tag_defined Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a tag defined check
+  Check Tag Defined Resource
 ---
 
 # opslevel_check_tag_defined (Resource)
 
-Manages a tag defined check
+Check Tag Defined Resource
 
 ## Example Usage
 
@@ -48,7 +48,7 @@ resource "opslevel_check_tag_defined" "example" {
   owner    = data.opslevel_team.devs.id
   filter   = data.opslevel_filter.tier1.id
   tag_key  = "environment"
-  tag_predicate {
+  tag_predicate = {
     type  = "contains"
     value = "dev"
   }
@@ -62,7 +62,6 @@ resource "opslevel_check_tag_defined" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 - `tag_key` (String) The tag key where the tag predicate should be applied.
@@ -70,19 +69,21 @@ resource "opslevel_check_tag_defined" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `tag_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tag_predicate))
+- `tag_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tag_predicate))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--tag_predicate"></a>
+<a id="nestedatt--tag_predicate"></a>
 ### Nested Schema for `tag_predicate`
 
 Required:

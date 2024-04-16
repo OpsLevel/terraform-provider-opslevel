@@ -3,12 +3,12 @@
 page_title: "opslevel_system Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  System data source
 ---
 
 # opslevel_system (Data Source)
 
-
+System data source
 
 ## Example Usage
 
@@ -23,15 +23,15 @@ data "opslevel_system" "example" {
 
 ### Required
 
-- `identifier` (String) The id or alias of the system to find.
+- `identifier` (String) The id or alias of the System.
 
 ### Read-Only
 
-- `aliases` (List of String) The aliases of the system.
-- `description` (String) The description of the system.
-- `domain` (String) The id of the domain this system is child to.
-- `id` (String) The ID of this resource.
-- `name` (String) The name of the system.
-- `owner` (String) The id of the team that owns the system.
+- `aliases` (List of String) All of the aliases attached to the System.
+- `description` (String) The description of the System.
+- `domain` (String) ID of the parent domain of the System.
+- `id` (String) The ID of this System.
+- `name` (String) The name of the System.
+- `owner` (String) The id of the team that owns the System.
 
 

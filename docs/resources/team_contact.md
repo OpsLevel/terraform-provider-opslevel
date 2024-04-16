@@ -3,12 +3,12 @@
 page_title: "opslevel_team_contact Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a team contact
+  Team Contact Resource
 ---
 
 # opslevel_team_contact (Resource)
 
-Manages a team contact
+Team Contact Resource
 
 ## Example Usage
 
@@ -49,13 +49,10 @@ resource "opslevel_team_contact" "example" {
 - `type` (String) The method of contact [email, slack, slack_handle, web].
 - `value` (String) The contact value. Examples: support@company.com for type email, https://opslevel.com for type web, #devs for type slack
 
-### Optional
-
-- `last_updated` (String)
-
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 ## Import
 

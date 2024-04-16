@@ -3,12 +3,12 @@
 page_title: "opslevel_check_repository_file Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a repository file check
+  Check Repository File Resource
 ---
 
 # opslevel_check_repository_file (Resource)
 
-Manages a repository file check
+Check Repository File Resource
 
 ## Example Usage
 
@@ -49,7 +49,7 @@ resource "opslevel_check_repository_file" "example" {
   filter           = data.opslevel_filter.tier1.id
   directory_search = false
   filepaths        = ["/src", "/tests"]
-  file_contents_predicate {
+  file_contents_predicate = {
     type  = "equals"
     value = "import shim"
   }
@@ -64,7 +64,6 @@ resource "opslevel_check_repository_file" "example" {
 
 - `category` (String) The id of the category the check belongs to.
 - `directory_search` (Boolean) Whether the check looks for the existence of a directory instead of a file.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filepaths` (List of String) Restrict the search to certain file paths.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
@@ -73,19 +72,21 @@ resource "opslevel_check_repository_file" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
-- `file_contents_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--file_contents_predicate))
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
+- `file_contents_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--file_contents_predicate))
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--file_contents_predicate"></a>
+<a id="nestedatt--file_contents_predicate"></a>
 ### Nested Schema for `file_contents_predicate`
 
 Required:

@@ -3,12 +3,12 @@
 page_title: "opslevel_service Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a service
+  Service Resource
 ---
 
 # opslevel_service (Resource)
 
-Manages a service
+Service Resource
 
 ## Example Usage
 
@@ -75,9 +75,8 @@ output "foo_aliases" {
 - `description` (String) A brief description of the service.
 - `framework` (String) The primary software development framework that the service uses.
 - `language` (String) The primary programming language that the service is written in.
-- `last_updated` (String)
 - `lifecycle_alias` (String) The lifecycle stage of the service.
-- `owner` (String) The team that owns the service. ID or Alias my be used.
+- `owner` (String) The team that owns the service. ID or Alias may be used.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.
@@ -85,7 +84,8 @@ output "foo_aliases" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The id of the service to find
+- `last_updated` (String)
 
 ## Import
 

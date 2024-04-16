@@ -3,12 +3,12 @@
 page_title: "opslevel_property_definition Data Source - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  
+  Data source for Property Definitions
 ---
 
 # opslevel_property_definition (Data Source)
 
-
+Data source for Property Definitions
 
 ## Example Usage
 
@@ -27,18 +27,15 @@ output "pd_schema" {
 
 ### Required
 
-- `identifier` (String) The id or alias of the property definition to find.
-
-### Optional
-
-- `description` (String) The description of the property definition.
-- `property_display_status` (String) The display status of a custom property on service pages. (Options: 'visible' or 'hidden')
+- `identifier` (String) The id or alias of the property definition
 
 ### Read-Only
 
 - `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
+- `description` (String) The description of the property definition.
 - `id` (String) The ID of this resource.
 - `name` (String) The display name of the property definition.
+- `property_display_status` (String) The display status of a custom property on service pages. (Options: 'visible' or 'hidden')
 - `schema` (String) The schema of the property definition.
 
 

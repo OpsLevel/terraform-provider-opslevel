@@ -3,12 +3,12 @@
 page_title: "opslevel_check_tool_usage Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a tool usage check
+  Check Tool Usage Resource
 ---
 
 # opslevel_check_tool_usage (Resource)
 
-Manages a tool usage check
+Check Tool Usage Resource
 
 ## Example Usage
 
@@ -66,7 +66,6 @@ resource "opslevel_check_tool_usage" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 - `tool_category` (String) The category that the tool belongs to.
@@ -74,21 +73,23 @@ resource "opslevel_check_tool_usage" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
-- `environment_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--environment_predicate))
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
+- `environment_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--environment_predicate))
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `tool_name_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_name_predicate))
-- `tool_url_predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--tool_url_predicate))
+- `tool_name_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tool_name_predicate))
+- `tool_url_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tool_url_predicate))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--environment_predicate"></a>
+<a id="nestedatt--environment_predicate"></a>
 ### Nested Schema for `environment_predicate`
 
 Required:
@@ -100,7 +101,7 @@ Optional:
 - `value` (String) The condition value used by the predicate.
 
 
-<a id="nestedblock--tool_name_predicate"></a>
+<a id="nestedatt--tool_name_predicate"></a>
 ### Nested Schema for `tool_name_predicate`
 
 Required:
@@ -112,7 +113,7 @@ Optional:
 - `value` (String) The condition value used by the predicate.
 
 
-<a id="nestedblock--tool_url_predicate"></a>
+<a id="nestedatt--tool_url_predicate"></a>
 ### Nested Schema for `tool_url_predicate`
 
 Required:

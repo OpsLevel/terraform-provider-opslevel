@@ -3,12 +3,12 @@
 page_title: "opslevel_team_tag Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a team tag
+  Team Tag Resource
 ---
 
 # opslevel_team_tag (Resource)
 
-Manages a team tag
+Team Tag Resource
 
 
 
@@ -22,12 +22,12 @@ Manages a team tag
 
 ### Optional
 
-- `last_updated` (String)
 - `team` (String) The id of the team that this will be added to.
 - `team_alias` (String) The alias of the team that this will be added to.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 

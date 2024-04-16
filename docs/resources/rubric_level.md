@@ -3,12 +3,12 @@
 page_title: "opslevel_rubric_level Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a rubric level
+  Rubric Level Resource
 ---
 
 # opslevel_rubric_level (Resource)
 
-Manages a rubric level
+Rubric Level Resource
 
 ## Example Usage
 
@@ -29,17 +29,17 @@ output "level" {
 
 ### Required
 
-- `name` (String) The display name of the category.
+- `name` (String) The display name of the rubric level.
 
 ### Optional
 
-- `description` (String) The description of the category.
-- `index` (Number) An integer allowing this level to be inserted between others. Must be unique per Rubric.
-- `last_updated` (String)
+- `description` (String) The description of the rubric level.
+- `index` (Number) An integer allowing this level to be inserted between others. Must be unique per rubric.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the rubric level.
+- `last_updated` (String)
 
 ## Import
 

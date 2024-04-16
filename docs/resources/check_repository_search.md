@@ -3,12 +3,12 @@
 page_title: "opslevel_check_repository_search Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a repository search check.
+  Check Repository Search Resource
 ---
 
 # opslevel_check_repository_search (Resource)
 
-Manages a repository search check.
+Check Repository Search Resource
 
 ## Example Usage
 
@@ -48,7 +48,7 @@ resource "opslevel_check_repository_search" "example" {
   owner           = data.opslevel_team.devs.id
   filter          = data.opslevel_filter.tier1.id
   file_extensions = ["sbt", "py"]
-  file_contents_predicate {
+  file_contents_predicate = {
     type  = "contains"
     value = "postgres"
   }
@@ -62,27 +62,28 @@ resource "opslevel_check_repository_search" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
-- `file_contents_predicate` (Block List, Min: 1, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--file_contents_predicate))
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
+- `file_contents_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--file_contents_predicate))
 - `file_extensions` (List of String) Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: ["py", "rb"].
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--file_contents_predicate"></a>
+<a id="nestedatt--file_contents_predicate"></a>
 ### Nested Schema for `file_contents_predicate`
 
 Required:

@@ -3,12 +3,12 @@
 page_title: "opslevel_service_tag Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a service tag
+  Service Tag Resource
 ---
 
 # opslevel_service_tag (Resource)
 
-Manages a service tag
+Service Tag Resource
 
 
 
@@ -22,12 +22,12 @@ Manages a service tag
 
 ### Optional
 
-- `last_updated` (String)
 - `service` (String) The id of the service that this will be added to.
 - `service_alias` (String) The alias of the service that this will be added to.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `last_updated` (String)
 
 

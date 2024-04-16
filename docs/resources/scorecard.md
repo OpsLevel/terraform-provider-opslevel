@@ -3,12 +3,12 @@
 page_title: "opslevel_scorecard Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a scorecard
+  Scorecard Resource
 ---
 
 # opslevel_scorecard (Resource)
 
-Manages a scorecard
+Scorecard Resource
 
 ## Example Usage
 
@@ -65,7 +65,7 @@ resource "opslevel_check_manual" "my_check" {
 ### Read-Only
 
 - `aliases` (List of String) The scorecard's aliases.
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the scorecard.
 - `passing_checks` (Number) The scorecard's number of checks that are passing.
 - `service_count` (Number) The scorecard's number of services matched.
 - `total_checks` (Number) The scorecard's total number of checks.

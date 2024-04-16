@@ -3,12 +3,12 @@
 page_title: "opslevel_secret Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a secret
+  Secret Resource
 ---
 
 # opslevel_secret (Resource)
 
-Manages a secret
+Secret Resource
 
 ## Example Usage
 
@@ -35,18 +35,15 @@ resource "opslevel_secret" "my_secret_2" {
 
 ### Required
 
-- `alias` (String) The alias for this secret.
+- `alias` (String) The alias for this secret. Can only be set at create time.
 - `owner` (String) The owner of this secret.
-- `value` (String, Sensitive) A sensitive value.
-
-### Optional
-
-- `last_updated` (String)
+- `value` (String, Sensitive) A sensitive value
 
 ### Read-Only
 
 - `created_at` (String) Timestamp of time created at.
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the secret.
+- `last_updated` (String)
 - `updated_at` (String) Timestamp of last update.
 
 ## Import

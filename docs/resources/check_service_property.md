@@ -3,12 +3,12 @@
 page_title: "opslevel_check_service_property Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a service property check.
+  Check Service Property Resource
 ---
 
 # opslevel_check_service_property (Resource)
 
-Manages a service property check.
+Check Service Property Resource
 
 ## Example Usage
 
@@ -62,7 +62,6 @@ resource "opslevel_check_service_property" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 - `property` (String) The property of the service that the check will verify.
@@ -70,19 +69,21 @@ resource "opslevel_check_service_property" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `predicate` (Block List, Max: 1) A condition that should be satisfied. (see [below for nested schema](#nestedblock--predicate))
+- `predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--predicate))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--predicate"></a>
+<a id="nestedatt--predicate"></a>
 ### Nested Schema for `predicate`
 
 Required:

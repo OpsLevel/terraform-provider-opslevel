@@ -3,12 +3,12 @@
 page_title: "opslevel_check_manual Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Manages a manual check.
+  Check Manual Resource
 ---
 
 # opslevel_check_manual (Resource)
 
-Manages a manual check.
+Check Manual Resource
 
 ## Example Usage
 
@@ -70,7 +70,6 @@ resource "opslevel_check_manual" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 - `update_requires_comment` (Boolean) Whether the check requires a comment or not.
@@ -78,26 +77,28 @@ resource "opslevel_check_manual" "example" {
 ### Optional
 
 - `enable_on` (String) The date when the check will be automatically enabled.
-If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
-See example in opslevel_check_manual for proper configuration.
+ If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+ See example in opslevel_check_manual for proper configuration.
+- `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
 - `last_updated` (String)
-- `notes` (String) Additional information about the check.
+- `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `update_frequency` (Block List, Max: 1) Defines the minimum frequency of the updates. (see [below for nested schema](#nestedblock--update_frequency))
+- `update_frequency` (Attributes) Defines the minimum frequency of the updates. (see [below for nested schema](#nestedatt--update_frequency))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `description` (String) The description the check.
+- `id` (String) The id of the check.
 
-<a id="nestedblock--update_frequency"></a>
+<a id="nestedatt--update_frequency"></a>
 ### Nested Schema for `update_frequency`
 
 Required:
 
-- `starting_data` (String) The date that the check will start to evaluate.
+- `starting_date` (String) The date that the check will start to evaluate.
 - `time_scale` (String) The time scale type for the frequency.
-- `value` (Number) The value to be used together with the frequency scale.
+- `value` (Number) The value to be used together with the frequency time_scale.
 
 ## Import
 
