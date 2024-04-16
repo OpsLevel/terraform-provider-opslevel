@@ -1,149 +1,478 @@
 package opslevel
 
 import (
+	"context"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/rs/zerolog/log"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-func resourceService() *schema.Resource {
-	return &schema.Resource{
-		Description: "Manages a service",
-		Create:      wrap(resourceServiceCreate),
-		Read:        wrap(resourceServiceRead),
-		Update:      wrap(resourceServiceUpdate),
-		Delete:      wrap(resourceServiceDelete),
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
-		Schema: map[string]*schema.Schema{
-			"last_updated": {
-				Type:     schema.TypeString,
-				Optional: true,
+var _ resource.ResourceWithConfigure = &ServiceResource{}
+
+var _ resource.ResourceWithImportState = &ServiceResource{}
+
+func NewServiceResource() resource.Resource {
+	return &ServiceResource{}
+}
+
+// ServiceResource defines the resource implementation.
+type ServiceResource struct {
+	CommonResourceClient
+}
+
+// ServiceResourceModel describes the Service managed resource.
+type ServiceResourceModel struct {
+	Aliases                    types.List   `tfsdk:"aliases"`
+	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
+	Description                types.String `tfsdk:"description"`
+	Framework                  types.String `tfsdk:"framework"`
+	Id                         types.String `tfsdk:"id"`
+	Language                   types.String `tfsdk:"language"`
+	LastUpdated                types.String `tfsdk:"last_updated"`
+	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
+	Name                       types.String `tfsdk:"name"`
+	Owner                      types.String `tfsdk:"owner"`
+	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
+	Product                    types.String `tfsdk:"product"`
+	Tags                       types.List   `tfsdk:"tags"`
+	TierAlias                  types.String `tfsdk:"tier_alias"`
+}
+
+func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	serviceResourceModel := ServiceResourceModel{
+		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
+		Description:     OptionalStringValue(service.Description),
+		Framework:       OptionalStringValue(service.Framework),
+		Id:              ComputedStringValue(string(service.Id)),
+		Language:        OptionalStringValue(service.Language),
+		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
+		Name:            RequiredStringValue(service.Name),
+		Product:         OptionalStringValue(service.Product),
+		TierAlias:       OptionalStringValue(service.Tier.Alias),
+	}
+
+	if len(service.ManagedAliases) == 0 {
+		serviceResourceModel.Aliases = types.ListNull(types.StringType)
+	} else {
+		serviceResourceModel.Aliases, diags = types.ListValueFrom(ctx, types.StringType, service.ManagedAliases)
+		if diags.HasError() {
+			return serviceResourceModel, diags
+		}
+	}
+
+	if service.Tags != nil && len(service.Tags.Nodes) > 0 {
+		serviceResourceModel.Tags, diags = types.ListValueFrom(ctx, types.StringType, flattenTagArray(service.Tags.Nodes))
+		if diags.HasError() {
+			return serviceResourceModel, diags
+		}
+	} else {
+		serviceResourceModel.Tags = types.ListNull(types.StringType)
+	}
+
+	if service.PreferredApiDocumentSource != nil {
+		apiDocSource := service.PreferredApiDocumentSource
+		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
+	}
+
+	return serviceResourceModel, diags
+}
+
+func (r *ServiceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_service"
+}
+
+func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Service Resource",
+
+		Attributes: map[string]schema.Attribute{
+			"aliases": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "A list of human-friendly, unique identifiers for the service.",
+				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.UniqueValues(),
+				},
+			},
+			"api_document_path": schema.StringAttribute{
+				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`.+\.(json|ya?ml)$`),
+						"ends with '.json', '.yml', or '.yaml'",
+					),
+				},
+			},
+			"description": schema.StringAttribute{
+				Description: "A brief description of the service.",
+				Optional:    true,
+			},
+			"framework": schema.StringAttribute{
+				Description: "The primary software development framework that the service uses.",
+				Optional:    true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The id of the service to find",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"language": schema.StringAttribute{
+				Description: "The primary programming language that the service is written in.",
+				Optional:    true,
+			},
+			"last_updated": schema.StringAttribute{
 				Computed: true,
 			},
-			"name": {
-				Type:        schema.TypeString,
+			"lifecycle_alias": schema.StringAttribute{
+				Description: "The lifecycle stage of the service.",
+				Optional:    true,
+			},
+			"name": schema.StringAttribute{
 				Description: "The display name of the service.",
-				ForceNew:    false,
 				Required:    true,
 			},
-			"product": {
-				Type:        schema.TypeString,
+			"owner": schema.StringAttribute{
+				Description: "The team that owns the service. ID or Alias may be used.",
+				Optional:    true,
+			},
+			"preferred_api_document_source": schema.StringAttribute{
+				Description: "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllApiDocumentSourceEnum...),
+				},
+			},
+			"product": schema.StringAttribute{
 				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
-				ForceNew:    false,
 				Optional:    true,
 			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "A brief description of the service.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"language": {
-				Type:        schema.TypeString,
-				Description: "The primary programming language that the service is written in.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"framework": {
-				Type:        schema.TypeString,
-				Description: "The primary software development framework that the service uses.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"tier_alias": {
-				Type:        schema.TypeString,
-				Description: "The software tier that the service belongs to.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"owner": {
-				Type:        schema.TypeString,
-				Description: "The team that owns the service. ID or Alias my be used.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"lifecycle_alias": {
-				Type:        schema.TypeString,
-				Description: "The lifecycle stage of the service.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"api_document_path": {
-				Type:        schema.TypeString,
-				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"preferred_api_document_source": {
-				Type:         schema.TypeString,
-				Description:  "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
-				ForceNew:     false,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice(opslevel.AllApiDocumentSourceEnum, false),
-			},
-			"aliases": {
-				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the service.",
-				ForceNew:    false,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"tags": {
-				Type:        schema.TypeList,
+			"tags": schema.ListAttribute{
+				ElementType: types.StringType,
 				Description: "A list of tags applied to the service.",
-				ForceNew:    false,
 				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Validators:  []validator.List{TagFormatValidator()},
+			},
+			"tier_alias": schema.StringAttribute{
+				Description: "The software tier that the service belongs to.",
+				Optional:    true,
 			},
 		},
 	}
 }
 
-func reconcileServiceAliases(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
-	expectedAliases := getStringArray(d, "aliases")
-	existingAliases := service.ManagedAliases
-	for _, existingAlias := range existingAliases {
-		if !slices.Contains(expectedAliases, existingAlias) {
-			err := client.DeleteServiceAlias(existingAlias)
-			if err != nil {
+func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel ServiceResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	serviceCreateInput := opslevel.ServiceCreateInput{
+		Description:    planModel.Description.ValueStringPointer(),
+		Framework:      planModel.Framework.ValueStringPointer(),
+		Language:       planModel.Language.ValueStringPointer(),
+		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
+		Name:           planModel.Name.ValueString(),
+		Product:        planModel.Product.ValueStringPointer(),
+		TierAlias:      planModel.TierAlias.ValueStringPointer(),
+	}
+
+	if planModel.Owner.ValueString() != "" {
+		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	}
+
+	service, err := r.client.CreateService(serviceCreateInput)
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service, got error: %s", err))
+		return
+	}
+
+	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
+		return
+	}
+	err = reconcileServiceAliases(*r.client, givenAliases, service)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s', got error: %s", givenAliases, err))
+		return
+	}
+
+	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
+		return
+	}
+	err = reconcileTags(*r.client, givenTags, service)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s', got error: %s", givenTags, err))
+		return
+	}
+	if planModel.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := planModel.ApiDocumentPath.ValueString()
+		if planModel.PreferredApiDocumentSource.IsNull() {
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s for service. error: %s", apiDocPath, err))
+				return
+			}
+		} else {
+			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s", apiDocPath, sourceEnum, err))
+				return
+			}
+		}
+	}
+	service, err = r.client.GetService(opslevel.ID(service.Id))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
+		return
+	}
+
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
+				stateModel.Owner.ValueString(),
+				planModel.Owner.ValueString(),
+			),
+		)
+		return
+	}
+	stateModel.LastUpdated = timeLastUpdated()
+
+	tflog.Trace(ctx, "created a service resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var planModel ServiceResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	service, err := r.client.GetService(opslevel.ID(planModel.Id.ValueString()))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		return
+	}
+
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	resp.Diagnostics.Append(diags...)
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+		)
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel ServiceResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	serviceUpdateInput := opslevel.ServiceUpdateInput{
+		Description:    opslevel.RefOf(planModel.Description.ValueString()),
+		Framework:      opslevel.RefOf(planModel.Framework.ValueString()),
+		Id:             opslevel.NewID(planModel.Id.ValueString()),
+		Language:       opslevel.RefOf(planModel.Language.ValueString()),
+		LifecycleAlias: opslevel.RefOf(planModel.LifecycleAlias.ValueString()),
+		Name:           planModel.Name.ValueStringPointer(),
+		Product:        opslevel.RefOf(planModel.Product.ValueString()),
+		TierAlias:      opslevel.RefOf(planModel.TierAlias.ValueString()),
+	}
+	if planModel.Owner.ValueString() != "" {
+		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	}
+
+	service, err := r.client.UpdateService(serviceUpdateInput)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service, got error: %s", err))
+		return
+	}
+
+	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
+		return
+	}
+	err = reconcileServiceAliases(*r.client, givenAliases, service)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases '%s', go error: %s", givenAliases, err))
+		return
+	}
+
+	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
+		return
+	}
+	err = reconcileTags(*r.client, givenTags, service)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
+		return
+	}
+	if planModel.ApiDocumentPath.ValueString() != "" {
+		apiDocPath := planModel.ApiDocumentPath.ValueString()
+		if planModel.PreferredApiDocumentSource.IsNull() {
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
+				resp.Diagnostics.AddError("opslevel client error",
+					fmt.Sprintf(
+						"Unable to set provided 'api_document_path' %s for service. error: %s",
+						apiDocPath, err),
+				)
+				return
+			}
+		} else {
+			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
+			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
+				resp.Diagnostics.AddError("opslevel client error",
+					fmt.Sprintf(
+						"Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s",
+						apiDocPath, sourceEnum, err),
+				)
+				return
+			}
+		}
+	}
+
+	service, err = r.client.GetService(opslevel.ID(service.Id))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
+		return
+	}
+
+	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
+
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		stateModel.Owner = planModel.Owner
+	case "":
+		stateModel.Owner = types.StringNull()
+	default:
+		resp.Diagnostics.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
+		)
+		return
+	}
+
+	tflog.Trace(ctx, "updated a service resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel ServiceResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteService(planModel.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a service resource")
+}
+
+func (r *ServiceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// Assigns new aliases from terraform config to service and deletes aliases not in config
+func reconcileServiceAliases(client opslevel.Client, aliasesFromConfig []string, service *opslevel.Service) error {
+	// delete service aliases found in service but not listed in Terraform config
+	for _, managedAlias := range service.ManagedAliases {
+		if !slices.Contains(aliasesFromConfig, managedAlias) {
+			if err := client.DeleteServiceAlias(managedAlias); err != nil {
 				return err
 			}
 		}
 	}
-	for _, expectedAlias := range expectedAliases {
-		if !slices.Contains(existingAliases, expectedAlias) {
-			_, err := client.CreateAliases(service.Id, []string{expectedAlias})
-			if err != nil {
-				return err
-			}
+
+	// create aliases listed in Terraform config but not found in service
+	newServiceAliases := []string{}
+	for _, configAlias := range aliasesFromConfig {
+		if !slices.Contains(service.ManagedAliases, configAlias) {
+			newServiceAliases = append(newServiceAliases, configAlias)
 		}
 	}
+	if len(newServiceAliases) > 0 {
+		if _, err := client.CreateAliases(service.Id, newServiceAliases); err != nil {
+			return err
+		}
+	}
+	service.ManagedAliases = aliasesFromConfig
 	return nil
 }
 
-func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *opslevel.Client) error {
-	tags := getStringArray(d, "tags")
-	existingTags := make([]string, 0)
+// Assigns new tags from terraform config to service and deletes tags not in config
+func reconcileTags(client opslevel.Client, tagsFromConfig []string, service *opslevel.Service) error {
+	// delete service tags found in service but not listed in Terraform config
+	existingTags := []string{}
 	for _, tag := range service.Tags.Nodes {
 		flattenedTag := flattenTag(tag)
 		existingTags = append(existingTags, flattenedTag)
-		if !slices.Contains(tags, flattenedTag) {
-			err := client.DeleteTag(tag.Id)
-			if err != nil {
+		if !slices.Contains(tagsFromConfig, flattenedTag) {
+			if err := client.DeleteTag(tag.Id); err != nil {
 				return err
 			}
 		}
 	}
+
+	// format tags listed in Terraform config but not found in service
 	tagInput := map[string]string{}
-	for _, tag := range tags {
+	for _, tag := range tagsFromConfig {
 		parts := strings.Split(tag, ":")
 		if len(parts) != 2 {
 			return fmt.Errorf("[%s] invalid tag, should be in format 'key:value' (only a single colon between the key and value, no spaces or special characters)", tag)
@@ -152,209 +481,12 @@ func reconcileTags(d *schema.ResourceData, service *opslevel.Service, client *op
 		value := parts[1]
 		tagInput[key] = value
 	}
-	_, err := client.AssignTags(string(service.Id), tagInput)
+	// assign tags listed in Terraform config but not found in service
+	assignedTags, err := client.AssignTags(string(service.Id), tagInput)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func resourceServiceCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := opslevel.ServiceCreateInput{
-		Name:           d.Get("name").(string),
-		Product:        opslevel.RefOf(d.Get("product").(string)),
-		Description:    opslevel.RefOf(d.Get("description").(string)),
-		Language:       opslevel.RefOf(d.Get("language").(string)),
-		Framework:      opslevel.RefOf(d.Get("framework").(string)),
-		TierAlias:      opslevel.RefOf(d.Get("tier_alias").(string)),
-		LifecycleAlias: opslevel.RefOf(d.Get("lifecycle_alias").(string)),
-	}
-	if owner := d.Get("owner"); owner != "" {
-		input.OwnerInput = opslevel.NewIdentifier(owner.(string))
-	}
-
-	resource, err := client.CreateService(input)
-	if err != nil {
-		return err
-	}
-	d.SetId(string(resource.Id))
-
-	err = reconcileServiceAliases(d, resource, client)
-	if err != nil {
-		return err
-	}
-
-	err = reconcileTags(d, resource, client)
-	if err != nil {
-		return err
-	}
-
-	docPath, ok1 := d.GetOk("api_document_path")
-	docSource, ok2 := d.GetOk("preferred_api_document_source")
-	if ok1 || ok2 {
-		var source *opslevel.ApiDocumentSourceEnum = nil
-		if ok2 {
-			s := opslevel.ApiDocumentSourceEnum(docSource.(string))
-			source = &s
-		}
-		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath.(string), source)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
-		}
-	}
-
-	return resourceServiceRead(d, client)
-}
-
-func resourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
-
-	resource, err := client.GetService(opslevel.ID(id))
-	if err != nil {
-		return err
-	}
-
-	if err := d.Set("name", resource.Name); err != nil {
-		return err
-	}
-	if err := d.Set("product", resource.Product); err != nil {
-		return err
-	}
-	if err := d.Set("description", resource.Description); err != nil {
-		return err
-	}
-	if err := d.Set("language", resource.Language); err != nil {
-		return err
-	}
-	if err := d.Set("framework", resource.Framework); err != nil {
-		return err
-	}
-	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
-		return err
-	}
-
-	// only read in changes to optional fields if they have been set before
-	// this will prevent HasChange() from detecting changes on update
-	if owner, ok := d.GetOk("owner"); ok || owner != "" {
-		var ownerValue string
-		if opslevel.IsID(owner.(string)) {
-			ownerValue = string(resource.Owner.Id)
-		} else {
-			ownerValue = string(resource.Owner.Alias)
-		}
-
-		if err := d.Set("owner", ownerValue); err != nil {
-			return err
-		}
-	}
-
-	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
-		return err
-	}
-
-	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
-		return err
-	}
-	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
-		return err
-	}
-
-	if err := d.Set("api_document_path", resource.ApiDocumentPath); err != nil {
-		return err
-	}
-	if err := d.Set("preferred_api_document_source", resource.PreferredApiDocumentSource); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func resourceServiceUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
-
-	input := opslevel.ServiceUpdateInput{
-		Id: opslevel.NewID(id),
-	}
-
-	if d.HasChange("name") {
-		input.Name = opslevel.RefOf(d.Get("name").(string))
-	}
-	if d.HasChange("product") {
-		input.Product = opslevel.RefOf(d.Get("product").(string))
-	}
-	if d.HasChange("description") {
-		input.Description = opslevel.RefOf(d.Get("description").(string))
-	}
-	if d.HasChange("language") {
-		input.Language = opslevel.RefOf(d.Get("language").(string))
-	}
-	if d.HasChange("framework") {
-		input.Framework = opslevel.RefOf(d.Get("framework").(string))
-	}
-	if d.HasChange("tier_alias") {
-		input.TierAlias = opslevel.RefOf(d.Get("tier_alias").(string))
-	}
-	if d.HasChange("owner") {
-		if owner := d.Get("owner"); owner != "" {
-			input.OwnerInput = opslevel.NewIdentifier(owner.(string))
-		} else {
-			input.OwnerInput = opslevel.NewIdentifier()
-		}
-	}
-	if d.HasChange("lifecycle_alias") {
-		input.LifecycleAlias = opslevel.RefOf(d.Get("lifecycle_alias").(string))
-	}
-
-	resource, err := client.UpdateService(input)
-	if err != nil {
-		return err
-	}
-
-	if d.HasChange("aliases") {
-		err = reconcileServiceAliases(d, resource, client)
-		if err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("tags") {
-		tagsErr := reconcileTags(d, resource, client)
-		if tagsErr != nil {
-			return tagsErr
-		}
-	}
-
-	if d.HasChange("api_document_path") || d.HasChange("preferred_api_document_source") {
-		var docPath string
-		var docSource *opslevel.ApiDocumentSourceEnum
-		if value, ok := d.GetOk("api_document_path"); ok {
-			docPath = value.(string)
-		} else {
-			docPath = ""
-		}
-		if value, ok := d.GetOk("preferred_api_document_source"); ok {
-			s := opslevel.ApiDocumentSourceEnum(value.(string))
-			docSource = &s
-		} else {
-			docSource = nil
-		}
-		_, err := client.ServiceApiDocSettingsUpdate(string(resource.Id), docPath, docSource)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to update service '%s' api doc settings", resource.Aliases[0])
-		}
-	}
-
-	d.Set("last_updated", timeLastUpdated())
-	return resourceServiceRead(d, client)
-}
-
-func resourceServiceDelete(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
-	err := client.DeleteService(id)
-	if err != nil {
-		return err
-	}
-	d.SetId("")
+	service.Tags.Nodes = assignedTags
 	return nil
 }

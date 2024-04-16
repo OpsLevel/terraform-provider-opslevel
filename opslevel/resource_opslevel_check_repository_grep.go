@@ -1,108 +1,245 @@
 package opslevel
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/relvacode/iso8601"
 )
 
-func resourceCheckRepositoryGrep() *schema.Resource {
-	return &schema.Resource{
-		Description: "Manages a repository file check",
-		Create:      wrap(resourceCheckRepositoryGrepCreate),
-		Read:        wrap(resourceCheckRepositoryGrepRead),
-		Update:      wrap(resourceCheckRepositoryGrepUpdate),
-		Delete:      wrap(resourceCheckDelete),
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
-		Schema: getCheckSchema(map[string]*schema.Schema{
-			"directory_search": {
-				Type:        schema.TypeBool,
+var (
+	_ resource.ResourceWithConfigure   = &CheckRepositoryGrepResource{}
+	_ resource.ResourceWithImportState = &CheckRepositoryGrepResource{}
+)
+
+func NewCheckRepositoryGrepResource() resource.Resource {
+	return &CheckRepositoryGrepResource{}
+}
+
+// CheckRepositoryGrepResource defines the resource implementation.
+type CheckRepositoryGrepResource struct {
+	CommonResourceClient
+}
+
+type CheckRepositoryGrepResourceModel struct {
+	Category    types.String `tfsdk:"category"`
+	Description types.String `tfsdk:"description"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	EnableOn    types.String `tfsdk:"enable_on"`
+	Filter      types.String `tfsdk:"filter"`
+	Id          types.String `tfsdk:"id"`
+	Level       types.String `tfsdk:"level"`
+	Name        types.String `tfsdk:"name"`
+	Notes       types.String `tfsdk:"notes"`
+	Owner       types.String `tfsdk:"owner"`
+	LastUpdated types.String `tfsdk:"last_updated"`
+
+	DirectorySearch       types.Bool      `tfsdk:"directory_search"`
+	Filepaths             types.List      `tfsdk:"filepaths"`
+	FileContentsPredicate *PredicateModel `tfsdk:"file_contents_predicate"`
+}
+
+func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
+	var stateModel CheckRepositoryGrepResourceModel
+
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
+
+	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
+	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
+	stateModel.Filepaths = data
+	if check.RepositoryGrepCheckFragment.FileContentsPredicate != nil {
+		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
+	}
+
+	return stateModel, diags
+}
+
+func (r *CheckRepositoryGrepResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_check_repository_grep"
+}
+
+func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Check Repository Grep Resource",
+
+		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+			"directory_search": schema.BoolAttribute{
 				Description: "Whether the check looks for the existence of a directory instead of a file.",
-				ForceNew:    false,
 				Required:    true,
 			},
-			"filepaths": {
-				Type:        schema.TypeList,
-				MinItems:    1,
+			"filepaths": schema.ListAttribute{
 				Description: "Restrict the search to certain file paths.",
-				ForceNew:    false,
 				Required:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				ElementType: types.StringType,
 			},
-			"file_contents_predicate": getPredicateInputSchema(false, "A condition that should be satisfied. Defaults to `exists` condition"),
+			"file_contents_predicate": PredicateSchema(),
 		}),
 	}
 }
 
-func resourceCheckRepositoryGrepCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	checkCreateInput := getCheckCreateInputFrom(d)
-	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckRepositoryGrepCreateInput](checkCreateInput)
-	input.DirectorySearch = opslevel.RefOf(d.Get("directory_search").(bool))
-	input.FilePaths = getStringArray(d, "filepaths")
-	fileContentsPredicate := expandPredicate(d, "file_contents_predicate")
-	if fileContentsPredicate == nil {
-		input.FileContentsPredicate = opslevel.PredicateInput{
-			Type: opslevel.PredicateTypeEnumExists,
+func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel CheckRepositoryGrepResourceModel
+
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	input := opslevel.CheckRepositoryGrepCreateInput{
+		CategoryId: asID(planModel.Category),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		LevelId:    asID(planModel.Level),
+		Name:       planModel.Name.ValueString(),
+		Notes:      planModel.Notes.ValueStringPointer(),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
 		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	resource, err := client.CreateCheckRepositoryGrep(*input)
+	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
+	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
+	if planModel.FileContentsPredicate != nil {
+		input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
+	}
+
+	data, err := r.client.CreateCheckRepositoryGrep(input)
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create check_repository_grep, got error: %s", err))
+		return
 	}
-	d.SetId(string(resource.Id))
 
-	return resourceCheckRepositoryGrepRead(d, client)
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
+
+	tflog.Trace(ctx, "created a check repository grep resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
-func resourceCheckRepositoryGrepRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
+func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var planModel CheckRepositoryGrepResourceModel
 
-	resource, err := client.GetCheck(opslevel.ID(id))
+	// Read Terraform prior state data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository grep, got error: %s", err))
+		return
+	}
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
+	resp.Diagnostics.Append(diags...)
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel CheckRepositoryGrepResourceModel
+
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if err := setCheckData(d, resource); err != nil {
-		return err
+	input := opslevel.CheckRepositoryGrepUpdateInput{
+		CategoryId: opslevel.RefOf(asID(planModel.Category)),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
+		Name:       opslevel.RefOf(planModel.Name.ValueString()),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
-	if err := d.Set("directory_search", resource.RepositoryGrepCheckFragment.DirectorySearch); err != nil {
-		return err
-	}
-	if err := d.Set("filepaths", resource.RepositoryGrepCheckFragment.Filepaths); err != nil {
-		return err
-	}
-	if _, ok := d.GetOk("file_contents_predicate"); !ok {
-		if err := d.Set("file_contents_predicate", nil); err != nil {
-			return err
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
 		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
+
+	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
+	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
+	if planModel.FileContentsPredicate != nil {
+		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
 	} else {
-		if err := d.Set("file_contents_predicate", flattenPredicate(resource.RepositoryGrepCheckFragment.FileContentsPredicate)); err != nil {
-			return err
-		}
+		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{}
 	}
-	return nil
+
+	data, err := r.client.UpdateCheckRepositoryGrep(input)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update check_repository_grep, got error: %s", err))
+		return
+	}
+
+	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
+	resp.Diagnostics.Append(diags...)
+
+	tflog.Trace(ctx, "updated a check repository grep resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
-func resourceCheckRepositoryGrepUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	checkUpdateInput := getCheckUpdateInputFrom(d)
-	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckRepositoryGrepUpdateInput](checkUpdateInput)
-	input.DirectorySearch = opslevel.RefOf(d.Get("directory_search").(bool))
+func (r *CheckRepositoryGrepResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel CheckRepositoryGrepResourceModel
 
-	if d.HasChange("filepaths") {
-		input.FilePaths = opslevel.RefOf(getStringArray(d, "filepaths"))
-	}
-	if d.HasChange("file_contents_predicate") {
-		input.FileContentsPredicate = expandPredicateUpdate(d, "file_contents_predicate")
+	// Read Terraform prior state data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	_, err := client.UpdateCheckRepositoryGrep(*input)
+	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository grep, got error: %s", err))
+		return
 	}
-	d.Set("last_updated", timeLastUpdated())
-	return resourceCheckRepositoryGrepRead(d, client)
+	tflog.Trace(ctx, "deleted a check repository grep resource")
+}
+
+func (r *CheckRepositoryGrepResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

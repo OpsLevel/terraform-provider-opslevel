@@ -1,86 +1,120 @@
 package opslevel
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-func handleInput(d *schema.ResourceData) opslevel.ScorecardInput {
-	// optional fields
-	description := d.Get("description").(string)
+var _ resource.ResourceWithConfigure = &ScorecardResource{}
 
-	input := opslevel.ScorecardInput{
-		Name:                        d.Get("name").(string),
-		OwnerId:                     *opslevel.NewID(d.Get("owner_id").(string)),
-		Description:                 &description,
-		FilterId:                    opslevel.NewID(d.Get("filter_id").(string)),
-		AffectsOverallServiceLevels: opslevel.RefOf(d.Get("affects_overall_service_levels").(bool)),
-	}
+var _ resource.ResourceWithImportState = &ScorecardResource{}
 
-	return input
+func NewScorecardResource() resource.Resource {
+	return &ScorecardResource{}
 }
 
-func resourceScorecard() *schema.Resource {
-	return &schema.Resource{
-		Description: "Manages a scorecard",
-		Create:      wrap(resourceScorecardCreate),
-		Read:        wrap(resourceScorecardRead),
-		Update:      wrap(resourceScorecardUpdate),
-		Delete:      wrap(resourceScorecardDelete),
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's name.",
-				ForceNew:    false,
-				Required:    true,
-			},
-			"affects_overall_service_levels": {
-				Type:        schema.TypeBool,
-				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
-				ForceNew:    false,
-				Required:    true,
-			},
-			"owner_id": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's owner.",
-				ForceNew:    false,
-				Required:    true,
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's description.",
-				ForceNew:    false,
-				Optional:    true,
-			},
-			"filter_id": {
-				Type:        schema.TypeString,
-				Description: "The scorecard's filter.",
-				ForceNew:    false,
-				Optional:    true,
-			},
+// ScorecardResource defines the resource implementation.
+type ScorecardResource struct {
+	CommonResourceClient
+}
 
-			// computed fields
-			"aliases": {
-				Type:        schema.TypeList,
+// ScorecardResourceModel describes the Scorecard managed resource.
+type ScorecardResourceModel struct {
+	AffectsOverallServiceLevels types.Bool   `tfsdk:"affects_overall_service_levels"`
+	Aliases                     types.List   `tfsdk:"aliases"`
+	Description                 types.String `tfsdk:"description"`
+	FilterId                    types.String `tfsdk:"filter_id"`
+	Id                          types.String `tfsdk:"id"`
+	Name                        types.String `tfsdk:"name"`
+	OwnerId                     types.String `tfsdk:"owner_id"`
+	PassingChecks               types.Int64  `tfsdk:"passing_checks"`
+	ServiceCount                types.Int64  `tfsdk:"service_count"`
+	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
+}
+
+func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard) (ScorecardResourceModel, diag.Diagnostics) {
+	scorecardDataSourceModel := ScorecardResourceModel{
+		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
+		Description:                 OptionalStringValue(scorecard.Description),
+		FilterId:                    OptionalStringValue(string(scorecard.Filter.Id)),
+		Id:                          ComputedStringValue(string(scorecard.Id)),
+		Name:                        RequiredStringValue(scorecard.Name),
+		OwnerId:                     RequiredStringValue(string(scorecard.Owner.Id())),
+		PassingChecks:               types.Int64Value(int64(scorecard.PassingChecks)),
+		ServiceCount:                types.Int64Value(int64(scorecard.ServiceCount)),
+		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
+	}
+
+	scorecardAliases, diags := types.ListValueFrom(ctx, types.StringType, scorecard.Aliases)
+	scorecardDataSourceModel.Aliases = scorecardAliases
+
+	return scorecardDataSourceModel, diags
+}
+
+func (r *ScorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_scorecard"
+}
+
+func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Scorecard Resource",
+
+		Attributes: map[string]schema.Attribute{
+			"affects_overall_service_levels": schema.BoolAttribute{
+				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
+				Required:    true,
+			},
+			"aliases": schema.ListAttribute{
 				Description: "The scorecard's aliases.",
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				ElementType: types.StringType,
 			},
-			"passing_checks": {
-				Type:        schema.TypeInt,
+			"description": schema.StringAttribute{
+				Description: "The scorecard's description.",
+				Optional:    true,
+			},
+			"filter_id": schema.StringAttribute{
+				Description: "The scorecard's filter.",
+				Optional:    true,
+				Validators:  []validator.String{IdStringValidator()},
+			},
+			"id": schema.StringAttribute{
+				Description: "The ID of the scorecard.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"name": schema.StringAttribute{
+				Description: "The scorecard's name.",
+				Required:    true,
+			},
+			"owner_id": schema.StringAttribute{
+				Description: "The scorecard's owner.",
+				Required:    true,
+				Validators:  []validator.String{IdStringValidator()},
+			},
+			"passing_checks": schema.Int64Attribute{
 				Description: "The scorecard's number of checks that are passing.",
 				Computed:    true,
 			},
-			"service_count": {
-				Type:        schema.TypeInt,
+			"service_count": schema.Int64Attribute{
 				Description: "The scorecard's number of services matched.",
 				Computed:    true,
 			},
-			"total_checks": {
-				Type:        schema.TypeInt,
+			"total_checks": schema.Int64Attribute{
 				Description: "The scorecard's total number of checks.",
 				Computed:    true,
 			},
@@ -88,72 +122,109 @@ func resourceScorecard() *schema.Resource {
 	}
 }
 
-func resourceScorecardCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := handleInput(d)
+func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data ScorecardResourceModel
 
-	resource, err := client.CreateScorecard(input)
-	if err != nil {
-		return err
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	d.SetId(string(resource.Id))
 
-	return resourceScorecardRead(d, client)
+	scorecard, err := r.client.CreateScorecard(opslevel.ScorecardInput{
+		AffectsOverallServiceLevels: data.AffectsOverallServiceLevels.ValueBoolPointer(),
+		Description:                 data.Description.ValueStringPointer(),
+		FilterId:                    opslevel.NewID(data.FilterId.ValueString()),
+		Name:                        data.Name.ValueString(),
+		OwnerId:                     opslevel.ID(data.OwnerId.ValueString()),
+	})
+	if err != nil || scorecard == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create scorecard, got error: %s", err))
+		return
+	}
+	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	tflog.Trace(ctx, "created a scorecard resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdScorecardResourceModel)...)
 }
 
-func resourceScorecardRead(d *schema.ResourceData, client *opslevel.Client) error {
-	resource, err := client.GetScorecard(d.Id())
-	if err != nil {
-		return err
+func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data ScorecardResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if err := d.Set("aliases", resource.Aliases); err != nil {
-		return err
+	readScorecard, err := r.client.GetScorecard(data.Id.ValueString())
+	if err != nil || readScorecard == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
+		return
 	}
-	if err := d.Set("description", resource.Description); err != nil {
-		return err
-	}
-	if err := d.Set("filter_id", resource.Filter.Id); err != nil {
-		return err
-	}
-	if err := d.Set("affects_overall_service_levels", resource.AffectsOverallServiceLevels); err != nil {
-		return err
-	}
-	if err := d.Set("name", resource.Name); err != nil {
-		return err
-	}
-	if err := d.Set("owner_id", resource.Owner.Id()); err != nil {
-		return err
-	}
-	if err := d.Set("passing_checks", resource.PassingChecks); err != nil {
-		return err
-	}
-	if err := d.Set("service_count", resource.ServiceCount); err != nil {
-		return err
-	}
-	if err := d.Set("total_checks", resource.ChecksCount); err != nil {
-		return err
+	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readScorecardResourceModel)...)
 }
 
-func resourceScorecardUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	input := handleInput(d)
+func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data ScorecardResourceModel
 
-	_, err := client.UpdateScorecard(d.Id(), input)
-	if err != nil {
-		return err
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return resourceScorecardRead(d, client)
+	scorecard, err := r.client.UpdateScorecard(data.Id.ValueString(), opslevel.ScorecardInput{
+		AffectsOverallServiceLevels: data.AffectsOverallServiceLevels.ValueBoolPointer(),
+		Description:                 opslevel.RefOf(data.Description.ValueString()),
+		FilterId:                    opslevel.NewID(data.FilterId.ValueString()),
+		Name:                        data.Name.ValueString(),
+		OwnerId:                     opslevel.ID(data.OwnerId.ValueString()),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update scorecard, got error: %s", err))
+		return
+	}
+	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	tflog.Trace(ctx, "updated a scorecard resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedScorecardResourceModel)...)
 }
 
-func resourceScorecardDelete(d *schema.ResourceData, client *opslevel.Client) error {
-	_, err := client.DeleteScorecard(d.Id())
-	if err != nil {
-		return err
-	}
-	d.SetId("")
+func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data ScorecardResourceModel
 
-	return nil
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	_, err := r.client.DeleteScorecard(data.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete scorecard, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a scorecard resource")
+}
+
+func (r *ScorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

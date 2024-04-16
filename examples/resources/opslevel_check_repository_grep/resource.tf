@@ -34,7 +34,7 @@ resource "opslevel_check_repository_grep" "example" {
   filter           = data.opslevel_filter.tier1.id
   directory_search = false
   filepaths        = ["/src", "/tests"]
-  file_contents_predicate {
+  file_contents_predicate = {
     type  = "contains"
     value = "**/hello.go"
   }

@@ -1,94 +1,136 @@
 package opslevel
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func datasourceRubricLevel() *schema.Resource {
-	return &schema.Resource{
-		Read: wrap(datasourceRubricLevelRead),
-		Schema: map[string]*schema.Schema{
-			"filter": getDatasourceFilter(true, []string{"alias", "id", "index", "name"}),
-			"alias": {
-				Type:     schema.TypeString,
-				Computed: true,
+// Ensure LevelDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &LevelDataSource{}
+
+func NewLevelDataSource() datasource.DataSource {
+	return &LevelDataSource{}
+}
+
+// LevelDataSource manages a Level data source.
+type LevelDataSource struct {
+	CommonDataSourceClient
+}
+
+// LevelDataSourceModel describes the data source data model.
+type LevelDataSourceModel struct {
+	Alias  types.String     `tfsdk:"alias"`
+	Filter FilterBlockModel `tfsdk:"filter"`
+	Id     types.String     `tfsdk:"id"`
+	Index  types.Int64      `tfsdk:"index"`
+	Name   types.String     `tfsdk:"name"`
+}
+
+func NewLevelDataSourceModel(ctx context.Context, level opslevel.Level, filter FilterBlockModel) LevelDataSourceModel {
+	return LevelDataSourceModel{
+		Alias:  types.StringValue(string(level.Alias)),
+		Filter: filter,
+		Id:     types.StringValue(string(level.Id)),
+		Index:  types.Int64Value(int64(level.Index)),
+		Name:   types.StringValue(string(level.Name)),
+	}
+}
+
+func (d *LevelDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_rubric_level"
+}
+
+func (d *LevelDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	validFieldNames := []string{"alias", "id", "index", "name"}
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Rubric Level data source",
+
+		Attributes: map[string]schema.Attribute{
+			"alias": schema.StringAttribute{
+				MarkdownDescription: "An alias of the rubric level to find by.",
+				Computed:            true,
 			},
-			"index": {
-				Type:     schema.TypeInt,
-				Computed: true,
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The ID of this resource.",
+				Computed:            true,
 			},
-			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+			"index": schema.Int64Attribute{
+				MarkdownDescription: "An integer allowing this level to be inserted between others.",
+				Computed:            true,
 			},
+			"name": schema.StringAttribute{
+				Description: "The display name of the rubric level.",
+				Computed:    true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"filter": getDatasourceFilter(validFieldNames),
 		},
 	}
 }
 
-func filterRubricLevels(levels []opslevel.Level, field string, value string) (*opslevel.Level, error) {
-	if value == "" {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data LevelDataSourceModel
+
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	var output opslevel.Level
-	found := false
-	for _, item := range levels {
-		switch field {
-		case "alias":
-			if item.Alias == value {
-				output = item
-				found = true
-			}
-		case "id":
-			if string(item.Id) == value {
-				output = item
-				found = true
-			}
-		case "index":
-			if v, err := strconv.Atoi(value); err == nil && item.Index == v {
-				output = item
-				found = true
-			}
-		case "name":
-			if item.Name == value {
-				output = item
-				found = true
-			}
-		}
-		if found {
-			break
-		}
+	levels, err := d.client.ListLevels()
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read rubric_level datasource, got error: %s", err))
+		return
 	}
 
-	if !found {
-		return nil, fmt.Errorf("Unable to find level with: %s==%s", field, value)
+	level, err := filterRubricLevels(levels, data.Filter)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_level datasource, got error: %s", err))
+		return
 	}
-	return &output, nil
+
+	levelDataModel := NewLevelDataSourceModel(ctx, *level, data.Filter)
+
+	// Save data into Terraform state
+	tflog.Trace(ctx, "read an OpsLevel Rubric Level data source")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &levelDataModel)...)
 }
 
-func datasourceRubricLevelRead(d *schema.ResourceData, client *opslevel.Client) error {
-	results, err := client.ListLevels()
-	if err != nil {
-		return err
+func filterRubricLevels(levels []opslevel.Level, filter FilterBlockModel) (*opslevel.Level, error) {
+	if filter.Value.Equal(types.StringValue("")) {
+		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+	}
+	for _, level := range levels {
+		switch filter.Field.ValueString() {
+		case "alias":
+			if filter.Value.Equal(types.StringValue(level.Alias)) {
+				return &level, nil
+			}
+		case "id":
+			if filter.Value.Equal(types.StringValue(string(level.Id))) {
+				return &level, nil
+			}
+		case "index":
+			index := strconv.Itoa(int(level.Index))
+			if filter.Value.Equal(types.StringValue(index)) {
+				return &level, nil
+			}
+		case "name":
+			if filter.Value.Equal(types.StringValue(level.Name)) {
+				return &level, nil
+			}
+
+		}
 	}
 
-	field := d.Get("filter.0.field").(string)
-	value := d.Get("filter.0.value").(string)
-
-	item, itemErr := filterRubricLevels(results, field, value)
-	if itemErr != nil {
-		return itemErr
-	}
-
-	d.SetId(string(item.Id))
-	d.Set("alias", item.Alias)
-	d.Set("index", item.Index)
-	d.Set("name", item.Name)
-
-	return nil
+	return nil, fmt.Errorf("Unable to find rubric level with: %s==%s", filter.Field, filter.Value)
 }

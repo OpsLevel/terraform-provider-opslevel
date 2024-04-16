@@ -1,210 +1,328 @@
 package opslevel
 
 import (
-	"strings"
+	"context"
+	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
-	"github.com/rs/zerolog/log"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func datasourceService() *schema.Resource {
-	return &schema.Resource{
-		Read: wrap(datasourceServiceRead),
-		Schema: map[string]*schema.Schema{
-			"alias": {
-				Type:        schema.TypeString,
+// Ensure ServiceDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &ServiceDataSource{}
+
+func NewServiceDataSource() datasource.DataSource {
+	return &ServiceDataSource{}
+}
+
+// ServiceDataSource manages a Service data source.
+type ServiceDataSource struct {
+	CommonDataSourceClient
+}
+
+// ServiceDataSourceModel describes the data source data model.
+type ServiceDataSourceModel struct {
+	Alias                      types.String `tfsdk:"alias"`
+	Aliases                    types.List   `tfsdk:"aliases"`
+	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
+	Description                types.String `tfsdk:"description"`
+	Framework                  types.String `tfsdk:"framework"`
+	Id                         types.String `tfsdk:"id"`
+	Language                   types.String `tfsdk:"language"`
+	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
+	Name                       types.String `tfsdk:"name"`
+	Owner                      types.String `tfsdk:"owner"`
+	OwnerId                    types.String `tfsdk:"owner_id"`
+	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
+	Product                    types.String `tfsdk:"product"`
+	Properties                 types.List   `tfsdk:"properties"`
+	Repositories               types.List   `tfsdk:"repositories"`
+	Tags                       types.List   `tfsdk:"tags"`
+	TierAlias                  types.String `tfsdk:"tier_alias"`
+}
+
+func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, alias string) (ServiceDataSourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	serviceDataSourceModel := ServiceDataSourceModel{
+		ApiDocumentPath: types.StringValue(service.ApiDocumentPath),
+		Description:     types.StringValue(service.Description),
+		Framework:       types.StringValue(service.Framework),
+		Id:              types.StringValue(string(service.Id)),
+		Language:        types.StringValue(service.Language),
+		LifecycleAlias:  types.StringValue(service.Lifecycle.Alias),
+		Name:            types.StringValue(service.Name),
+		Owner:           types.StringValue(service.Owner.Alias),
+		OwnerId:         types.StringValue(string(service.Owner.Id)),
+		Product:         types.StringValue(service.Product),
+		TierAlias:       types.StringValue(service.Tier.Alias),
+	}
+
+	if alias != "" {
+		serviceDataSourceModel.Alias = types.StringValue(alias)
+	}
+
+	serviceAliases, svcDiags := types.ListValueFrom(ctx, types.StringType, service.Aliases)
+	diags = append(diags, svcDiags...)
+	serviceDataSourceModel.Aliases = serviceAliases
+
+	if service.PreferredApiDocumentSource != nil {
+		serviceDataSourceModel.PreferredApiDocumentSource = types.StringValue(string(*service.PreferredApiDocumentSource))
+	}
+
+	if service.Tags == nil {
+		serviceDataSourceModel.Tags = types.ListNull(types.StringType)
+	} else {
+		serviceTags, tagsDiags := types.ListValueFrom(ctx, types.StringType, flattenTagArray(service.Tags.Nodes))
+		serviceDataSourceModel.Tags = serviceTags
+		diags = append(diags, tagsDiags...)
+	}
+
+	return serviceDataSourceModel, diags
+}
+
+func (d *ServiceDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_service"
+}
+
+func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Service data source",
+
+		Attributes: map[string]schema.Attribute{
+			"alias": schema.StringAttribute{
 				Description: "An alias of the service to find by.",
-				ForceNew:    true,
+				Computed:    true,
 				Optional:    true,
 			},
-			"id": {
-				Type:        schema.TypeString,
-				Description: "The id of the service to find.",
-				ForceNew:    true,
-				Optional:    true,
-			},
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The display name of the service.",
+			"aliases": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "The aliases of the service.",
 				Computed:    true,
 			},
-			"product": {
-				Type:        schema.TypeString,
-				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
-				Computed:    true,
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "A brief description of the service.",
-				Computed:    true,
-			},
-			"language": {
-				Type:        schema.TypeString,
-				Description: "The primary programming language that the service is written in.",
-				Computed:    true,
-			},
-			"framework": {
-				Type:        schema.TypeString,
-				Description: "The primary software development framework that the service uses.",
-				Computed:    true,
-			},
-			"tier_alias": {
-				Type:        schema.TypeString,
-				Description: "The software tier that the service belongs to.",
-				Computed:    true,
-			},
-			"owner": {
-				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
-				Computed:    true,
-			},
-			"owner_alias": {
-				Type:        schema.TypeString,
-				Description: "The team that owns the service.",
-				Computed:    true,
-				Deprecated:  "field 'owner_alias' on service is no longer supported please use the 'owner' field.",
-			},
-			"owner_id": {
-				Type:        schema.TypeString,
-				Description: "The team ID that owns the service.",
-				Computed:    true,
-			},
-			"lifecycle_alias": {
-				Type:        schema.TypeString,
-				Description: "The lifecycle stage of the service.",
-				Computed:    true,
-			},
-			"api_document_path": {
-				Type:        schema.TypeString,
+			"api_document_path": schema.StringAttribute{
 				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
 				Computed:    true,
 			},
-			"preferred_api_document_source": {
-				Type:        schema.TypeString,
+			"description": schema.StringAttribute{
+				Description: "A brief description of the service.",
+				Computed:    true,
+			},
+			"framework": schema.StringAttribute{
+				Description: "The primary software development framework that the service uses.",
+				Computed:    true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The id of the service to find",
+				Computed:    true,
+				Optional:    true,
+			},
+			"language": schema.StringAttribute{
+				Description: "The primary programming language that the service is written in.",
+				Computed:    true,
+			},
+			"lifecycle_alias": schema.StringAttribute{
+				Description: "The lifecycle stage of the service.",
+				Computed:    true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The display name of the service.",
+				Computed:    true,
+			},
+			"owner": schema.StringAttribute{
+				Description: "The team that owns the service.",
+				Computed:    true,
+			},
+			"owner_id": schema.StringAttribute{
+				Description: "The team ID that owns the service.",
+				Computed:    true,
+			},
+			"preferred_api_document_source": schema.StringAttribute{
 				Description: "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
 				Computed:    true,
 			},
-			"aliases": {
-				Type:        schema.TypeList,
-				Description: "A list of human-friendly, unique identifiers for the service",
+			"product": schema.StringAttribute{
+				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"tags": {
-				Type:        schema.TypeList,
-				Description: "A list of tags applied to the service.",
+			"properties": schema.ListAttribute{
+				Description: "Custom properties assigned to this service.",
+				ElementType: opslevelPropertyObjectType,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"repositories": {
-				Type:        schema.TypeList,
+			"repositories": schema.ListAttribute{
+				ElementType: types.StringType,
 				Description: "List of repositories connected to the service.",
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"properties": {
-				Type:        schema.TypeList,
-				Description: "Custom properties assigned to this service.",
+			"tags": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "A list of tags applied to the service.",
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"definition": {
-							Type:        schema.TypeString,
-							Description: "The custom property definition's ID.",
-							Computed:    true,
-						},
-						"owner": {
-							Type:        schema.TypeString,
-							Description: "The ID of the entity that the property has been assigned to.",
-							Computed:    true,
-						},
-						"value": {
-							Type:        schema.TypeString,
-							Description: "The value of the custom property.",
-							Computed:    true,
-						},
-					},
-				},
+			},
+			"tier_alias": schema.StringAttribute{
+				Description: "The software tier that the service belongs to.",
+				Computed:    true,
 			},
 		},
 	}
 }
 
-func datasourceServiceRead(d *schema.ResourceData, client *opslevel.Client) error {
-	resource, err := findService("alias", "id", d, client)
+func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data ServiceDataSourceModel
+	var service opslevel.Service
+	var err error
+
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if opslevel.IsID(data.Id.ValueString()) {
+		service, err = getServiceWithId(*d.client, data)
+	} else if data.Alias.ValueString() != "" {
+		service, err = getServiceWithAlias(*d.client, data)
+	} else {
+		resp.Diagnostics.AddError("Config Error", "'alias' or valid 'id' for opslevel_service datasource must be set")
+		return
+	}
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read service datasource, got error: %s", err))
+		return
 	}
 
-	d.SetId(string(resource.Id))
-	if err := d.Set("name", resource.Name); err != nil {
-		return err
-	}
-	if err := d.Set("product", resource.Product); err != nil {
-		return err
-	}
-	if err := d.Set("description", resource.Description); err != nil {
-		return err
-	}
-	if err := d.Set("language", resource.Language); err != nil {
-		return err
-	}
-	if err := d.Set("framework", resource.Framework); err != nil {
-		return err
-	}
-	if err := d.Set("tier_alias", resource.Tier.Alias); err != nil {
-		return err
-	}
-	if err := d.Set("owner", resource.Owner.Alias); err != nil {
-		return err
-	}
-	if err := d.Set("owner_alias", resource.Owner.Alias); err != nil {
-		return err
-	}
-	if err := d.Set("owner_id", resource.Owner.Id); err != nil {
-		return err
-	}
-	if err := d.Set("lifecycle_alias", resource.Lifecycle.Alias); err != nil {
-		return err
+	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Alias.ValueString())
+	resp.Diagnostics.Append(diags...)
+
+	// NOTE: service's hydrate does not populate properties
+	serviceDataModel.Properties, diags = getServiceProperties(ctx, d.client, service)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
-	if err := d.Set("aliases", resource.ManagedAliases); err != nil {
-		return err
-	}
-	if err := d.Set("tags", flattenTagArray(resource.Tags.Nodes)); err != nil {
-		return err
-	}
-	if err := d.Set("repositories", flattenServiceRepositoriesArray(resource.Repositories)); err != nil {
-		return err
+	if service.Repositories == nil {
+		serviceDataModel.Repositories = types.ListNull(types.StringType)
+	} else {
+		serviceDataModel.Repositories, diags = types.ListValueFrom(
+			ctx,
+			types.StringType,
+			flattenServiceRepositoriesArray(service.Repositories),
+		)
 	}
 
-	properties, err := resource.GetProperties(client, nil)
+	// Save data into Terraform state
+	tflog.Trace(ctx, "read an OpsLevel Service data source")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &serviceDataModel)...)
+}
+
+var opslevelPropertyObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"definition": identifierObjectType,
+		"value":      types.StringType,
+	},
+}
+
+// identifierObjectType used as nested object
+var identifierObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"aliases": types.ListType{ElemType: types.StringType},
+		"id":      types.StringType,
+	},
+}
+
+func getServiceProperties(ctx context.Context, client *opslevel.Client, service opslevel.Service) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	properties, err := service.GetProperties(client, nil)
 	if err != nil {
-		return err
+		diags.AddAttributeError(
+			path.Root("properties"),
+			"OpsLevel Client Error",
+			fmt.Sprintf("unable to read Properties for service, got error: %s", err),
+		)
+		return types.ListNull(opslevelPropertyObjectType), diags
 	}
-	// log warnings for any validation errors rather than adding them to state
-	for _, property := range properties.Nodes {
-		for _, validationErr := range property.ValidationErrors {
-			log.Warn().Msgf("service '%s' property '%s' has a validation error\n\tmessage=\"%s\" path=[%s]",
-				string(resource.Id),
-				string(property.Definition.Id),
-				validationErr.Message,
-				strings.Join(validationErr.Path, ","))
+	if properties == nil {
+		return types.ListNull(opslevelPropertyObjectType), diags
+	}
+
+	serviceProperties, diags := opslevelPropertiesToListValue(ctx, properties.Nodes)
+	if diags != nil && diags.HasError() {
+		return types.ListNull(opslevelPropertyObjectType), diags
+	}
+	return serviceProperties, diags
+}
+
+func getServiceWithAlias(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
+	service, err := client.GetServiceWithAlias(data.Alias.ValueString())
+	if err != nil {
+		return opslevel.Service{}, err
+	}
+	return *service, nil
+}
+
+func getServiceWithId(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
+	service, err := client.GetService(opslevel.ID(data.Id.ValueString()))
+	if err != nil {
+		return opslevel.Service{}, err
+	}
+	return *service, nil
+}
+
+func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []opslevel.Property) (basetypes.ListValue, diag.Diagnostics) {
+	properties := make([]attr.Value, len(opslevelProperties))
+	for i, property := range opslevelProperties {
+		propertyObject, diags := opslevelPropertyToObject(ctx, property)
+		if diags != nil && diags.HasError() {
+			return basetypes.NewListNull(domainObjectType), diags
 		}
-	}
-	props := mapServiceProperties(properties)
-	if err := d.Set("properties", props); err != nil {
-		return err
+		properties[i] = propertyObject
 	}
 
-	if err := d.Set("api_document_path", resource.ApiDocumentPath); err != nil {
-		return err
-	}
-	if err := d.Set("preferred_api_document_source", resource.PreferredApiDocumentSource); err != nil {
-		return err
+	result, diags := types.ListValueFrom(ctx, opslevelPropertyObjectType, properties)
+	if diags != nil && diags.HasError() {
+		return basetypes.NewListNull(domainObjectType), diags
 	}
 
-	return nil
+	return result, nil
+}
+
+func opslevelPropertyToObject(ctx context.Context, opslevelProperty opslevel.Property) (basetypes.ObjectValue, diag.Diagnostics) {
+	identifierAttrs := make(map[string]attr.Value)
+	propertyAttrs := make(map[string]attr.Value)
+
+	propertyDefinitionAliases, diags := types.ListValueFrom(ctx, types.StringType, opslevelProperty.Definition.Aliases)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+
+	identifierAttrs["aliases"] = propertyDefinitionAliases
+	identifierAttrs["id"] = types.StringValue(string(opslevelProperty.Definition.Id))
+
+	parsedPropertyDefinition, diags := types.ObjectValue(identifierObjectType.AttrTypes, identifierAttrs)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	propertyAttrs["definition"] = parsedPropertyDefinition
+
+	if opslevelProperty.Value == nil {
+		propertyAttrs["value"] = basetypes.NewStringNull()
+	} else {
+		propertyAttrs["value"] = types.StringValue(string(*opslevelProperty.Value))
+	}
+
+	parsedProperty, diags := types.ObjectValue(opslevelPropertyObjectType.AttrTypes, propertyAttrs)
+	if diags != nil && diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	return parsedProperty, nil
 }

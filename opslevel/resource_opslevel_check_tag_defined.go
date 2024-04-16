@@ -1,83 +1,231 @@
 package opslevel
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
+	"github.com/relvacode/iso8601"
 )
 
-func resourceCheckTagDefined() *schema.Resource {
-	return &schema.Resource{
-		Description: "Manages a tag defined check",
-		Create:      wrap(resourceCheckTagDefinedCreate),
-		Read:        wrap(resourceCheckTagDefinedRead),
-		Update:      wrap(resourceCheckTagDefinedUpdate),
-		Delete:      wrap(resourceCheckDelete),
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
-		Schema: getCheckSchema(map[string]*schema.Schema{
-			"tag_key": {
-				Type:        schema.TypeString,
+var (
+	_ resource.ResourceWithConfigure   = &CheckTagDefinedResource{}
+	_ resource.ResourceWithImportState = &CheckTagDefinedResource{}
+)
+
+func NewCheckTagDefinedResource() resource.Resource {
+	return &CheckTagDefinedResource{}
+}
+
+// CheckTagDefinedResource defines the resource implementation.
+type CheckTagDefinedResource struct {
+	CommonResourceClient
+}
+
+type CheckTagDefinedResourceModel struct {
+	Category    types.String `tfsdk:"category"`
+	Description types.String `tfsdk:"description"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	EnableOn    types.String `tfsdk:"enable_on"`
+	Filter      types.String `tfsdk:"filter"`
+	Id          types.String `tfsdk:"id"`
+	Level       types.String `tfsdk:"level"`
+	Name        types.String `tfsdk:"name"`
+	Notes       types.String `tfsdk:"notes"`
+	Owner       types.String `tfsdk:"owner"`
+	LastUpdated types.String `tfsdk:"last_updated"`
+
+	TagKey       types.String    `tfsdk:"tag_key"`
+	TagPredicate *PredicateModel `tfsdk:"tag_predicate"`
+}
+
+func NewCheckTagDefinedResourceModel(ctx context.Context, check opslevel.Check, planModel CheckTagDefinedResourceModel) CheckTagDefinedResourceModel {
+	var stateModel CheckTagDefinedResourceModel
+
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if planModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if planModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = planModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
+
+	stateModel.TagKey = RequiredStringValue(check.TagKey)
+	if check.TagPredicate != nil {
+		stateModel.TagPredicate = NewPredicateModel(*check.TagPredicate)
+	}
+
+	return stateModel
+}
+
+func (r *CheckTagDefinedResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_check_tag_defined"
+}
+
+func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Check Tag Defined Resource",
+
+		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+			"tag_key": schema.StringAttribute{
 				Description: "The tag key where the tag predicate should be applied.",
-				ForceNew:    false,
 				Required:    true,
 			},
-			"tag_predicate": getPredicateInputSchema(false, DefaultPredicateDescription),
+			"tag_predicate": PredicateSchema(),
 		}),
 	}
 }
 
-func resourceCheckTagDefinedCreate(d *schema.ResourceData, client *opslevel.Client) error {
-	checkCreateInput := getCheckCreateInputFrom(d)
-	input := opslevel.NewCheckCreateInputTypeOf[opslevel.CheckTagDefinedCreateInput](checkCreateInput)
-	input.TagKey = d.Get("tag_key").(string)
-	input.TagPredicate = expandPredicate(d, "tag_predicate")
+func (r *CheckTagDefinedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel CheckTagDefinedResourceModel
 
-	resource, err := client.CreateCheckTagDefined(*input)
-	if err != nil {
-		return err
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	d.SetId(string(resource.Id))
 
-	return resourceCheckTagDefinedRead(d, client)
+	input := opslevel.CheckTagDefinedCreateInput{
+		CategoryId: asID(planModel.Category),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		LevelId:    asID(planModel.Level),
+		Name:       planModel.Name.ValueString(),
+		Notes:      planModel.Notes.ValueStringPointer(),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
+
+	input.TagKey = planModel.TagKey.ValueString()
+	if planModel.TagPredicate != nil {
+		input.TagPredicate = planModel.TagPredicate.ToCreateInput()
+	}
+
+	data, err := r.client.CreateCheckTagDefined(input)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create check_tag_defined, got error: %s", err))
+		return
+	}
+
+	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
+
+	tflog.Trace(ctx, "created a check tag defined resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
-func resourceCheckTagDefinedRead(d *schema.ResourceData, client *opslevel.Client) error {
-	id := d.Id()
+func (r *CheckTagDefinedResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var planModel CheckTagDefinedResourceModel
 
-	resource, err := client.GetCheck(opslevel.ID(id))
+	// Read Terraform prior state data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tag defined, got error: %s", err))
+		return
 	}
+	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
 
-	if err := setCheckData(d, resource); err != nil {
-		return err
-	}
-	if err := d.Set("tag_key", resource.TagKey); err != nil {
-		return err
-	}
-	if err := d.Set("tag_predicate", flattenPredicate(resource.TagPredicate)); err != nil {
-		return err
-	}
-
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
-func resourceCheckTagDefinedUpdate(d *schema.ResourceData, client *opslevel.Client) error {
-	checkUpdateInput := getCheckUpdateInputFrom(d)
-	input := opslevel.NewCheckUpdateInputTypeOf[opslevel.CheckTagDefinedUpdateInput](checkUpdateInput)
+func (r *CheckTagDefinedResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel CheckTagDefinedResourceModel
 
-	if d.HasChange("tag_key") {
-		input.TagKey = opslevel.RefOf(d.Get("tag_key").(string))
-	}
-	if d.HasChange("tag_predicate") {
-		input.TagPredicate = expandPredicateUpdate(d, "tag_predicate")
+	// Read Terraform plan data into the planModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	_, err := client.UpdateCheckTagDefined(*input)
+	input := opslevel.CheckTagDefinedUpdateInput{
+		CategoryId: opslevel.RefOf(asID(planModel.Category)),
+		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		Id:         asID(planModel.Id),
+		LevelId:    opslevel.RefOf(asID(planModel.Level)),
+		Name:       opslevel.RefOf(planModel.Name.ValueString()),
+		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+	}
+	if !planModel.EnableOn.IsNull() {
+		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("error", err.Error())
+		}
+		input.EnableOn = &iso8601.Time{Time: enabledOn}
+	}
+
+	input.TagKey = planModel.TagKey.ValueStringPointer()
+	if planModel.TagPredicate != nil {
+		input.TagPredicate = planModel.TagPredicate.ToUpdateInput()
+	} else {
+		input.TagPredicate = &opslevel.PredicateUpdateInput{}
+	}
+
+	data, err := r.client.UpdateCheckTagDefined(input)
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update check_tag_defined, got error: %s", err))
+		return
 	}
-	d.Set("last_updated", timeLastUpdated())
-	return resourceCheckTagDefinedRead(d, client)
+
+	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
+
+	tflog.Trace(ctx, "updated a check tag defined resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func (r *CheckTagDefinedResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var planModel CheckTagDefinedResourceModel
+
+	// Read Terraform prior state data into the planModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteCheck(asID(planModel.Id))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check tag defined, got error: %s", err))
+		return
+	}
+	tflog.Trace(ctx, "deleted a check tag defined resource")
+}
+
+func (r *CheckTagDefinedResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
