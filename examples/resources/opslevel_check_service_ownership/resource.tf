@@ -36,7 +36,7 @@ resource "opslevel_check_service_ownership" "example" {
   require_contact_method = true
   contact_method         = "ANY"
   tag_key                = "team"
-  tag_predicate {
+  tag_predicate = {
     type  = "equals"
     value = "frontend"
   }

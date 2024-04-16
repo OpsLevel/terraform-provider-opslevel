@@ -85,7 +85,7 @@ func NewInfrastructureResourceModel(ctx context.Context, infrastructure opslevel
 		Data:         OptionalStringValue(infrastructure.Data.ToJSON()),
 		Id:           ComputedStringValue(infrastructure.Id),
 		ProviderData: providerData,
-		Owner:        OptionalStringValue(string(infrastructure.Owner.Id())),
+		Owner:        RequiredStringValue(string(infrastructure.Owner.Id())),
 		Schema:       RequiredStringValue(infrastructure.Schema),
 	}, diags
 }

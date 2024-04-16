@@ -5,7 +5,8 @@ data "opslevel_team" "foo" {
 // Minimum example
 resource "opslevel_infrastructure" "example_1" {
   schema = "Database"
-  provider_data {
+  owner  = data.opslevel_team.foo.id
+  provider_data = {
     account = "dev"
   }
   data = jsonencode({
@@ -17,7 +18,7 @@ resource "opslevel_infrastructure" "example_1" {
 resource "opslevel_infrastructure" "example_2" {
   schema = "Database"
   owner  = data.opslevel_team.foo.id
-  provider_data {
+  provider_data = {
     account = "dev"
     name    = "google cloud"
     type    = "BigQuery"
