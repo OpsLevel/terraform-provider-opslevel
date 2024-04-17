@@ -29,12 +29,12 @@ type categoryDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-// CategoryDataSourcesModel describes the data source data model.
-type CategoryDataSourcesModel struct {
+// CategoryDataSourcesAllModel describes the data source data model.
+type CategoryDataSourcesAllModel struct {
 	RubricCategories []categoryDataSourceModel `tfsdk:"rubric_categories"`
 }
 
-func NewCategoryDataSourcesModel(categories []opslevel.Category) CategoryDataSourcesModel {
+func NewCategoryDataSourcesAllModel(categories []opslevel.Category) CategoryDataSourcesAllModel {
 	rubricCategories := []categoryDataSourceModel{}
 	for _, category := range categories {
 		rubricCategory := categoryDataSourceModel{
@@ -43,7 +43,7 @@ func NewCategoryDataSourcesModel(categories []opslevel.Category) CategoryDataSou
 		}
 		rubricCategories = append(rubricCategories, rubricCategory)
 	}
-	return CategoryDataSourcesModel{RubricCategories: rubricCategories}
+	return CategoryDataSourcesAllModel{RubricCategories: rubricCategories}
 }
 
 func (d *CategoryDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -67,7 +67,7 @@ func (d *CategoryDataSourcesAll) Schema(ctx context.Context, req datasource.Sche
 }
 
 func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel CategoryDataSourcesModel
+	var planModel, stateModel CategoryDataSourcesAllModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
@@ -80,7 +80,7 @@ func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list rubric_categories datasource, got error: %s", err))
 		return
 	}
-	stateModel = NewCategoryDataSourcesModel(categories.Nodes)
+	stateModel = NewCategoryDataSourcesAllModel(categories.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all rubric_categories data sources")

@@ -24,8 +24,39 @@ type DomainDataSource struct {
 	CommonDataSourceClient
 }
 
-// DomainDataSourceModel describes the data source data model.
-type DomainDataSourceModel struct {
+var domainDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The ID of this Doamin",
+		Computed:            true,
+	},
+	"aliases": schema.ListAttribute{
+		ElementType: types.StringType,
+		Description: "The aliases of the domain.",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the domain.",
+		Computed:    true,
+	},
+	"description": schema.StringAttribute{
+		Description: "The description of the domain.",
+		Computed:    true,
+	},
+	"owner": schema.StringAttribute{
+		Description: "The id of the domain owner - could be a group or team.",
+		Computed:    true,
+	},
+}
+
+func DomainAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	for key, value := range domainDatasourceSchemaAttrs {
+		attrs[key] = value
+	}
+	return attrs
+}
+
+// domainDataSourceModel describes the data source data model.
+type domainDataSourceModel struct {
 	Aliases     types.List   `tfsdk:"aliases"`
 	Description types.String `tfsdk:"description"`
 	Id          types.String `tfsdk:"id"`
@@ -45,28 +76,27 @@ type domainDataSourceModelWithIdentifier struct {
 
 // newDomainDataSourceModelWithIdentifier used for a single Domain
 func newDomainDataSourceModelWithIdentifier(ctx context.Context, domain opslevel.Domain, identifier types.String) (domainDataSourceModelWithIdentifier, diag.Diagnostics) {
-	domainDataSourceModel, diag := NewDomainDataSourceModel(ctx, domain)
+	domainAliases, diags := OptionalStringListValue(ctx, domain.Aliases)
 	domainDataSourceModelWithIdentifier := domainDataSourceModelWithIdentifier{
-		Id:          domainDataSourceModel.Id,
-		Aliases:     domainDataSourceModel.Aliases,
+		Aliases:     domainAliases,
+		Description: ComputedStringValue(domain.Description),
+		Id:          ComputedStringValue(string(domain.Id)),
 		Identifier:  identifier,
-		Name:        domainDataSourceModel.Name,
-		Description: domainDataSourceModel.Description,
-		Owner:       domainDataSourceModel.Owner,
+		Name:        ComputedStringValue(domain.Name),
+		Owner:       ComputedStringValue(string(domain.Owner.Id())),
 	}
-	return domainDataSourceModelWithIdentifier, diag
+	return domainDataSourceModelWithIdentifier, diags
 }
 
-func NewDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (DomainDataSourceModel, diag.Diagnostics) {
-	var domainDataSourceModel DomainDataSourceModel
-
-	domainDataSourceModel.Id = types.StringValue(string(domain.Id))
-	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
-
-	domainDataSourceModel.Aliases = domainAliases
-	domainDataSourceModel.Name = types.StringValue(string(domain.Name))
-	domainDataSourceModel.Description = types.StringValue(string(domain.Description))
-	domainDataSourceModel.Owner = types.StringValue(string(domain.Owner.Id()))
+func NewDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (domainDataSourceModel, diag.Diagnostics) {
+	domainAliases, diags := OptionalStringListValue(ctx, domain.Aliases)
+	domainDataSourceModel := domainDataSourceModel{
+		Aliases:     domainAliases,
+		Description: ComputedStringValue(domain.Description),
+		Id:          ComputedStringValue(string(domain.Id)),
+		Name:        ComputedStringValue(domain.Name),
+		Owner:       ComputedStringValue(string(domain.Owner.Id())),
+	}
 	return domainDataSourceModel, diags
 }
 
@@ -79,33 +109,12 @@ func (d *DomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Domain data source",
 
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Terraform specific identifier.",
-				Computed:            true,
-			},
+		Attributes: DomainAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the domain to find.",
 				Optional:    true,
 			},
-			"aliases": schema.ListAttribute{
-				ElementType: types.StringType,
-				Description: "The aliases of the domain.",
-				Computed:    true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the domain.",
-				Computed:    true,
-			},
-			"description": schema.StringAttribute{
-				Description: "The description of the domain.",
-				Computed:    true,
-			},
-			"owner": schema.StringAttribute{
-				Description: "The id of the domain owner - could be a group or team.",
-				Computed:    true,
-			},
-		},
+		}),
 	}
 }
 
