@@ -69,7 +69,6 @@ var checkBaseAttributes = map[string]schema.Attribute{
 		Validators:  []validator.String{IdStringValidator()},
 	},
 	"last_updated": schema.StringAttribute{
-		Optional: true,
 		Computed: true,
 	},
 }
