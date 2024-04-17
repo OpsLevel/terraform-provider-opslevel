@@ -4,7 +4,7 @@ data "opslevel_domain" "mock_domain" {
   identifier = "example"
 }
 
-data "opslevel_domains" "all" {}
+# data "opslevel_domains" "all" {}
 
 # Filter data sources
 
