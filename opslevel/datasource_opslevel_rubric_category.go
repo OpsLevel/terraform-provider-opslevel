@@ -30,11 +30,10 @@ type CategoryDataSourceModel struct {
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewCategoryDataSourceModel(ctx context.Context, category opslevel.Category, filter FilterBlockModel) CategoryDataSourceModel {
+func NewCategoryDataSourceModel(ctx context.Context, category opslevel.Category) CategoryDataSourceModel {
 	return CategoryDataSourceModel{
-		Filter: filter,
-		Id:     types.StringValue(string(category.Id)),
-		Name:   types.StringValue(category.Name),
+		Id:   ComputedStringValue(string(category.Id)),
+		Name: ComputedStringValue(category.Name),
 	}
 }
 
@@ -85,7 +84,8 @@ func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	categoryDataModel := NewCategoryDataSourceModel(ctx, *category, data.Filter)
+	categoryDataModel := NewCategoryDataSourceModel(ctx, *category)
+	categoryDataModel.Filter = data.Filter
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Rubric Category data source")
