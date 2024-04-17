@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -27,16 +28,15 @@ type DomainDataSourcesAllModel struct {
 	Domains []domainDataSourceModel `tfsdk:"domains"`
 }
 
-func NewDomainDataSourcesAllModel(ctx context.Context, domains []opslevel.Domain) DomainDataSourcesAllModel {
+func NewDomainDataSourcesAllModel(ctx context.Context, domains []opslevel.Domain) (DomainDataSourcesAllModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	domainModels := []domainDataSourceModel{}
 	for _, domain := range domains {
-		domainModel, diags := NewDomainDataSourceModel(ctx, domain)
-		if diags != nil && diags.HasError() {
-			continue
-		}
+		domainModel, domainDiag := NewDomainDataSourceModel(ctx, domain)
+		diags = append(diags, domainDiag...)
 		domainModels = append(domainModels, domainModel)
 	}
-	return DomainDataSourcesAllModel{Domains: domainModels}
+	return DomainDataSourcesAllModel{Domains: domainModels}, diags
 }
 
 func (d *DomainDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -75,9 +75,10 @@ func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
 		return
 	}
-	stateModel = NewDomainDataSourcesAllModel(ctx, domains.Nodes)
+	stateModel, diags := NewDomainDataSourcesAllModel(ctx, domains.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all OpsLevel Domain data sources")
+	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
