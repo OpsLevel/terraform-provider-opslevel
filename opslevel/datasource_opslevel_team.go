@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -28,45 +25,57 @@ type TeamDataSource struct {
 
 // TeamDataSourceModel describes the data source data model.
 type TeamDataSourceModel struct {
-	Alias       types.String `tfsdk:"alias"`
-	Id          types.String `tfsdk:"id"`
-	Members     types.List   `tfsdk:"members"`
-	Name        types.String `tfsdk:"name"`
-	ParentAlias types.String `tfsdk:"parent_alias"`
-	ParentId    types.String `tfsdk:"parent_id"`
+	Alias       types.String      `tfsdk:"alias"`
+	Id          types.String      `tfsdk:"id"`
+	Members     []teamMemberModel `tfsdk:"members"`
+	Name        types.String      `tfsdk:"name"`
+	ParentAlias types.String      `tfsdk:"parent_alias"`
+	ParentId    types.String      `tfsdk:"parent_id"`
 }
 
-var memberObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"email": types.StringType,
-		"role":  types.StringType,
+var memberNestedSchemaAttrs = map[string]schema.Attribute{
+	"email": schema.StringAttribute{
+		MarkdownDescription: "The email address of the team member.",
+		Computed:            true,
+	},
+	"role": schema.StringAttribute{
+		MarkdownDescription: "The role of the team member.",
+		Computed:            true,
 	},
 }
 
-func membershipsToListValue(members *opslevel.TeamMembershipConnection) basetypes.ListValue {
-	if members == nil {
-		return basetypes.NewListNull(memberObjectType)
-	}
+type teamMemberModel struct {
+	Email types.String `tfsdk:"email"`
+	Role  types.String `tfsdk:"role"`
+}
 
-	output := make([]attr.Value, len(members.Nodes))
-	for i, membership := range members.Nodes {
-		object := make(map[string]attr.Value)
-		object["email"] = basetypes.NewStringValue(membership.User.Email)
-		object["role"] = basetypes.NewStringValue(membership.Role)
-		output[i] = types.ObjectValueMust(memberObjectType.AttrTypes, object)
+func NewTeamMemberModel(member opslevel.TeamMembership) teamMemberModel {
+	return teamMemberModel{
+		Email: ComputedStringValue(member.User.Email),
+		Role:  ComputedStringValue(member.Role),
 	}
-	return types.ListValueMust(memberObjectType, output)
+}
+
+func NewTeamMembersAllModel(members []opslevel.TeamMembership) []teamMemberModel {
+	membersModel := []teamMemberModel{}
+	for _, member := range members {
+		membersModel = append(membersModel, NewTeamMemberModel(member))
+	}
+	return membersModel
 }
 
 func NewTeamDataSourceModel(team opslevel.Team) TeamDataSourceModel {
-	return TeamDataSourceModel{
-		Alias:       types.StringValue(team.Alias),
-		Id:          types.StringValue(string(team.Id)),
-		Members:     membershipsToListValue(team.Memberships),
-		Name:        types.StringValue(team.Name),
-		ParentAlias: types.StringValue(team.ParentTeam.Alias),
-		ParentId:    types.StringValue(string(team.ParentTeam.Id)),
+	teamDataSourceModel := TeamDataSourceModel{
+		Alias:       ComputedStringValue(team.Alias),
+		Id:          ComputedStringValue(string(team.Id)),
+		Name:        ComputedStringValue(team.Name),
+		ParentAlias: ComputedStringValue(team.ParentTeam.Alias),
+		ParentId:    ComputedStringValue(string(team.ParentTeam.Id)),
 	}
+	if team.Memberships != nil {
+		teamDataSourceModel.Members = NewTeamMembersAllModel(team.Memberships.Nodes)
+	}
+	return teamDataSourceModel
 }
 
 func (teamDataSource *TeamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -93,9 +102,11 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 				Description: "The name of the Team.",
 				Computed:    true,
 			},
-			"members": schema.ListAttribute{
+			"members": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: memberNestedSchemaAttrs,
+				},
 				Description: "List of team members on the team with email address and role.",
-				ElementType: memberObjectType,
 				Computed:    true,
 			},
 			"parent_alias": schema.StringAttribute{
