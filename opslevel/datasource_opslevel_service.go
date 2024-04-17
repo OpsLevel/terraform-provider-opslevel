@@ -283,14 +283,14 @@ func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []ops
 	for i, property := range opslevelProperties {
 		propertyObject, diags := opslevelPropertyToObject(ctx, property)
 		if diags != nil && diags.HasError() {
-			return basetypes.NewListNull(domainObjectType), diags
+			return basetypes.NewListNull(opslevelPropertyObjectType), diags
 		}
 		properties[i] = propertyObject
 	}
 
 	result, diags := types.ListValueFrom(ctx, opslevelPropertyObjectType, properties)
 	if diags != nil && diags.HasError() {
-		return basetypes.NewListNull(domainObjectType), diags
+		return basetypes.NewListNull(opslevelPropertyObjectType), diags
 	}
 
 	return result, nil
