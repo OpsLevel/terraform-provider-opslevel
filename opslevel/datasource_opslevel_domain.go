@@ -43,7 +43,7 @@ var domainDatasourceSchemaAttrs = map[string]schema.Attribute{
 		Computed:    true,
 	},
 	"owner": schema.StringAttribute{
-		Description: "The id of the domain owner - could be a group or team.",
+		Description: "The id of the domain owner (team)",
 		Computed:    true,
 	},
 }
@@ -112,7 +112,7 @@ func (d *DomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 		Attributes: DomainAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the domain to find.",
-				Optional:    true,
+				Required:    true,
 			},
 		}),
 	}

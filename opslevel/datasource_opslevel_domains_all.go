@@ -33,7 +33,7 @@ func NewDomainDataSourcesAllModel(ctx context.Context, domains []opslevel.Domain
 	domainModels := []domainDataSourceModel{}
 	for _, domain := range domains {
 		domainModel, domainDiag := NewDomainDataSourceModel(ctx, domain)
-		diags = append(diags, domainDiag...)
+		diags.Append(domainDiag...)
 		domainModels = append(domainModels, domainModel)
 	}
 	return DomainDataSourcesAllModel{Domains: domainModels}, diags
