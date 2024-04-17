@@ -5,5 +5,3 @@ mock_data "opslevel_rubric_category" {
     # id intentionally omitted - will be assigned a random string
   }
 }
-
-

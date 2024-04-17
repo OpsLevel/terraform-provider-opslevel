@@ -23,17 +23,18 @@ type CategoryDataSource struct {
 	CommonDataSourceClient
 }
 
-// CategoryDataSourceModel describes the data source data model.
-type CategoryDataSourceModel struct {
+// categoryDataSourceWithFilterModel contains categoryDataSourceModel fields and a FilterBlockModel
+type categoryDataSourceWithFilterModel struct {
 	Filter FilterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewCategoryDataSourceModel(ctx context.Context, category opslevel.Category) CategoryDataSourceModel {
-	return CategoryDataSourceModel{
-		Id:   ComputedStringValue(string(category.Id)),
-		Name: ComputedStringValue(category.Name),
+func NewCategoryDataSourceWithFilterModel(category opslevel.Category, filter FilterBlockModel) categoryDataSourceWithFilterModel {
+	return categoryDataSourceWithFilterModel{
+		Id:     ComputedStringValue(string(category.Id)),
+		Name:   ComputedStringValue(category.Name),
+		Filter: filter,
 	}
 }
 
@@ -41,21 +42,23 @@ func (d *CategoryDataSource) Metadata(ctx context.Context, req datasource.Metada
 	resp.TypeName = req.ProviderTypeName + "_rubric_category"
 }
 
+var rubricCategorySchemaAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The ID of this resource.",
+		Computed:            true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the rubric category.",
+		Computed:    true,
+	},
+}
+
 func (d *CategoryDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	validFieldNames := []string{"id", "name"}
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rubric Category data source",
 
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The ID of this resource.",
-				Computed:            true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the rubric category.",
-				Computed:    true,
-			},
-		},
+		Attributes: rubricCategorySchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -63,10 +66,10 @@ func (d *CategoryDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 }
 
 func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data CategoryDataSourceModel
+	var planModel, stateModel categoryDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -78,18 +81,17 @@ func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	category, err := filterRubricCategories(categories.Nodes, data.Filter)
+	category, err := filterRubricCategories(categories.Nodes, planModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_category datasource, got error: %s", err))
 		return
 	}
 
-	categoryDataModel := NewCategoryDataSourceModel(ctx, *category)
-	categoryDataModel.Filter = data.Filter
+	stateModel = NewCategoryDataSourceWithFilterModel(*category, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Rubric Category data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &categoryDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func filterRubricCategories(categories []opslevel.Category, filter FilterBlockModel) (*opslevel.Category, error) {

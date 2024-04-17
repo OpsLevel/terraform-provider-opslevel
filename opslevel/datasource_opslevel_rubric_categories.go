@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -26,17 +23,27 @@ type CategoryDataSourcesAll struct {
 	CommonDataSourceClient
 }
 
-// rubricCategoryObjectType is derived from DomainDataSourceModel, needed for lists
-var rubricCategoryObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"id":   types.StringType,
-		"name": types.StringType,
-	},
+// categoryDataSourceModel describes the data source data model.
+type categoryDataSourceModel struct {
+	Id   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
 }
 
 // CategoryDataSourcesModel describes the data source data model.
 type CategoryDataSourcesModel struct {
-	RubricCategories types.List `tfsdk:"rubric_categories"`
+	RubricCategories []categoryDataSourceModel `tfsdk:"rubric_categories"`
+}
+
+func NewCategoryDataSourcesModel(categories []opslevel.Category) CategoryDataSourcesModel {
+	rubricCategories := []categoryDataSourceModel{}
+	for _, category := range categories {
+		rubricCategory := categoryDataSourceModel{
+			Id:   ComputedStringValue(string(category.Id)),
+			Name: ComputedStringValue(category.Name),
+		}
+		rubricCategories = append(rubricCategories, rubricCategory)
+	}
+	return CategoryDataSourcesModel{RubricCategories: rubricCategories}
 }
 
 func (d *CategoryDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -48,8 +55,10 @@ func (d *CategoryDataSourcesAll) Schema(ctx context.Context, req datasource.Sche
 		MarkdownDescription: "Rubric Category data sources",
 
 		Attributes: map[string]schema.Attribute{
-			"rubric_categories": schema.ListAttribute{
-				ElementType: rubricCategoryObjectType,
+			"rubric_categories": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: rubricCategorySchemaAttrs,
+				},
 				Description: "List of Rubric Category data sources",
 				Computed:    true,
 			},
@@ -58,10 +67,10 @@ func (d *CategoryDataSourcesAll) Schema(ctx context.Context, req datasource.Sche
 }
 
 func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data CategoryDataSourcesModel
+	var planModel, stateModel CategoryDataSourcesModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -71,49 +80,9 @@ func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list rubric_categories datasource, got error: %s", err))
 		return
 	}
-	categoriesListValue, diags := allCategoriesToListValue(ctx, categories.Nodes)
-	resp.Diagnostics.Append(diags...)
-
-	data.RubricCategories = categoriesListValue
+	stateModel = NewCategoryDataSourcesModel(categories.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all rubric_categories data sources")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func allCategoriesToListValue(ctx context.Context, opslevelCategories []opslevel.Category) (basetypes.ListValue, diag.Diagnostics) {
-	categories := make([]attr.Value, len(opslevelCategories))
-
-	for idx, category := range opslevelCategories {
-		categoryObject, diags := categoryToObject(ctx, category)
-		if diags != nil && diags.HasError() {
-			return basetypes.NewListNull(rubricCategoryObjectType), diags
-		}
-		categories[idx] = categoryObject
-	}
-
-	result, diags := basetypes.NewListValue(
-		rubricCategoryObjectType,
-		categories,
-	)
-	if diags != nil && diags.HasError() {
-		return basetypes.NewListNull(rubricCategoryObjectType), diags
-	}
-
-	return result, nil
-}
-
-// categoryToObject converts an opslevel.Category to a basetypes.ObjectValue
-func categoryToObject(ctx context.Context, opslevelCategory opslevel.Category) (basetypes.ObjectValue, diag.Diagnostics) {
-	categoryObject := NewCategoryDataSourceModel(ctx, opslevelCategory)
-
-	categoryModel := make(map[string]attr.Value)
-	categoryModel["id"] = categoryObject.Id
-	categoryModel["name"] = categoryObject.Name
-
-	parsedCategory, diags := types.ObjectValue(rubricCategoryObjectType.AttrTypes, categoryModel)
-	if diags != nil && diags.HasError() {
-		return basetypes.ObjectValue{}, diags
-	}
-	return parsedCategory, nil
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
