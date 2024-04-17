@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -38,15 +37,6 @@ type InfraProviderData struct {
 	Name    types.String `tfsdk:"name"`
 	Type    types.String `tfsdk:"type"`
 	Url     types.String `tfsdk:"url"`
-}
-
-var infraProviderDataObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"account": types.StringType,
-		"name":    types.StringType,
-		"type":    types.StringType,
-		"url":     types.StringType,
-	},
 }
 
 func newInfraProviderData(infrastructure opslevel.InfrastructureResource) *InfraProviderData {
