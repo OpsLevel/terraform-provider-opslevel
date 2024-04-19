@@ -316,6 +316,19 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	// NOTE: these fields cannot be unset at the GraphQL API level - we want to acknowledge this for now
+	var lifecycleAliasBeforeUpdate, tierAliasBeforeUpdate types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("lifecycle_alias"), &lifecycleAliasBeforeUpdate)...)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tier_alias"), &tierAliasBeforeUpdate)...)
+	if !lifecycleAliasBeforeUpdate.IsNull() && planModel.LifecycleAlias.IsNull() {
+		resp.Diagnostics.AddError("Known error", "Unable to unset 'lifecycle_alias' field for now. We have a planned fix for this.")
+		return
+	}
+	if !tierAliasBeforeUpdate.IsNull() && planModel.TierAlias.IsNull() {
+		resp.Diagnostics.AddError("Known error", "Unable to unset 'tier_alias' field for now. We have a planned fix for this.")
+		return
+	}
+
 	serviceUpdateInput := opslevel.ServiceUpdateInput{
 		Description:    opslevel.RefOf(planModel.Description.ValueString()),
 		Framework:      opslevel.RefOf(planModel.Framework.ValueString()),
