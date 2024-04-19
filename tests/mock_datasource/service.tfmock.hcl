@@ -11,30 +11,17 @@ mock_data "opslevel_service" {
     owner_id                      = "Z2lkOi8vmockowner123"
     preferred_api_document_source = "PULL"
     product                       = "mock-product"
-    properties = [
-      {
-        "definition" = {
-          aliases = [
-            "mock-one",
-            "mock-two",
-            "mock-three",
-          ]
-          id = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8yODk"
-        }
-        "value" = "mock-property-definition",
-      },
-      {
-        "definition" = {
-          aliases = [
-            "mock-foo",
-            "mock-bar",
-            "mock-baz",
-          ]
-          id = "Z2LKOI8VB3BZBGV2ZWWVUHJVCGVYDGLLCZO6RGVMAW5PDGLVBI8YODK"
-        }
-        "value" = "mock-value-two",
+    properties = {
+      "definition" = {
+        aliases = [
+          "mock-one",
+          "mock-two",
+          "mock-three",
+        ]
+        id = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8yODk"
       }
-    ]
+      "value" = "mock-property-definition",
+    }
     repositories = ["repo-one", "repo-two"]
     tags         = ["key1:value2", "key2:value2"]
     tier_alias   = "mock-tier-alias"

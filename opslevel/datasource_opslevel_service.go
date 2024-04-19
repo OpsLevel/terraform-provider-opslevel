@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -29,47 +27,104 @@ type ServiceDataSource struct {
 
 // ServiceDataSourceModel describes the data source data model.
 type ServiceDataSourceModel struct {
-	Alias                      types.String `tfsdk:"alias"`
-	Aliases                    types.List   `tfsdk:"aliases"`
-	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
-	Description                types.String `tfsdk:"description"`
-	Framework                  types.String `tfsdk:"framework"`
-	Id                         types.String `tfsdk:"id"`
-	Language                   types.String `tfsdk:"language"`
-	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
-	Name                       types.String `tfsdk:"name"`
-	Owner                      types.String `tfsdk:"owner"`
-	OwnerId                    types.String `tfsdk:"owner_id"`
-	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
-	Product                    types.String `tfsdk:"product"`
-	Properties                 types.List   `tfsdk:"properties"`
-	Repositories               types.List   `tfsdk:"repositories"`
-	Tags                       types.List   `tfsdk:"tags"`
-	TierAlias                  types.String `tfsdk:"tier_alias"`
+	Alias                      types.String    `tfsdk:"alias"`
+	Aliases                    types.List      `tfsdk:"aliases"`
+	ApiDocumentPath            types.String    `tfsdk:"api_document_path"`
+	Description                types.String    `tfsdk:"description"`
+	Framework                  types.String    `tfsdk:"framework"`
+	Id                         types.String    `tfsdk:"id"`
+	Language                   types.String    `tfsdk:"language"`
+	LifecycleAlias             types.String    `tfsdk:"lifecycle_alias"`
+	Name                       types.String    `tfsdk:"name"`
+	Owner                      types.String    `tfsdk:"owner"`
+	OwnerId                    types.String    `tfsdk:"owner_id"`
+	PreferredApiDocumentSource types.String    `tfsdk:"preferred_api_document_source"`
+	Product                    types.String    `tfsdk:"product"`
+	Properties                 []propertyModel `tfsdk:"properties"`
+	Repositories               types.List      `tfsdk:"repositories"`
+	Tags                       types.List      `tfsdk:"tags"`
+	TierAlias                  types.String    `tfsdk:"tier_alias"`
+}
+
+type propertyModel struct {
+	Definition propertyDefinitionModel `tfsdk:"definition"`
+	Value      types.String            `tfsdk:"value"`
+}
+
+type propertyDefinitionModel struct {
+	Aliases types.List   `tfsdk:"aliases"`
+	Id      types.String `tfsdk:"id"`
+}
+
+func NewPropertyModel(ctx context.Context, opslevelProperty opslevel.Property) (propertyModel, diag.Diagnostics) {
+	aliases, diags := OptionalStringListValue(ctx, opslevelProperty.Definition.Aliases)
+	if diags != nil && diags.HasError() {
+		return propertyModel{}, diags
+	}
+	propModel := propertyModel{
+		Definition: propertyDefinitionModel{
+			Id:      ComputedStringValue(string(opslevelProperty.Definition.Id)),
+			Aliases: aliases,
+		},
+	}
+	if opslevelProperty.Value != nil {
+		propModel.Value = ComputedStringValue(string(*opslevelProperty.Value))
+	}
+	return propModel, diags
+}
+
+func NewPropertiesAllModel(ctx context.Context, opslevelProperties []opslevel.Property) ([]propertyModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	propertiesModel := []propertyModel{}
+	for _, property := range opslevelProperties {
+		propertyModel, propertyDiag := NewPropertyModel(ctx, property)
+		diags.Append(propertyDiag...)
+		propertiesModel = append(propertiesModel, propertyModel)
+	}
+	return propertiesModel, diags
+}
+
+var opslevelPropertyAttrs = map[string]schema.Attribute{
+	"definition": schema.SingleNestedAttribute{
+		Description: "",
+		Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"aliases": schema.ListAttribute{
+				Description: "A list of human-friendly, unique identifiers of the property definition.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"id": schema.StringAttribute{
+				Description: "The id of the property definition.",
+				Computed:    true,
+			},
+		},
+	},
+	"value": schema.StringAttribute{
+		Description: "The value of the custom property.",
+		Computed:    true,
+	},
 }
 
 func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, alias string) (ServiceDataSourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	serviceDataSourceModel := ServiceDataSourceModel{
-		ApiDocumentPath: types.StringValue(service.ApiDocumentPath),
-		Description:     types.StringValue(service.Description),
-		Framework:       types.StringValue(service.Framework),
-		Id:              types.StringValue(string(service.Id)),
-		Language:        types.StringValue(service.Language),
-		LifecycleAlias:  types.StringValue(service.Lifecycle.Alias),
-		Name:            types.StringValue(service.Name),
-		Owner:           types.StringValue(service.Owner.Alias),
-		OwnerId:         types.StringValue(string(service.Owner.Id)),
-		Product:         types.StringValue(service.Product),
-		TierAlias:       types.StringValue(service.Tier.Alias),
+		Alias:           OptionalStringValue(alias),
+		ApiDocumentPath: ComputedStringValue(service.ApiDocumentPath),
+		Description:     ComputedStringValue(service.Description),
+		Framework:       ComputedStringValue(service.Framework),
+		Id:              OptionalStringValue(string(service.Id)),
+		Language:        ComputedStringValue(service.Language),
+		LifecycleAlias:  ComputedStringValue(service.Lifecycle.Alias),
+		Name:            ComputedStringValue(service.Name),
+		Owner:           ComputedStringValue(service.Owner.Alias),
+		OwnerId:         ComputedStringValue(string(service.Owner.Id)),
+		Product:         ComputedStringValue(service.Product),
+		TierAlias:       ComputedStringValue(service.Tier.Alias),
 	}
 
-	if alias != "" {
-		serviceDataSourceModel.Alias = types.StringValue(alias)
-	}
-
-	serviceAliases, svcDiags := types.ListValueFrom(ctx, types.StringType, service.Aliases)
+	serviceAliases, svcDiags := OptionalStringListValue(ctx, service.Aliases)
 	diags = append(diags, svcDiags...)
 	serviceDataSourceModel.Aliases = serviceAliases
 
@@ -152,9 +207,11 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
 				Computed:    true,
 			},
-			"properties": schema.ListAttribute{
+			"properties": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: opslevelPropertyAttrs,
+				},
 				Description: "Custom properties assigned to this service.",
-				ElementType: opslevelPropertyObjectType,
 				Computed:    true,
 			},
 			"repositories": schema.ListAttribute{
@@ -176,20 +233,20 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 }
 
 func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data ServiceDataSourceModel
+	var planModel, stateModel ServiceDataSourceModel
 	var service opslevel.Service
 	var err error
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if opslevel.IsID(data.Id.ValueString()) {
-		service, err = getServiceWithId(*d.client, data)
-	} else if data.Alias.ValueString() != "" {
-		service, err = getServiceWithAlias(*d.client, data)
+	if opslevel.IsID(planModel.Id.ValueString()) {
+		service, err = getServiceWithId(*d.client, planModel)
+	} else if planModel.Alias.ValueString() != "" {
+		service, err = getServiceWithAlias(*d.client, planModel)
 	} else {
 		resp.Diagnostics.AddError("Config Error", "'alias' or valid 'id' for opslevel_service datasource must be set")
 		return
@@ -199,20 +256,27 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	serviceDataModel, diags := NewServiceDataSourceModel(ctx, service, data.Alias.ValueString())
+	stateModel, diags := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 	resp.Diagnostics.Append(diags...)
 
 	// NOTE: service's hydrate does not populate properties
-	serviceDataModel.Properties, diags = getServiceProperties(ctx, d.client, service)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	properties, err := service.GetProperties(d.client, nil)
+	if err != nil {
+		diags.AddAttributeError(
+			path.Root("properties"),
+			"OpsLevel Client Error",
+			fmt.Sprintf("unable to read Properties for service, got error: %s", err),
+		)
 		return
+	}
+	if properties != nil {
+		stateModel.Properties, diags = NewPropertiesAllModel(ctx, properties.Nodes)
 	}
 
 	if service.Repositories == nil {
-		serviceDataModel.Repositories = types.ListNull(types.StringType)
+		stateModel.Repositories = types.ListNull(types.StringType)
 	} else {
-		serviceDataModel.Repositories, diags = types.ListValueFrom(
+		stateModel.Repositories, diags = types.ListValueFrom(
 			ctx,
 			types.StringType,
 			flattenServiceRepositoriesArray(service.Repositories),
@@ -221,45 +285,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Service data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &serviceDataModel)...)
-}
-
-var opslevelPropertyObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"definition": identifierObjectType,
-		"value":      types.StringType,
-	},
-}
-
-// identifierObjectType used as nested object
-var identifierObjectType = types.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"aliases": types.ListType{ElemType: types.StringType},
-		"id":      types.StringType,
-	},
-}
-
-func getServiceProperties(ctx context.Context, client *opslevel.Client, service opslevel.Service) (basetypes.ListValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	properties, err := service.GetProperties(client, nil)
-	if err != nil {
-		diags.AddAttributeError(
-			path.Root("properties"),
-			"OpsLevel Client Error",
-			fmt.Sprintf("unable to read Properties for service, got error: %s", err),
-		)
-		return types.ListNull(opslevelPropertyObjectType), diags
-	}
-	if properties == nil {
-		return types.ListNull(opslevelPropertyObjectType), diags
-	}
-
-	serviceProperties, diags := opslevelPropertiesToListValue(ctx, properties.Nodes)
-	if diags != nil && diags.HasError() {
-		return types.ListNull(opslevelPropertyObjectType), diags
-	}
-	return serviceProperties, diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func getServiceWithAlias(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
@@ -276,53 +302,4 @@ func getServiceWithId(client opslevel.Client, data ServiceDataSourceModel) (opsl
 		return opslevel.Service{}, err
 	}
 	return *service, nil
-}
-
-func opslevelPropertiesToListValue(ctx context.Context, opslevelProperties []opslevel.Property) (basetypes.ListValue, diag.Diagnostics) {
-	properties := make([]attr.Value, len(opslevelProperties))
-	for i, property := range opslevelProperties {
-		propertyObject, diags := opslevelPropertyToObject(ctx, property)
-		if diags != nil && diags.HasError() {
-			return basetypes.NewListNull(opslevelPropertyObjectType), diags
-		}
-		properties[i] = propertyObject
-	}
-
-	result, diags := types.ListValueFrom(ctx, opslevelPropertyObjectType, properties)
-	if diags != nil && diags.HasError() {
-		return basetypes.NewListNull(opslevelPropertyObjectType), diags
-	}
-
-	return result, nil
-}
-
-func opslevelPropertyToObject(ctx context.Context, opslevelProperty opslevel.Property) (basetypes.ObjectValue, diag.Diagnostics) {
-	identifierAttrs := make(map[string]attr.Value)
-	propertyAttrs := make(map[string]attr.Value)
-
-	propertyDefinitionAliases, diags := types.ListValueFrom(ctx, types.StringType, opslevelProperty.Definition.Aliases)
-	if diags != nil && diags.HasError() {
-		return basetypes.ObjectValue{}, diags
-	}
-
-	identifierAttrs["aliases"] = propertyDefinitionAliases
-	identifierAttrs["id"] = types.StringValue(string(opslevelProperty.Definition.Id))
-
-	parsedPropertyDefinition, diags := types.ObjectValue(identifierObjectType.AttrTypes, identifierAttrs)
-	if diags != nil && diags.HasError() {
-		return basetypes.ObjectValue{}, diags
-	}
-	propertyAttrs["definition"] = parsedPropertyDefinition
-
-	if opslevelProperty.Value == nil {
-		propertyAttrs["value"] = basetypes.NewStringNull()
-	} else {
-		propertyAttrs["value"] = types.StringValue(string(*opslevelProperty.Value))
-	}
-
-	parsedProperty, diags := types.ObjectValue(opslevelPropertyObjectType.AttrTypes, propertyAttrs)
-	if diags != nil && diags.HasError() {
-		return basetypes.ObjectValue{}, diags
-	}
-	return parsedProperty, nil
 }
