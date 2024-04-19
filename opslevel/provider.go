@@ -19,7 +19,7 @@ import (
 const defaultApiTimeout = int64(30)
 
 // Ensure the implementation satisfies the provider.Provider interface.
-var _ provider.Provider = &OpslevelProvider{}
+var _ provider.ProviderWithValidateConfig = &OpslevelProvider{}
 
 type OpslevelProvider struct {
 	version string
@@ -51,25 +51,45 @@ func (p *OpslevelProvider) Schema(ctx context.Context, req provider.SchemaReques
 			},
 			"api_timeout": schema.Int64Attribute{
 				Optional:    true,
-				Description: "Value (in seconds) to use for the timeout of API calls made",
+				Description: "Value (in seconds) to use for the timeout of API calls made.  It can also be sourced from the OPSLEVEL_API_TIMEOUT environment variable.",
 				Sensitive:   false,
 			},
 		},
 	}
 }
 
-func configApiToken(data *OpslevelProviderModel, resp *provider.ConfigureResponse) {
-	if data.ApiUrl.IsNull() || data.ApiToken.Equal(types.StringValue("")) {
-		if apiToken, ok := os.LookupEnv("OPSLEVEL_API_TOKEN"); ok {
-			data.ApiToken = types.StringValue(apiToken)
-		} else {
-			resp.Diagnostics.AddError(
-				"Missing OPSLEVEL_API_TOKEN",
-				"An OPSLEVEL_API_TOKEN is needed to authenticate with the opslevel client. "+
-					"This can be set as an environment variable or in the provider configuration block as 'api_token'.",
-			)
-		}
+func (p *OpslevelProvider) ValidateConfig(ctx context.Context, req provider.ValidateConfigRequest, resp *provider.ValidateConfigResponse) {
+	var providerModel OpslevelProviderModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &providerModel)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
+	if providerModel.ApiUrl.IsNull() && os.Getenv("OPSLEVEL_API_TOKEN") == "" {
+		resp.Diagnostics.AddError(
+			"Provider Config Error",
+			"An OPSLEVEL_API_TOKEN is needed to authenticate with the opslevel client. "+
+				"This can be set as an 'OPSLEVEL_API_TOKEN' environment variable or in the provider configuration block as 'api_token'.",
+		)
+	}
+}
+
+func configApiToken(data *OpslevelProviderModel, resp *provider.ConfigureResponse) {
+	if data.ApiToken.ValueString() != "" {
+		return
+	}
+
+	if apiToken, ok := os.LookupEnv("OPSLEVEL_API_TOKEN"); ok {
+		data.ApiToken = types.StringValue(apiToken)
+		return
+	}
+
+	resp.Diagnostics.AddError(
+		"Missing OPSLEVEL_API_TOKEN",
+		"An OPSLEVEL_API_TOKEN is needed to authenticate with the opslevel client. "+
+			"This can be set as an environment variable or in the provider configuration block as 'api_token'.",
+	)
 }
 
 func configApiUrl(data *OpslevelProviderModel) {
@@ -87,21 +107,26 @@ func configApiTimeOut(data *OpslevelProviderModel, resp *provider.ConfigureRespo
 		return
 	}
 
-	if apiTimeout, ok := os.LookupEnv("OPSLEVEL_API_TIMEOUT"); ok {
-		if timeout, err := strconv.Atoi(apiTimeout); err == nil {
-			data.ApiTimeout = types.Int64Value(int64(timeout))
-			return
-		}
+	apiTimeout, ok := os.LookupEnv("OPSLEVEL_API_TIMEOUT")
+	if !ok {
+		data.ApiTimeout = types.Int64Value(defaultApiTimeout)
+		return
 	}
 
+	if timeout, err := strconv.Atoi(apiTimeout); err == nil {
+		data.ApiTimeout = types.Int64Value(int64(timeout))
+		return
+	}
+
+	// Display warning when OPSLEVEL_API_TIMEOUT is set to to an invalid value
 	resp.Diagnostics.AddWarning(
 		"Expected OPSLEVEL_API_TIMEOUT to be an int",
 		fmt.Sprintf(
-			"OPSLEVEL_API_TIMEOUT was set but not as an int. The default timeout value of %d seconds will be used.",
+			"OPSLEVEL_API_TIMEOUT was set to '%s'. The default timeout value of %d seconds will be used.",
+			apiTimeout,
 			defaultApiTimeout,
 		),
 	)
-	data.ApiTimeout = types.Int64Value(defaultApiTimeout)
 }
 
 func (p *OpslevelProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
