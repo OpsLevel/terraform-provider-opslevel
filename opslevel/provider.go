@@ -66,7 +66,7 @@ func (p *OpslevelProvider) ValidateConfig(ctx context.Context, req provider.Vali
 		return
 	}
 
-	if providerModel.ApiUrl.IsNull() && os.Getenv("OPSLEVEL_API_TOKEN") == "" {
+	if providerModel.ApiToken.IsNull() && os.Getenv("OPSLEVEL_API_TOKEN") == "" {
 		resp.Diagnostics.AddError(
 			"Provider Config Error",
 			"An OPSLEVEL_API_TOKEN is needed to authenticate with the opslevel client. "+
