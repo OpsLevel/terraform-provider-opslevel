@@ -70,7 +70,6 @@ resource "opslevel_check_has_recent_deploy" "example" {
  See example in opslevel_check_manual for proper configuration.
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
-- `last_updated` (String)
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 
@@ -78,6 +77,7 @@ resource "opslevel_check_has_recent_deploy" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
+- `last_updated` (String)
 
 ## Import
 

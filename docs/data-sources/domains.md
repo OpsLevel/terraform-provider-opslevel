@@ -26,17 +26,17 @@ output "found" {
 
 ### Read-Only
 
-- `domains` (List of Object) List of domain data sources (see [below for nested schema](#nestedatt--domains))
+- `domains` (Attributes List) List of domain data sources (see [below for nested schema](#nestedatt--domains))
 
 <a id="nestedatt--domains"></a>
 ### Nested Schema for `domains`
 
 Read-Only:
 
-- `aliases` (List of String)
-- `description` (String)
-- `id` (String)
-- `name` (String)
-- `owner` (String)
+- `aliases` (List of String) The aliases of the domain.
+- `description` (String) The description of the domain.
+- `id` (String) The ID of this Doamin
+- `name` (String) The name of the domain.
+- `owner` (String) The id of the domain owner (team)
 
 

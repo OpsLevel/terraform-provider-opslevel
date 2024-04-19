@@ -73,7 +73,6 @@ resource "opslevel_check_tag_defined" "example" {
  See example in opslevel_check_manual for proper configuration.
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `filter` (String) The id of the filter of the check.
-- `last_updated` (String)
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 - `tag_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tag_predicate))
@@ -82,6 +81,7 @@ resource "opslevel_check_tag_defined" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
+- `last_updated` (String)
 
 <a id="nestedatt--tag_predicate"></a>
 ### Nested Schema for `tag_predicate`

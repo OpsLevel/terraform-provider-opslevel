@@ -78,7 +78,6 @@ resource "opslevel_check_tool_usage" "example" {
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
 - `environment_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--environment_predicate))
 - `filter` (String) The id of the filter of the check.
-- `last_updated` (String)
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 - `tool_name_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tool_name_predicate))
@@ -88,6 +87,7 @@ resource "opslevel_check_tool_usage" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
+- `last_updated` (String)
 
 <a id="nestedatt--environment_predicate"></a>
 ### Nested Schema for `environment_predicate`

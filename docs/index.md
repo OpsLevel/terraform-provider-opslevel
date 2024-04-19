@@ -89,7 +89,7 @@ resource "opslevel_check_repository_integrated" "foo" {
 
 ### Optional
 
-- `api_timeout` (Number) Value (in seconds) to use for the timeout of API calls made
+- `api_timeout` (Number) Value (in seconds) to use for the timeout of API calls made.  It can also be sourced from the OPSLEVEL_API_TIMEOUT environment variable.
 - `api_url` (String) The url of the OpsLevel API to. It can also be sourced from the OPSLEVEL_API_URL environment variable.
 
 ## Argument Reference
