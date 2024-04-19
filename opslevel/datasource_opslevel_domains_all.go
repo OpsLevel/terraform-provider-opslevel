@@ -32,7 +32,7 @@ func NewDomainDataSourcesAllModel(ctx context.Context, domains []opslevel.Domain
 	var diags diag.Diagnostics
 	domainModels := []domainDataSourceModel{}
 	for _, domain := range domains {
-		domainModel, domainDiag := NewDomainDataSourceModel(ctx, domain)
+		domainModel, domainDiag := newDomainDataSourceModel(ctx, domain)
 		diags.Append(domainDiag...)
 		domainModels = append(domainModels, domainModel)
 	}
@@ -72,7 +72,7 @@ func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 
 	domains, err := d.client.ListDomains(nil)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}
 	stateModel, diags := NewDomainDataSourcesAllModel(ctx, domains.Nodes)

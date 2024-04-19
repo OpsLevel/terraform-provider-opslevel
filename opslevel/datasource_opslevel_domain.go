@@ -88,7 +88,7 @@ func newDomainDataSourceModelWithIdentifier(ctx context.Context, domain opslevel
 	return domainDataSourceModelWithIdentifier, diags
 }
 
-func NewDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (domainDataSourceModel, diag.Diagnostics) {
+func newDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (domainDataSourceModel, diag.Diagnostics) {
 	domainAliases, diags := OptionalStringListValue(ctx, domain.Aliases)
 	domainDataSourceModel := domainDataSourceModel{
 		Aliases:     domainAliases,
@@ -130,7 +130,7 @@ func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	domain, err := d.client.GetDomain(data.Identifier.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}
 	domainDataModel, diags := newDomainDataSourceModelWithIdentifier(ctx, *domain, data.Identifier)
