@@ -79,27 +79,27 @@ type systemDataSourceModelWithIdentifier struct {
 }
 
 func newSystemDataSourceModelWithIdentifier(ctx context.Context, system opslevel.System, identifier types.String) (systemDataSourceModelWithIdentifier, diag.Diagnostics) {
-	aliases, diags := types.ListValueFrom(ctx, types.StringType, system.Aliases)
+	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
 	return systemDataSourceModelWithIdentifier{
 		Aliases:     aliases,
-		Description: types.StringValue(system.Description),
-		Domain:      types.StringValue(string(system.Parent.Id)),
-		Id:          types.StringValue(string(system.Id)),
+		Description: ComputedStringValue(system.Description),
+		Domain:      ComputedStringValue(string(system.Parent.Id)),
+		Id:          ComputedStringValue(string(system.Id)),
 		Identifier:  identifier,
-		Name:        types.StringValue(system.Name),
-		Owner:       types.StringValue(string(system.Owner.Id())),
+		Name:        ComputedStringValue(system.Name),
+		Owner:       ComputedStringValue(string(system.Owner.Id())),
 	}, diags
 }
 
 func newSystemDataSourceModel(ctx context.Context, system opslevel.System) (systemDataSourceModel, diag.Diagnostics) {
-	aliases, diags := types.ListValueFrom(ctx, types.StringType, system.Aliases)
+	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
 	return systemDataSourceModel{
 		Aliases:     aliases,
-		Description: types.StringValue(system.Description),
-		Domain:      types.StringValue(string(system.Parent.Id)),
-		Id:          types.StringValue(string(system.Id)),
-		Name:        types.StringValue(system.Name),
-		Owner:       types.StringValue(string(system.Owner.Id())),
+		Description: ComputedStringValue(system.Description),
+		Domain:      ComputedStringValue(string(system.Parent.Id)),
+		Id:          ComputedStringValue(string(system.Id)),
+		Name:        ComputedStringValue(system.Name),
+		Owner:       ComputedStringValue(string(system.Owner.Id())),
 	}, diags
 }
 
