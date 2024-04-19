@@ -154,6 +154,8 @@ data "opslevel_system" "mock_system" {
   identifier = "my_system"
 }
 
+#data "opslevel_systems" "all" {}
+
 # team
 
 data "opslevel_team" "mock_team_with_id" {

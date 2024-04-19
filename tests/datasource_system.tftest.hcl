@@ -38,3 +38,20 @@ run "datasource_system" {
     error_message = "opslevel_system owner should be sys_owner"
   }
 }
+
+# TODO: re-enable me
+#run "datasource_systems_all" {
+#  providers = {
+#    opslevel = opslevel.fake
+#  }
+#
+#  assert {
+#    condition     = length(data.opslevel_systems.all.systems) == 2
+#    error_message = "wrong number of objects in opslevel_systems"
+#  }
+#
+#  assert {
+#    condition     = data.opslevel_systems.all.systems[0].description == "This is my new system that has a domain." && data.opslevel_systems.all.systems[1].description == "This is my new system that has a domain (2)."
+#    error_message = "wrong descriptions in opslevel_systems"
+#  }
+#}

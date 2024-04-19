@@ -44,6 +44,7 @@ run "datasource_domain" {
   }
 }
 
+# TODO: re-enable me
 #run "datasource_domains_all" {
 #  providers = {
 #    opslevel = opslevel.fake
@@ -51,7 +52,7 @@ run "datasource_domain" {
 #
 #  assert {
 #    condition     = length(data.opslevel_domains.all.domains) == 2
-#    error_message = "wrong number of owners in opslevel_domains"
+#    error_message = "wrong number of objects in opslevel_domains"
 #  }
 #
 #  assert {

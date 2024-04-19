@@ -231,6 +231,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewScorecardDataSource,
 		NewServiceDataSource,
 		NewSystemDataSource,
+		NewSystemDataSourcesAll,
 		NewTeamDataSource,
 		NewTierDataSource,
 		NewUserDataSource,

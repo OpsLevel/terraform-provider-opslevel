@@ -24,8 +24,51 @@ type SystemDataSource struct {
 	CommonDataSourceClient
 }
 
-// SystemDataSourceModel describes the data source data model.
-type SystemDataSourceModel struct {
+var systemDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"aliases": schema.ListAttribute{
+		ElementType:         types.StringType,
+		MarkdownDescription: "All of the aliases attached to the System.",
+		Computed:            true,
+	},
+	"description": schema.StringAttribute{
+		MarkdownDescription: "The description of the System.",
+		Computed:            true,
+	},
+	"domain": schema.StringAttribute{
+		MarkdownDescription: "ID of the parent domain of the System.",
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The ID of this System.",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the System.",
+		Computed:    true,
+	},
+	"owner": schema.StringAttribute{
+		Description: "The id of the team that owns the System.",
+		Computed:    true,
+	},
+}
+
+func SystemAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	for key, value := range systemDatasourceSchemaAttrs {
+		attrs[key] = value
+	}
+	return attrs
+}
+
+type systemDataSourceModel struct {
+	Aliases     types.List   `tfsdk:"aliases"`
+	Description types.String `tfsdk:"description"`
+	Domain      types.String `tfsdk:"domain"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Owner       types.String `tfsdk:"owner"`
+}
+
+type systemDataSourceModelWithIdentifier struct {
 	Aliases     types.List   `tfsdk:"aliases"`
 	Description types.String `tfsdk:"description"`
 	Domain      types.String `tfsdk:"domain"`
@@ -35,14 +78,26 @@ type SystemDataSourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-func NewSystemDataSourceModel(ctx context.Context, system opslevel.System, identifier types.String) (SystemDataSourceModel, diag.Diagnostics) {
+func newSystemDataSourceModelWithIdentifier(ctx context.Context, system opslevel.System, identifier types.String) (systemDataSourceModelWithIdentifier, diag.Diagnostics) {
 	aliases, diags := types.ListValueFrom(ctx, types.StringType, system.Aliases)
-	return SystemDataSourceModel{
+	return systemDataSourceModelWithIdentifier{
 		Aliases:     aliases,
 		Description: types.StringValue(system.Description),
 		Domain:      types.StringValue(string(system.Parent.Id)),
 		Id:          types.StringValue(string(system.Id)),
 		Identifier:  identifier,
+		Name:        types.StringValue(system.Name),
+		Owner:       types.StringValue(string(system.Owner.Id())),
+	}, diags
+}
+
+func newSystemDataSourceModel(ctx context.Context, system opslevel.System) (systemDataSourceModel, diag.Diagnostics) {
+	aliases, diags := types.ListValueFrom(ctx, types.StringType, system.Aliases)
+	return systemDataSourceModel{
+		Aliases:     aliases,
+		Description: types.StringValue(system.Description),
+		Domain:      types.StringValue(string(system.Parent.Id)),
+		Id:          types.StringValue(string(system.Id)),
 		Name:        types.StringValue(system.Name),
 		Owner:       types.StringValue(string(system.Owner.Id())),
 	}, diags
@@ -57,42 +112,17 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "System data source",
 
-		Attributes: map[string]schema.Attribute{
-			"aliases": schema.ListAttribute{
-				ElementType:         types.StringType,
-				MarkdownDescription: "All of the aliases attached to the System.",
-				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The description of the System.",
-				Computed:            true,
-			},
-			"domain": schema.StringAttribute{
-				MarkdownDescription: "ID of the parent domain of the System.",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				Description: "The ID of this System.",
-				Computed:    true,
-			},
+		Attributes: SystemAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the System.",
 				Required:    true,
 			},
-			"name": schema.StringAttribute{
-				Description: "The name of the System.",
-				Computed:    true,
-			},
-			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the System.",
-				Computed:    true,
-			},
-		},
+		}),
 	}
 }
 
 func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data SystemDataSourceModel
+	var data systemDataSourceModelWithIdentifier
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -105,7 +135,7 @@ func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read system, got error: %s", err))
 		return
 	}
-	systemDataModel, diags := NewSystemDataSourceModel(ctx, *system, data.Identifier)
+	systemDataModel, diags := newSystemDataSourceModelWithIdentifier(ctx, *system, data.Identifier)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel System data source")
