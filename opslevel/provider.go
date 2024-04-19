@@ -59,7 +59,7 @@ func (p *OpslevelProvider) Schema(ctx context.Context, req provider.SchemaReques
 }
 
 func configApiToken(data *OpslevelProviderModel, resp *provider.ConfigureResponse) {
-	if data.ApiUrl.IsNull() || data.ApiToken.Equal(types.StringValue("")) {
+	if data.ApiToken.IsNull() || data.ApiToken.Equal(types.StringValue("")) {
 		if apiToken, ok := os.LookupEnv("OPSLEVEL_API_TOKEN"); ok {
 			data.ApiToken = types.StringValue(apiToken)
 		} else {
