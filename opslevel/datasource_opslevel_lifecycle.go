@@ -27,13 +27,13 @@ type LifecycleDataSource struct {
 // LifecycleDataSourceModel describes the data source data model.
 type LifecycleDataSourceModel struct {
 	Alias  types.String     `tfsdk:"alias"`
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Index  types.Int64      `tfsdk:"index"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter FilterBlockModel) LifecycleDataSourceModel {
+func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter filterBlockModel) LifecycleDataSourceModel {
 	return LifecycleDataSourceModel{
 		Alias:  types.StringValue(lifecycle.Alias),
 		Filter: filter,
@@ -105,7 +105,7 @@ func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req da
 	resp.Diagnostics.Append(resp.State.Set(ctx, &lifecycleDataModel)...)
 }
 
-func filterLifecycles(lifecycles []opslevel.Lifecycle, filter FilterBlockModel) (*opslevel.Lifecycle, error) {
+func filterLifecycles(lifecycles []opslevel.Lifecycle, filter filterBlockModel) (*opslevel.Lifecycle, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for lifecycle's value")
 	}

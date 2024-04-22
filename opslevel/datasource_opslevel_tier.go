@@ -27,13 +27,13 @@ type TierDataSource struct {
 // TierDataSourceModel describes the data source data model.
 type TierDataSourceModel struct {
 	Alias  types.String     `tfsdk:"alias"`
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Index  types.Int64      `tfsdk:"index"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewTierDataSourceModel(ctx context.Context, tier opslevel.Tier, filter FilterBlockModel) TierDataSourceModel {
+func NewTierDataSourceModel(ctx context.Context, tier opslevel.Tier, filter filterBlockModel) TierDataSourceModel {
 	return TierDataSourceModel{
 		Alias:  types.StringValue(string(tier.Alias)),
 		Filter: filter,
@@ -105,7 +105,7 @@ func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &tierDataModel)...)
 }
 
-func filterTiers(tiers []opslevel.Tier, filter FilterBlockModel) (*opslevel.Tier, error) {
+func filterTiers(tiers []opslevel.Tier, filter filterBlockModel) (*opslevel.Tier, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
 	}

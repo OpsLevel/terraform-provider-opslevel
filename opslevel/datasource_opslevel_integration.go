@@ -25,12 +25,12 @@ type IntegrationDataSource struct {
 
 // IntegrationDataSourceModel describes the data source data model.
 type IntegrationDataSourceModel struct {
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter FilterBlockModel) IntegrationDataSourceModel {
+func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) IntegrationDataSourceModel {
 	return IntegrationDataSourceModel{
 		Filter: filter,
 		Id:     types.StringValue(string(integration.Id)),
@@ -92,7 +92,7 @@ func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &integrationDataModel)...)
 }
 
-func filterIntegrations(data []opslevel.Integration, filter FilterBlockModel) (*opslevel.Integration, error) {
+func filterIntegrations(data []opslevel.Integration, filter filterBlockModel) (*opslevel.Integration, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}

@@ -23,14 +23,14 @@ type CategoryDataSource struct {
 	CommonDataSourceClient
 }
 
-// categoryDataSourceWithFilterModel contains categoryDataSourceModel fields and a FilterBlockModel
+// categoryDataSourceWithFilterModel contains categoryDataSourceModel fields and a filterBlockModel
 type categoryDataSourceWithFilterModel struct {
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewCategoryDataSourceWithFilterModel(category opslevel.Category, filter FilterBlockModel) categoryDataSourceWithFilterModel {
+func NewCategoryDataSourceWithFilterModel(category opslevel.Category, filter filterBlockModel) categoryDataSourceWithFilterModel {
 	return categoryDataSourceWithFilterModel{
 		Id:     ComputedStringValue(string(category.Id)),
 		Name:   ComputedStringValue(category.Name),
@@ -94,7 +94,7 @@ func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
-func filterRubricCategories(categories []opslevel.Category, filter FilterBlockModel) (*opslevel.Category, error) {
+func filterRubricCategories(categories []opslevel.Category, filter filterBlockModel) (*opslevel.Category, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}

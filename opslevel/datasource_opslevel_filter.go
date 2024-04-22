@@ -29,9 +29,9 @@ type filterDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-// filterDataSourceWithFilterModel contains filterDataSourceModel fields and a FilterBlockModel
+// filterDataSourceWithFilterModel contains filterDataSourceModel fields and a filterBlockModel
 type filterDataSourceWithFilterModel struct {
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
@@ -43,7 +43,7 @@ func newFilterDataSourceModel(opslevelFilter opslevel.Filter) filterDataSourceMo
 	}
 }
 
-func newFilterDataSourceWithFilterModel(opslevelFilter opslevel.Filter, filterModel FilterBlockModel) filterDataSourceWithFilterModel {
+func newFilterDataSourceWithFilterModel(opslevelFilter opslevel.Filter, filterModel filterBlockModel) filterDataSourceWithFilterModel {
 	return filterDataSourceWithFilterModel{
 		Filter: filterModel,
 		Id:     ComputedStringValue(string(opslevelFilter.Id)),
@@ -107,7 +107,7 @@ func (d *FilterDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &filterDataModel)...)
 }
 
-func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter FilterBlockModel) (*opslevel.Filter, error) {
+func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter filterBlockModel) (*opslevel.Filter, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
