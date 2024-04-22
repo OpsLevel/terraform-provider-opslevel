@@ -339,23 +339,28 @@ func NewFilterBlockModel(field string, value string) filterBlockModel {
 	}
 }
 
+func FilterAttrs(validFieldNames []string) map[string]schema.Attribute {
+	filterAttrs := map[string]schema.Attribute{
+		"field": schema.StringAttribute{
+			Description: "The field of the target resource to filter upon.",
+			Required:    true,
+			Validators: []validator.String{
+				stringvalidator.OneOf(validFieldNames...),
+			},
+		},
+		"value": schema.StringAttribute{
+			Description: "The field value of the target resource to match.",
+			Required:    true,
+		},
+	}
+	return filterAttrs
+}
+
 // getDatasourceFilter originally had a "required" bool input parameter - no longer needed
 func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "The filter of the target resource to filter upon.",
-		Attributes: map[string]schema.Attribute{
-			"field": schema.StringAttribute{
-				Description: "The field of the target resource to filter upon.",
-				Required:    true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(validFieldNames...),
-				},
-			},
-			"value": schema.StringAttribute{
-				Description: "The field value of the target resource to match.",
-				Required:    true,
-			},
-		},
+		Attributes:          FilterAttrs(validFieldNames),
 	}
 }
 
