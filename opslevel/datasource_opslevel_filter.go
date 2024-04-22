@@ -23,23 +23,47 @@ type FilterDataSource struct {
 	CommonDataSourceClient
 }
 
-// FilterDataSourceModel describes the data source data model.
-type FilterDataSourceModel struct {
-	Filter FilterBlockModel `tfsdk:"filter"`
+// filterDataSourceModel describes the data source data model.
+type filterDataSourceModel struct {
+	Id   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+}
+
+// filterDataSourceWithFilterModel contains filterDataSourceModel fields and a filterBlockModel
+type filterDataSourceWithFilterModel struct {
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewFilterDataSourceModel(ctx context.Context, opslevelFilter opslevel.Filter, filterModel FilterBlockModel) FilterDataSourceModel {
-	return FilterDataSourceModel{
-		Name:   types.StringValue(opslevelFilter.Name),
-		Id:     types.StringValue(string(opslevelFilter.Id)),
+func newFilterDataSourceModel(opslevelFilter opslevel.Filter) filterDataSourceModel {
+	return filterDataSourceModel{
+		Id:   ComputedStringValue(string(opslevelFilter.Id)),
+		Name: ComputedStringValue(opslevelFilter.Name),
+	}
+}
+
+func newFilterDataSourceWithFilterModel(opslevelFilter opslevel.Filter, filterModel filterBlockModel) filterDataSourceWithFilterModel {
+	return filterDataSourceWithFilterModel{
 		Filter: filterModel,
+		Id:     ComputedStringValue(string(opslevelFilter.Id)),
+		Name:   ComputedStringValue(opslevelFilter.Name),
 	}
 }
 
 func (d *FilterDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_filter"
+}
+
+var filterDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The ID of this filter.",
+		Computed:            true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the filter.",
+		Computed:    true,
+	},
 }
 
 func (d *FilterDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -48,16 +72,7 @@ func (d *FilterDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Filter data source",
 
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Terraform specific identifier.",
-				Computed:            true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the filter.",
-				Computed:    true,
-			},
-		},
+		Attributes: filterDatasourceSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -65,7 +80,7 @@ func (d *FilterDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 }
 
 func (d *FilterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data FilterDataSourceModel
+	var data filterDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -85,14 +100,14 @@ func (d *FilterDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	filterDataModel := NewFilterDataSourceModel(ctx, *opslevelFilter, data.Filter)
+	filterDataModel := newFilterDataSourceWithFilterModel(*opslevelFilter, data.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Filter data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &filterDataModel)...)
 }
 
-func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter FilterBlockModel) (*opslevel.Filter, error) {
+func filterOpsLevelFilters(opslevelFilters []opslevel.Filter, filter filterBlockModel) (*opslevel.Filter, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}

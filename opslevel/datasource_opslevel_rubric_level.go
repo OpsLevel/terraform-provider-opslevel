@@ -27,13 +27,13 @@ type LevelDataSource struct {
 // LevelDataSourceModel describes the data source data model.
 type LevelDataSourceModel struct {
 	Alias  types.String     `tfsdk:"alias"`
-	Filter FilterBlockModel `tfsdk:"filter"`
+	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Index  types.Int64      `tfsdk:"index"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewLevelDataSourceModel(ctx context.Context, level opslevel.Level, filter FilterBlockModel) LevelDataSourceModel {
+func NewLevelDataSourceModel(ctx context.Context, level opslevel.Level, filter filterBlockModel) LevelDataSourceModel {
 	return LevelDataSourceModel{
 		Alias:  types.StringValue(string(level.Alias)),
 		Filter: filter,
@@ -105,7 +105,7 @@ func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &levelDataModel)...)
 }
 
-func filterRubricLevels(levels []opslevel.Level, filter FilterBlockModel) (*opslevel.Level, error) {
+func filterRubricLevels(levels []opslevel.Level, filter filterBlockModel) (*opslevel.Level, error) {
 	if filter.Value.Equal(types.StringValue("")) {
 		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
 	}
