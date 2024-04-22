@@ -52,11 +52,11 @@ var repositoryDatasourceSchemaAttrs = map[string]schema.Attribute{
 		Computed:    true,
 	},
 	"name": schema.StringAttribute{
-		Description: "The unique identifier for the repository.",
+		Description: "The display name of the repository.",
 		Computed:    true,
 	},
 	"url": schema.StringAttribute{
-		Description: "The unique identifier for the repository.",
+		Description: "The url of the the repository.",
 		Computed:    true,
 	},
 }
