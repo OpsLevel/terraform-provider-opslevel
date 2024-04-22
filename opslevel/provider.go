@@ -228,6 +228,7 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 		NewLevelDataSource,
 		NewLifecycleDataSource,
 		NewPropertyDefinitionDataSource,
+		NewRepositoriesDataSourceAll,
 		NewRepositoryDataSource,
 		NewScorecardDataSource,
 		NewServiceDataSource,

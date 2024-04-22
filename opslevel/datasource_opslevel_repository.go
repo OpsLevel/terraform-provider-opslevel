@@ -27,13 +27,38 @@ type RepositoryDataSource struct {
 type RepositoryDataSourceModel struct {
 	Alias types.String `tfsdk:"alias"`
 	Id    types.String `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	Url   types.String `tfsdk:"url"`
 }
 
-func NewRepositoryDataSourceModel(ctx context.Context, repository opslevel.Repository) RepositoryDataSourceModel {
+func NewRepositoryDataSourceModel(repository opslevel.Repository) RepositoryDataSourceModel {
 	return RepositoryDataSourceModel{
-		Alias: types.StringValue(repository.DefaultAlias),
-		Id:    types.StringValue(string(repository.Id)),
+		Alias: OptionalStringValue(repository.DefaultAlias),
+		Id:    OptionalStringValue(string(repository.Id)),
+		Name:  ComputedStringValue(repository.Name),
+		Url:   ComputedStringValue(repository.Url),
 	}
+}
+
+var repositoryDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"alias": schema.StringAttribute{
+		MarkdownDescription: "The human-friendly, unique identifier for the repository.",
+		Optional:            true,
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The unique identifier for the repository.",
+		Optional:    true,
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The display name of the repository.",
+		Computed:    true,
+	},
+	"url": schema.StringAttribute{
+		Description: "The url of the the repository.",
+		Computed:    true,
+	},
 }
 
 func (d *RepositoryDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,18 +69,7 @@ func (d *RepositoryDataSource) Schema(ctx context.Context, req datasource.Schema
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Repository data source",
 
-		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				MarkdownDescription: "The human-friendly, unique identifier for the repository.",
-				Optional:            true,
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The unique identifier for the repository.",
-				Optional:            true,
-				Computed:            true,
-			},
-		},
+		Attributes: repositoryDatasourceSchemaAttrs,
 	}
 }
 
@@ -88,7 +102,7 @@ func (d *RepositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	repositoryDataModel := NewRepositoryDataSourceModel(ctx, *repository)
+	repositoryDataModel := NewRepositoryDataSourceModel(*repository)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Repository data source")
