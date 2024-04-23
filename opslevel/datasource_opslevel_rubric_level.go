@@ -24,8 +24,8 @@ type LevelDataSource struct {
 	CommonDataSourceClient
 }
 
-// LevelDataSourceModel describes the data source data model.
-type LevelDataSourceModel struct {
+// levelDataSourceWithFilterModel describes the data source data model.
+type levelDataSourceWithFilterModel struct {
 	Alias  types.String     `tfsdk:"alias"`
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
@@ -33,14 +33,33 @@ type LevelDataSourceModel struct {
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewLevelDataSourceModel(ctx context.Context, level opslevel.Level, filter filterBlockModel) LevelDataSourceModel {
-	return LevelDataSourceModel{
-		Alias:  types.StringValue(string(level.Alias)),
+func NewLevelDataSourceWithFilterModel(ctx context.Context, level opslevel.Level, filter filterBlockModel) levelDataSourceWithFilterModel {
+	return levelDataSourceWithFilterModel{
+		Alias:  ComputedStringValue(level.Alias),
 		Filter: filter,
-		Id:     types.StringValue(string(level.Id)),
+		Id:     ComputedStringValue(string(level.Id)),
 		Index:  types.Int64Value(int64(level.Index)),
-		Name:   types.StringValue(string(level.Name)),
+		Name:   ComputedStringValue(level.Name),
 	}
+}
+
+var rubricLevelSchemaAttrs = map[string]schema.Attribute{
+	"alias": schema.StringAttribute{
+		MarkdownDescription: "An alias of the rubric level to find by.",
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The ID of this resource.",
+		Computed:            true,
+	},
+	"index": schema.Int64Attribute{
+		MarkdownDescription: "An integer allowing this level to be inserted between others.",
+		Computed:            true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The display name of the rubric level.",
+		Computed:    true,
+	},
 }
 
 func (d *LevelDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -52,24 +71,7 @@ func (d *LevelDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rubric Level data source",
 
-		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				MarkdownDescription: "An alias of the rubric level to find by.",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The ID of this resource.",
-				Computed:            true,
-			},
-			"index": schema.Int64Attribute{
-				MarkdownDescription: "An integer allowing this level to be inserted between others.",
-				Computed:            true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The display name of the rubric level.",
-				Computed:    true,
-			},
-		},
+		Attributes: rubricLevelSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -77,10 +79,10 @@ func (d *LevelDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 }
 
 func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data LevelDataSourceModel
+	var planModel, stateModel levelDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -92,17 +94,17 @@ func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	level, err := filterRubricLevels(levels, data.Filter)
+	level, err := filterRubricLevels(levels, planModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_level datasource, got error: %s", err))
 		return
 	}
 
-	levelDataModel := NewLevelDataSourceModel(ctx, *level, data.Filter)
+	stateModel = NewLevelDataSourceWithFilterModel(ctx, *level, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Rubric Level data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &levelDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func filterRubricLevels(levels []opslevel.Level, filter filterBlockModel) (*opslevel.Level, error) {
