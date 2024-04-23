@@ -44,7 +44,19 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"teams": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: teamAttributes(map[string]schema.Attribute{
+					Attributes: map[string]schema.Attribute{
+						"alias": schema.StringAttribute{
+							MarkdownDescription: "The alias attached to the Team.",
+							Computed:            true,
+						},
+						"id": schema.StringAttribute{
+							Description: "The ID of this Team.",
+							Computed:    true,
+						},
+						"name": schema.StringAttribute{
+							Description: "The name of the Team.",
+							Computed:    true,
+						},
 						"members": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: memberNestedSchemaAttrs,
@@ -60,7 +72,7 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 							Description: "The id of the parent team.",
 							Computed:    true,
 						},
-					}),
+					},
 				},
 				Description: "List of team data sources",
 				Computed:    true,

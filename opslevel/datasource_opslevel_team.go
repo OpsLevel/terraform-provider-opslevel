@@ -33,30 +33,6 @@ type teamDataSourceModel struct {
 	ParentId    types.String      `tfsdk:"parent_id"`
 }
 
-var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
-	"alias": schema.StringAttribute{
-		MarkdownDescription: "The alias attached to the Team.",
-		Computed:            true,
-		Optional:            true,
-	},
-	"id": schema.StringAttribute{
-		Description: "The ID of this Team.",
-		Computed:    true,
-		Optional:    true,
-	},
-	"name": schema.StringAttribute{
-		Description: "The name of the Team.",
-		Computed:    true,
-	},
-}
-
-func teamAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	for key, value := range teamDatasourceSchemaAttrs {
-		attrs[key] = value
-	}
-	return attrs
-}
-
 var memberNestedSchemaAttrs = map[string]schema.Attribute{
 	"email": schema.StringAttribute{
 		MarkdownDescription: "The email address of the team member.",
@@ -111,7 +87,19 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Team data source",
 
-		Attributes: teamAttributes(map[string]schema.Attribute{
+		Attributes: map[string]schema.Attribute{
+			"alias": schema.StringAttribute{
+				MarkdownDescription: "The alias attached to the Team.",
+				Optional:            true,
+			},
+			"id": schema.StringAttribute{
+				Description: "The ID of this Team.",
+				Optional:    true,
+			},
+			"name": schema.StringAttribute{
+				Description: "The name of the Team.",
+				Computed:    true,
+			},
 			"members": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: memberNestedSchemaAttrs,
@@ -127,7 +115,7 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 				Description: "The id of the parent team.",
 				Computed:    true,
 			},
-		}),
+		},
 	}
 }
 
