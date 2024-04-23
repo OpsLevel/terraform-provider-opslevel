@@ -29,12 +29,12 @@ type integrationDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-// IntegrationDataSourcesAllModel describes the data source data model.
-type IntegrationDataSourcesAllModel struct {
+// integrationDataSourcesAllModel describes the data source data model.
+type integrationDataSourcesAllModel struct {
 	Integrations []integrationDataSourceModel `tfsdk:"integrations"`
 }
 
-func NewIntegrationDataSourcesAllModel(integrations []opslevel.Integration) IntegrationDataSourcesAllModel {
+func NewIntegrationDataSourcesAllModel(integrations []opslevel.Integration) integrationDataSourcesAllModel {
 	integrationsModel := []integrationDataSourceModel{}
 	for _, integration := range integrations {
 		integrationModel := integrationDataSourceModel{
@@ -43,7 +43,7 @@ func NewIntegrationDataSourcesAllModel(integrations []opslevel.Integration) Inte
 		}
 		integrationsModel = append(integrationsModel, integrationModel)
 	}
-	return IntegrationDataSourcesAllModel{Integrations: integrationsModel}
+	return integrationDataSourcesAllModel{Integrations: integrationsModel}
 }
 
 func (i *IntegrationDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -68,7 +68,7 @@ func (i *IntegrationDataSourcesAll) Schema(ctx context.Context, req datasource.S
 }
 
 func (i *IntegrationDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel IntegrationDataSourcesAllModel
+	var planModel, stateModel integrationDataSourcesAllModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)

@@ -34,15 +34,15 @@ var integrationSchemaAttrs = map[string]schema.Attribute{
 	},
 }
 
-// IntegrationDataSourceWithFilterModel describes the data source data model.
-type IntegrationDataSourceWithFilterModel struct {
+// integrationDataSourceWithFilterModel describes the data source data model.
+type integrationDataSourceWithFilterModel struct {
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) IntegrationDataSourceWithFilterModel {
-	return IntegrationDataSourceWithFilterModel{
+func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) integrationDataSourceWithFilterModel {
+	return integrationDataSourceWithFilterModel{
 		Filter: filter,
 		Id:     ComputedStringValue(string(integration.Id)),
 		Name:   ComputedStringValue(integration.Name),
@@ -67,7 +67,7 @@ func (i *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 }
 
 func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel IntegrationDataSourceWithFilterModel
+	var planModel, stateModel integrationDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
