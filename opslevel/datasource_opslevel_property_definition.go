@@ -44,12 +44,12 @@ type propertyDefinitionDataSourceWithFilterModel struct {
 func NewPropertyDefinitionDataSourceWithFilterModel(propertydefinition opslevel.PropertyDefinition, identifier string) propertyDefinitionDataSourceWithFilterModel {
 	return propertyDefinitionDataSourceWithFilterModel{
 		AllowedInConfigFiles:  types.BoolValue(propertydefinition.AllowedInConfigFiles),
-		Description:           types.StringValue(propertydefinition.Description),
-		Id:                    types.StringValue(string(propertydefinition.Id)),
-		Identifier:            types.StringValue(identifier),
-		Name:                  types.StringValue(propertydefinition.Name),
-		PropertyDisplayStatus: types.StringValue(string(propertydefinition.PropertyDisplayStatus)),
-		Schema:                types.StringValue(propertydefinition.Schema.ToJSON()),
+		Description:           ComputedStringValue(propertydefinition.Description),
+		Id:                    ComputedStringValue(string(propertydefinition.Id)),
+		Identifier:            ComputedStringValue(identifier),
+		Name:                  ComputedStringValue(propertydefinition.Name),
+		PropertyDisplayStatus: ComputedStringValue(string(propertydefinition.PropertyDisplayStatus)),
+		Schema:                ComputedStringValue(propertydefinition.Schema.ToJSON()),
 	}
 }
 
