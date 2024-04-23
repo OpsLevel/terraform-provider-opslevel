@@ -132,7 +132,7 @@ func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	system, err := sys.client.GetSystem(data.Identifier.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list systems, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read system, got error: %s", err))
 		return
 	}
 	systemDataModel, diags := newSystemDataSourceModelWithIdentifier(ctx, *system, data.Identifier)
