@@ -90,10 +90,12 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		Attributes: map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
 				MarkdownDescription: "The alias attached to the Team.",
+				Computed:            true,
 				Optional:            true,
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of this Team.",
+				Computed:    true,
 				Optional:    true,
 			},
 			"name": schema.StringAttribute{
