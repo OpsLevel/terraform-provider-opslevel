@@ -24,13 +24,13 @@ type ServiceDataSourcesAll struct {
 	CommonDataSourceClient
 }
 
-// ServiceDataSourcesAllModel describes the data source data model.
-type ServiceDataSourcesAllModel struct {
+// serviceDataSourcesAllModel describes the data source data model.
+type serviceDataSourcesAllModel struct {
 	Filter   *filterBlockModel                `tfsdk:"filter"`
 	Services []serviceMinimalaDataSourceModel `tfsdk:"services"`
 }
 
-func NewServiceDataSourcesAllModel(services []opslevel.Service) ServiceDataSourcesAllModel {
+func NewServiceDataSourcesAllModel(services []opslevel.Service) serviceDataSourcesAllModel {
 	serviceDataSourcesModel := []serviceMinimalaDataSourceModel{}
 	for _, service := range services {
 		serviceModel := serviceMinimalaDataSourceModel{
@@ -40,7 +40,7 @@ func NewServiceDataSourcesAllModel(services []opslevel.Service) ServiceDataSourc
 		}
 		serviceDataSourcesModel = append(serviceDataSourcesModel, serviceModel)
 	}
-	return ServiceDataSourcesAllModel{Services: serviceDataSourcesModel}
+	return serviceDataSourcesAllModel{Services: serviceDataSourcesModel}
 }
 
 func (d *ServiceDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -94,7 +94,7 @@ func (d *ServiceDataSourcesAll) Schema(ctx context.Context, req datasource.Schem
 }
 
 func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel ServiceDataSourcesAllModel
+	var planModel, stateModel serviceDataSourcesAllModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
