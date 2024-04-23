@@ -24,7 +24,7 @@ type LifecycleDataSourcesAll struct {
 }
 
 // CategoryDataSourcesAll manages a Category data source.
-type LifecycleDataSourcesAllModel struct {
+type lifecycleDataSourcesAllModel struct {
 	Lifecycles []lifecycleDataSourceModel `tfsdk:"lifecycles"`
 }
 
@@ -36,7 +36,7 @@ type lifecycleDataSourceModel struct {
 	Name  types.String `tfsdk:"name"`
 }
 
-func NewLifecycleDataSourcesAllModel(lifecycles []opslevel.Lifecycle) LifecycleDataSourcesAllModel {
+func NewLifecycleDataSourcesAllModel(lifecycles []opslevel.Lifecycle) lifecycleDataSourcesAllModel {
 	lifecyclesModel := []lifecycleDataSourceModel{}
 	for _, lifecycle := range lifecycles {
 		lifecycleModel := lifecycleDataSourceModel{
@@ -47,7 +47,7 @@ func NewLifecycleDataSourcesAllModel(lifecycles []opslevel.Lifecycle) LifecycleD
 		}
 		lifecyclesModel = append(lifecyclesModel, lifecycleModel)
 	}
-	return LifecycleDataSourcesAllModel{Lifecycles: lifecyclesModel}
+	return lifecycleDataSourcesAllModel{Lifecycles: lifecyclesModel}
 }
 
 func (d *LifecycleDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -72,7 +72,7 @@ func (d *LifecycleDataSourcesAll) Schema(ctx context.Context, req datasource.Sch
 }
 
 func (d *LifecycleDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel LifecycleDataSourcesAllModel
+	var planModel, stateModel lifecycleDataSourcesAllModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)

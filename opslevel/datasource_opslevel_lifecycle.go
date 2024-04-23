@@ -24,8 +24,8 @@ type LifecycleDataSource struct {
 	CommonDataSourceClient
 }
 
-// LifecycleDataSourceWithFilterModel describes the data source data model.
-type LifecycleDataSourceWithFilterModel struct {
+// lifecycleDataSourceWithFilterModel describes the data source data model.
+type lifecycleDataSourceWithFilterModel struct {
 	Alias  types.String     `tfsdk:"alias"`
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
@@ -33,8 +33,8 @@ type LifecycleDataSourceWithFilterModel struct {
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter filterBlockModel) LifecycleDataSourceWithFilterModel {
-	return LifecycleDataSourceWithFilterModel{
+func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter filterBlockModel) lifecycleDataSourceWithFilterModel {
+	return lifecycleDataSourceWithFilterModel{
 		Alias:  ComputedStringValue(lifecycle.Alias),
 		Filter: filter,
 		Id:     ComputedStringValue(string(lifecycle.Id)),
@@ -80,7 +80,7 @@ func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req 
 }
 
 func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel LifecycleDataSourceWithFilterModel
+	var planModel, stateModel lifecycleDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
