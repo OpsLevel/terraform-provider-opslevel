@@ -52,7 +52,7 @@ var systemDatasourceSchemaAttrs = map[string]schema.Attribute{
 	},
 }
 
-func SystemAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+func systemAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
 	for key, value := range systemDatasourceSchemaAttrs {
 		attrs[key] = value
 	}
@@ -112,7 +112,7 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "System data source",
 
-		Attributes: SystemAttributes(map[string]schema.Attribute{
+		Attributes: systemAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the System.",
 				Required:    true,
@@ -132,7 +132,7 @@ func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	system, err := sys.client.GetSystem(data.Identifier.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read system, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list systems, got error: %s", err))
 		return
 	}
 	systemDataModel, diags := newSystemDataSourceModelWithIdentifier(ctx, *system, data.Identifier)
