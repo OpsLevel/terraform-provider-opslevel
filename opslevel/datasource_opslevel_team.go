@@ -48,21 +48,6 @@ var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
 		Description: "The name of the Team.",
 		Computed:    true,
 	},
-	"members": schema.ListNestedAttribute{
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: memberNestedSchemaAttrs,
-		},
-		Description: "List of team members on the team with email address and role.",
-		Computed:    true,
-	},
-	"parent_alias": schema.StringAttribute{
-		Description: "The alias of the parent team.",
-		Computed:    true,
-	},
-	"parent_id": schema.StringAttribute{
-		Description: "The id of the parent team.",
-		Computed:    true,
-	},
 }
 
 func teamAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
@@ -126,7 +111,23 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Team data source",
 
-		Attributes: teamAttributes(map[string]schema.Attribute{}),
+		Attributes: teamAttributes(map[string]schema.Attribute{
+			"members": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: memberNestedSchemaAttrs,
+				},
+				Description: "List of team members on the team with email address and role.",
+				Computed:    true,
+			},
+			"parent_alias": schema.StringAttribute{
+				Description: "The alias of the parent team.",
+				Computed:    true,
+			},
+			"parent_id": schema.StringAttribute{
+				Description: "The id of the parent team.",
+				Computed:    true,
+			},
+		}),
 	}
 }
 

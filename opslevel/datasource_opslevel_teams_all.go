@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -25,14 +24,13 @@ type teamDataSourcesAllModel struct {
 	Teams []teamDataSourceModel `tfsdk:"teams"`
 }
 
-func newTeamDataSourcesAllModel(teams []opslevel.Team) (teamDataSourcesAllModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func newTeamDataSourcesAllModel(teams []opslevel.Team) teamDataSourcesAllModel {
 	teamModels := make([]teamDataSourceModel, 0)
 	for _, team := range teams {
 		teamModel := newTeamDataSourceModel(team)
 		teamModels = append(teamModels, teamModel)
 	}
-	return teamDataSourcesAllModel{Teams: teamModels}, diags
+	return teamDataSourcesAllModel{Teams: teamModels}
 }
 
 func (d *TeamDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -46,7 +44,23 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"teams": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: teamDatasourceSchemaAttrs,
+					Attributes: teamAttributes(map[string]schema.Attribute{
+						"members": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: memberNestedSchemaAttrs,
+							},
+							Description: "List of team members on the team with email address and role.",
+							Computed:    true,
+						},
+						"parent_alias": schema.StringAttribute{
+							Description: "The alias of the parent team.",
+							Computed:    true,
+						},
+						"parent_id": schema.StringAttribute{
+							Description: "The id of the parent team.",
+							Computed:    true,
+						},
+					}),
 				},
 				Description: "List of team data sources",
 				Computed:    true,
@@ -69,9 +83,8 @@ func (d *TeamDataSourcesAll) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list teams, got error: %s", err))
 		return
 	}
-	stateModel, diags := newTeamDataSourcesAllModel(teams.Nodes)
+	stateModel = newTeamDataSourcesAllModel(teams.Nodes)
 
 	tflog.Trace(ctx, "listed all OpsLevel Team data sources")
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
