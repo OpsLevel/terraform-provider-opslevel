@@ -23,18 +23,29 @@ type IntegrationDataSource struct {
 	CommonDataSourceClient
 }
 
-// IntegrationDataSourceModel describes the data source data model.
-type IntegrationDataSourceModel struct {
+var integrationSchemaAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		Description: "The ID of this Integration.",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the Integration.",
+		Computed:    true,
+	},
+}
+
+// integrationDataSourceWithFilterModel describes the data source data model.
+type integrationDataSourceWithFilterModel struct {
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) IntegrationDataSourceModel {
-	return IntegrationDataSourceModel{
+func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) integrationDataSourceWithFilterModel {
+	return integrationDataSourceWithFilterModel{
 		Filter: filter,
-		Id:     types.StringValue(string(integration.Id)),
-		Name:   types.StringValue(integration.Name),
+		Id:     ComputedStringValue(string(integration.Id)),
+		Name:   ComputedStringValue(integration.Name),
 	}
 }
 
@@ -48,16 +59,7 @@ func (i *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Integration data source",
 
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Description: "The ID of this Integration.",
-				Computed:    true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the Integration.",
-				Computed:    true,
-			},
-		},
+		Attributes: integrationSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -65,10 +67,10 @@ func (i *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 }
 
 func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data IntegrationDataSourceModel
+	var planModel, stateModel integrationDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -79,17 +81,17 @@ func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	integration, err := filterIntegrations(integrations.Nodes, data.Filter)
+	integration, err := filterIntegrations(integrations.Nodes, planModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to filter integrations, got error: %s", err))
 		return
 	}
 
-	integrationDataModel := NewIntegrationDataSourceModel(ctx, *integration, data.Filter)
+	stateModel = NewIntegrationDataSourceModel(ctx, *integration, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Integration data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &integrationDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func filterIntegrations(data []opslevel.Integration, filter filterBlockModel) (*opslevel.Integration, error) {
