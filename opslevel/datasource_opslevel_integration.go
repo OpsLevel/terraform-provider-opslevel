@@ -44,8 +44,8 @@ type IntegrationDataSourceWithFilterModel struct {
 func NewIntegrationDataSourceModel(ctx context.Context, integration opslevel.Integration, filter filterBlockModel) IntegrationDataSourceWithFilterModel {
 	return IntegrationDataSourceWithFilterModel{
 		Filter: filter,
-		Id:     types.StringValue(string(integration.Id)),
-		Name:   types.StringValue(integration.Name),
+		Id:     ComputedStringValue(string(integration.Id)),
+		Name:   ComputedStringValue(integration.Name),
 	}
 }
 
