@@ -18,7 +18,7 @@ func NewLevelDataSourcesAll() datasource.DataSource {
 	return &LevelDataSourcesAll{}
 }
 
-// LevelDataSourcesAll manages a Level data source.
+// LevelDataSourcesAll manages a list of Level data sources.
 type LevelDataSourcesAll struct {
 	CommonDataSourceClient
 }
