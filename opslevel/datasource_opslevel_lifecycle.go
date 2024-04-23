@@ -24,8 +24,8 @@ type LifecycleDataSource struct {
 	CommonDataSourceClient
 }
 
-// LifecycleDataSourceModel describes the data source data model.
-type LifecycleDataSourceModel struct {
+// lifecycleDataSourceWithFilterModel describes the data source data model.
+type lifecycleDataSourceWithFilterModel struct {
 	Alias  types.String     `tfsdk:"alias"`
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
@@ -33,14 +33,33 @@ type LifecycleDataSourceModel struct {
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter filterBlockModel) LifecycleDataSourceModel {
-	return LifecycleDataSourceModel{
-		Alias:  types.StringValue(lifecycle.Alias),
+func NewLifecycleDataSourceModel(ctx context.Context, lifecycle opslevel.Lifecycle, filter filterBlockModel) lifecycleDataSourceWithFilterModel {
+	return lifecycleDataSourceWithFilterModel{
+		Alias:  ComputedStringValue(lifecycle.Alias),
 		Filter: filter,
-		Id:     types.StringValue(string(lifecycle.Id)),
+		Id:     ComputedStringValue(string(lifecycle.Id)),
 		Index:  types.Int64Value(int64(lifecycle.Index)),
-		Name:   types.StringValue(lifecycle.Name),
+		Name:   ComputedStringValue(lifecycle.Name),
 	}
+}
+
+var lifecycleSchemaAttrs = map[string]schema.Attribute{
+	"alias": schema.StringAttribute{
+		MarkdownDescription: "The alias attached to the Lifecycle.",
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The unique identifier for the Lifecycle.",
+		Computed:    true,
+	},
+	"index": schema.Int64Attribute{
+		Description: "The numerical representation of the Lifecycle.",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the Lifecycle.",
+		Computed:    true,
+	},
 }
 
 func (lifecycleDataSource *LifecycleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -53,24 +72,7 @@ func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req 
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Lifecycle data source",
 
-		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				MarkdownDescription: "The alias attached to the Lifecycle.",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				Description: "The unique identifier for the Lifecycle.",
-				Computed:    true,
-			},
-			"index": schema.Int64Attribute{
-				Description: "The numerical representation of the Lifecycle.",
-				Computed:    true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the Lifecycle.",
-				Computed:    true,
-			},
-		},
+		Attributes: lifecycleSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -78,10 +80,10 @@ func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req 
 }
 
 func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data LifecycleDataSourceModel
+	var planModel, stateModel lifecycleDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -92,17 +94,17 @@ func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req da
 		return
 	}
 
-	lifecycle, err := filterLifecycles(lifecycles, data.Filter)
+	lifecycle, err := filterLifecycles(lifecycles, planModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to filter lifecycle, got error: %s", err))
 		return
 	}
 
-	lifecycleDataModel := NewLifecycleDataSourceModel(ctx, *lifecycle, data.Filter)
+	stateModel = NewLifecycleDataSourceModel(ctx, *lifecycle, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Lifecycle data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &lifecycleDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func filterLifecycles(lifecycles []opslevel.Lifecycle, filter filterBlockModel) (*opslevel.Lifecycle, error) {
