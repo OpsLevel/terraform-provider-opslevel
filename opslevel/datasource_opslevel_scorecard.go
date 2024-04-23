@@ -24,8 +24,59 @@ type ScorecardDataSource struct {
 	CommonDataSourceClient
 }
 
-// ScorecardDataSourceModel describes the data source data model.
-type ScorecardDataSourceModel struct {
+var scorecardSchemaAttrs = map[string]schema.Attribute{
+	"affects_overall_service_levels": schema.BoolAttribute{
+		Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
+		Computed:    true,
+	},
+	"aliases": schema.ListAttribute{
+		ElementType: types.StringType,
+		Description: "The scorecard's aliases.",
+		Computed:    true,
+	},
+	"description": schema.StringAttribute{
+		Description: "The scorecard's description.",
+		Computed:    true,
+	},
+	"filter_id": schema.StringAttribute{
+		MarkdownDescription: "The scorecard's filter.",
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The ID of this resource.",
+		Computed:            true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The scorecard's name.",
+		Computed:    true,
+	},
+	"owner_id": schema.StringAttribute{
+		Description: "The scorecard's owner id.",
+		Computed:    true,
+	},
+	"passing_checks": schema.Int64Attribute{
+		Description: "The scorecard's number of checks that are passing.",
+		Computed:    true,
+	},
+	"service_count": schema.Int64Attribute{
+		Description: "The scorecard's number of services matched.",
+		Computed:    true,
+	},
+	"total_checks": schema.Int64Attribute{
+		Description: "The scorecard's total number of checks.",
+		Computed:    true,
+	},
+}
+
+func ScorecardAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	for key, value := range scorecardSchemaAttrs {
+		attrs[key] = value
+	}
+	return attrs
+}
+
+// scorecardDataSourceWithIdentifierModel describes the data source data model.
+type scorecardDataSourceWithIdentifierModel struct {
 	AffectsOverallServiceLevels types.Bool   `tfsdk:"affects_overall_service_levels"`
 	Aliases                     types.List   `tfsdk:"aliases"`
 	Description                 types.String `tfsdk:"description"`
@@ -39,24 +90,21 @@ type ScorecardDataSourceModel struct {
 	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
 }
 
-func NewScorecardDataSourceModel(ctx context.Context, scorecard opslevel.Scorecard, identifier string) (ScorecardDataSourceModel, diag.Diagnostics) {
-	scorecardDataSourceModel := ScorecardDataSourceModel{
+func NewScorecardDataSourceWithIdentifierModel(ctx context.Context, scorecard opslevel.Scorecard, identifier string) (scorecardDataSourceWithIdentifierModel, diag.Diagnostics) {
+	scorecardAliases, diags := OptionalStringListValue(ctx, scorecard.Aliases)
+	return scorecardDataSourceWithIdentifierModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
-		Description:                 types.StringValue(scorecard.Description),
-		FilterId:                    types.StringValue(string(scorecard.Filter.Id)),
-		Id:                          types.StringValue(string(scorecard.Id)),
-		Identifier:                  types.StringValue(identifier),
-		Name:                        types.StringValue(scorecard.Name),
-		OwnerId:                     types.StringValue(string(scorecard.Owner.Id())),
+		Aliases:                     scorecardAliases,
+		Description:                 ComputedStringValue(scorecard.Description),
+		FilterId:                    ComputedStringValue(string(scorecard.Filter.Id)),
+		Id:                          ComputedStringValue(string(scorecard.Id)),
+		Identifier:                  ComputedStringValue(identifier),
+		Name:                        ComputedStringValue(scorecard.Name),
+		OwnerId:                     ComputedStringValue(string(scorecard.Owner.Id())),
 		PassingChecks:               types.Int64Value(int64(scorecard.PassingChecks)),
 		ServiceCount:                types.Int64Value(int64(scorecard.ServiceCount)),
 		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
-	}
-
-	scorecardAliases, diags := types.ListValueFrom(ctx, types.StringType, scorecard.Aliases)
-	scorecardDataSourceModel.Aliases = scorecardAliases
-
-	return scorecardDataSourceModel, diags
+	}, diags
 }
 
 func (d *ScorecardDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -67,74 +115,33 @@ func (d *ScorecardDataSource) Schema(ctx context.Context, req datasource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Scorecard data source",
 
-		Attributes: map[string]schema.Attribute{
-			"affects_overall_service_levels": schema.BoolAttribute{
-				Description: "Specifies whether the checks on this scorecard affect services' overall maturity level.",
-				Computed:    true,
-			},
-			"aliases": schema.ListAttribute{
-				ElementType: types.StringType,
-				Description: "The scorecard's aliases.",
-				Computed:    true,
-			},
-			"description": schema.StringAttribute{
-				Description: "The scorecard's description.",
-				Computed:    true,
-			},
-			"filter_id": schema.StringAttribute{
-				MarkdownDescription: "The scorecard's filter.",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The ID of this resource.",
-				Computed:            true,
-			},
+		Attributes: ScorecardAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the scorecard to find.",
 				Required:    true,
 			},
-			"name": schema.StringAttribute{
-				Description: "The scorecard's name.",
-				Computed:    true,
-			},
-			"owner_id": schema.StringAttribute{
-				Description: "The scorecard's owner id.",
-				Computed:    true,
-			},
-			"passing_checks": schema.Int64Attribute{
-				Description: "The scorecard's number of checks that are passing.",
-				Computed:    true,
-			},
-			"service_count": schema.Int64Attribute{
-				Description: "The scorecard's number of services matched.",
-				Computed:    true,
-			},
-			"total_checks": schema.Int64Attribute{
-				Description: "The scorecard's total number of checks.",
-				Computed:    true,
-			},
-		},
+		}),
 	}
 }
 
 func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data ScorecardDataSourceModel
+	var planModel, stateModel scorecardDataSourceWithIdentifierModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	scorecard, err := d.client.GetScorecard(data.Identifier.ValueString())
+	scorecard, err := d.client.GetScorecard(planModel.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read scorecard datasource, got error: %s", err))
 		return
 	}
-	scorecardDataModel, diags := NewScorecardDataSourceModel(ctx, *scorecard, data.Identifier.ValueString())
+	stateModel, diags := NewScorecardDataSourceWithIdentifierModel(ctx, *scorecard, planModel.Identifier.ValueString())
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Scorecard data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &scorecardDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
