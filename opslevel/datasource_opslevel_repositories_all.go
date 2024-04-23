@@ -84,7 +84,7 @@ func (d *RepositoriesDataSourcesAll) Read(ctx context.Context, req datasource.Re
 	} else {
 		repos, err = d.client.ListRepositories(nil)
 	}
-	if err != nil || repos == nil || repos.Nodes == nil {
+	if err != nil || repos == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read OpsLevel Repositories data source, got error: %s", err))
 		return
 	}
@@ -93,6 +93,6 @@ func (d *RepositoriesDataSourcesAll) Read(ctx context.Context, req datasource.Re
 	stateModel.Filter = planModel.Filter
 
 	// Save data into Terraform state
-	tflog.Trace(ctx, "read an OpsLevel Repository data source")
+	tflog.Trace(ctx, "listed all OpsLevel Repository data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
