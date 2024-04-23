@@ -1,78 +1,149 @@
 package opslevel
 
-// import (
-// 	"github.com/opslevel/opslevel-go/v2024"
+import (
+	"context"
+	"fmt"
+	"strings"
 
-// 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-// )
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/opslevel/opslevel-go/v2024"
+)
 
-// func datasourceServices() *schema.Resource {
-// 	return &schema.Resource{
-// 		Read: wrap(datasourceServicesRead),
-// 		Schema: map[string]*schema.Schema{
-// 			"filter": getDatasourceFilter(false, []string{"framework", "language", "lifecycle", "owner", "product", "tag", "tier"}),
-// 			"ids": {
-// 				Type:     schema.TypeList,
-// 				Computed: true,
-// 				Elem:     &schema.Schema{Type: schema.TypeString},
-// 			},
-// 			"names": {
-// 				Type:     schema.TypeList,
-// 				Computed: true,
-// 				Elem:     &schema.Schema{Type: schema.TypeString},
-// 			},
-// 			"urls": {
-// 				Type:     schema.TypeList,
-// 				Computed: true,
-// 				Elem:     &schema.Schema{Type: schema.TypeString},
-// 			},
-// 		},
-// 	}
-// }
+// Ensure ServiceDataSource implements DataSourceWithConfigure interface
+var _ datasource.DataSourceWithConfigure = &ServiceDataSource{}
 
-// func datasourceServicesRead(d *schema.ResourceData, client *opslevel.Client) error {
-// 	field := d.Get("filter.0.field").(string)
-// 	value := d.Get("filter.0.value").(string)
+func NewServiceDataSourcesAll() datasource.DataSource {
+	return &ServiceDataSourcesAll{}
+}
 
-// 	var services *opslevel.ServiceConnection
-// 	var err error
+// ServiceDataSource manages a Service data source.
+type ServiceDataSourcesAll struct {
+	CommonDataSourceClient
+}
 
-// 	switch field {
-// 	case "framework":
-// 		services, err = client.ListServicesWithFramework(value, nil)
-// 	case "language":
-// 		services, err = client.ListServicesWithLanguage(value, nil)
-// 	case "lifecycle":
-// 		services, err = client.ListServicesWithLifecycle(value, nil)
-// 	case "owner":
-// 		services, err = client.ListServicesWithOwner(value, nil)
-// 	case "product":
-// 		services, err = client.ListServicesWithProduct(value, nil)
-// 	case "tag":
-// 		services, err = client.ListServicesWithTag(opslevel.NewTagArgs(value), nil)
-// 	case "tier":
-// 		services, err = client.ListServicesWithTier(value, nil)
-// 	default:
-// 		services, err = client.ListServices(nil)
-// 	}
-// 	if err != nil {
-// 		return err
-// 	}
+// ServiceDataSourcesAllModel describes the data source data model.
+type ServiceDataSourcesAllModel struct {
+	Filter   *filterBlockModel                `tfsdk:"filter"`
+	Services []serviceMinimalaDataSourceModel `tfsdk:"services"`
+}
 
-// 	count := len(services.Nodes)
-// 	ids := make([]string, count)
-// 	names := make([]string, count)
-// 	urls := make([]string, count)
-// 	for i, item := range services.Nodes {
-// 		ids[i] = string(item.Id)
-// 		names[i] = item.Name
-// 		urls[i] = item.HtmlURL
-// 	}
+func NewServiceDataSourcesAllModel(services []opslevel.Service) ServiceDataSourcesAllModel {
+	serviceDataSourcesModel := []serviceMinimalaDataSourceModel{}
+	for _, service := range services {
+		serviceModel := serviceMinimalaDataSourceModel{
+			Id:   ComputedStringValue(string(service.Id)),
+			Name: ComputedStringValue(service.Name),
+			Url:  ComputedStringValue(service.HtmlURL),
+		}
+		serviceDataSourcesModel = append(serviceDataSourcesModel, serviceModel)
+	}
+	return ServiceDataSourcesAllModel{Services: serviceDataSourcesModel}
+}
 
-// 	d.SetId(timeID())
-// 	d.Set("ids", ids)
-// 	d.Set("names", names)
-// 	d.Set("urls", urls)
+func (d *ServiceDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_services"
+}
 
-// 	return nil
-// }
+var serviceMinimalSchemaAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		Description: "The id of the service",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The display name of the service.",
+		Computed:    true,
+	},
+	"url": schema.StringAttribute{
+		Description: "A link to the HTML page for the resource",
+		Computed:    true,
+	},
+}
+
+type serviceMinimalaDataSourceModel struct {
+	Id   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Url  types.String `tfsdk:"url"`
+}
+
+func (d *ServiceDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	validFieldNames := []string{"framework", "language", "lifecycle", "owner", "product", "tag", "tier"}
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Services data source",
+
+		Attributes: map[string]schema.Attribute{
+			"filter": schema.SingleNestedAttribute{
+				Description: fmt.Sprintf(
+					"Used to filter services by one of '%s'",
+					strings.Join(validFieldNames, "`, `"),
+				),
+				Optional:   true,
+				Attributes: FilterAttrs(validFieldNames),
+			},
+			"services": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: serviceMinimalSchemaAttrs,
+				},
+				Description: "List of Service data sources",
+				Computed:    true,
+			},
+		},
+	}
+}
+
+func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var planModel, stateModel ServiceDataSourcesAllModel
+
+	// Read Terraform configuration data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var services *opslevel.ServiceConnection
+	var err error
+
+	if planModel.Filter == nil {
+		services, err = d.client.ListServices(nil)
+	} else {
+		switch planModel.Filter.Field.ValueString() {
+		case "framework":
+			services, err = d.client.ListServicesWithFramework(planModel.Filter.Value.ValueString(), nil)
+		case "language":
+			services, err = d.client.ListServicesWithLanguage(planModel.Filter.Value.ValueString(), nil)
+		case "lifecycle":
+			services, err = d.client.ListServicesWithLifecycle(planModel.Filter.Value.ValueString(), nil)
+		case "owner":
+			services, err = d.client.ListServicesWithOwner(planModel.Filter.Value.ValueString(), nil)
+		case "product":
+			services, err = d.client.ListServicesWithProduct(planModel.Filter.Value.ValueString(), nil)
+		case "tag":
+			tagArgs, tagArgsErr := opslevel.NewTagArgs(planModel.Filter.Value.ValueString())
+			if tagArgsErr != nil {
+				resp.Diagnostics.AddError("Client Error",
+					fmt.Sprintf("Unable to create TagArgs from '%s', got error: '%s'", planModel.Filter.Value.ValueString(), err),
+				)
+				return
+			}
+			services, err = d.client.ListServicesWithTag(tagArgs, nil)
+		case "tier":
+			services, err = d.client.ListServicesWithTier(planModel.Filter.Value.ValueString(), nil)
+		default:
+			services, err = d.client.ListServices(nil)
+		}
+	}
+
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list services datasource, got error: %s", err))
+		return
+	}
+
+	stateModel = NewServiceDataSourcesAllModel(services.Nodes)
+	stateModel.Filter = planModel.Filter
+
+	// Save data into Terraform state
+	tflog.Trace(ctx, "listed all OpsLevel Service data sources")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
