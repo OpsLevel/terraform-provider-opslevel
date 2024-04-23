@@ -23,8 +23,15 @@ type PropertyDefinitionDataSource struct {
 	CommonDataSourceClient
 }
 
-// PropertyDefinitionDataSourceModel describes the data source data model.
-type PropertyDefinitionDataSourceModel struct {
+func PropertyDefinitionAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	for key, value := range propertyDefinitionSchemaAttrs {
+		attrs[key] = value
+	}
+	return attrs
+}
+
+// propertyDefinitionDataSourceWithFilterModel describes the data source data model.
+type propertyDefinitionDataSourceWithFilterModel struct {
 	AllowedInConfigFiles  types.Bool   `tfsdk:"allowed_in_config_files"`
 	Description           types.String `tfsdk:"description"`
 	Id                    types.String `tfsdk:"id"`
@@ -34,15 +41,15 @@ type PropertyDefinitionDataSourceModel struct {
 	Schema                types.String `tfsdk:"schema"`
 }
 
-func NewPropertyDefinitionDataSourceModel(ctx context.Context, propertydefinition opslevel.PropertyDefinition, identifier string) PropertyDefinitionDataSourceModel {
-	return PropertyDefinitionDataSourceModel{
+func NewPropertyDefinitionDataSourceWithFilterModel(propertydefinition opslevel.PropertyDefinition, identifier string) propertyDefinitionDataSourceWithFilterModel {
+	return propertyDefinitionDataSourceWithFilterModel{
 		AllowedInConfigFiles:  types.BoolValue(propertydefinition.AllowedInConfigFiles),
-		Description:           types.StringValue(propertydefinition.Description),
-		Id:                    types.StringValue(string(propertydefinition.Id)),
-		Identifier:            types.StringValue(identifier),
-		Name:                  types.StringValue(propertydefinition.Name),
-		PropertyDisplayStatus: types.StringValue(string(propertydefinition.PropertyDisplayStatus)),
-		Schema:                types.StringValue(propertydefinition.Schema.ToJSON()),
+		Description:           ComputedStringValue(propertydefinition.Description),
+		Id:                    ComputedStringValue(string(propertydefinition.Id)),
+		Identifier:            ComputedStringValue(identifier),
+		Name:                  ComputedStringValue(propertydefinition.Name),
+		PropertyDisplayStatus: ComputedStringValue(string(propertydefinition.PropertyDisplayStatus)),
+		Schema:                ComputedStringValue(propertydefinition.Schema.ToJSON()),
 	}
 }
 
@@ -55,57 +62,37 @@ func (d *PropertyDefinitionDataSource) Schema(ctx context.Context, req datasourc
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Data source for Property Definitions",
 
-		Attributes: map[string]schema.Attribute{
+		Attributes: PropertyDefinitionAttributes(map[string]schema.Attribute{
 			"allowed_in_config_files": schema.BoolAttribute{
 				MarkdownDescription: "Whether or not the property is allowed to be set in opslevel.yml config files.",
-				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The description of the property definition.",
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{
 				MarkdownDescription: "The id or alias of the property definition",
 				Required:            true,
 			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The ID of this resource.",
-				Computed:            true,
-			},
-			"name": schema.StringAttribute{
-				MarkdownDescription: "The display name of the property definition.",
-				Computed:            true,
-			},
-			"property_display_status": schema.StringAttribute{
-				MarkdownDescription: "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
-				Computed:            true,
-			},
-			"schema": schema.StringAttribute{
-				MarkdownDescription: "The schema of the property definition.",
-				Computed:            true,
-			},
-		},
+		}),
 	}
 }
 
 func (d *PropertyDefinitionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data PropertyDefinitionDataSourceModel
+	var planModel, stateModel propertyDefinitionDataSourceWithFilterModel
 
 	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	propertydefinition, err := d.client.GetPropertyDefinition(data.Identifier.ValueString())
+	propertydefinition, err := d.client.GetPropertyDefinition(planModel.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read property definition datasource, got error: %s", err))
 		return
 	}
-	propertydefinitionDataModel := NewPropertyDefinitionDataSourceModel(ctx, *propertydefinition, data.Identifier.ValueString())
+	stateModel = NewPropertyDefinitionDataSourceWithFilterModel(*propertydefinition, planModel.Identifier.ValueString())
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel PropertyDefinition data source")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &propertydefinitionDataModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
