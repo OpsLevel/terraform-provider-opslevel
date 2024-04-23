@@ -35,11 +35,11 @@ type levelDataSourceWithFilterModel struct {
 
 func NewLevelDataSourceWithFilterModel(ctx context.Context, level opslevel.Level, filter filterBlockModel) levelDataSourceWithFilterModel {
 	return levelDataSourceWithFilterModel{
-		Alias:  types.StringValue(string(level.Alias)),
+		Alias:  ComputedStringValue(level.Alias),
 		Filter: filter,
-		Id:     types.StringValue(string(level.Id)),
+		Id:     ComputedStringValue(string(level.Id)),
 		Index:  types.Int64Value(int64(level.Index)),
-		Name:   types.StringValue(string(level.Name)),
+		Name:   ComputedStringValue(level.Name),
 	}
 }
 

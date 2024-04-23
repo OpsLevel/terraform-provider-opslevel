@@ -31,12 +31,12 @@ type levelDataSourceModel struct {
 	Name  types.String `tfsdk:"name"`
 }
 
-// LevelDataSourcesAllModel describes the data source data model.
-type LevelDataSourcesAllModel struct {
+// levelDataSourcesAllModel describes the data source data model.
+type levelDataSourcesAllModel struct {
 	RubricLevels []levelDataSourceModel `tfsdk:"rubric_levels"`
 }
 
-func NewLevelDataSourcesAllModel(levels []opslevel.Level) LevelDataSourcesAllModel {
+func NewLevelDataSourcesAllModel(levels []opslevel.Level) levelDataSourcesAllModel {
 	rubricLevels := []levelDataSourceModel{}
 	for _, level := range levels {
 		rubricLevel := levelDataSourceModel{
@@ -47,7 +47,7 @@ func NewLevelDataSourcesAllModel(levels []opslevel.Level) LevelDataSourcesAllMod
 		}
 		rubricLevels = append(rubricLevels, rubricLevel)
 	}
-	return LevelDataSourcesAllModel{RubricLevels: rubricLevels}
+	return levelDataSourcesAllModel{RubricLevels: rubricLevels}
 }
 
 func (d *LevelDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -71,7 +71,7 @@ func (d *LevelDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaR
 }
 
 func (d *LevelDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel LevelDataSourcesAllModel
+	var planModel, stateModel levelDataSourcesAllModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
