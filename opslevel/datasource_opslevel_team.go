@@ -23,14 +23,43 @@ type TeamDataSource struct {
 	CommonDataSourceClient
 }
 
-// TeamDataSourceModel describes the data source data model.
-type TeamDataSourceModel struct {
+// teamDataSourceModel describes the data source data model.
+type teamDataSourceModel struct {
 	Alias       types.String      `tfsdk:"alias"`
 	Id          types.String      `tfsdk:"id"`
 	Members     []teamMemberModel `tfsdk:"members"`
 	Name        types.String      `tfsdk:"name"`
 	ParentAlias types.String      `tfsdk:"parent_alias"`
 	ParentId    types.String      `tfsdk:"parent_id"`
+}
+
+var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"name": schema.StringAttribute{
+		Description: "The name of the Team.",
+		Computed:    true,
+	},
+	"members": schema.ListNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: memberNestedSchemaAttrs,
+		},
+		Description: "List of team members on the team with email address and role.",
+		Computed:    true,
+	},
+	"parent_alias": schema.StringAttribute{
+		Description: "The alias of the parent team.",
+		Computed:    true,
+	},
+	"parent_id": schema.StringAttribute{
+		Description: "The id of the parent team.",
+		Computed:    true,
+	},
+}
+
+func teamAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	for key, value := range teamDatasourceSchemaAttrs {
+		attrs[key] = value
+	}
+	return attrs
 }
 
 var memberNestedSchemaAttrs = map[string]schema.Attribute{
@@ -49,23 +78,23 @@ type teamMemberModel struct {
 	Role  types.String `tfsdk:"role"`
 }
 
-func NewTeamMemberModel(member opslevel.TeamMembership) teamMemberModel {
+func newTeamMemberModel(member opslevel.TeamMembership) teamMemberModel {
 	return teamMemberModel{
 		Email: ComputedStringValue(member.User.Email),
 		Role:  ComputedStringValue(member.Role),
 	}
 }
 
-func NewTeamMembersAllModel(members []opslevel.TeamMembership) []teamMemberModel {
-	membersModel := []teamMemberModel{}
+func newTeamMembersAllModel(members []opslevel.TeamMembership) []teamMemberModel {
+	membersModel := make([]teamMemberModel, 0)
 	for _, member := range members {
-		membersModel = append(membersModel, NewTeamMemberModel(member))
+		membersModel = append(membersModel, newTeamMemberModel(member))
 	}
 	return membersModel
 }
 
-func NewTeamDataSourceModel(team opslevel.Team) TeamDataSourceModel {
-	teamDataSourceModel := TeamDataSourceModel{
+func newTeamDataSourceModel(team opslevel.Team) teamDataSourceModel {
+	teamDataSourceModel := teamDataSourceModel{
 		Alias:       ComputedStringValue(team.Alias),
 		Id:          ComputedStringValue(string(team.Id)),
 		Name:        ComputedStringValue(team.Name),
@@ -73,7 +102,7 @@ func NewTeamDataSourceModel(team opslevel.Team) TeamDataSourceModel {
 		ParentId:    ComputedStringValue(string(team.ParentTeam.Id)),
 	}
 	if team.Memberships != nil {
-		teamDataSourceModel.Members = NewTeamMembersAllModel(team.Memberships.Nodes)
+		teamDataSourceModel.Members = newTeamMembersAllModel(team.Memberships.Nodes)
 	}
 	return teamDataSourceModel
 }
@@ -87,7 +116,7 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Team data source",
 
-		Attributes: map[string]schema.Attribute{
+		Attributes: teamAttributes(map[string]schema.Attribute{
 			"alias": schema.StringAttribute{
 				MarkdownDescription: "The alias attached to the Team.",
 				Computed:            true,
@@ -98,31 +127,12 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 				Computed:    true,
 				Optional:    true,
 			},
-			"name": schema.StringAttribute{
-				Description: "The name of the Team.",
-				Computed:    true,
-			},
-			"members": schema.ListNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: memberNestedSchemaAttrs,
-				},
-				Description: "List of team members on the team with email address and role.",
-				Computed:    true,
-			},
-			"parent_alias": schema.StringAttribute{
-				Description: "The alias of the parent team.",
-				Computed:    true,
-			},
-			"parent_id": schema.StringAttribute{
-				Description: "The id of the parent team.",
-				Computed:    true,
-			},
-		},
+		}),
 	}
 }
 
 func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data TeamDataSourceModel
+	var data teamDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -149,7 +159,7 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	teamDataModel := NewTeamDataSourceModel(*team)
+	teamDataModel := newTeamDataSourceModel(*team)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Team data source")

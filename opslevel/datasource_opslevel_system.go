@@ -52,7 +52,7 @@ var systemDatasourceSchemaAttrs = map[string]schema.Attribute{
 	},
 }
 
-func SystemAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+func systemAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
 	for key, value := range systemDatasourceSchemaAttrs {
 		attrs[key] = value
 	}
@@ -112,7 +112,7 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "System data source",
 
-		Attributes: SystemAttributes(map[string]schema.Attribute{
+		Attributes: systemAttributes(map[string]schema.Attribute{
 			"identifier": schema.StringAttribute{
 				Description: "The id or alias of the System.",
 				Required:    true,
