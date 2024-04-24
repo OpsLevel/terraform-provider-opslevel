@@ -19,7 +19,7 @@ run "resource_check_service_ownership" {
   }
 
   assert {
-    condition     = opslevel_check_service_ownership.example.contact_method == "ANY"
+    condition     = opslevel_check_service_ownership.example.contact_method == "any"
     error_message = "wrong value for contact_method in opslevel_check_service_ownership.example"
   }
 
