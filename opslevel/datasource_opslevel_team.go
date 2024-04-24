@@ -33,6 +33,38 @@ type teamDataSourceModel struct {
 	ParentId    types.String      `tfsdk:"parent_id"`
 }
 
+var teamSchemaAttrs = map[string]schema.Attribute{
+	"alias": schema.StringAttribute{
+		MarkdownDescription: "The alias attached to the Team.",
+		Computed:            true,
+		Optional:            true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The ID of this Team.",
+		Computed:    true,
+		Optional:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the Team.",
+		Computed:    true,
+	},
+	"members": schema.ListNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: memberNestedSchemaAttrs,
+		},
+		Description: "List of team members on the team with email address and role.",
+		Computed:    true,
+	},
+	"parent_alias": schema.StringAttribute{
+		Description: "The alias of the parent team.",
+		Computed:    true,
+	},
+	"parent_id": schema.StringAttribute{
+		Description: "The id of the parent team.",
+		Computed:    true,
+	},
+}
+
 var memberNestedSchemaAttrs = map[string]schema.Attribute{
 	"email": schema.StringAttribute{
 		MarkdownDescription: "The email address of the team member.",
@@ -87,37 +119,7 @@ func (teamDataSource *TeamDataSource) Schema(ctx context.Context, req datasource
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Team data source",
 
-		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				MarkdownDescription: "The alias attached to the Team.",
-				Computed:            true,
-				Optional:            true,
-			},
-			"id": schema.StringAttribute{
-				Description: "The ID of this Team.",
-				Computed:    true,
-				Optional:    true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The name of the Team.",
-				Computed:    true,
-			},
-			"members": schema.ListNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: memberNestedSchemaAttrs,
-				},
-				Description: "List of team members on the team with email address and role.",
-				Computed:    true,
-			},
-			"parent_alias": schema.StringAttribute{
-				Description: "The alias of the parent team.",
-				Computed:    true,
-			},
-			"parent_id": schema.StringAttribute{
-				Description: "The id of the parent team.",
-				Computed:    true,
-			},
-		},
+		Attributes: teamSchemaAttrs,
 	}
 }
 

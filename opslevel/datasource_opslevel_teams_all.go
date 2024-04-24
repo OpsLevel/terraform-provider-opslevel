@@ -44,35 +44,7 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"teams": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"alias": schema.StringAttribute{
-							MarkdownDescription: "The alias attached to the Team.",
-							Computed:            true,
-						},
-						"id": schema.StringAttribute{
-							Description: "The ID of this Team.",
-							Computed:    true,
-						},
-						"name": schema.StringAttribute{
-							Description: "The name of the Team.",
-							Computed:    true,
-						},
-						"members": schema.ListNestedAttribute{
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: memberNestedSchemaAttrs,
-							},
-							Description: "List of team members on the team with email address and role.",
-							Computed:    true,
-						},
-						"parent_alias": schema.StringAttribute{
-							Description: "The alias of the parent team.",
-							Computed:    true,
-						},
-						"parent_id": schema.StringAttribute{
-							Description: "The id of the parent team.",
-							Computed:    true,
-						},
-					},
+					Attributes: teamSchemaAttrs,
 				},
 				Description: "List of team data sources",
 				Computed:    true,
