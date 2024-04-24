@@ -44,7 +44,16 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"teams": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: teamSchemaAttrs,
+					Attributes: teamAttributes(map[string]schema.Attribute{
+						"alias": schema.StringAttribute{
+							MarkdownDescription: "The alias attached to the Team.",
+							Computed:            true,
+						},
+						"id": schema.StringAttribute{
+							Description: "The ID of this Team.",
+							Computed:    true,
+						},
+					}),
 				},
 				Description: "List of team data sources",
 				Computed:    true,
