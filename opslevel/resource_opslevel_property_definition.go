@@ -89,8 +89,11 @@ func (resource *PropertyDefinitionResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 			},
 			"property_display_status": schema.StringAttribute{
-				Description: fmt.Sprintf("The display status of a custom property on service pages. (Options: %s)", strings.Join(opslevel.AllPropertyDisplayStatusEnum, ", ")),
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The display status of a custom property on service pages. One of `%s`",
+					strings.Join(opslevel.AllPropertyDisplayStatusEnum, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllPropertyDisplayStatusEnum...),
 				},

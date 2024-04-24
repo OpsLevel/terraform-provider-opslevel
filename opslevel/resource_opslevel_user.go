@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -81,8 +82,11 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:    true,
 			},
 			"role": schema.StringAttribute{
-				Description: "The access role (e.g. user or admin) of the user.",
-				Optional:    true,
+				Description: fmt.Sprintf(
+					"The access role of the user. One of `%s`",
+					strings.Join(opslevel.AllUserRole, "`, `"),
+				),
+				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllUserRole...),
 				},

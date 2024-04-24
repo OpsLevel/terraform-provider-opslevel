@@ -51,7 +51,7 @@ func (d *RepositoriesDataSourcesAll) Schema(ctx context.Context, req datasource.
 		Attributes: map[string]schema.Attribute{
 			"filter": schema.SingleNestedAttribute{
 				Description: fmt.Sprintf(
-					"Used to filter repositories by one of '%s'",
+					"Used to filter repositories by one of `%s`",
 					strings.Join(validFieldNames, "`, `"),
 				),
 				Optional:   true,

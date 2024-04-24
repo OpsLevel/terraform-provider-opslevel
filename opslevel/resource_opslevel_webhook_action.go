@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -80,8 +81,11 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 			"method": schema.StringAttribute{
-				Description: "The http method used to call the Webhook Action.",
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The http method used to call the Webhook Action. One of `%s`",
+					strings.Join(opslevel.AllCustomActionsHttpMethodEnum, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllCustomActionsHttpMethodEnum...),
 				},

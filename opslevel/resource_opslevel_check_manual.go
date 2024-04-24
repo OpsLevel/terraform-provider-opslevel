@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -109,8 +110,11 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:    true,
 					},
 					"time_scale": schema.StringAttribute{
-						Description: "The time scale type for the frequency.",
-						Required:    true,
+						Description: fmt.Sprintf(
+							"The time scale type for the frequency. One of `%s`",
+							strings.Join(opslevel.AllFrequencyTimeScale, "`, `"),
+						),
+						Required: true,
 						Validators: []validator.String{
 							stringvalidator.OneOf(opslevel.AllFrequencyTimeScale...),
 						},

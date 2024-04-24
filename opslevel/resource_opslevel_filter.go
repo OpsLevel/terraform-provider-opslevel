@@ -96,7 +96,7 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"connective": schema.StringAttribute{
 				Description: fmt.Sprintf(
-					"The logical operator to be used in conjunction with predicates. Valid values are `%s`",
+					"The logical operator to be used in conjunction with predicates. One of `%s`",
 					strings.Join(opslevel.AllConnectiveEnum, "`, `"),
 				),
 				Optional: true,

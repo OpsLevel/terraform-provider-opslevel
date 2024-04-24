@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -70,8 +71,11 @@ func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 			},
 			"resource_type": schema.StringAttribute{
-				Description: "The resource type that the tag applies to.",
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The resource type that the tag applies to. One of `%s`",
+					strings.Join(opslevel.AllTaggableResource, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllTaggableResource...),
 				},

@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -88,8 +89,11 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"property": schema.StringAttribute{
-				Description: "The property of the service that the check will verify.",
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The property of the service that the check will verify. One of `%s`",
+					strings.Join(opslevel.AllServicePropertyTypeEnum, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllServicePropertyTypeEnum...),
 				},

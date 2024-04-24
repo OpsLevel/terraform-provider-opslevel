@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -53,6 +54,7 @@ func (teamContactResource *TeamContactResource) Metadata(ctx context.Context, re
 }
 
 func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	enumAllContactTypes := append(opslevel.AllContactType, "any")
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Team Contact Resource",
 		Attributes: map[string]schema.Attribute{
@@ -75,10 +77,13 @@ func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req 
 				Required:    true,
 			},
 			"type": schema.StringAttribute{
-				Description: "The method of contact [email, slack, slack_handle, web].",
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The method of contact. One of `%s`",
+					strings.Join(enumAllContactTypes, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf(opslevel.AllContactType...),
+					stringvalidator.OneOf(enumAllContactTypes...),
 				},
 			},
 			"value": schema.StringAttribute{

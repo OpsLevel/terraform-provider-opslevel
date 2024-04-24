@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -86,14 +87,20 @@ func (r *CheckHasDocumentationResource) Schema(ctx context.Context, req resource
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"document_type": schema.StringAttribute{
-				Description: "The type of the document.",
-				Required:    true,
-				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllHasDocumentationTypeEnum...)},
+				Description: fmt.Sprintf(
+					"The type of the document. One of `%s`",
+					strings.Join(opslevel.AllHasDocumentationTypeEnum, "`, `"),
+				),
+				Required:   true,
+				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllHasDocumentationTypeEnum...)},
 			},
 			"document_subtype": schema.StringAttribute{
-				Description: "The subtype of the document.",
-				Required:    true,
-				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllHasDocumentationSubtypeEnum...)},
+				Description: fmt.Sprintf(
+					"The subtype of the document. One of `%s`",
+					strings.Join(opslevel.AllHasDocumentationSubtypeEnum, "`, `"),
+				),
+				Required:   true,
+				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllHasDocumentationSubtypeEnum...)},
 			},
 		}),
 	}

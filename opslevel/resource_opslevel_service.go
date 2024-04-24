@@ -155,8 +155,11 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 			},
 			"preferred_api_document_source": schema.StringAttribute{
-				Description: "The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.",
-				Optional:    true,
+				Description: fmt.Sprintf(
+					"The API document source (%s) used to determine the displayed document. If null, defaults to PUSH.",
+					strings.Join(opslevel.AllApiDocumentSourceEnum, " or "),
+				),
+				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllApiDocumentSourceEnum...),
 				},

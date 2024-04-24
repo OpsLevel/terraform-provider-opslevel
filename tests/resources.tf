@@ -597,7 +597,7 @@ resource "opslevel_check_service_ownership" "example" {
   filter                 = var.test_id
   notes                  = "Optional additional info on why this check is run or how to fix it"
   require_contact_method = true
-  contact_method         = "ANY"
+  contact_method         = "any"
   tag_key                = "team"
   tag_predicate = {
     type  = "equals"
@@ -666,3 +666,4 @@ resource "opslevel_tag" "example" {
   key   = "yacht"
   value = "racing"
 }
+
