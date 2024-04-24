@@ -24,8 +24,23 @@ type TierDataSource struct {
 	CommonDataSourceClient
 }
 
-// TierDataSourceModel describes the data source data model.
-type TierDataSourceModel struct {
+type tierDataSourceModel struct {
+	Alias types.String `tfsdk:"alias"`
+	Id    types.String `tfsdk:"id"`
+	Index types.Int64  `tfsdk:"index"`
+	Name  types.String `tfsdk:"name"`
+}
+
+func newTierDataSourceModel(tier opslevel.Tier) tierDataSourceModel {
+	return tierDataSourceModel{
+		Alias: types.StringValue(tier.Alias),
+		Id:    types.StringValue(string(tier.Id)),
+		Index: types.Int64Value(int64(tier.Index)),
+		Name:  types.StringValue(tier.Name),
+	}
+}
+
+type tierDataSourceModelWithFilter struct {
 	Alias  types.String     `tfsdk:"alias"`
 	Filter filterBlockModel `tfsdk:"filter"`
 	Id     types.String     `tfsdk:"id"`
@@ -33,14 +48,33 @@ type TierDataSourceModel struct {
 	Name   types.String     `tfsdk:"name"`
 }
 
-func NewTierDataSourceModel(ctx context.Context, tier opslevel.Tier, filter filterBlockModel) TierDataSourceModel {
-	return TierDataSourceModel{
-		Alias:  types.StringValue(string(tier.Alias)),
+func newTierDataSourceModelWithFilter(tier opslevel.Tier, filter filterBlockModel) tierDataSourceModelWithFilter {
+	return tierDataSourceModelWithFilter{
+		Alias:  types.StringValue(tier.Alias),
 		Filter: filter,
 		Id:     types.StringValue(string(tier.Id)),
 		Index:  types.Int64Value(int64(tier.Index)),
-		Name:   types.StringValue(string(tier.Name)),
+		Name:   types.StringValue(tier.Name),
 	}
+}
+
+var tierDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"alias": schema.StringAttribute{
+		MarkdownDescription: "The human-friendly, unique identifier for the tier.",
+		Computed:            true,
+	},
+	"id": schema.StringAttribute{
+		MarkdownDescription: "The unique identifier for the tier.",
+		Computed:            true,
+	},
+	"index": schema.Int64Attribute{
+		MarkdownDescription: "The numerical representation of the tier.",
+		Computed:            true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The display name of the tier.",
+		Computed:    true,
+	},
 }
 
 func (d *TierDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -52,24 +86,7 @@ func (d *TierDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tier data source",
 
-		Attributes: map[string]schema.Attribute{
-			"alias": schema.StringAttribute{
-				MarkdownDescription: "The human-friendly, unique identifier for the tier.",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The unique identifier for the tier.",
-				Computed:            true,
-			},
-			"index": schema.Int64Attribute{
-				MarkdownDescription: "The numerical representation of the tier.",
-				Computed:            true,
-			},
-			"name": schema.StringAttribute{
-				Description: "The display name of the tier.",
-				Computed:    true,
-			},
-		},
+		Attributes: tierDatasourceSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
@@ -77,7 +94,7 @@ func (d *TierDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 }
 
 func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data TierDataSourceModel
+	var data tierDataSourceModelWithFilter
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -97,7 +114,7 @@ func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	tierDataModel := NewTierDataSourceModel(ctx, *tier, data.Filter)
+	tierDataModel := newTierDataSourceModelWithFilter(*tier, data.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Tier data source")
@@ -107,7 +124,7 @@ func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 func filterTiers(tiers []opslevel.Tier, filter filterBlockModel) (*opslevel.Tier, error) {
 	if filter.Value.Equal(types.StringValue("")) {
-		return nil, fmt.Errorf("Please provide a non-empty value for filter's value")
+		return nil, fmt.Errorf("please provide a non-empty value for filter's value")
 	}
 	for _, tier := range tiers {
 		switch filter.Field.ValueString() {
@@ -120,7 +137,7 @@ func filterTiers(tiers []opslevel.Tier, filter filterBlockModel) (*opslevel.Tier
 				return &tier, nil
 			}
 		case "index":
-			index := strconv.Itoa(int(tier.Index))
+			index := strconv.Itoa(tier.Index)
 			if filter.Value.Equal(types.StringValue(index)) {
 				return &tier, nil
 			}
@@ -131,5 +148,5 @@ func filterTiers(tiers []opslevel.Tier, filter filterBlockModel) (*opslevel.Tier
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find tier with: %s==%s", filter.Field, filter.Value)
+	return nil, fmt.Errorf("unable to find tier with: %s==%s", filter.Field, filter.Value)
 }
