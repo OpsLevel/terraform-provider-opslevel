@@ -40,7 +40,6 @@ func newTierDataSourceModel(tier opslevel.Tier) tierDataSourceModel {
 	}
 }
 
-// tierDataSourceModel describes the data source data model.
 type tierDataSourceModelWithFilter struct {
 	Alias  types.String     `tfsdk:"alias"`
 	Filter filterBlockModel `tfsdk:"filter"`
