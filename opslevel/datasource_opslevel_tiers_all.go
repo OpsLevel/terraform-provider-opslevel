@@ -44,7 +44,7 @@ func (d *TierDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"tiers": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: tierAttributes(map[string]schema.Attribute{}),
+					Attributes: tierDatasourceSchemaAttrs,
 				},
 				Description: "List of tier data sources",
 				Computed:    true,

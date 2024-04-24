@@ -77,13 +77,6 @@ var tierDatasourceSchemaAttrs = map[string]schema.Attribute{
 	},
 }
 
-func tierAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	for key, value := range tierDatasourceSchemaAttrs {
-		attrs[key] = value
-	}
-	return attrs
-}
-
 func (d *TierDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_tier"
 }
@@ -93,7 +86,7 @@ func (d *TierDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tier data source",
 
-		Attributes: tierAttributes(map[string]schema.Attribute{}),
+		Attributes: tierDatasourceSchemaAttrs,
 		Blocks: map[string]schema.Block{
 			"filter": getDatasourceFilter(validFieldNames),
 		},
