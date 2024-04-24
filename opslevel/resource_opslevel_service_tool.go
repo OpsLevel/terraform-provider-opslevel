@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -67,9 +68,12 @@ func (r *ServiceToolResource) Schema(ctx context.Context, req resource.SchemaReq
 
 		Attributes: map[string]schema.Attribute{
 			"category": schema.StringAttribute{
-				Description: "The category that the tool belongs to.",
-				Required:    true,
-				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
+				Description: fmt.Sprintf(
+					"The category that the tool belongs to. One of `%s`",
+					strings.Join(opslevel.AllToolCategory, "`, `"),
+				),
+				Required:   true,
+				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
 			},
 			"environment": schema.StringAttribute{
 				Description: "The environment that the tool belongs to.",

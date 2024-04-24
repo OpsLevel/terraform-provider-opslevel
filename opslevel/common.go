@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	// "sort"
 	"strconv"
 	"time"
@@ -342,8 +344,11 @@ func NewFilterBlockModel(field string, value string) filterBlockModel {
 func FilterAttrs(validFieldNames []string) map[string]schema.Attribute {
 	filterAttrs := map[string]schema.Attribute{
 		"field": schema.StringAttribute{
-			Description: "The field of the target resource to filter upon.",
-			Required:    true,
+			Description: fmt.Sprintf(
+				"The field of the target resource to filter upon. One of `%s`",
+				strings.Join(validFieldNames, "`, `"),
+			),
+			Required: true,
 			Validators: []validator.String{
 				stringvalidator.OneOf(validFieldNames...),
 			},

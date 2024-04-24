@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -77,8 +78,11 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 
 		Attributes: map[string]schema.Attribute{
 			"access_control": schema.StringAttribute{
-				Description: "The set of users that should be able to use the Trigger Definition. Requires a value of `everyone`, `admins`, or `service_owners`.",
-				Required:    true,
+				Description: fmt.Sprintf(
+					"The set of users that should be able to use the Trigger Definition. One of `%s`",
+					strings.Join(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum, "`, `"),
+				),
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllCustomActionsTriggerDefinitionAccessControlEnum...),
 				},
@@ -93,8 +97,11 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Optional:    true,
 			},
 			"entity_type": schema.StringAttribute{
-				Description: "The entity type to associate with the Trigger Definition.",
-				Optional:    true,
+				Description: fmt.Sprintf(
+					"The entity type to associate with the Trigger Definition. One of `%s`",
+					strings.Join(opslevel.AllCustomActionsEntityTypeEnum, "`, `"),
+				),
+				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllCustomActionsEntityTypeEnum...),
 				},

@@ -1,6 +1,9 @@
 package opslevel
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -108,8 +111,11 @@ func (s PredicateModel) ToUpdateInput() *opslevel.PredicateUpdateInput {
 
 func PredicateSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
-		Description: "A condition that should be satisfied.",
-		Optional:    true,
+		Description: fmt.Sprintf(
+			"A condition that should be satisfied. One of `%s`",
+			strings.Join(opslevel.AllPredicateTypeEnum, "`, `"),
+		),
+		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				Description: "A condition that should be satisfied.",

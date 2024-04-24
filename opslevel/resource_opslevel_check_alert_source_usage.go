@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -88,9 +89,12 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"alert_type": schema.StringAttribute{
-				Description: "The type of the alert source.",
-				Required:    true,
-				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllAlertSourceTypeEnum...)},
+				Description: fmt.Sprintf(
+					"The type of the alert source. One of `%s`",
+					strings.Join(opslevel.AllAlertSourceTypeEnum, "`, `"),
+				),
+				Required:   true,
+				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllAlertSourceTypeEnum...)},
 			},
 			"alert_name_predicate": PredicateSchema(),
 		}),
