@@ -112,7 +112,7 @@ func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadReq
 		case "filter":
 			filterId := planModel.Filter.Value.ValueString()
 			if opslevel.IsID(filterId) {
-				services, err = d.client.ListServicesWithFilterId(filterId, nil)
+				services, err = d.client.ListServicesWithFilter(filterId, nil)
 			} else {
 				resp.Diagnostics.AddError("Config Error",
 					fmt.Sprintf("'value' field in filter block must be a valid ID. Given '%s'", filterId),
