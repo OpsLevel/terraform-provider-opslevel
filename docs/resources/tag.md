@@ -90,7 +90,7 @@ resource "opslevel_tag" "foo_user" {
 
 - `key` (String) The key of the tag.
 - `resource_identifier` (String) The id or human-friendly, unique identifier of the resource this tag belongs to.
-- `resource_type` (String) The resource type that the tag applies to.
+- `resource_type` (String) The resource type that the tag applies to. One of `Service`, `Repository`, `Team`, `User`, `Domain`, `System`, `InfrastructureResource`
 - `value` (String) The value of the tag.
 
 ### Read-Only

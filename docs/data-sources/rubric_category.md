@@ -45,7 +45,7 @@ data "opslevel_rubric_category" "Observability" {
 
 Required:
 
-- `field` (String) The field of the target resource to filter upon.
+- `field` (String) The field of the target resource to filter upon. One of `id`, `name`
 - `value` (String) The field value of the target resource to match.
 
 

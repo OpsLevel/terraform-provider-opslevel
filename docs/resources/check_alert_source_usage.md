@@ -62,14 +62,14 @@ resource "opslevel_check_alert_source_usage" "example" {
 
 ### Required
 
-- `alert_type` (String) The type of the alert source.
+- `alert_type` (String) The type of the alert source. One of `pagerduty`, `datadog`, `opsgenie`, `new_relic`
 - `category` (String) The id of the category the check belongs to.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 
 ### Optional
 
-- `alert_name_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--alert_name_predicate))
+- `alert_name_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--alert_name_predicate))
 - `enable_on` (String) The date when the check will be automatically enabled.
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.

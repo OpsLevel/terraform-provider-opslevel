@@ -97,7 +97,7 @@ resource "opslevel_check_manual" "example" {
 Required:
 
 - `starting_date` (String) The date that the check will start to evaluate.
-- `time_scale` (String) The time scale type for the frequency.
+- `time_scale` (String) The time scale type for the frequency. One of `day`, `week`, `month`, `year`
 - `value` (Number) The value to be used together with the frequency time_scale.
 
 ## Import

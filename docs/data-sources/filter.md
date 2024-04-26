@@ -30,7 +30,7 @@ data "opslevel_filter" "tier_1" {
 
 ### Read-Only
 
-- `id` (String) Terraform specific identifier.
+- `id` (String) The ID of this filter.
 - `name` (String) The name of the filter.
 
 <a id="nestedblock--filter"></a>
@@ -38,7 +38,7 @@ data "opslevel_filter" "tier_1" {
 
 Required:
 
-- `field` (String) The field of the target resource to filter upon.
+- `field` (String) The field of the target resource to filter upon. One of `id`, `name`
 - `value` (String) The field value of the target resource to match.
 
 

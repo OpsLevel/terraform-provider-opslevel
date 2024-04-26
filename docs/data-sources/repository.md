@@ -30,4 +30,9 @@ data "opslevel_repository" "bar" {
 - `alias` (String) The human-friendly, unique identifier for the repository.
 - `id` (String) The unique identifier for the repository.
 
+### Read-Only
+
+- `name` (String) The display name of the repository.
+- `url` (String) The url of the the repository.
+
 

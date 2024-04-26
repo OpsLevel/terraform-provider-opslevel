@@ -77,7 +77,7 @@ output "foo_aliases" {
 - `language` (String) The primary programming language that the service is written in.
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `owner` (String) The team that owns the service. ID or Alias may be used.
-- `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
+- `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, defaults to PUSH.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.

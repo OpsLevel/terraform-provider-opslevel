@@ -47,7 +47,7 @@ data "opslevel_tier" "tier3" {
 
 Required:
 
-- `field` (String) The field of the target resource to filter upon.
+- `field` (String) The field of the target resource to filter upon. One of `alias`, `id`, `index`, `name`
 - `value` (String) The field value of the target resource to match.
 
 

@@ -69,7 +69,7 @@ resource "opslevel_check_service_ownership" "example" {
 
 ### Optional
 
-- `contact_method` (String) The type of contact method that is required.
+- `contact_method` (String) The type of contact method that is required. One of `slack`, `slack_handle`, `email`, `web`, `github`, `any`
 - `enable_on` (String) The date when the check will be automatically enabled.
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.
@@ -79,7 +79,7 @@ resource "opslevel_check_service_ownership" "example" {
 - `owner` (String) The id of the team that owns the check.
 - `require_contact_method` (Boolean) True if a service's owner must have a contact method, False otherwise.
 - `tag_key` (String) The tag key where the tag predicate should be applied.
-- `tag_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tag_predicate))
+- `tag_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--tag_predicate))
 
 ### Read-Only
 

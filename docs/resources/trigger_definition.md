@@ -96,7 +96,7 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 
 ### Required
 
-- `access_control` (String) The set of users that should be able to use the Trigger Definition. Requires a value of `everyone`, `admins`, or `service_owners`.
+- `access_control` (String) The set of users that should be able to use the Trigger Definition. One of `everyone`, `admins`, `service_owners`
 - `action` (String) The action that will be triggered by the Trigger Definition.
 - `name` (String) The name of the Trigger Definition
 - `owner` (String) The owner of the Trigger Definition.
@@ -105,7 +105,7 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 ### Optional
 
 - `description` (String) The description of what the Trigger Definition will do.
-- `entity_type` (String) The entity type to associate with the Trigger Definition.
+- `entity_type` (String) The entity type to associate with the Trigger Definition. One of `SERVICE`, `GLOBAL`
 - `extended_team_access` (List of String) The set of additional teams who can invoke this Trigger Definition.
 - `filter` (String) A filter defining which services this Trigger Definition applies to.
 - `manual_inputs_definition` (String) The YAML definition of any custom inputs for this Trigger Definition.

@@ -41,7 +41,7 @@ resource "opslevel_service_tool" "bar_datadog" {
 
 ### Required
 
-- `category` (String) The category that the tool belongs to.
+- `category` (String) The category that the tool belongs to. One of `admin`, `api_documentation`, `architecture_diagram`, `backlog`, `code`, `continuous_integration`, `deployment`, `design_documentation`, `errors`, `feature_flag`, `health_checks`, `incidents`, `issue_tracking`, `logs`, `metrics`, `observability`, `orchestrator`, `other`, `resiliency`, `runbooks`, `security_scans`, `status_page`, `wiki`
 - `name` (String) The display name of the tool.
 - `url` (String) The URL of the tool.
 

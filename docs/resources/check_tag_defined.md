@@ -75,7 +75,7 @@ resource "opslevel_check_tag_defined" "example" {
 - `filter` (String) The id of the filter of the check.
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `tag_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tag_predicate))
+- `tag_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--tag_predicate))
 
 ### Read-Only
 

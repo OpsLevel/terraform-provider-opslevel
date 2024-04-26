@@ -32,7 +32,7 @@ data "opslevel_team" "devs" {
 
 ### Read-Only
 
-- `members` (List of Object) List of team members on the team with email address and role. (see [below for nested schema](#nestedatt--members))
+- `members` (Attributes List) List of team members on the team with email address and role. (see [below for nested schema](#nestedatt--members))
 - `name` (String) The name of the Team.
 - `parent_alias` (String) The alias of the parent team.
 - `parent_id` (String) The id of the parent team.
@@ -42,7 +42,7 @@ data "opslevel_team" "devs" {
 
 Read-Only:
 
-- `email` (String)
-- `role` (String)
+- `email` (String) The email address of the team member.
+- `role` (String) The role of the team member.
 
 

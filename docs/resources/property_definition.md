@@ -35,7 +35,7 @@ resource "opslevel_property_definition" "color_picker" {
 
 - `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
 - `name` (String) The display name of the property definition.
-- `property_display_status` (String) The display status of a custom property on service pages. (Options: hidden, visible)
+- `property_display_status` (String) The display status of a custom property on service pages. One of `hidden`, `visible`
 - `schema` (String) The schema of the property definition.
 
 ### Optional

@@ -43,7 +43,7 @@ data "opslevel_service" "bar" {
 - `owner_id` (String) The team ID that owns the service.
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, we use the order push and then pull.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
-- `properties` (List of Object) Custom properties assigned to this service. (see [below for nested schema](#nestedatt--properties))
+- `properties` (Attributes List) Custom properties assigned to this service. (see [below for nested schema](#nestedatt--properties))
 - `repositories` (List of String) List of repositories connected to the service.
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.
@@ -53,15 +53,15 @@ data "opslevel_service" "bar" {
 
 Read-Only:
 
-- `definition` (Object) (see [below for nested schema](#nestedobjatt--properties--definition))
-- `value` (String)
+- `definition` (Attributes) (see [below for nested schema](#nestedatt--properties--definition))
+- `value` (String) The value of the custom property.
 
-<a id="nestedobjatt--properties--definition"></a>
+<a id="nestedatt--properties--definition"></a>
 ### Nested Schema for `properties.definition`
 
 Read-Only:
 
-- `aliases` (List of String)
-- `id` (String)
+- `aliases` (List of String) A list of human-friendly, unique identifiers of the property definition.
+- `id` (String) The id of the property definition.
 
 

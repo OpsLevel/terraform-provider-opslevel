@@ -68,7 +68,7 @@ resource "opslevel_check_tool_usage" "example" {
 - `category` (String) The id of the category the check belongs to.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
-- `tool_category` (String) The category that the tool belongs to.
+- `tool_category` (String) The category that the tool belongs to. One of `admin`, `api_documentation`, `architecture_diagram`, `backlog`, `code`, `continuous_integration`, `deployment`, `design_documentation`, `errors`, `feature_flag`, `health_checks`, `incidents`, `issue_tracking`, `logs`, `metrics`, `observability`, `orchestrator`, `other`, `resiliency`, `runbooks`, `security_scans`, `status_page`, `wiki`
 
 ### Optional
 
@@ -76,12 +76,12 @@ resource "opslevel_check_tool_usage" "example" {
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
-- `environment_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--environment_predicate))
+- `environment_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--environment_predicate))
 - `filter` (String) The id of the filter of the check.
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
-- `tool_name_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tool_name_predicate))
-- `tool_url_predicate` (Attributes) A condition that should be satisfied. (see [below for nested schema](#nestedatt--tool_url_predicate))
+- `tool_name_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--tool_name_predicate))
+- `tool_url_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--tool_url_predicate))
 
 ### Read-Only
 

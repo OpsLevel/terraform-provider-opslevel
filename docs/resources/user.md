@@ -30,7 +30,7 @@ resource "opslevel_user" "john" {
 
 ### Optional
 
-- `role` (String) The access role (e.g. user or admin) of the user.
+- `role` (String) The access role of the user. One of `user`, `admin`, `basic_user`
 - `skip_welcome_email` (Boolean, Deprecated) Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.
 
 ### Read-Only

@@ -68,7 +68,7 @@ resource "opslevel_filter" "case_sensitive" {
 
 ### Optional
 
-- `connective` (String) The logical operator to be used in conjunction with predicates. Valid values are `and`, `or`
+- `connective` (String) The logical operator to be used in conjunction with predicates. One of `and`, `or`
 - `predicate` (Block List) (see [below for nested schema](#nestedblock--predicate))
 
 ### Read-Only
