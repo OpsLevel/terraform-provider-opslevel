@@ -48,7 +48,7 @@ func (d *WebhookActionDataSourcesAll) Schema(ctx context.Context, req datasource
 		Attributes: map[string]schema.Attribute{
 			"webhook_actions": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: webhookActionAttributes(map[string]schema.Attribute{}),
+					Attributes: webhookActionDatasourceSchemaAttrs,
 				},
 				Description: "List of webhook action data sources",
 				Computed:    true,
