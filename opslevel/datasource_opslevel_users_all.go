@@ -44,7 +44,7 @@ func (d *UserDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"users": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: userAttributes(map[string]schema.Attribute{}),
+					Attributes: userDatasourceSchemaAttrs,
 				},
 				Description: "List of user data sources",
 				Computed:    true,
