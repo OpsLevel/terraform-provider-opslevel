@@ -33,6 +33,7 @@ data "opslevel_repository" "bar" {
 ### Read-Only
 
 - `name` (String) The display name of the repository.
-- `url` (String) The url of the the repository.
+- `url` (String) The url of the repository.
+- `languages` (List) List of maps containing all languages and their coverage detected on the repository.
 
 
