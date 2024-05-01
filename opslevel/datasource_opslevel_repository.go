@@ -41,23 +41,23 @@ type RepositoryDataSourceModel struct {
 
 // LanguagesValue function converts the raw opslevel data to terraform friendly format
 func LanguagesValue(value []opslevel.Language) []LanguagesModel {
-    var languages []LanguagesModel
+	var languages []LanguagesModel
 
-    if len(value) == 0 {
-        return []LanguagesModel{}
-    }
+	if len(value) == 0 {
+		return []LanguagesModel{}
+	}
 
-    for _, lang := range value {
-        language := LanguagesModel{
-            Name:  types.StringValue(lang.Name),
-            Usage: types.StringValue(strconv.FormatFloat(float64(lang.Usage), 'f', -1, 32)),
-            // convert the Usage float32 value to StringValue instead of NumberValue or Float64Value to keep the exact same value
-            // eg: a value of 0.55404 to type number or float64 converts to 0.5540400147, where to string, it remains the same.
-        }
+	for _, lang := range value {
+		language := LanguagesModel{
+			Name:  types.StringValue(lang.Name),
+			Usage: types.StringValue(strconv.FormatFloat(float64(lang.Usage), 'f', -1, 32)),
+			// convert the Usage float32 value to StringValue instead of NumberValue or Float64Value to keep the exact same value
+			// eg: a value of 0.55404 to type number or float64 converts to 0.5540400147, where to string, it remains the same.
+		}
 
-        languages = append(languages, language)
-    }
-    return languages
+		languages = append(languages, language)
+	}
+	return languages
 }
 
 func NewRepositoryDataSourceModel(repository opslevel.Repository) RepositoryDataSourceModel {
@@ -89,20 +89,20 @@ var repositoryDatasourceSchemaAttrs = map[string]schema.Attribute{
 		Description: "The url of the the repository.",
 		Computed:    true,
 	},
-    "languages": schema.ListNestedAttribute{
-        Description:  "The list of programming languages used in the repository.",
-        Computed:     true,
-        NestedObject: schema.NestedAttributeObject{
-            Attributes: map[string]schema.Attribute{
-                "name": schema.StringAttribute{
-                        Optional: true,
-                },
-                "usage": schema.StringAttribute{
-                        Optional: true,
-                },
-            },
-        },
-    },
+	"languages": schema.ListNestedAttribute{
+		Description: "The list of programming languages used in the repository.",
+		Computed:    true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"name": schema.StringAttribute{
+					Optional: true,
+				},
+				"usage": schema.StringAttribute{
+					Optional: true,
+				},
+			},
+		},
+	},
 }
 
 func (d *RepositoryDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
