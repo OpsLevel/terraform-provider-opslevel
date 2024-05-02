@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -26,8 +25,8 @@ type RepositoryDataSource struct {
 
 // LanguagesModel describes the model for the Languages data of the repository.
 type LanguagesModel struct {
-	Name  types.String `tfsdk:"name"`
-	Usage types.String `tfsdk:"usage"`
+	Name  types.String  `tfsdk:"name"`
+	Usage types.Float64 `tfsdk:"usage"`
 }
 
 // RepositoryDataSourceModel describes the data source data model.
@@ -50,9 +49,7 @@ func LanguagesValue(value []opslevel.Language) []LanguagesModel {
 	for _, lang := range value {
 		language := LanguagesModel{
 			Name:  types.StringValue(lang.Name),
-			Usage: types.StringValue(strconv.FormatFloat(float64(lang.Usage), 'f', -1, 32)),
-			// convert the Usage float32 value to StringValue instead of NumberValue or Float64Value to keep the exact same value
-			// eg: a value of 0.55404 to type number or float64 converts to 0.5540400147, where to string, it remains the same.
+			Usage: types.Float64Value(lang.Usage),
 		}
 
 		languages = append(languages, language)
@@ -97,7 +94,7 @@ var repositoryDatasourceSchemaAttrs = map[string]schema.Attribute{
 				"name": schema.StringAttribute{
 					Optional: true,
 				},
-				"usage": schema.StringAttribute{
+				"usage": schema.Float64Attribute{
 					Optional: true,
 				},
 			},
