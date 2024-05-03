@@ -177,8 +177,13 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
-		Parent:      opslevel.NewIdentifier(planModel.Domain.ValueString()),
 	}
+	if planModel.Domain.IsNull() {
+		systemInput.Parent = opslevel.NewIdentifier()
+	} else {
+		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+	}
+
 	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), systemInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update system, got error: %s", err))
