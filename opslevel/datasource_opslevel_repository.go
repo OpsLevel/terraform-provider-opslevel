@@ -23,20 +23,47 @@ type RepositoryDataSource struct {
 	CommonDataSourceClient
 }
 
+// LanguagesModel describes the model for the Languages data of the repository.
+type LanguagesModel struct {
+	Name  types.String  `tfsdk:"name"`
+	Usage types.Float64 `tfsdk:"usage"`
+}
+
 // RepositoryDataSourceModel describes the data source data model.
 type RepositoryDataSourceModel struct {
-	Alias types.String `tfsdk:"alias"`
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Url   types.String `tfsdk:"url"`
+	Alias     types.String     `tfsdk:"alias"`
+	Id        types.String     `tfsdk:"id"`
+	Name      types.String     `tfsdk:"name"`
+	Url       types.String     `tfsdk:"url"`
+	Languages []LanguagesModel `tfsdk:"languages"`
+}
+
+// LanguagesValue function converts the raw opslevel data to terraform friendly format
+func LanguagesValue(value []opslevel.Language) []LanguagesModel {
+	var languages []LanguagesModel
+
+	if len(value) == 0 {
+		return []LanguagesModel{}
+	}
+
+	for _, lang := range value {
+		language := LanguagesModel{
+			Name:  types.StringValue(lang.Name),
+			Usage: types.Float64Value(lang.Usage),
+		}
+
+		languages = append(languages, language)
+	}
+	return languages
 }
 
 func NewRepositoryDataSourceModel(repository opslevel.Repository) RepositoryDataSourceModel {
 	return RepositoryDataSourceModel{
-		Alias: OptionalStringValue(repository.DefaultAlias),
-		Id:    OptionalStringValue(string(repository.Id)),
-		Name:  ComputedStringValue(repository.Name),
-		Url:   ComputedStringValue(repository.Url),
+		Alias:     OptionalStringValue(repository.DefaultAlias),
+		Id:        OptionalStringValue(string(repository.Id)),
+		Name:      ComputedStringValue(repository.Name),
+		Url:       ComputedStringValue(repository.Url),
+		Languages: LanguagesValue(repository.Languages),
 	}
 }
 
@@ -58,6 +85,20 @@ var repositoryDatasourceSchemaAttrs = map[string]schema.Attribute{
 	"url": schema.StringAttribute{
 		Description: "The url of the the repository.",
 		Computed:    true,
+	},
+	"languages": schema.ListNestedAttribute{
+		Description: "The list of programming languages used in the repository.",
+		Computed:    true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"name": schema.StringAttribute{
+					Optional: true,
+				},
+				"usage": schema.Float64Attribute{
+					Optional: true,
+				},
+			},
+		},
 	},
 }
 
