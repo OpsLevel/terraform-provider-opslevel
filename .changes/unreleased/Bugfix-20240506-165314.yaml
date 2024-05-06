@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug on resource `opslevel_service` where `'' was not found` error message
+  was thrown on all updates for `tier_alias`, `lifecycle_alias`
+time: 2024-05-06T16:53:14.469466-04:00

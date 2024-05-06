@@ -319,28 +319,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// NOTE: these fields cannot be unset at the GraphQL API level - we want to acknowledge this for now
-	var lifecycleAliasBeforeUpdate, tierAliasBeforeUpdate types.String
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("lifecycle_alias"), &lifecycleAliasBeforeUpdate)...)
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tier_alias"), &tierAliasBeforeUpdate)...)
-	if !lifecycleAliasBeforeUpdate.IsNull() && planModel.LifecycleAlias.IsNull() {
-		resp.Diagnostics.AddError("Known error", "Unable to unset 'lifecycle_alias' field for now. We have a planned fix for this.")
-		return
-	}
-	if !tierAliasBeforeUpdate.IsNull() && planModel.TierAlias.IsNull() {
-		resp.Diagnostics.AddError("Known error", "Unable to unset 'tier_alias' field for now. We have a planned fix for this.")
-		return
-	}
-
-	serviceUpdateInput := opslevel.ServiceUpdateInput{
-		Description:    opslevel.RefOf(planModel.Description.ValueString()),
-		Framework:      opslevel.RefOf(planModel.Framework.ValueString()),
+	serviceUpdateInput := opslevel.ServiceUpdateInputV2{
+		Description:    NullableStringConfigValue(planModel.Description),
+		Framework:      NullableStringConfigValue(planModel.Framework),
 		Id:             opslevel.NewID(planModel.Id.ValueString()),
-		Language:       opslevel.RefOf(planModel.Language.ValueString()),
-		LifecycleAlias: opslevel.RefOf(planModel.LifecycleAlias.ValueString()),
-		Name:           planModel.Name.ValueStringPointer(),
-		Product:        opslevel.RefOf(planModel.Product.ValueString()),
-		TierAlias:      opslevel.RefOf(planModel.TierAlias.ValueString()),
+		Language:       NullableStringConfigValue(planModel.Language),
+		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
+		Name:           opslevel.NewNullableValue(planModel.Name.ValueString()),
+		Product:        NullableStringConfigValue(planModel.Product),
+		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
