@@ -245,6 +245,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	// TODO: the post create/update steps are the same and can be extracted into a function so we repeat less code
 	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
@@ -281,6 +282,8 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 		}
 	}
+
+	// fetch the service again, since other mutations are performed after the create/update step
 	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
@@ -397,6 +400,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
+	// fetch the service again, since other mutations are performed after the create/update step
 	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
