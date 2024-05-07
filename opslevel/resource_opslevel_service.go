@@ -52,7 +52,7 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service, planModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
+func newServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -64,9 +64,6 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 		Name:            RequiredStringValue(service.Name),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
-	}
-	if setLastUpdated {
-		serviceResourceModel.LastUpdated = timeLastUpdated()
 	}
 
 	if len(service.ManagedAliases) == 0 {
@@ -92,7 +89,16 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
 	}
 
-	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
+	return serviceResourceModel, diags
+}
+
+func newServiceResourceModelFromPlan(ctx context.Context, service opslevel.Service, planModel ServiceResourceModel) (ServiceResourceModel, diag.Diagnostics) {
+	serviceResourceModel, diags := newServiceResourceModel(ctx, service)
+	if diags.HasError() {
+		return serviceResourceModel, diags
+	}
+
+	// differentiate between a basic field being unset (null) vs empty string ("")
 	if serviceResourceModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
 		serviceResourceModel.Description = types.StringValue("")
 	}
@@ -106,7 +112,7 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 		serviceResourceModel.Product = types.StringValue("")
 	}
 
-	// after creating resource model, set the owner to alias/ID or to null
+	// set the owner to alias/ID or to null
 	switch planModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
 		serviceResourceModel.Owner = planModel.Owner
@@ -123,6 +129,8 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 		return serviceResourceModel, diags
 	}
 
+	// on success update time
+	serviceResourceModel.LastUpdated = timeLastUpdated()
 	return serviceResourceModel, diags
 }
 
@@ -290,7 +298,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	stateModel, diags := newServiceResourceModelFromPlan(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -316,7 +324,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, false)
+	stateModel, diags := newServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -407,7 +415,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	stateModel, diags := newServiceResourceModelFromPlan(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
