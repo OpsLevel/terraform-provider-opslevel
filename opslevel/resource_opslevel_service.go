@@ -302,22 +302,23 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel ServiceResourceModel
+	var stateModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	service, err := r.client.GetService(opslevel.ID(planModel.Id.ValueString()))
+	service, err := r.client.GetService(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, false)
+	var diags diag.Diagnostics
+	stateModel, diags = NewServiceResourceModel(ctx, *service, stateModel, false)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -419,15 +420,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel ServiceResourceModel
+	var stateModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteService(planModel.Id.ValueString())
+	err := r.client.DeleteService(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
 		return
