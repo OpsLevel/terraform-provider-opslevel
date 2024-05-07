@@ -247,13 +247,19 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 		}
 	}
-	service, err = r.client.GetService(opslevel.ID(service.Id))
+	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
 		return
 	}
 
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	resp.Diagnostics.Append(diags...)
+
+	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
+		stateModel.Description = types.StringValue("")
+	}
+
 	switch planModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
 		stateModel.Owner = planModel.Owner
@@ -293,6 +299,11 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
+
+	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
+		stateModel.Description = types.StringValue("")
+	}
+
 	switch planModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
 		stateModel.Owner = planModel.Owner
@@ -384,7 +395,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
-	service, err = r.client.GetService(opslevel.ID(service.Id))
+	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return
@@ -393,6 +404,10 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
 	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
+
+	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
+		stateModel.Description = types.StringValue("")
+	}
 
 	switch planModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
