@@ -52,7 +52,8 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service, planModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
+// NewServiceResourceModel uses the cachedModel to ensure that fields are consistent between the terraform plan and state
+func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cachedModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -93,23 +94,23 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 	}
 
 	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
-	if serviceResourceModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
+	if serviceResourceModel.Description.IsNull() && !cachedModel.Description.IsNull() && cachedModel.Description.ValueString() == "" {
 		serviceResourceModel.Description = types.StringValue("")
 	}
-	if serviceResourceModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
+	if serviceResourceModel.Framework.IsNull() && !cachedModel.Framework.IsNull() && cachedModel.Framework.ValueString() == "" {
 		serviceResourceModel.Framework = types.StringValue("")
 	}
-	if serviceResourceModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
+	if serviceResourceModel.Language.IsNull() && !cachedModel.Language.IsNull() && cachedModel.Language.ValueString() == "" {
 		serviceResourceModel.Language = types.StringValue("")
 	}
-	if serviceResourceModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
+	if serviceResourceModel.Product.IsNull() && !cachedModel.Product.IsNull() && cachedModel.Product.ValueString() == "" {
 		serviceResourceModel.Product = types.StringValue("")
 	}
 
 	// after creating resource model, set the owner to alias/ID or to null
-	switch planModel.Owner.ValueString() {
+	switch cachedModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
-		serviceResourceModel.Owner = planModel.Owner
+		serviceResourceModel.Owner = cachedModel.Owner
 	case "":
 		serviceResourceModel.Owner = types.StringNull()
 	default:
@@ -117,7 +118,7 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, plan
 			"opslevel client error",
 			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
 				serviceResourceModel.Owner.ValueString(),
-				planModel.Owner.ValueString(),
+				cachedModel.Owner.ValueString(),
 			),
 		)
 		return serviceResourceModel, diags
