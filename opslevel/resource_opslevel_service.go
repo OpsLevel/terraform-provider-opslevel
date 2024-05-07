@@ -52,7 +52,7 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
+func NewServiceResourceModel(ctx context.Context, service opslevel.Service, planModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -64,6 +64,9 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		Name:            RequiredStringValue(service.Name),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
+	}
+	if setLastUpdated {
+		serviceResourceModel.LastUpdated = timeLastUpdated()
 	}
 
 	if len(service.ManagedAliases) == 0 {
@@ -87,6 +90,37 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 	if service.PreferredApiDocumentSource != nil {
 		apiDocSource := service.PreferredApiDocumentSource
 		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
+	}
+
+	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
+	if serviceResourceModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
+		serviceResourceModel.Description = types.StringValue("")
+	}
+	if serviceResourceModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
+		serviceResourceModel.Framework = types.StringValue("")
+	}
+	if serviceResourceModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
+		serviceResourceModel.Language = types.StringValue("")
+	}
+	if serviceResourceModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
+		serviceResourceModel.Product = types.StringValue("")
+	}
+
+	// after creating resource model, set the owner to alias/ID or to null
+	switch planModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		serviceResourceModel.Owner = planModel.Owner
+	case "":
+		serviceResourceModel.Owner = types.StringNull()
+	default:
+		diags.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
+				serviceResourceModel.Owner.ValueString(),
+				planModel.Owner.ValueString(),
+			),
+		)
+		return serviceResourceModel, diags
 	}
 
 	return serviceResourceModel, diags
@@ -253,42 +287,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
 	resp.Diagnostics.Append(diags...)
-
-	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
-	// TODO: find a way to do this without repeating code
-	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
-		stateModel.Description = types.StringValue("")
-	}
-	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
-		stateModel.Framework = types.StringValue("")
-	}
-	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
-		stateModel.Language = types.StringValue("")
-	}
-	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
-		stateModel.Product = types.StringValue("")
-	}
-
-	// after creating resource model, set the owner to alias/ID or to null
-	// TODO: find a way to do this without repeating code
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
-				stateModel.Owner.ValueString(),
-				planModel.Owner.ValueString(),
-			),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -310,32 +313,9 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, false)
 	resp.Diagnostics.Append(diags...)
-
-	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
-		stateModel.Description = types.StringValue("")
-	}
-	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
-		stateModel.Framework = types.StringValue("")
-	}
-	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
-		stateModel.Language = types.StringValue("")
-	}
-	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
-		stateModel.Product = types.StringValue("")
-	}
-
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -358,7 +338,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Id:             opslevel.NewID(planModel.Id.ValueString()),
 		Language:       NullableStringConfigValue(planModel.Language),
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
-		Name:           opslevel.NewNullableValue(planModel.Name.ValueString()),
+		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
@@ -423,33 +403,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
-	stateModel.LastUpdated = timeLastUpdated()
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
 	resp.Diagnostics.Append(diags...)
-
-	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
-		stateModel.Description = types.StringValue("")
-	}
-	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
-		stateModel.Framework = types.StringValue("")
-	}
-	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
-		stateModel.Language = types.StringValue("")
-	}
-	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
-		stateModel.Product = types.StringValue("")
-	}
-
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
