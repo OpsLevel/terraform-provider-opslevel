@@ -66,9 +66,6 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
-	if setLastUpdated {
-		serviceResourceModel.LastUpdated = timeLastUpdated()
-	}
 
 	if len(service.ManagedAliases) == 0 {
 		serviceResourceModel.Aliases = types.ListNull(types.StringType)
@@ -124,6 +121,9 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		return serviceResourceModel, diags
 	}
 
+	if setLastUpdated {
+		serviceResourceModel.LastUpdated = timeLastUpdated()
+	}
 	return serviceResourceModel, diags
 }
 
