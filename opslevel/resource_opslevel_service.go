@@ -256,10 +256,23 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	stateModel, diags := NewServiceResourceModel(ctx, *service)
 	resp.Diagnostics.Append(diags...)
 
+	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
+	// TODO: find a way to do this without repeating code
 	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
 		stateModel.Description = types.StringValue("")
 	}
+	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
+		stateModel.Framework = types.StringValue("")
+	}
+	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
+		stateModel.Language = types.StringValue("")
+	}
+	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
+		stateModel.Product = types.StringValue("")
+	}
 
+	// after creating resource model, set the owner to alias/ID or to null
+	// TODO: find a way to do this without repeating code
 	switch planModel.Owner.ValueString() {
 	case string(service.Owner.Id), service.Owner.Alias:
 		stateModel.Owner = planModel.Owner
@@ -302,6 +315,15 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
 		stateModel.Description = types.StringValue("")
+	}
+	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
+		stateModel.Framework = types.StringValue("")
+	}
+	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
+		stateModel.Language = types.StringValue("")
+	}
+	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
+		stateModel.Product = types.StringValue("")
 	}
 
 	switch planModel.Owner.ValueString() {
@@ -407,6 +429,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	if stateModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
 		stateModel.Description = types.StringValue("")
+	}
+	if stateModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
+		stateModel.Framework = types.StringValue("")
+	}
+	if stateModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
+		stateModel.Language = types.StringValue("")
+	}
+	if stateModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
+		stateModel.Product = types.StringValue("")
 	}
 
 	switch planModel.Owner.ValueString() {
