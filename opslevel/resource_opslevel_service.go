@@ -283,7 +283,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true, r.client)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -310,7 +310,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	var diags diag.Diagnostics
-	stateModel, diags = NewServiceResourceModel(ctx, *service, stateModel, false)
+	stateModel, diags = NewServiceResourceModel(ctx, *service, stateModel, false, r.client)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -401,7 +401,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true, r.client)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
