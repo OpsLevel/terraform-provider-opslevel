@@ -111,7 +111,7 @@ func updateServiceResourceModelWithPlan(service opslevel.Service, serviceResourc
 	}
 
 	// properly set owner to team alias OR id OR null - based on what is in the service
-	owner, err := ensureValidOwner(client, &service, planModel.Owner.ValueString())
+	owner, err := getValidOwner(client, &service, planModel.Owner.ValueString())
 	if err != nil {
 		diags.AddError("opslevel client error", err.Error())
 		return diags
@@ -230,6 +230,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		Product:        planModel.Product.ValueStringPointer(),
 		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
+
 	if planModel.Owner.ValueString() != "" {
 		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
 	}

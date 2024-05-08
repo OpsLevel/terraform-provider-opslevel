@@ -105,9 +105,9 @@ func timeLastUpdated() basetypes.StringValue {
 	return types.StringValue(time.Now().Format(time.RFC850))
 }
 
-// ensureValidOwner will compare the expected owner from the terraform plan OR state versus what is found in OpsLevel
+// getValidOwner will compare the expected owner from the terraform plan OR state versus what is found in OpsLevel
 // if the owner is not as expected it will return an error
-func ensureValidOwner(client *opslevel.Client, resource opslevel.HasTeam, expectedOwner string) (types.String, error) {
+func getValidOwner(client *opslevel.Client, resource opslevel.HasTeam, expectedOwner string) (types.String, error) {
 	// validate that the resource does not have an owner set
 	if expectedOwner == "" {
 		if expectedOwner == string(resource.GetTeamId().Id) {
