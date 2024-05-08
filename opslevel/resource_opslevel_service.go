@@ -52,8 +52,7 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-// NewServiceResourceModel uses the cachedModel to ensure that fields are consistent between the terraform plan and state
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cachedModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
+func newServiceResourceModel(ctx context.Context, service opslevel.Service, ownerIdentifier string) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -63,6 +62,7 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
+		Owner:           OptionalStringValue(ownerIdentifier),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
@@ -90,41 +90,24 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
 	}
 
-	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
-	if serviceResourceModel.Description.IsNull() && !cachedModel.Description.IsNull() && cachedModel.Description.ValueString() == "" {
+	return serviceResourceModel, diags
+}
+
+// updateServiceResourceModelWithPlan mutates the input ServiceResourceModel based on the current terraform plan
+func updateServiceResourceModelWithPlan(serviceResourceModel *ServiceResourceModel, planModel ServiceResourceModel) {
+	// handle edge case of a basic field being null vs ""
+	if serviceResourceModel.Description.IsNull() && !planModel.Description.IsNull() && planModel.Description.ValueString() == "" {
 		serviceResourceModel.Description = types.StringValue("")
 	}
-	if serviceResourceModel.Framework.IsNull() && !cachedModel.Framework.IsNull() && cachedModel.Framework.ValueString() == "" {
+	if serviceResourceModel.Framework.IsNull() && !planModel.Framework.IsNull() && planModel.Framework.ValueString() == "" {
 		serviceResourceModel.Framework = types.StringValue("")
 	}
-	if serviceResourceModel.Language.IsNull() && !cachedModel.Language.IsNull() && cachedModel.Language.ValueString() == "" {
+	if serviceResourceModel.Language.IsNull() && !planModel.Language.IsNull() && planModel.Language.ValueString() == "" {
 		serviceResourceModel.Language = types.StringValue("")
 	}
-	if serviceResourceModel.Product.IsNull() && !cachedModel.Product.IsNull() && cachedModel.Product.ValueString() == "" {
+	if serviceResourceModel.Product.IsNull() && !planModel.Product.IsNull() && planModel.Product.ValueString() == "" {
 		serviceResourceModel.Product = types.StringValue("")
 	}
-
-	// after creating resource model, set the owner to alias/ID or to null
-	switch cachedModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		serviceResourceModel.Owner = cachedModel.Owner
-	case "":
-		serviceResourceModel.Owner = types.StringNull()
-	default:
-		diags.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
-				serviceResourceModel.Owner.ValueString(),
-				cachedModel.Owner.ValueString(),
-			),
-		)
-		return serviceResourceModel, diags
-	}
-
-	if setLastUpdated {
-		serviceResourceModel.LastUpdated = timeLastUpdated()
-	}
-	return serviceResourceModel, diags
 }
 
 func (r *ServiceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -232,6 +215,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		Language:       planModel.Language.ValueStringPointer(),
 		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
 		Name:           planModel.Name.ValueString(),
+		OwnerInput:     opslevel.NewIdentifier(),
 		Product:        planModel.Product.ValueStringPointer(),
 		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
@@ -291,14 +275,16 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	updateServiceResourceModelWithPlan(&newStateModel, planModel)
+	newStateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -317,15 +303,14 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var diags diag.Diagnostics
-	stateModel, diags = NewServiceResourceModel(ctx, *service, stateModel, false)
+	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel.Owner.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -344,6 +329,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Language:       NullableStringConfigValue(planModel.Language),
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
 		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
+		OwnerInput:     opslevel.NewIdentifier(),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
@@ -409,14 +395,16 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	updateServiceResourceModelWithPlan(&newStateModel, planModel)
+	newStateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a service resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
