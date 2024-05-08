@@ -52,7 +52,8 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (ServiceResourceModel, diag.Diagnostics) {
+// NewServiceResourceModel uses the cachedModel to ensure that fields are consistent between the terraform plan and state
+func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cachedModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -89,6 +90,40 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service) (Ser
 		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
 	}
 
+	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
+	if serviceResourceModel.Description.IsNull() && !cachedModel.Description.IsNull() && cachedModel.Description.ValueString() == "" {
+		serviceResourceModel.Description = types.StringValue("")
+	}
+	if serviceResourceModel.Framework.IsNull() && !cachedModel.Framework.IsNull() && cachedModel.Framework.ValueString() == "" {
+		serviceResourceModel.Framework = types.StringValue("")
+	}
+	if serviceResourceModel.Language.IsNull() && !cachedModel.Language.IsNull() && cachedModel.Language.ValueString() == "" {
+		serviceResourceModel.Language = types.StringValue("")
+	}
+	if serviceResourceModel.Product.IsNull() && !cachedModel.Product.IsNull() && cachedModel.Product.ValueString() == "" {
+		serviceResourceModel.Product = types.StringValue("")
+	}
+
+	// after creating resource model, set the owner to alias/ID or to null
+	switch cachedModel.Owner.ValueString() {
+	case string(service.Owner.Id), service.Owner.Alias:
+		serviceResourceModel.Owner = cachedModel.Owner
+	case "":
+		serviceResourceModel.Owner = types.StringNull()
+	default:
+		diags.AddError(
+			"opslevel client error",
+			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
+				serviceResourceModel.Owner.ValueString(),
+				cachedModel.Owner.ValueString(),
+			),
+		)
+		return serviceResourceModel, diags
+	}
+
+	if setLastUpdated {
+		serviceResourceModel.LastUpdated = timeLastUpdated()
+	}
 	return serviceResourceModel, diags
 }
 
@@ -211,6 +246,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	// TODO: the post create/update steps are the same and can be extracted into a function so we repeat less code
 	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
@@ -247,62 +283,44 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 		}
 	}
-	service, err = r.client.GetService(opslevel.ID(service.Id))
+
+	// fetch the service again, since other mutations are performed after the create/update step
+	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
-				stateModel.Owner.ValueString(),
-				planModel.Owner.ValueString(),
-			),
-		)
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel ServiceResourceModel
+	var stateModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	service, err := r.client.GetService(opslevel.ID(planModel.Id.ValueString()))
+	service, err := r.client.GetService(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
+	var diags diag.Diagnostics
+	stateModel, diags = NewServiceResourceModel(ctx, *service, stateModel, false)
 	resp.Diagnostics.Append(diags...)
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -319,28 +337,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// NOTE: these fields cannot be unset at the GraphQL API level - we want to acknowledge this for now
-	var lifecycleAliasBeforeUpdate, tierAliasBeforeUpdate types.String
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("lifecycle_alias"), &lifecycleAliasBeforeUpdate)...)
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tier_alias"), &tierAliasBeforeUpdate)...)
-	if !lifecycleAliasBeforeUpdate.IsNull() && planModel.LifecycleAlias.IsNull() {
-		resp.Diagnostics.AddError("Known error", "Unable to unset 'lifecycle_alias' field for now. We have a planned fix for this.")
-		return
-	}
-	if !tierAliasBeforeUpdate.IsNull() && planModel.TierAlias.IsNull() {
-		resp.Diagnostics.AddError("Known error", "Unable to unset 'tier_alias' field for now. We have a planned fix for this.")
-		return
-	}
-
-	serviceUpdateInput := opslevel.ServiceUpdateInput{
-		Description:    opslevel.RefOf(planModel.Description.ValueString()),
-		Framework:      opslevel.RefOf(planModel.Framework.ValueString()),
+	serviceUpdateInput := opslevel.ServiceUpdateInputV2{
+		Description:    NullableStringConfigValue(planModel.Description),
+		Framework:      NullableStringConfigValue(planModel.Framework),
 		Id:             opslevel.NewID(planModel.Id.ValueString()),
-		Language:       opslevel.RefOf(planModel.Language.ValueString()),
-		LifecycleAlias: opslevel.RefOf(planModel.LifecycleAlias.ValueString()),
-		Name:           planModel.Name.ValueStringPointer(),
-		Product:        opslevel.RefOf(planModel.Product.ValueString()),
-		TierAlias:      opslevel.RefOf(planModel.TierAlias.ValueString()),
+		Language:       NullableStringConfigValue(planModel.Language),
+		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
+		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
+		Product:        NullableStringConfigValue(planModel.Product),
+		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
@@ -397,26 +402,16 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
-	service, err = r.client.GetService(opslevel.ID(service.Id))
+	// fetch the service again, since other mutations are performed after the create/update step
+	service, err = r.client.GetService(service.Id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return
 	}
 
-	stateModel, diags := NewServiceResourceModel(ctx, *service)
-	stateModel.LastUpdated = timeLastUpdated()
+	stateModel, diags := NewServiceResourceModel(ctx, *service, planModel, true)
 	resp.Diagnostics.Append(diags...)
-
-	switch planModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		stateModel.Owner = planModel.Owner
-	case "":
-		stateModel.Owner = types.StringNull()
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner did not match given owner '%s'", stateModel.Owner.ValueString()),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -425,15 +420,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel ServiceResourceModel
+	var stateModel ServiceResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteService(planModel.Id.ValueString())
+	err := r.client.DeleteService(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
 		return

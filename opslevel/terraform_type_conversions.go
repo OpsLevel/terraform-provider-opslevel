@@ -24,6 +24,14 @@ func OptionalStringValue(value string) basetypes.StringValue {
 	return types.StringValue(unquote(value))
 }
 
+// Returns value from config as a string OR null if the value is not set/explicitly set to null (supports empty strings)
+func NullableStringConfigValue(s types.String) *opslevel.Nullable[string] {
+	if s.IsNull() {
+		return opslevel.NewNull[string]()
+	}
+	return opslevel.NewNullableFrom(s.ValueString())
+}
+
 // Syntactic sugar for OptionalStringValue
 func ComputedStringValue(value string) basetypes.StringValue {
 	return OptionalStringValue(value)
