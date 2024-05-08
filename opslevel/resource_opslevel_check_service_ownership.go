@@ -111,7 +111,7 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 				Description: "The tag key where the tag predicate should be applied.",
 				Optional:    true,
 			},
-			"tag_predicate": newPredicateSchema(false),
+			"tag_predicate": PredicateSchema(),
 		}),
 	}
 }

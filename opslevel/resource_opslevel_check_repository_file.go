@@ -100,7 +100,7 @@ func (r *CheckRepositoryFileResource) Schema(ctx context.Context, req resource.S
 				Required:    true,
 				ElementType: types.StringType,
 			},
-			"file_contents_predicate": newPredicateSchema(false),
+			"file_contents_predicate": PredicateSchema(),
 			"use_absolute_root": schema.BoolAttribute{
 				Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
 				Required:    true,

@@ -104,9 +104,9 @@ func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.Schema
 				Required:   true,
 				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
 			},
-			"tool_name_predicate":   newPredicateSchema(false),
-			"tool_url_predicate":    newPredicateSchema(false),
-			"environment_predicate": newPredicateSchema(false),
+			"tool_name_predicate":   PredicateSchema(),
+			"tool_url_predicate":    PredicateSchema(),
+			"environment_predicate": PredicateSchema(),
 		}),
 	}
 }
