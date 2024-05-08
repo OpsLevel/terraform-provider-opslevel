@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	// "sort"
@@ -103,43 +102,6 @@ func timeID() string {
 
 func timeLastUpdated() basetypes.StringValue {
 	return types.StringValue(time.Now().Format(time.RFC850))
-}
-
-// getValidOwner will compare the expected owner from the terraform plan OR state versus what is found in OpsLevel
-// if the owner is not as expected it will return an error
-func getValidOwner(client *opslevel.Client, resource opslevel.HasTeam, expectedOwner string) (types.String, error) {
-	// validate that the resource does not have an owner set
-	if expectedOwner == "" {
-		if expectedOwner == string(resource.GetTeamId().Id) {
-			return types.StringNull(), nil
-		}
-		return types.String{}, fmt.Errorf("expected no owner to be set, got owner with ID: '%s'", resource.GetTeamId().Id)
-	}
-
-	// validate that the resource owner ID is correct
-	if opslevel.IsID(expectedOwner) {
-		if expectedOwner == string(resource.GetTeamId().Id) {
-			return types.StringValue(expectedOwner), nil
-		}
-		return types.String{}, fmt.Errorf("expected owner with ID '%s', got owner with ID '%s'", expectedOwner, resource.GetTeamId().Id)
-	}
-
-	// validate that the resource owner alias is correct
-	if expectedOwner == resource.GetTeamId().Alias {
-		return types.StringValue(expectedOwner), nil
-	}
-	// complex case - need to check through non-default aliases
-	team, err := resource.GetTeam(client)
-	if err != nil {
-		return types.String{}, fmt.Errorf("error fetching owner team on resource: '%w'", err)
-	}
-	if team == nil || team.Id == "" {
-		return types.String{}, fmt.Errorf("owner team on resource was not found")
-	}
-	if !slices.Contains(team.Aliases, expectedOwner) {
-		return types.String{}, fmt.Errorf("owner team on resource does not have expected alias '%s'", expectedOwner)
-	}
-	return types.StringValue(expectedOwner), nil
 }
 
 // func wrap(handler func(data *schema.ResourceData, client *opslevel.Client) error) func(d *schema.ResourceData, meta interface{}) error {
