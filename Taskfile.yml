@@ -27,6 +27,7 @@ tasks:
 
   docs:
     desc: Generate docs
+    aliases: ["doc"]
     cmds:
       - go get github.com/hashicorp/terraform-plugin-docs@v0.13.0
       - go get github.com/hashicorp/terraform-plugin-docs/internal/provider@v0.13.0
