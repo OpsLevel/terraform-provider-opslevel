@@ -25,6 +25,13 @@ tasks:
       - task: lint
       - task: test
 
+  docs:
+    desc: Generate docs
+    cmds:
+      - go get github.com/hashicorp/terraform-plugin-docs@v0.13.0
+      - go get github.com/hashicorp/terraform-plugin-docs/internal/provider@v0.13.0
+      - go generate
+
   fix:
     desc: Fix formatting, linting, go.mod, and update submodule
     cmds:
