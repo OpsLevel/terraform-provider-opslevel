@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -41,32 +40,14 @@ type SecretResourceModel struct {
 	Value       types.String `tfsdk:"value"`
 }
 
-func newSecretResourceModel(secret opslevel.Secret, sensitiveValue string) SecretResourceModel {
-	secretResourceModel := SecretResourceModel{
+func NewSecretResourceModel(secret opslevel.Secret, ownerIdentifier, sensitiveValue string) SecretResourceModel {
+	return SecretResourceModel{
 		Alias:     RequiredStringValue(secret.Alias),
 		CreatedAt: ComputedStringValue(secret.Timestamps.CreatedAt.Local().Format(time.RFC850)),
 		Id:        ComputedStringValue(string(secret.ID)),
+		Owner:     RequiredStringValue(ownerIdentifier),
 		Value:     RequiredStringValue(sensitiveValue),
 	}
-	return secretResourceModel
-}
-
-func updateSecretResourceModelWithPlan(secret opslevel.Secret, secretResourceModel *SecretResourceModel, planModel SecretResourceModel, client *opslevel.Client) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	// properly set owner to team alias OR id - based on what is in the secret
-	owner, err := getValidOwner(client, &secret, planModel.Owner.ValueString())
-	if err != nil {
-		diags.AddError("opslevel client error", err.Error())
-		return diags
-	}
-	if owner == types.StringNull() {
-		diags.AddError("terraform state error", "unexpected: got owner = null")
-		return diags
-	}
-	secretResourceModel.Owner = owner
-
-	return diags
 }
 
 func (r *SecretResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -118,97 +99,85 @@ func (r *SecretResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 func (r *SecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel SecretResourceModel
+	var data SecretResourceModel
 
-	// Read Terraform plan into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	secret, err := r.client.CreateSecret(planModel.Alias.ValueString(), opslevel.SecretInput{
-		Owner: opslevel.NewIdentifier(planModel.Owner.ValueString()),
-		Value: opslevel.RefOf(planModel.Value.ValueString()),
+	secret, err := r.client.CreateSecret(data.Alias.ValueString(), opslevel.SecretInput{
+		Owner: opslevel.NewIdentifier(data.Owner.ValueString()),
+		Value: opslevel.RefOf(data.Value.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create secret, got error: %s", err))
 		return
 	}
-	newStateModel := newSecretResourceModel(*secret, planModel.Value.ValueString())
-	diags := updateSecretResourceModelWithPlan(*secret, &newStateModel, planModel, r.client)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	newStateModel.LastUpdated = timeLastUpdated()
+	createdSecretResourceModel := NewSecretResourceModel(*secret, data.Owner.ValueString(), data.Value.ValueString())
+	createdSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a secret resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &createdSecretResourceModel)...)
 }
 
 func (r *SecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel SecretResourceModel
+	var data SecretResourceModel
 
-	// Read Terraform prior state into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	secret, err := r.client.GetSecret(stateModel.Id.ValueString())
+	secret, err := r.client.GetSecret(data.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read secret, got error: %s", err))
 		return
 	}
-	newStateModel := newSecretResourceModel(*secret, stateModel.Value.ValueString())
-	// for owner - use alias or ID based on what was previously in the state
-	newStateModel.Owner = stateModel.Owner
+	readSecretResourceModel := NewSecretResourceModel(*secret, data.Owner.ValueString(), data.Value.ValueString())
 
-	// Save updated into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readSecretResourceModel)...)
 }
 
 func (r *SecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel SecretResourceModel
+	var data SecretResourceModel
 
-	// Read Terraform plan into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	updatedSecret, err := r.client.UpdateSecret(planModel.Id.ValueString(), opslevel.SecretInput{
-		Owner: opslevel.NewIdentifier(planModel.Owner.ValueString()),
-		Value: opslevel.RefOf(planModel.Value.ValueString()),
+	updatedSecret, err := r.client.UpdateSecret(data.Id.ValueString(), opslevel.SecretInput{
+		Owner: opslevel.NewIdentifier(data.Owner.ValueString()),
+		Value: opslevel.RefOf(data.Value.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update secret, got error: %s", err))
 		return
 	}
-	newStateModel := newSecretResourceModel(*updatedSecret, planModel.Value.ValueString())
-	diags := updateSecretResourceModelWithPlan(*updatedSecret, &newStateModel, planModel, r.client)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	newStateModel.LastUpdated = timeLastUpdated()
+	updatedSecretResourceModel := NewSecretResourceModel(*updatedSecret, data.Owner.ValueString(), data.Value.ValueString())
+	updatedSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a secret resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedSecretResourceModel)...)
 }
 
 func (r *SecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var stateModel SecretResourceModel
+	var data SecretResourceModel
 
-	// Read Terraform prior state into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteSecret(stateModel.Id.ValueString())
+	err := r.client.DeleteSecret(data.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete secret, got error: %s", err))
 		return
