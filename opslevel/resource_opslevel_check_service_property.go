@@ -98,7 +98,7 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 					stringvalidator.OneOf(opslevel.AllServicePropertyTypeEnum...),
 				},
 			},
-			"predicate": PredicateSchema(),
+			"predicate": newPredicateSchema(false),
 		}),
 	}
 }

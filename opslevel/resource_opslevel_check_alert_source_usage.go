@@ -96,7 +96,7 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 				Required:   true,
 				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllAlertSourceTypeEnum...)},
 			},
-			"alert_name_predicate": PredicateSchema(),
+			"alert_name_predicate": newPredicateSchema(false),
 		}),
 	}
 }

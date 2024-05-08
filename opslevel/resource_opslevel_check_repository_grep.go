@@ -98,7 +98,7 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 				Required:    true,
 				ElementType: types.StringType,
 			},
-			"file_contents_predicate": PredicateSchema(),
+			"file_contents_predicate": newPredicateSchema(true),
 		}),
 	}
 }

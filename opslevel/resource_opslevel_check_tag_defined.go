@@ -89,7 +89,7 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 				Description: "The tag key where the tag predicate should be applied.",
 				Required:    true,
 			},
-			"tag_predicate": PredicateSchema(),
+			"tag_predicate": newPredicateSchema(false),
 		}),
 	}
 }

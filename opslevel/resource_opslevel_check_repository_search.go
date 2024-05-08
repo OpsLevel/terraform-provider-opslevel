@@ -90,7 +90,7 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 				Optional:    true,
 				ElementType: types.StringType,
 			},
-			"file_contents_predicate": PredicateSchema(),
+			"file_contents_predicate": newPredicateSchema(false),
 		}),
 	}
 }

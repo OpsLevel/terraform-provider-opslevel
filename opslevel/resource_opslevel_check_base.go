@@ -109,13 +109,12 @@ func (s PredicateModel) ToUpdateInput() *opslevel.PredicateUpdateInput {
 	}
 }
 
-func PredicateSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
+func newPredicateSchema(required bool) schema.Attribute {
+	attr := schema.SingleNestedAttribute{
 		Description: fmt.Sprintf(
 			"A condition that should be satisfied. One of `%s`",
 			strings.Join(opslevel.AllPredicateTypeEnum, "`, `"),
 		),
-		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				Description: "A condition that should be satisfied.",
@@ -128,4 +127,10 @@ func PredicateSchema() schema.Attribute {
 			},
 		},
 	}
+	if required {
+		attr.Required = true
+	} else {
+		attr.Optional = true
+	}
+	return attr
 }
