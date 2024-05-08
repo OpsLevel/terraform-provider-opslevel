@@ -215,7 +215,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		Language:       planModel.Language.ValueStringPointer(),
 		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
 		Name:           planModel.Name.ValueString(),
-		OwnerInput:     opslevel.NullIdentifier(),
+		OwnerInput:     opslevel.NewIdentifier(),
 		Product:        planModel.Product.ValueStringPointer(),
 		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
@@ -329,7 +329,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Language:       NullableStringConfigValue(planModel.Language),
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
 		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
-		OwnerInput:     opslevel.NullIdentifier(),
+		OwnerInput:     opslevel.NewIdentifier(),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
