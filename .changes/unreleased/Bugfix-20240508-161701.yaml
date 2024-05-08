@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug on resource `opslevel_check_repository_grep` where `file_contents_predicate`
+  was not required causing API errors
+time: 2024-05-08T16:17:01.096324-04:00

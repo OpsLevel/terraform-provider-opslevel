@@ -109,7 +109,7 @@ func (s PredicateModel) ToUpdateInput() *opslevel.PredicateUpdateInput {
 	}
 }
 
-func PredicateSchema() schema.Attribute {
+func PredicateSchema() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		Description: fmt.Sprintf(
 			"A condition that should be satisfied. One of `%s`",

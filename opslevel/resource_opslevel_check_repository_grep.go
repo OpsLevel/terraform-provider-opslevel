@@ -84,6 +84,10 @@ func (r *CheckRepositoryGrepResource) Metadata(ctx context.Context, req resource
 }
 
 func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	predicateSchema := PredicateSchema()
+	predicateSchema.Optional = false
+	predicateSchema.Required = true
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository Grep Resource",
@@ -98,7 +102,7 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 				Required:    true,
 				ElementType: types.StringType,
 			},
-			"file_contents_predicate": PredicateSchema(),
+			"file_contents_predicate": predicateSchema,
 		}),
 	}
 }
