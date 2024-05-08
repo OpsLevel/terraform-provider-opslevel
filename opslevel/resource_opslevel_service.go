@@ -53,7 +53,7 @@ type ServiceResourceModel struct {
 }
 
 // NewServiceResourceModel uses the cachedModel to ensure that fields are consistent between the terraform plan and state
-func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cachedModel ServiceResourceModel, setLastUpdated bool) (ServiceResourceModel, diag.Diagnostics) {
+func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cachedModel ServiceResourceModel, setLastUpdated bool, client *opslevel.Client) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -90,7 +90,7 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		serviceResourceModel.PreferredApiDocumentSource = types.StringValue(string(*apiDocSource))
 	}
 
-	// after creating resource model, differentiate between a basic field being unset (null) vs empty string ("")
+	// differentiate between a basic field being unset (null) vs empty string ("")
 	if serviceResourceModel.Description.IsNull() && !cachedModel.Description.IsNull() && cachedModel.Description.ValueString() == "" {
 		serviceResourceModel.Description = types.StringValue("")
 	}
@@ -104,23 +104,15 @@ func NewServiceResourceModel(ctx context.Context, service opslevel.Service, cach
 		serviceResourceModel.Product = types.StringValue("")
 	}
 
-	// after creating resource model, set the owner to alias/ID or to null
-	switch cachedModel.Owner.ValueString() {
-	case string(service.Owner.Id), service.Owner.Alias:
-		serviceResourceModel.Owner = cachedModel.Owner
-	case "":
-		serviceResourceModel.Owner = types.StringNull()
-	default:
-		diags.AddError(
-			"opslevel client error",
-			fmt.Sprintf("service owner found '%s' did not match given owner '%s'",
-				serviceResourceModel.Owner.ValueString(),
-				cachedModel.Owner.ValueString(),
-			),
-		)
+	// set the owner as an alias/ID or null
+	owner, err := ensureValidOwner(client, &service, cachedModel.Owner.ValueString())
+	if err != nil {
+		diags.AddError("opslevel client error", fmt.Sprintf("%s", err))
 		return serviceResourceModel, diags
 	}
+	serviceResourceModel.Owner = owner
 
+	// set last updated timestamp
 	if setLastUpdated {
 		serviceResourceModel.LastUpdated = timeLastUpdated()
 	}
