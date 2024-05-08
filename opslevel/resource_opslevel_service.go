@@ -216,10 +216,10 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	serviceCreateInput := opslevel.ServiceCreateInput{
 		Description:    planModel.Description.ValueStringPointer(),
 		Framework:      planModel.Framework.ValueStringPointer(),
@@ -334,10 +334,10 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	serviceUpdateInput := opslevel.ServiceUpdateInputV2{
 		Description:    NullableStringConfigValue(planModel.Description),
 		Framework:      NullableStringConfigValue(planModel.Framework),
