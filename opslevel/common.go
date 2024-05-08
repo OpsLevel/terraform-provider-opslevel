@@ -106,7 +106,7 @@ func timeLastUpdated() basetypes.StringValue {
 }
 
 // ensureValidOwner will compare the expected owner from the terraform plan OR state versus what is found in OpsLevel
-// TODO: write test cases
+// if the owner is not as expected it will return an error
 func ensureValidOwner(client *opslevel.Client, resource opslevel.HasTeam, expectedOwner string) (types.String, error) {
 	// validate that the resource does not have an owner set
 	if expectedOwner == "" {
