@@ -1,12 +1,4 @@
-data "opslevel_teams" "all" {
-}
-
-data "opslevel_teams" "leet" {
-  filter {
-    field = "manager-email"
-    value = "0p5l3v3l@example.com"
-  }
-}
+data "opslevel_teams" "all" {}
 
 output "found" {
   value = data.opslevel_teams.all.ids[3]

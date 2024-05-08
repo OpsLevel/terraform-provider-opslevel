@@ -31,8 +31,9 @@ data "opslevel_integration" "kubernetes" {
 }
 
 resource "opslevel_check_custom_event" "example" {
-  name    = "foo"
-  enabled = true
+  name         = "foo"
+  pass_pending = true
+  enabled      = true
   # To set a future enable date remove field 'enabled' and use 'enable_on'
   # enable_on = "2022-05-23T14:14:18.782000Z"
   category          = data.opslevel_rubric_category.security.id
@@ -53,3 +54,4 @@ resource "opslevel_check_custom_event" "example" {
   EOT
   notes             = "Optional additional info on why this check is run or how to fix it"
 }
+

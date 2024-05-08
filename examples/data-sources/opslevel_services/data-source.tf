@@ -5,18 +5,17 @@ data "opslevel_tier" "tier1" {
   }
 }
 
-data "opslevel_services" "all" {
-}
+data "opslevel_services" "all" {}
 
 data "opslevel_services" "tier1" {
-  filter {
+  filter = {
     field = "tier"
     value = data.opslevel_tier.tier1.alias
   }
 }
 
 data "opslevel_services" "frontend" {
-  filter {
+  filter = {
     field = "owner"
     value = "frontend"
   }

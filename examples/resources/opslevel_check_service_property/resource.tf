@@ -33,7 +33,7 @@ resource "opslevel_check_service_property" "example" {
   owner    = data.opslevel_team.devs.id
   filter   = data.opslevel_filter.tier1.id
   property = "language"
-  predicate {
+  predicate = {
     type  = "equals"
     value = "python"
   }

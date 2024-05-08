@@ -5,11 +5,10 @@ data "opslevel_tier" "tier2" {
   }
 }
 
-data "opslevel_repositories" "all" {
-}
+data "opslevel_repositories" "all" {}
 
 data "opslevel_repositories" "tier2" {
-  filter {
+  filter = {
     field = "tier"
     value = data.opslevel_tier.tier2.alias
   }
@@ -22,3 +21,4 @@ output "all" {
 output "tier2" {
   value = data.opslevel_repositories.tier2.names
 }
+
