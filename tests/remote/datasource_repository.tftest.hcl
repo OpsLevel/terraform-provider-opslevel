@@ -1,33 +1,46 @@
 run "datasource_repositories_all" {
 
-  assert {
-    condition     = length(data.opslevel_repositories.all.repositories) > 0
-    error_message = "zero Repositories found in data.opslevel_repositories"
+  variables {
+    datasource_type = "opslevel_repositories"
   }
 
   assert {
-    condition = alltrue([
-      can(data.opslevel_repositories.all.repositories[0].alias),
-      can(data.opslevel_repositories.all.repositories[0].id),
-      can(data.opslevel_repositories.all.repositories[0].languages),
-      can(data.opslevel_repositories.all.repositories[0].name),
-      can(data.opslevel_repositories.all.repositories[0].url),
-    ])
-    error_message = "cannot set all expected Repository datasource fields"
+    condition     = can(data.opslevel_repositories.all.repositories)
+    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+  }
+
+  assert {
+    condition     = length(data.opslevel_repositories.all.repositories) > 0
+    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
   }
 
 }
 
 run "datasource_repository_first" {
 
+  variables {
+    datasource_type = "opslevel_repository"
+  }
+
+  assert {
+    condition = alltrue([
+      can(data.opslevel_repository.first_repo_by_id.alias),
+      can(data.opslevel_repository.first_repo_by_id.id),
+      can(data.opslevel_repository.first_repo_by_id.languages),
+      can(data.opslevel_repository.first_repo_by_id.name),
+      can(data.opslevel_repository.first_repo_by_id.url),
+    ])
+    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+  }
+
   assert {
     condition     = data.opslevel_repository.first_repo_by_alias.alias == data.opslevel_repositories.all.repositories[0].alias
-    error_message = "wrong alias on first opslevel_repository"
+    error_message = replace(var.wrong_alias_error, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_repository.first_repo_by_id.id == data.opslevel_repositories.all.repositories[0].id
-    error_message = "wrong ID on first opslevel_repository"
+    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
   }
 
 }

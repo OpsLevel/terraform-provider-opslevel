@@ -1,42 +1,55 @@
 run "datasource_lifecycles_all" {
 
-  assert {
-    condition     = length(data.opslevel_lifecycles.all.lifecycles) > 0
-    error_message = "zero lifecycles found in data.opslevel_lifecycles"
+  variables {
+    datasource_type = "opslevel_lifecycles"
   }
 
   assert {
-    condition = alltrue([
-      can(data.opslevel_lifecycles.all.lifecycles[0].alias),
-      can(data.opslevel_lifecycles.all.lifecycles[0].id),
-      can(data.opslevel_lifecycles.all.lifecycles[0].index),
-      can(data.opslevel_lifecycles.all.lifecycles[0].name),
-    ])
-    error_message = "cannot set all expected lifecycle datasource fields"
+    condition     = can(data.opslevel_lifecycles.all.lifecycles)
+    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+  }
+
+  assert {
+    condition     = length(data.opslevel_lifecycles.all.lifecycles) > 0
+    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
   }
 
 }
 
 run "datasource_lifecycle_first" {
 
+  variables {
+    datasource_type = "opslevel_lifecycle"
+  }
+
+  assert {
+    condition = alltrue([
+      can(data.opslevel_lifecycle.first_lifecycle_by_id.alias),
+      can(data.opslevel_lifecycle.first_lifecycle_by_id.id),
+      can(data.opslevel_lifecycle.first_lifecycle_by_id.index),
+      can(data.opslevel_lifecycle.first_lifecycle_by_id.name),
+    ])
+    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+  }
+
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.alias == data.opslevel_lifecycles.all.lifecycles[0].alias
-    error_message = "wrong alias on opslevel_lifecycle"
+    error_message = replace(var.wrong_alias_error, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.id == data.opslevel_lifecycles.all.lifecycles[0].id
-    error_message = "wrong ID on opslevel_lifecycle"
+    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.index == data.opslevel_lifecycles.all.lifecycles[0].index
-    error_message = "wrong index on opslevel_lifecycle"
+    error_message = replace(var.wrong_index_error, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_name.name == data.opslevel_lifecycles.all.lifecycles[0].name
-    error_message = "wrong name on opslevel_lifecycle"
+    error_message = replace(var.wrong_name_error, "TYPE", var.datasource_type)
   }
 
 }
