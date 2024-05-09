@@ -34,7 +34,7 @@ run "resource_team_big" {
   }
 
   assert {
-    condition     = opslevel_team.big.member[0].email == "alice@opslevel.com" && opslevel_team.big.member[0].role == "manager" && opslevel_team.big.member[1].email == "bob@opslevel.com" && opslevel_team.big.member[1].role == "contributor"
+    condition     = opslevel_team.big.member == toset([{ email : "alice@opslevel.com", role : "manager" }, { email : "bob@opslevel.com", role : "contributor" }])
     error_message = "wrong members in opslevel_team.big"
   }
 }
@@ -70,7 +70,7 @@ run "resource_team_small" {
   }
 
   assert {
-    condition     = length(opslevel_team.small.member) == 0
+    condition     = opslevel_team.small.member == null
     error_message = "wrong members in opslevel_team.small"
   }
 }

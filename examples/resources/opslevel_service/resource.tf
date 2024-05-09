@@ -17,10 +17,10 @@ resource "opslevel_team" "foo" {
   responsibilities = "Responsible for foo frontend and backend"
   aliases          = ["bar", "baz"]
 
-  member {
+  member = [{
     email = "john.doe@example.com"
     role  = "manager"
-  }
+  }]
 }
 
 resource "opslevel_service" "foo" {

@@ -23,14 +23,14 @@ resource "opslevel_team" "example" {
   aliases          = ["bar", "baz"]
   parent           = data.opslevel_team.parent.id
 
-  member {
+  member = [{
     email = "john.doe@example.com"
     role  = "manager"
-  }
-  member {
+  },
+  {
     email = "jane.doe@example.com"
     role  = "contributor"
-  }
+  }]
 }
 
 output "team" {

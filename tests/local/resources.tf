@@ -259,15 +259,14 @@ resource "opslevel_team" "big" {
   parent           = "small_team"
   responsibilities = "This is a big team"
 
-  member {
+  member = [{
     email = "alice@opslevel.com"
     role  = "manager"
-  }
-
-  member {
-    email = "bob@opslevel.com"
-    role  = "contributor"
-  }
+    },
+    {
+      email = "bob@opslevel.com"
+      role  = "contributor"
+  }]
 }
 
 resource "opslevel_team" "small" {

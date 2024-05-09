@@ -35,14 +35,14 @@ resource "opslevel_team" "foo" {
   name = "foo"
   responsibilities = "Responsible for foo frontend and backend"
 
-  member {
+  member = [{
     email = "foo@example.com"
     role = "manager"
-  }
-  member {
+  },
+  {
     email = "bar@example.com"
     role = "contributor"
-  }
+  }]
 }
 
 resource "opslevel_service" "foo-frontend" {
