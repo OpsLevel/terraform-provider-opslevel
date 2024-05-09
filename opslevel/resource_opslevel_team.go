@@ -28,41 +28,29 @@ func NewTeamResource() resource.Resource {
 	return &TeamResource{}
 }
 
-// TeamResourceModel describes the Team managed resource.
-type TeamResourceModel struct {
-	Aliases          types.List   `tfsdk:"aliases"`
-	Id               types.String `tfsdk:"id"`
-	LastUpdated      types.String `tfsdk:"last_updated"`
-	Member           []TeamMember `tfsdk:"member"`
-	Name             types.String `tfsdk:"name"`
-	Parent           types.String `tfsdk:"parent"`
-	Responsibilities types.String `tfsdk:"responsibilities"`
+// teamResourceModel describes the Team managed resource.
+type teamResourceModel struct {
+	Aliases          types.List        `tfsdk:"aliases"`
+	Id               types.String      `tfsdk:"id"`
+	LastUpdated      types.String      `tfsdk:"last_updated"`
+	Member           []teamMemberModel `tfsdk:"member"`
+	Name             types.String      `tfsdk:"name"`
+	Parent           types.String      `tfsdk:"parent"`
+	Responsibilities types.String      `tfsdk:"responsibilities"`
 }
 
-type TeamMember struct {
-	Email types.String `tfsdk:"email"`
-	Role  types.String `tfsdk:"role"`
-}
-
-func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
-	return TeamMember{
-		Email: RequiredStringValue(teamMember.User.Email),
-		Role:  RequiredStringValue(teamMember.Role),
-	}
-}
-
-func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentifier string) (TeamResourceModel, diag.Diagnostics) {
+func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentifier string) (teamResourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
 	if diags != nil && diags.HasError() {
-		return TeamResourceModel{}, diags
+		return teamResourceModel{}, diags
 	}
-	teamMembers := make([]TeamMember, 0)
+	teamMembers := make([]teamMemberModel, 0)
 	if team.Memberships != nil {
 		for _, mem := range team.Memberships.Nodes {
-			teamMembers = append(teamMembers, convertTeamMember(mem))
+			teamMembers = append(teamMembers, newTeamMemberModel(mem))
 		}
 	}
-	teamResourceModel := TeamResourceModel{
+	model := teamResourceModel{
 		Aliases:          aliases,
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
@@ -71,7 +59,20 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 
-	return teamResourceModel, diags
+	return model, diags
+}
+
+// removeNonTerraformManagedMembers mutates the input model to exclude team members not managed by terraform
+func removeNonTerraformManagedMembers(ctx context.Context, model *teamResourceModel, cachedModel teamResourceModel) {
+	tfManagedMembers := make([]teamMemberModel, 0)
+	for _, memberModel := range model.Member {
+		if slices.Contains(cachedModel.Member, memberModel) {
+			tfManagedMembers = append(tfManagedMembers, memberModel)
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("not a terraform managed team member: '%s'", memberModel.Email.ValueString()))
+		}
+	}
+	model.Member = tfManagedMembers
 }
 
 func (teamResource *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -129,7 +130,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 }
 
 func (teamResource *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel TeamResourceModel
+	var planModel teamResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -164,19 +165,20 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	createdTeamResourceModel, diags := newTeamResourceModel(ctx, *team, planModel.Parent.ValueString())
+	newStateModel, diags := newTeamResourceModel(ctx, *team, planModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	removeNonTerraformManagedMembers(ctx, &newStateModel, planModel)
+	newStateModel.LastUpdated = timeLastUpdated()
 
-	createdTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel TeamResourceModel
+	var stateModel teamResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -193,17 +195,18 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	readTeamResourceModel, diags := newTeamResourceModel(ctx, *team, stateModel.Parent.ValueString())
+	newStateModel, diags := newTeamResourceModel(ctx, *team, stateModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	removeNonTerraformManagedMembers(ctx, &newStateModel, stateModel)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (teamResource *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel TeamResourceModel
+	var planModel teamResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -239,19 +242,20 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	updatedTeamResourceModel, diags := newTeamResourceModel(ctx, *updatedTeam, planModel.Parent.ValueString())
+	newStateModel, diags := newTeamResourceModel(ctx, *updatedTeam, planModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	removeNonTerraformManagedMembers(ctx, &newStateModel, planModel)
+	newStateModel.LastUpdated = timeLastUpdated()
 
-	updatedTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
 func (teamResource *TeamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data TeamResourceModel
+	var data teamResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -269,7 +273,7 @@ func (teamResource *TeamResource) ImportState(ctx context.Context, req resource.
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error) {
+func getMembers(members []teamMemberModel) ([]opslevel.TeamMembershipUserInput, error) {
 	memberInputs := make([]opslevel.TeamMembershipUserInput, len(members))
 	for i, mem := range members {
 		memberInputs[i] = opslevel.TeamMembershipUserInput{
@@ -283,7 +287,7 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 	return nil, nil
 }
 
-func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data TeamResourceModel) error {
+func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data teamResourceModel) error {
 	// get list of expected aliases from terraform
 	tmp := data.Aliases.Elements()
 	expectedAliases := make([]string, len(tmp))
