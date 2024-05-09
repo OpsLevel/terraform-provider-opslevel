@@ -151,12 +151,11 @@ data "opslevel_repository" "first_repo_by_id" {
 
 # Scorecard data sources
 
-# TODO: Scorecard tests works on orange. Need to add to PAT acct.
-# data "opslevel_scorecards" "all" {}
+data "opslevel_scorecards" "all" {}
 
-# data "opslevel_scorecard" "first_scorecard_by_id" {
-#   identifier = data.opslevel_scorecards.all.scorecards[0].id
-# }
+data "opslevel_scorecard" "first_scorecard_by_id" {
+  identifier = data.opslevel_scorecards.all.scorecards[0].id
+}
 
 # Service data sources
 
@@ -194,12 +193,12 @@ data "opslevel_team" "first_team_by_id" {
 
 data "opslevel_tiers" "all" {}
 
-data "opslevel_tier" "first_tier_by_alias" {
-  filter {
-    field = "alias"
-    value = data.opslevel_tiers.all.tiers[0].alias
-  }
-}
+# data "opslevel_tier" "first_tier_by_alias" {
+#   filter {
+#     field = "alias"
+#     value = data.opslevel_tiers.all.tiers[0].alias
+#   }
+# }
 
 data "opslevel_tier" "first_tier_by_id" {
   filter {
@@ -238,9 +237,9 @@ data "opslevel_user" "first_user_by_id" {
 
 data "opslevel_webhook_actions" "all" {}
 
-data "opslevel_webhook_action" "first_webhook_action_by_alias" {
-  identifier = data.opslevel_webhook_actions.all.webhook_actions[0].aliases[0]
-}
+# data "opslevel_webhook_action" "first_webhook_action_by_alias" {
+#   identifier = data.opslevel_webhook_actions.all.webhook_actions[0].aliases[0]
+# }
 
 data "opslevel_webhook_action" "first_webhook_action_by_id" {
   identifier = data.opslevel_webhook_actions.all.webhook_actions[0].id
