@@ -178,6 +178,18 @@ tasks:
         vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}" }
       # - task: run-acceptance-tests
 
+  test-acceptance:
+    desc: Run acceptance tests
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
+    cmds:
+      - task: setup-terraform-from
+        vars: { SETUP_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
+      - task: terraform-command
+        vars: { TF_COMMAND: 'test -var="api_token=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
+
   run-acceptance-tests:
     internal: true
     env:
