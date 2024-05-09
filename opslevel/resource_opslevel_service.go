@@ -62,9 +62,17 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, owne
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
-		Owner:           OptionalStringValue(ownerIdentifier),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
+	}
+	// set owner team
+	if service.Owner.Id == "" {
+		serviceResourceModel.Owner = types.StringNull()
+	} else if opslevel.IsID(ownerIdentifier) {
+		serviceResourceModel.Owner = types.StringValue(string(service.Owner.Id))
+	} else {
+		// can use non-default aliases
+		serviceResourceModel.Owner = types.StringValue(ownerIdentifier)
 	}
 
 	if len(service.ManagedAliases) == 0 {
