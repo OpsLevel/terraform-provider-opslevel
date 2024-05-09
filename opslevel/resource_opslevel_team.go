@@ -119,7 +119,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 							Required:    true,
 						},
 						"role": schema.StringAttribute{
-							Description: "The role of the team member.",
+							Description: "The role of the team member. Options: `contributor` or `manager`",
 							Required:    true,
 						},
 					},
