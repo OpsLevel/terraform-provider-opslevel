@@ -1,0 +1,4 @@
+kind: Feature
+body: Resource `opslevel_team` will now ignore team members that are not defined in
+  Terraform, allowing separation between TF and non-TF managed users
+time: 2024-05-09T14:43:07.014431-04:00

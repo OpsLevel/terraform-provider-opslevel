@@ -1,0 +1,4 @@
+kind: Removed
+body: BREAKING CHANGE - on resource `opslevel_team` the `member` block has been removed
+  and replaced with an unordered list containing members
+time: 2024-05-09T14:40:20.336892-04:00

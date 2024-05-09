@@ -1,0 +1,4 @@
+kind: Bugfix
+body: List of team members in resource `opslevel_team` is no longer sensitive, does
+  not cause infinite loop of unnecessary updates
+time: 2024-05-09T14:42:29.055589-04:00
