@@ -1,6 +1,10 @@
-data "opslevel_filters" "all" {
+data "opslevel_filters" "all" {}
+
+output "all" {
+  value = data.opslevel_filters.all.filters
 }
 
-output "found" {
-  value = data.opslevel_filters.all.id[0]
+output "filter_names" {
+  value = sort(data.opslevel_filters.all.filters[*].name)
 }
+

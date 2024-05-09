@@ -1,6 +1,9 @@
-data "opslevel_rubric_levels" "all" {
+data "opslevel_rubric_levels" "all" {}
+
+output "all" {
+  value = data.opslevel_rubric_levels.all.rubric_levels
 }
 
-output "found" {
-  value = data.opslevel_rubric_levels.all.ids[0]
+output "level_names" {
+  value = sort(data.opslevel_rubric_levels.all.rubric_levels[*].name)
 }

@@ -1,6 +1,13 @@
-data "opslevel_users" "all" {
+data "opslevel_users" "all" {}
+
+output "all" {
+  value = data.opslevel_users.all.users
 }
 
-output "found" {
-  value = data.opslevel_users.all.emails[0]
+output "user_emails" {
+  value = sort(data.opslevel_users.all.users[*].email)
+}
+
+output "user_names" {
+  value = sort(data.opslevel_users.all.users[*].name)
 }
