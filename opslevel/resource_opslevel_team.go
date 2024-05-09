@@ -55,8 +55,16 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
 		Name:             RequiredStringValue(team.Name),
-		Parent:           OptionalStringValue(parentIdentifier),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
+	}
+	// set parent team
+	if team.ParentTeam.Id == "" {
+		model.Parent = types.StringNull()
+	} else if opslevel.IsID(parentIdentifier) {
+		model.Parent = types.StringValue(string(team.ParentTeam.Id))
+	} else {
+		// can use non-default aliases
+		model.Parent = types.StringValue(parentIdentifier)
 	}
 
 	return model, diags
@@ -112,7 +120,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 			},
 			"member": schema.SetNestedAttribute{
 				Description: "Unordered list of members. Only manages team members that were defined in terraform.",
-				Optional:    true,
+				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
@@ -137,11 +145,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	members, err := getMembers(planModel.Member)
-	if err != nil {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
-		return
-	}
+	members := getMembers(planModel.Member)
 	teamCreateInput := opslevel.TeamCreateInput{
 		Members:          &members,
 		Name:             planModel.Name.ValueString(),
@@ -213,14 +217,14 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	members, err := getMembers(planModel.Member)
+	members := getMembers(planModel.Member)
+	_, err := teamResource.client.AddMemberships(&opslevel.TeamId{Id: opslevel.ID(planModel.Id.ValueString())}, members...)
 	if err != nil {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to add members, got error: %s", err))
 		return
 	}
 	teamUpdateInput := opslevel.TeamUpdateInput{
 		Id:               opslevel.NewID(planModel.Id.ValueString()),
-		Members:          &members,
 		Name:             planModel.Name.ValueStringPointer(),
 		ParentTeam:       opslevel.NewIdentifier(),
 		Responsibilities: planModel.Responsibilities.ValueStringPointer(),
@@ -274,18 +278,17 @@ func (teamResource *TeamResource) ImportState(ctx context.Context, req resource.
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func getMembers(members []teamMemberModel) ([]opslevel.TeamMembershipUserInput, error) {
-	memberInputs := make([]opslevel.TeamMembershipUserInput, len(members))
-	for i, mem := range members {
+// TODO: works fine for when we need to change a member from a contributor to manager and vv but does not work for when we need to unset members
+// TODO: can go 2 ways - use remove memberships call or GET team first, put everything in here, remove the member(s) removed from teh plan.
+func getMembers(tfManagedMembers []teamMemberModel) []opslevel.TeamMembershipUserInput {
+	memberInputs := make([]opslevel.TeamMembershipUserInput, len(tfManagedMembers))
+	for i, mem := range tfManagedMembers {
 		memberInputs[i] = opslevel.TeamMembershipUserInput{
 			User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
 			Role: mem.Role.ValueStringPointer(),
 		}
 	}
-	if len(memberInputs) > 0 {
-		return memberInputs, nil
-	}
-	return nil, nil
+	return memberInputs
 }
 
 func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data teamResourceModel) error {
