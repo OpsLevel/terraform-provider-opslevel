@@ -111,7 +111,8 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				Optional:    true,
 			},
 			"member": schema.SetNestedAttribute{
-				Optional: true,
+				Description: "Unordered list of members. Only manages team members that were defined in terraform.",
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
