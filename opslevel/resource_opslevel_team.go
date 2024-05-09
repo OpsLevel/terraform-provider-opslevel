@@ -51,7 +51,7 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 	}
 }
 
-func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResourceModel, diag.Diagnostics) {
+func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentifier string) (TeamResourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
 	if diags != nil && diags.HasError() {
 		return TeamResourceModel{}, diags
@@ -67,6 +67,7 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team) (TeamResource
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
 		Name:             RequiredStringValue(team.Name),
+		Parent:           OptionalStringValue(parentIdentifier),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 
@@ -108,10 +109,9 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				Description: "A description of what the team is responsible for.",
 				Optional:    true,
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"member": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
+			"member": schema.SetNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
 							Description: "The email address of the team member. Must be sorted by email address.",
@@ -129,24 +129,25 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 }
 
 func (teamResource *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data TeamResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var planModel TeamResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	members, err := getMembers(data.Member)
+	members, err := getMembers(planModel.Member)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
 		return
 	}
 	teamCreateInput := opslevel.TeamCreateInput{
 		Members:          &members,
-		Name:             data.Name.ValueString(),
-		Responsibilities: data.Responsibilities.ValueStringPointer(),
+		Name:             planModel.Name.ValueString(),
+		ParentTeam:       opslevel.NewIdentifier(),
+		Responsibilities: planModel.Responsibilities.ValueStringPointer(),
 	}
-	if data.Parent.ValueString() != "" {
-		teamCreateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())
+	if planModel.Parent.ValueString() != "" {
+		teamCreateInput.ParentTeam = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 	team, err := teamResource.client.CreateTeam(teamCreateInput)
 	if err != nil || team == nil {
@@ -158,33 +159,30 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(team, data); err != nil {
+	if err = teamResource.reconcileTeamAliases(team, planModel); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
 
-	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team)
+	createdTeamResourceModel, diags := newTeamResourceModel(ctx, *team, planModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
-	// if parent is set, use an ID or alias for this field based on what is currently in the state
-	if opslevel.IsID(data.Parent.ValueString()) {
-		createdTeamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
-	} else {
-		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		createdTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
 	createdTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamResourceModel)...)
 }
 
 func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data TeamResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	var stateModel TeamResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	team, err := teamResource.client.GetTeam(opslevel.ID(data.Id.ValueString()))
+	team, err := teamResource.client.GetTeam(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team, got error: %s", err))
 		return
@@ -195,40 +193,36 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team)
+	readTeamResourceModel, diags := newTeamResourceModel(ctx, *team, stateModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
-	// if parent is set, use an ID or alias for this field based on what is currently in the state
-	if opslevel.IsID(data.Parent.ValueString()) {
-		readTeamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
-	} else {
-		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		readTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
-}
-
-func (teamResource *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data TeamResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	members, err := getMembers(data.Member)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
+}
+
+func (teamResource *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var planModel TeamResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	members, err := getMembers(planModel.Member)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("unable to read members, got error: %s", err))
 		return
 	}
 	teamUpdateInput := opslevel.TeamUpdateInput{
-		Id:               opslevel.NewID(data.Id.ValueString()),
+		Id:               opslevel.NewID(planModel.Id.ValueString()),
 		Members:          &members,
-		Name:             data.Name.ValueStringPointer(),
-		Responsibilities: data.Responsibilities.ValueStringPointer(),
+		Name:             planModel.Name.ValueStringPointer(),
+		ParentTeam:       opslevel.NewIdentifier(),
+		Responsibilities: planModel.Responsibilities.ValueStringPointer(),
 	}
-	if data.Parent.ValueString() != "" {
-		teamUpdateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())
-	} else {
-		teamUpdateInput.ParentTeam = opslevel.NewIdentifier()
+	if planModel.Parent.ValueString() != "" {
+		teamUpdateInput.ParentTeam = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 	updatedTeam, err := teamResource.client.UpdateTeam(teamUpdateInput)
 	if err != nil || updatedTeam == nil {
@@ -240,20 +234,17 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(updatedTeam, data); err != nil {
+	if err = teamResource.reconcileTeamAliases(updatedTeam, planModel); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
 
-	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam)
+	updatedTeamResourceModel, diags := newTeamResourceModel(ctx, *updatedTeam, planModel.Parent.ValueString())
 	resp.Diagnostics.Append(diags...)
-	// if parent is set, use an ID or alias for this field based on what is currently in the state
-	if opslevel.IsID(data.Parent.ValueString()) {
-		updatedTeamResourceModel.Parent = types.StringValue(string(updatedTeam.ParentTeam.Id))
-	} else {
-		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		updatedTeamResourceModel.Parent = OptionalStringValue(updatedTeam.ParentTeam.Alias)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
 	updatedTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamResourceModel)...)

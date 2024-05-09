@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix bug where `parent` on resource `opslevel_team` had to be the default alias
+  of a team - any valid alias can now be used
+time: 2024-05-09T14:00:13.442193-04:00
