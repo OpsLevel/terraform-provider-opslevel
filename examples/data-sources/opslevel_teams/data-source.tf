@@ -1,5 +1,9 @@
 data "opslevel_teams" "all" {}
 
-output "found" {
-  value = data.opslevel_teams.all.ids[3]
+output "all" {
+  value = data.opslevel_teams.all.teams
+}
+
+output "team_names" {
+  value = sort(data.opslevel_teams.all.teams[*].name)
 }

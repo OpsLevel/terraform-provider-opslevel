@@ -1,5 +1,9 @@
 data "opslevel_lifecycles" "all" {}
 
-output "found" {
-  value = data.opslevel_lifecycles.all.aliases[0]
+output "all" {
+  value = data.opslevel_lifecycles.all.lifecycles
+}
+
+output "lifecycle_names" {
+  value = sort(data.opslevel_lifecycles.all.lifecycles[*].name)
 }

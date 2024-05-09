@@ -1,5 +1,13 @@
 data "opslevel_tiers" "all" {}
 
-output "found" {
-  value = data.opslevel_tiers.all.aliases[0]
+output "all" {
+  value = data.opslevel_tiers.all.tiers
+}
+
+output "tier_aliases" {
+  value = sort(data.opslevel_tiers.all.tiers[*].alias)
+}
+
+output "tier_names" {
+  value = sort(data.opslevel_tiers.all.tiers[*].name)
 }
