@@ -78,14 +78,13 @@ data "opslevel_lifecycle" "first_lifecycle_by_name" {
   }
 }
 
-# TODO: PropertyDefinition tests works on orange. Need to add to PAT acct.
 # PropertyDefinition data sources
 
-# data "opslevel_property_definitions" "all" {}
+data "opslevel_property_definitions" "all" {}
 
-# data "opslevel_property_definition" "first_property_definition_by_id" {
-#   identifier = data.opslevel_property_definitions.all.property_definitions[0].id
-# }
+data "opslevel_property_definition" "first_property_definition_by_id" {
+  identifier = data.opslevel_property_definitions.all.property_definitions[0].id
+}
 
 # Rubric Category data sources
 
@@ -236,10 +235,6 @@ data "opslevel_user" "first_user_by_id" {
 # Webhook Action data sources
 
 data "opslevel_webhook_actions" "all" {}
-
-# data "opslevel_webhook_action" "first_webhook_action_by_alias" {
-#   identifier = data.opslevel_webhook_actions.all.webhook_actions[0].aliases[0]
-# }
 
 data "opslevel_webhook_action" "first_webhook_action_by_id" {
   identifier = data.opslevel_webhook_actions.all.webhook_actions[0].id
