@@ -43,7 +43,7 @@ website/vendor
 examples/.terraform.lock.hcl
 .terraform.lock.hcl
 main.tf
-tests/backend.tf
+tests/**/backend.tf
 workspace/*.tf*
 workspace/.terraform.d/
 workspace/tophatting.md

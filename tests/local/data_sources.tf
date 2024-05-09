@@ -29,6 +29,8 @@ data "opslevel_filter" "mock_filter" {
   }
 }
 
+# Integration data sources
+
 data "opslevel_integration" "name_filter" {
   filter {
     field = "name"
