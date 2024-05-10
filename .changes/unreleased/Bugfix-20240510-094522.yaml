@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix listing services, show empty list when no services exist
+time: 2024-05-10T09:45:22.019688-05:00
