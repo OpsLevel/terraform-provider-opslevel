@@ -4,14 +4,18 @@ run "datasource_users_all" {
     datasource_type = "opslevel_users"
   }
 
+  module {
+    source = "./user"
+  }
+
   assert {
     condition     = can(data.opslevel_users.all.users)
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = length(data.opslevel_users.all.users) > 0
-    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
   }
 
 }
@@ -20,6 +24,10 @@ run "datasource_user_first" {
 
   variables {
     datasource_type = "opslevel_user"
+  }
+
+  module {
+    source = "./user"
   }
 
   assert {
@@ -40,7 +48,7 @@ run "datasource_user_first" {
 
   assert {
     condition     = data.opslevel_user.first_user_by_id.id == data.opslevel_users.all.users[0].id
-    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
   }
 
 }

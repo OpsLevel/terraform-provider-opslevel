@@ -4,14 +4,18 @@ run "datasource_lifecycles_all" {
     datasource_type = "opslevel_lifecycles"
   }
 
+  module {
+    source = "./lifecycle"
+  }
+
   assert {
     condition     = can(data.opslevel_lifecycles.all.lifecycles)
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = length(data.opslevel_lifecycles.all.lifecycles) > 0
-    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
   }
 
 }
@@ -22,6 +26,10 @@ run "datasource_lifecycle_first" {
     datasource_type = "opslevel_lifecycle"
   }
 
+  module {
+    source = "./lifecycle"
+  }
+
   assert {
     condition = alltrue([
       can(data.opslevel_lifecycle.first_lifecycle_by_id.alias),
@@ -29,27 +37,27 @@ run "datasource_lifecycle_first" {
       can(data.opslevel_lifecycle.first_lifecycle_by_id.index),
       can(data.opslevel_lifecycle.first_lifecycle_by_id.name),
     ])
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.alias == data.opslevel_lifecycles.all.lifecycles[0].alias
-    error_message = replace(var.wrong_alias_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_alias, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.id == data.opslevel_lifecycles.all.lifecycles[0].id
-    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_id.index == data.opslevel_lifecycles.all.lifecycles[0].index
-    error_message = replace(var.wrong_index_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_index, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_lifecycle.first_lifecycle_by_name.name == data.opslevel_lifecycles.all.lifecycles[0].name
-    error_message = replace(var.wrong_name_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_name, "TYPE", var.datasource_type)
   }
 
 }

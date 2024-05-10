@@ -4,14 +4,18 @@ run "datasource_scorecards_all" {
     datasource_type = "opslevel_scorecards"
   }
 
+  module {
+    source = "./scorecard"
+  }
+
   assert {
     condition     = can(data.opslevel_scorecards.all.scorecards)
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = length(data.opslevel_scorecards.all.scorecards) > 0
-    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
   }
 
 }
@@ -20,6 +24,10 @@ run "datasource_scorecard_first" {
 
   variables {
     datasource_type = "opslevel_scorecard"
+  }
+
+  module {
+    source = "./scorecard"
   }
 
   assert {
@@ -36,12 +44,12 @@ run "datasource_scorecard_first" {
       can(data.opslevel_scorecard.first_scorecard_by_id.service_count),
       can(data.opslevel_scorecard.first_scorecard_by_id.total_checks),
     ])
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_scorecard.first_scorecard_by_id.id == data.opslevel_scorecards.all.scorecards[0].id
-    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
   }
 
 }

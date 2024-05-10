@@ -194,7 +194,7 @@ tasks:
       - task: setup-terraform-from
         vars: { SETUP_DIR: "{{.TEST_DIR}}/remote" }
       - task: terraform-command
-        vars: { TF_COMMAND: 'test -var="api_token=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
+        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
 
   run-acceptance-tests:
     internal: true

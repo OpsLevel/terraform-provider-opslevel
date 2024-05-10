@@ -3,7 +3,7 @@
 resource "opslevel_domain" "fancy" {
   name        = "Example"
   description = "The whole app in one monolith"
-  owner       = "Developers"
+  owner       = var.test_id
   note        = "This is an example"
 }
 
