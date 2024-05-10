@@ -24,7 +24,7 @@ run "resource_domain" {
   }
 
   assert {
-    condition     = opslevel_domain.fancy.owner == "Developers"
+    condition     = opslevel_domain.fancy.owner == var.test_id
     error_message = "wrong owner of opslevel_domain resource"
   }
 }
