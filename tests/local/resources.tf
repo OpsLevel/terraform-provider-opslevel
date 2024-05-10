@@ -271,6 +271,8 @@ resource "opslevel_team" "big" {
 
 resource "opslevel_team" "small" {
   name = "Small Team"
+
+  member = []
 }
 
 # Team Contact

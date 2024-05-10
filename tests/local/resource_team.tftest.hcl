@@ -70,7 +70,7 @@ run "resource_team_small" {
   }
 
   assert {
-    condition     = opslevel_team.small.member == null
+    condition     = length(opslevel_team.small.member) == 0
     error_message = "wrong members in opslevel_team.small"
   }
 }

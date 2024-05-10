@@ -1,0 +1,4 @@
+kind: Removed
+body: BREAKING CHANGE - to create resource `opslevel_team` with no team members, you
+  are required to set `member = []` in your plan
+time: 2024-05-10T13:31:28.331272-04:00
