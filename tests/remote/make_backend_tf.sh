@@ -19,3 +19,11 @@ variable "api_token" {
   sensitive = true
 }
 EOF
+
+# create symlinks for each test module. Used to match provider
+for TEST_DIR in */
+do
+  cd "$TEST_DIR" || continue
+  ln -s ../backend.tf || true
+  cd ..
+done
