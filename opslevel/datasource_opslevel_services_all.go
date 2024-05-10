@@ -149,7 +149,11 @@ func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	stateModel = NewServiceDataSourcesAllModel(services.Nodes)
+	if services == nil {
+		stateModel = NewServiceDataSourcesAllModel([]opslevel.Service{})
+	} else {
+		stateModel = NewServiceDataSourcesAllModel(services.Nodes)
+	}
 	stateModel.Filter = planModel.Filter
 
 	// Save data into Terraform state
