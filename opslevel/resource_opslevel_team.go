@@ -145,9 +145,16 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	members := getMembers(planModel.Member)
+	// insert all members when creating the team
+	membersToAddOnCreate := make([]opslevel.TeamMembershipUserInput, len(planModel.Member))
+	for i, mem := range planModel.Member {
+		membersToAddOnCreate[i] = opslevel.TeamMembershipUserInput{
+			User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
+			Role: mem.Role.ValueStringPointer(),
+		}
+	}
 	teamCreateInput := opslevel.TeamCreateInput{
-		Members:          &members,
+		Members:          &membersToAddOnCreate,
 		Name:             planModel.Name.ValueString(),
 		ParentTeam:       opslevel.NewIdentifier(),
 		Responsibilities: planModel.Responsibilities.ValueStringPointer(),
@@ -217,12 +224,44 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	members := getMembers(planModel.Member)
-	_, err := teamResource.client.AddMemberships(&opslevel.TeamId{Id: opslevel.ID(planModel.Id.ValueString())}, members...)
+	// need to read current state model so that members can be added/removed
+	var stateModel teamResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// for each member that is in the state, but not in the plan, remove that member from the team
+	membersToDelete := make([]opslevel.TeamMembershipUserInput, 0)
+	for _, mem := range stateModel.Member {
+		if !slices.Contains(planModel.Member, mem) {
+			membersToDelete = append(membersToDelete, opslevel.TeamMembershipUserInput{
+				User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
+				Role: mem.Role.ValueStringPointer(),
+			})
+		}
+	}
+	_, err := teamResource.client.RemoveMemberships(&opslevel.TeamId{Id: opslevel.ID(planModel.Id.ValueString())}, membersToDelete...)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete members, got error: %s", err))
+		return
+	}
+	// for each member that is in the plan, add that member to the team
+	// by "adding" a member, you can also change someone from being a contributor to manager and vice versa.
+	// therefore, this step should be performed AFTER removing members.
+	membersToAdd := make([]opslevel.TeamMembershipUserInput, len(planModel.Member))
+	for i, mem := range planModel.Member {
+		membersToAdd[i] = opslevel.TeamMembershipUserInput{
+			User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
+			Role: mem.Role.ValueStringPointer(),
+		}
+	}
+	_, err = teamResource.client.AddMemberships(&opslevel.TeamId{Id: opslevel.ID(planModel.Id.ValueString())}, membersToAdd...)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to add members, got error: %s", err))
 		return
 	}
+
 	teamUpdateInput := opslevel.TeamUpdateInput{
 		Id:               opslevel.NewID(planModel.Id.ValueString()),
 		Name:             planModel.Name.ValueStringPointer(),
@@ -276,19 +315,6 @@ func (teamResource *TeamResource) Delete(ctx context.Context, req resource.Delet
 
 func (teamResource *TeamResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-// TODO: works fine for when we need to change a member from a contributor to manager and vv but does not work for when we need to unset members
-// TODO: can go 2 ways - use remove memberships call or GET team first, put everything in here, remove the member(s) removed from teh plan.
-func getMembers(tfManagedMembers []teamMemberModel) []opslevel.TeamMembershipUserInput {
-	memberInputs := make([]opslevel.TeamMembershipUserInput, len(tfManagedMembers))
-	for i, mem := range tfManagedMembers {
-		memberInputs[i] = opslevel.TeamMembershipUserInput{
-			User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
-			Role: mem.Role.ValueStringPointer(),
-		}
-	}
-	return memberInputs
 }
 
 func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data teamResourceModel) error {
