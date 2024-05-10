@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -34,6 +36,7 @@ type teamResourceModel struct {
 	Id               types.String      `tfsdk:"id"`
 	LastUpdated      types.String      `tfsdk:"last_updated"`
 	Member           []teamMemberModel `tfsdk:"member"`
+	AllMembers       []teamMemberModel `tfsdk:"all_members"`
 	Name             types.String      `tfsdk:"name"`
 	Parent           types.String      `tfsdk:"parent"`
 	Responsibilities types.String      `tfsdk:"responsibilities"`
@@ -54,6 +57,7 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 		Aliases:          aliases,
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
+		AllMembers:       teamMembers,
 		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
@@ -119,17 +123,45 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				Optional:    true,
 			},
 			"member": schema.SetNestedAttribute{
-				Description: "Unordered list of members. Only manages team members that were defined in terraform.",
+				Description: "Unordered list of team members. Only manages team members that were defined in terraform.",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
-							Description: "The email address of the team member. Must be sorted by email address.",
+							Description: "The email address of the team member.",
 							Required:    true,
 						},
 						"role": schema.StringAttribute{
-							Description: "The role of the team member. Options: `contributor` or `manager`",
+							Description: "The role of the team member.",
 							Required:    true,
+						},
+					},
+				},
+			},
+			"all_members": schema.SetNestedAttribute{
+				Description: "Unordered list of team members. Includes all team members whether or not defined by terraform.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					PlanModifiers: []planmodifier.Object{
+						objectplanmodifier.UseStateForUnknown(),
+					},
+					Attributes: map[string]schema.Attribute{
+						"email": schema.StringAttribute{
+							Description: "The email address of the team member.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"role": schema.StringAttribute{
+							Description: "The role of the team member.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
