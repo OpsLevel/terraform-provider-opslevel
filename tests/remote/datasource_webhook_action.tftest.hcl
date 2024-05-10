@@ -4,6 +4,10 @@ run "datasource_webhook_actions_all" {
     datasource_type = "opslevel_webhook_actions"
   }
 
+  module {
+    source = "./webhook_action"
+  }
+
   assert {
     condition     = can(data.opslevel_webhook_actions.all.webhook_actions)
     error_message = "cannot set all expected webhook_action datasource fields"
@@ -11,7 +15,7 @@ run "datasource_webhook_actions_all" {
 
   assert {
     condition     = length(data.opslevel_webhook_actions.all.webhook_actions) > 0
-    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
   }
 
 }
@@ -20,6 +24,10 @@ run "datasource_webhook_action_first" {
 
   variables {
     datasource_type = "opslevel_webhook_action"
+  }
+
+  module {
+    source = "./webhook_action"
   }
 
   assert {
@@ -39,7 +47,7 @@ run "datasource_webhook_action_first" {
 
   assert {
     condition     = data.opslevel_webhook_action.first_webhook_action_by_id.id == data.opslevel_webhook_actions.all.webhook_actions[0].id
-    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
   }
 
 }

@@ -4,21 +4,25 @@ run "datasource_services_all" {
     datasource_type = "opslevel_services"
   }
 
+  module {
+    source = "./service"
+  }
+
   assert {
     condition     = can(data.opslevel_services.all.services)
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = length(data.opslevel_services.all.services) > 0
-    error_message = replace(var.empty_datasource_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
   }
 
   assert {
     condition = alltrue([
       can(data.opslevel_services.all.services[0].id),
     ])
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
 }
@@ -27,6 +31,10 @@ run "datasource_service_first" {
 
   variables {
     datasource_type = "opslevel_service"
+  }
+
+  module {
+    source = "./service"
   }
 
   assert {
@@ -49,12 +57,12 @@ run "datasource_service_first" {
       can(data.opslevel_service.first_service_by_id.tags),
       can(data.opslevel_service.first_service_by_id.tier_alias),
     ])
-    error_message = replace(var.unexpected_datasource_fields_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
   }
 
   assert {
     condition     = data.opslevel_service.first_service_by_id.id == data.opslevel_services.all.services[0].id
-    error_message = replace(var.wrong_id_error, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
   }
 
 }
