@@ -13,11 +13,14 @@ Rubric Category data sources
 ## Example Usage
 
 ```terraform
-data "opslevel_rubric_categories" "all" {
+data "opslevel_rubric_categories" "all" {}
+
+output "all" {
+  value = data.opslevel_rubric_categories.all.rubric_categories
 }
 
-output "found" {
-  value = data.opslevel_rubric_categories.all.ids[0]
+output "category_names" {
+  value = sort(data.opslevel_rubric_categories.all.rubric_categories[*].name)
 }
 ```
 

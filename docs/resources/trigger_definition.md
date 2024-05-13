@@ -88,6 +88,7 @@ Your request for {{ service.name }} has succeeded. See the incident here: {{resp
 Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
 {% endif %}
   EOT
+  published                = true
 }
 ```
 

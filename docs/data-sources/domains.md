@@ -13,11 +13,14 @@ List of all Domain data sources
 ## Example Usage
 
 ```terraform
-data "opslevel_domains" "all" {
+data "opslevel_domains" "all" {}
+
+output "all" {
+  value = data.opslevel_domains.all.domains
 }
 
-output "found" {
-  value = data.opslevel_domains.all
+output "domain_names" {
+  value = sort(data.opslevel_domains.all.domains[*].name)
 }
 ```
 
