@@ -9,9 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -30,6 +32,7 @@ func NewTeamResource() resource.Resource {
 
 // teamResourceModel describes the Team managed resource.
 type teamResourceModel struct {
+	AllMembers       types.List        `tfsdk:"all_members"`
 	Aliases          types.List        `tfsdk:"aliases"`
 	Id               types.String      `tfsdk:"id"`
 	LastUpdated      types.String      `tfsdk:"last_updated"`
@@ -50,7 +53,14 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 			teamMembers = append(teamMembers, newTeamMemberModel(mem))
 		}
 	}
+
+	allTeamMembers, diags := teamMembersModelToListValue(ctx, teamMembers)
+	if diags.HasError() {
+		return teamResourceModel{}, diags
+	}
+
 	model := teamResourceModel{
+		AllMembers:       allTeamMembers,
 		Aliases:          aliases,
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
@@ -68,6 +78,17 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 	}
 
 	return model, diags
+}
+
+func teamMembersModelToListValue(ctx context.Context, teamMembers []teamMemberModel) (basetypes.ListValue, diag.Diagnostics) {
+	if len(teamMembers) == 0 {
+		return types.ListNull(teamMemberObjectType), nil
+	}
+	memberObjectList := make([]types.Object, len(teamMembers))
+	for i, member := range teamMembers {
+		memberObjectList[i] = member.AsObjectValue()
+	}
+	return types.ListValueFrom(ctx, teamMemberObjectType, memberObjectList)
 }
 
 // removeNonTerraformManagedMembers mutates the input model to exclude team members not managed by terraform
@@ -92,6 +113,14 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Team Resource",
 		Attributes: map[string]schema.Attribute{
+			"all_members": schema.ListAttribute{
+				Description: "Unordered list of all team members. Both managed by terraform and not.",
+				Computed:    true,
+				ElementType: teamMemberObjectType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"aliases": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the team.",

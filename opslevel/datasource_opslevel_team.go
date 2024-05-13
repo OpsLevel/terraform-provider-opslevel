@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -76,6 +78,20 @@ var memberNestedSchemaAttrs = map[string]schema.Attribute{
 type teamMemberModel struct {
 	Email types.String `tfsdk:"email"`
 	Role  types.String `tfsdk:"role"`
+}
+
+func (t *teamMemberModel) AsObjectValue() basetypes.ObjectValue {
+	memberAttrs := make(map[string]attr.Value)
+	memberAttrs["email"] = t.Email
+	memberAttrs["role"] = t.Role
+	return types.ObjectValueMust(teamMemberObjectType.AttrTypes, memberAttrs)
+}
+
+var teamMemberObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"email": types.StringType,
+		"role":  types.StringType,
+	},
 }
 
 func newTeamMemberModel(member opslevel.TeamMembership) teamMemberModel {
