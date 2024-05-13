@@ -34,7 +34,6 @@ type teamResourceModel struct {
 	Id               types.String      `tfsdk:"id"`
 	LastUpdated      types.String      `tfsdk:"last_updated"`
 	Member           []teamMemberModel `tfsdk:"member"`
-	AllMembers       []teamMemberModel `tfsdk:"all_members"`
 	Name             types.String      `tfsdk:"name"`
 	Parent           types.String      `tfsdk:"parent"`
 	Responsibilities types.String      `tfsdk:"responsibilities"`
@@ -55,7 +54,6 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 		Aliases:          aliases,
 		Id:               ComputedStringValue(string(team.Id)),
 		Member:           teamMembers,
-		AllMembers:       teamMembers,
 		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
@@ -73,6 +71,7 @@ func newTeamResourceModel(ctx context.Context, team opslevel.Team, parentIdentif
 }
 
 // removeNonTerraformManagedMembers mutates the input model to exclude team members not managed by terraform
+// TODO: add unit testing (in Go) for this function
 func removeNonTerraformManagedMembers(ctx context.Context, model *teamResourceModel, cachedModel teamResourceModel) {
 	tfManagedMembers := make([]teamMemberModel, 0)
 	for _, memberModel := range model.Member {
@@ -136,42 +135,13 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 					},
 				},
 			},
-			"all_members": schema.ListNestedAttribute{
-				Description: "Unordered list of team members. Includes all team members whether or not defined by terraform.",
-				Computed:    true,
-				//Optional:    true,
-				//PlanModifiers: []planmodifier.Set{
-				//	setplanmodifier.UseStateForUnknown(),
-				//},
-				NestedObject: schema.NestedAttributeObject{
-					//PlanModifiers: []planmodifier.Object{
-					//	objectplanmodifier.UseStateForUnknown(),
-					//},
-					Attributes: map[string]schema.Attribute{
-						"email": schema.StringAttribute{
-							//Description: "The email address of the team member.",
-							Computed: true,
-							//PlanModifiers: []planmodifier.String{
-							//	stringplanmodifier.UseStateForUnknown(),
-							//},
-						},
-						"role": schema.StringAttribute{
-							//Description: "The role of the team member.",
-							Computed: true,
-							//PlanModifiers: []planmodifier.String{
-							//	stringplanmodifier.UseStateForUnknown(),
-							//},
-						},
-					},
-				},
-			},
 		},
 	}
 }
 
 func (teamResource *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var planModel teamResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -250,8 +220,7 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 
 func (teamResource *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel teamResourceModel
-	// TODO: what is the difference between plan and config? Should we have been using config this entire time? causes issue with computed all_members...
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -273,8 +242,6 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 			})
 		}
 	}
-	// TODO: Causes API error `- 'id' Invalid global id ''`
-	// TODO: look into a plan modifier... Also Plan vs Config!
 	_, err := teamResource.client.RemoveMemberships(&opslevel.TeamId{Id: opslevel.ID(planModel.Id.ValueString())}, membersToDelete...)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete members, got error: %s", err))
