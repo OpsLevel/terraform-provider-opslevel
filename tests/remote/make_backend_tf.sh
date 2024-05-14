@@ -24,6 +24,6 @@ EOF
 for TEST_DIR in */
 do
   cd "$TEST_DIR" || continue
-  ln -s ../backend.tf || true
+  ln -s ../backend.tf &> /dev/null|| true
   cd ..
 done
