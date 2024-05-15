@@ -62,3 +62,35 @@ run "datasource_tier_first" {
 
 }
 
+run "resource_tier_create_with_all_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./tier"
+  }
+
+}
+
+run "resource_tier_update_unset_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./tier"
+  }
+
+}
+
+run "resource_tier_update_set_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./tier"
+  }
+
+}

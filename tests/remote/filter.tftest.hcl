@@ -7,7 +7,7 @@ variables {
   name       = "required"
 }
 
-run "datasource_filters_all" {
+run "datasource_filters_list_all" {
 
   variables {
     connective = null

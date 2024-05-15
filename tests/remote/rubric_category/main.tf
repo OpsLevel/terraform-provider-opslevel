@@ -14,3 +14,6 @@ data "opslevel_rubric_category" "first_category_by_name" {
   }
 }
 
+resource "opslevel_rubric_category" "test" {
+  name = var.name
+}

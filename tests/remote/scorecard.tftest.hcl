@@ -53,3 +53,36 @@ run "datasource_scorecard_first" {
   }
 
 }
+
+run "resource_scorecard_create_with_all_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./scorecard"
+  }
+
+}
+
+run "resource_scorecard_update_unset_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./scorecard"
+  }
+
+}
+
+run "resource_scorecard_update_set_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./scorecard"
+  }
+
+}

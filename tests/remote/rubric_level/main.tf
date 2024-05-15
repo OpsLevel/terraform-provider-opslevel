@@ -27,3 +27,9 @@ data "opslevel_rubric_level" "first_level_by_name" {
     value = data.opslevel_rubric_levels.all.rubric_levels[0].name
   }
 }
+
+resource "opslevel_rubric_level" "test" {
+  description = var.description
+  index       = var.index
+  name        = var.name
+}

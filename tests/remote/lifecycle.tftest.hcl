@@ -61,3 +61,36 @@ run "datasource_lifecycle_first" {
   }
 
 }
+
+run "resource_lifecycle_create_with_all_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./lifecycle"
+  }
+
+}
+
+run "resource_lifecycle_update_unset_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./lifecycle"
+  }
+
+}
+
+run "resource_lifecycle_update_set_optional_fields" {
+
+  variables {
+  }
+
+  module {
+    source = "./lifecycle"
+  }
+
+}
