@@ -1,10 +1,10 @@
 variables {
-  repository_one    = "opslevel_repository"
-  repositories_all  = "opslevel_repositories"
+  repository_one   = "opslevel_repository"
+  repositories_all = "opslevel_repositories"
 
   # opslevel_repository fields
-  identifier        = "required"
-  owner_id          = "optional"
+  identifier = "required"
+  owner_id   = "optional"
 }
 
 run "datasource_repositories_all" {

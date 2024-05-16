@@ -1,5 +1,5 @@
 variables {
-  rubric_category_one  = "opslevel_rubric_category"
+  rubric_category_one   = "opslevel_rubric_category"
   rubric_categories_all = "opslevel_rubric_categories"
 
   # required fields

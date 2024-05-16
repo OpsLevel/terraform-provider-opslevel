@@ -171,7 +171,7 @@ run "resource_scorecard_update_set_all_fields" {
 run "datasource_scorecards_all" {
 
   variables {
-    owner_id    = run.from_team_get_owner_id.first_team.id
+    owner_id = run.from_team_get_owner_id.first_team.id
   }
 
   module {
@@ -193,7 +193,7 @@ run "datasource_scorecards_all" {
 run "datasource_scorecard_first" {
 
   variables {
-    owner_id    = run.from_team_get_owner_id.first_team.id
+    owner_id = run.from_team_get_owner_id.first_team.id
   }
 
   module {

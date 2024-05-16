@@ -3,10 +3,10 @@ variables {
   webhook_action_all = "opslevel_webhook_actions"
 
   # required fields
-  method      = "GET"
-  name        = "TF Test Webhook Action"
-  payload     = "{\"operation:\": \"create\"}"
-  url         = "https://webhook.url"
+  method  = "GET"
+  name    = "TF Test Webhook Action"
+  payload = "{\"operation:\": \"create\"}"
+  url     = "https://webhook.url"
 
   # optional fields
   description = "Webhook Action description"

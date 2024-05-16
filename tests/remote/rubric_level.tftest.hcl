@@ -7,15 +7,15 @@ variables {
 
   # optional fields
   description = "TF Rubric Level description"
-  index = null  # be careful not to overwrite existing Rubric Level
+  index       = null # be careful not to overwrite existing Rubric Level
 }
 
 run "resource_rubric_level_create_with_all_fields" {
 
   variables {
     description = var.description
-    name = var.name
-    index = null # only test index via "terraform plan"
+    name        = var.name
+    index       = null # only test index via "terraform plan"
   }
 
   module {
@@ -77,7 +77,7 @@ run "resource_rubric_level_update_all_fields" {
   variables {
     description = "${var.description} updated"
     name        = "${var.name} updated"
-    index = null # only test index via "terraform plan"
+    index       = null # only test index via "terraform plan"
   }
 
   module {
