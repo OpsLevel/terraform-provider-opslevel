@@ -22,21 +22,40 @@ run "resource_user_create_with_all_fields" {
     source = "./user"
   }
 
-}
-
-run "resource_user_update_unset_optional_fields" {
-
-  variables {
-    role  = null
+  assert {
+    condition = alltrue([
+      can(opslevel_user.test.email),
+      can(opslevel_user.test.id),
+      can(opslevel_user.test.last_updated),
+      can(opslevel_user.test.name),
+      can(opslevel_user.test.role),
+    ])
+    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.user_one)
   }
 
-  module {
-    source = "./user"
+  assert {
+    condition     = opslevel_user.test.email == var.email
+    error_message = "wrong email for opslevel_user resource"
+  }
+
+  assert {
+    condition     = startswith(opslevel_user.test.id, var.id_prefix)
+    error_message = replace(var.error_wrong_id, "TYPE", var.user_one)
+  }
+
+  assert {
+    condition     = opslevel_user.test.name == var.name
+    error_message = replace(var.error_wrong_name, "TYPE", var.user_one)
+  }
+
+  assert {
+    condition     = opslevel_user.test.role == var.role
+    error_message = "wrong role for opslevel_user resource"
   }
 
 }
 
-run "resource_user_update_set_optional_fields" {
+run "resource_user_update_set_all_fields" {
 
   variables {
     email = var.email
@@ -46,6 +65,22 @@ run "resource_user_update_set_optional_fields" {
 
   module {
     source = "./user"
+  }
+
+
+  assert {
+    condition     = opslevel_user.test.email == var.email
+    error_message = "wrong email for opslevel_user resource"
+  }
+
+  assert {
+    condition     = opslevel_user.test.name == var.name
+    error_message = replace(var.error_wrong_name, "TYPE", var.user_one)
+  }
+
+  assert {
+    condition     = opslevel_user.test.role == var.role
+    error_message = "wrong role for opslevel_user resource"
   }
 
 }

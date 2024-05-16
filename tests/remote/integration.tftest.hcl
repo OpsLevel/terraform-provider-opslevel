@@ -46,11 +46,3 @@ run "datasource_integration_first" {
   }
 
 }
-
-# NOTE: there is no "opslevel_integration" resource
-
-#run "resource_integration_aws_create_with_all_fields" {}
-
-#run "resource_integration_aws_update_unset_optional_fields" {}
-
-#run "resource_integration_aws_update_set_optional_fields" {}

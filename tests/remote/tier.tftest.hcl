@@ -1,8 +1,9 @@
-run "datasource_tiers_all" {
+variables {
+  tier_one  = "opslevel_tier"
+  tiers_all = "opslevel_tiers"
+}
 
-  variables {
-    datasource_type = "opslevel_tiers"
-  }
+run "datasource_tiers_all" {
 
   module {
     source = "./tier"
@@ -10,21 +11,17 @@ run "datasource_tiers_all" {
 
   assert {
     condition     = can(data.opslevel_tiers.all.tiers)
-    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.tiers_all)
   }
 
   assert {
     condition     = length(data.opslevel_tiers.all.tiers) > 0
-    error_message = replace(var.error_empty_datasource, "TYPE", var.datasource_type)
+    error_message = replace(var.error_empty_datasource, "TYPE", var.tiers_all)
   }
 
 }
 
 run "datasource_tier_first" {
-
-  variables {
-    datasource_type = "opslevel_tier"
-  }
 
   module {
     source = "./tier"
@@ -37,60 +34,27 @@ run "datasource_tier_first" {
       can(data.opslevel_tier.first_tier_by_id.index),
       can(data.opslevel_tier.first_tier_by_id.name),
     ])
-    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.datasource_type)
+    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.tier_one)
   }
 
   assert {
     condition     = data.opslevel_tier.first_tier_by_id.alias == data.opslevel_tiers.all.tiers[0].alias
-    error_message = replace(var.error_wrong_alias, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_alias, "TYPE", var.tier_one)
   }
 
   assert {
     condition     = data.opslevel_tier.first_tier_by_id.id == data.opslevel_tiers.all.tiers[0].id
-    error_message = replace(var.error_wrong_id, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_id, "TYPE", var.tier_one)
   }
 
   assert {
     condition     = data.opslevel_tier.first_tier_by_id.index == data.opslevel_tiers.all.tiers[0].index
-    error_message = replace(var.error_wrong_index, "TYPE", var.datasource_type)
+    error_message = replace(var.error_wrong_index, "TYPE", var.tier_one)
   }
 
   assert {
     condition     = data.opslevel_tier.first_tier_by_name.name == data.opslevel_tiers.all.tiers[0].name
-    error_message = replace(var.error_wrong_name, "TYPE", var.datasource_type)
-  }
-
-}
-
-run "resource_tier_create_with_all_fields" {
-
-  variables {
-  }
-
-  module {
-    source = "./tier"
-  }
-
-}
-
-run "resource_tier_update_unset_optional_fields" {
-
-  variables {
-  }
-
-  module {
-    source = "./tier"
-  }
-
-}
-
-run "resource_tier_update_set_optional_fields" {
-
-  variables {
-  }
-
-  module {
-    source = "./tier"
+    error_message = replace(var.error_wrong_name, "TYPE", var.tier_one)
   }
 
 }

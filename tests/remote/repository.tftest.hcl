@@ -57,7 +57,7 @@ run "datasource_repository_first" {
 # NOTE: "create" repository is really an update operation
 # NOTE: not testing repository resource. No safe way to not overwrite actual data.
 
-#run "resource_repository_update_set_optional_fields" {
+#run "resource_repository_update_set_all_fields" {
 #
 #  variables {
 #    identifier = data.opslevel_repository.first_repo_by_id.id

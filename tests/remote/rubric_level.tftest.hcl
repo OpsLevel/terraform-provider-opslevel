@@ -6,7 +6,7 @@ variables {
   name = "TF Rubric Level"
 
   # optional fields
-  description = "TF Rubric Level"
+  description = "TF Rubric Level description"
   index = null  # be careful not to overwrite existing Rubric Level
 }
 

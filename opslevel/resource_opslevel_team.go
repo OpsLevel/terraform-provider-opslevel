@@ -223,7 +223,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		Id:               opslevel.NewID(data.Id.ValueString()),
 		Members:          &members,
 		Name:             data.Name.ValueStringPointer(),
-		Responsibilities: data.Responsibilities.ValueStringPointer(),
+		Responsibilities: opslevel.RefOf(data.Responsibilities.ValueString()),
 	}
 	if data.Parent.ValueString() != "" {
 		teamUpdateInput.ParentTeam = opslevel.NewIdentifier(data.Parent.ValueString())

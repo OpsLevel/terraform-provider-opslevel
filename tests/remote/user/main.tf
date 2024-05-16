@@ -7,3 +7,9 @@ data "opslevel_user" "first_user_by_email" {
 data "opslevel_user" "first_user_by_id" {
   identifier = data.opslevel_users.all.users[0].id
 }
+
+resource "opslevel_user" "test" {
+  email = var.email
+  name  = var.name
+  role  = var.role
+}

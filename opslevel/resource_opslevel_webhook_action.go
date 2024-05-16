@@ -42,10 +42,9 @@ type WebhookActionResourceModel struct {
 }
 
 func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction) WebhookActionResourceModel {
-	jsonAttrs := jsonToMap(webhookAction.Headers)
 	return WebhookActionResourceModel{
 		Description: OptionalStringValue(webhookAction.Description),
-		Headers:     types.MapValueMust(types.StringType, jsonAttrs),
+		Headers:     jsonToMapValue(webhookAction.Headers),
 		Id:          ComputedStringValue(string(webhookAction.Id)),
 		Method:      RequiredStringValue(string(webhookAction.HTTPMethod)),
 		Name:        RequiredStringValue(webhookAction.Name),

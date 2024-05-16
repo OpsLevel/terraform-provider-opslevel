@@ -210,7 +210,7 @@ run "resource_service_update_unset_optional_fields" {
 
   assert {
     condition     = opslevel_service.test.preferred_api_document_source == null
-    error_message = var.error_expected_null_field
+    error_message = "expected 'PUSH' default for preferred_api_document_source in opslevel_service resource"
   }
 
   assert {
@@ -230,7 +230,7 @@ run "resource_service_update_unset_optional_fields" {
 
 }
 
-run "resource_service_update_set_optional_fields" {
+run "resource_service_update_set_all_fields" {
 
   variables {
     aliases                       = concat(var.aliases, ["test_alias"])

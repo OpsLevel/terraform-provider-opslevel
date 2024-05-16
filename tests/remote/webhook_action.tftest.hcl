@@ -82,7 +82,7 @@ run "resource_webhook_action_update_unset_optional_fields" {
 
   variables {
     description = null
-    headers     = tomap({}) # TODO: make headers accept null
+    headers     = null
   }
 
   module {

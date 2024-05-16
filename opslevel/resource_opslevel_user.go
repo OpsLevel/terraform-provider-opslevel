@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,21 +33,19 @@ type UserResource struct {
 
 // UserResourceModel describes the User managed resource.
 type UserResourceModel struct {
-	Email            types.String `tfsdk:"email"`
-	Id               types.String `tfsdk:"id"`
-	LastUpdated      types.String `tfsdk:"last_updated"`
-	Name             types.String `tfsdk:"name"`
-	Role             types.String `tfsdk:"role"`
-	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"` // not usable but kept for backwards compatibility
+	Email       types.String `tfsdk:"email"`
+	Id          types.String `tfsdk:"id"`
+	LastUpdated types.String `tfsdk:"last_updated"`
+	Name        types.String `tfsdk:"name"`
+	Role        types.String `tfsdk:"role"`
 }
 
 func NewUserResourceModel(user opslevel.User) UserResourceModel {
 	return UserResourceModel{
-		Email:            RequiredStringValue(user.Email),
-		Id:               ComputedStringValue(string(user.Id)),
-		Name:             RequiredStringValue(user.Name),
-		Role:             OptionalStringValue(string(user.Role)),
-		SkipWelcomeEmail: types.BoolNull(),
+		Email: RequiredStringValue(user.Email),
+		Id:    ComputedStringValue(string(user.Id)),
+		Name:  RequiredStringValue(user.Name),
+		Role:  OptionalStringValue(string(user.Role)),
 	}
 }
 
@@ -86,15 +85,12 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					"The access role of the user. One of `%s`",
 					strings.Join(opslevel.AllUserRole, "`, `"),
 				),
+				Default:  stringdefault.StaticString("user"),
+				Computed: true,
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllUserRole...),
 				},
-			},
-			"skip_welcome_email": schema.BoolAttribute{
-				DeprecationMessage: "The skip_welcome_email attribute is deprecated and only kept for backward compatibility.",
-				Description:        "Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.",
-				Optional:           true,
 			},
 		},
 	}

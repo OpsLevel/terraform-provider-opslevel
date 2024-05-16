@@ -17,7 +17,7 @@ run "from_domain_get_domain_id" {
 
   variables {
     description = null
-    name        = "" # TODO: put datasource into separate module?
+    name        = ""
     note        = null
     owner_id    = null
   }
@@ -137,7 +137,7 @@ run "resource_system_update_unset_optional_fields" {
 
 }
 
-run "resource_system_update_set_optional_fields" {
+run "resource_system_update_set_all_fields" {
 
   variables {
     description = "${var.description} updated"

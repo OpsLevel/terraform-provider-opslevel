@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix unsetting api_document_path field in Service resource
+time: 2024-05-16T11:03:50.117802-05:00
