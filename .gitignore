@@ -42,7 +42,7 @@ website/vendor
 *.winfile eol=crlf
 examples/.terraform.lock.hcl
 .terraform.lock.hcl
-main.tf
+./workspace/main.tf
 tests/**/backend.tf
 workspace/*.tf*
 workspace/.terraform.d/

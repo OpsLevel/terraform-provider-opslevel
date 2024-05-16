@@ -247,8 +247,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
-	err = reconcileTags(*r.client, givenTags, service)
-	if err != nil {
+	if err = reconcileTags(*r.client, givenTags, service); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s', got error: %s", givenTags, err))
 		return
 	}
@@ -359,12 +358,16 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
-	err = reconcileTags(*r.client, givenTags, service)
-	if err != nil {
+	if err = reconcileTags(*r.client, givenTags, service); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
 		return
 	}
-	if planModel.ApiDocumentPath.ValueString() != "" {
+	if planModel.ApiDocumentPath.IsNull() {
+		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), "", nil); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to unset 'api_document_path' for service %s. error: %s", service.Name, err))
+			return
+		}
+	} else {
 		apiDocPath := planModel.ApiDocumentPath.ValueString()
 		if planModel.PreferredApiDocumentSource.IsNull() {
 			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {

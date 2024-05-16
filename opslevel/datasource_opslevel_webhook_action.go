@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -49,7 +50,7 @@ type webhookActionDataSourceModel struct {
 	Url         types.String `tfsdk:"url"`
 }
 
-func jsonToMap(json map[string]any) map[string]attr.Value {
+func jsonToMapValue(json map[string]any) basetypes.MapValue {
 	jsonAttrs := make(map[string]attr.Value)
 	for k, v := range json {
 		if value, ok := v.(string); ok {
@@ -58,16 +59,18 @@ func jsonToMap(json map[string]any) map[string]attr.Value {
 			jsonAttrs[k] = types.StringNull()
 		}
 	}
-	return jsonAttrs
+	if len(jsonAttrs) == 0 {
+		return types.MapNull(types.StringType)
+	}
+	return types.MapValueMust(types.StringType, jsonAttrs)
 }
 
 func newWebhookActionWithIdentifierDataSourceModel(ctx context.Context, webhookAction opslevel.CustomActionsExternalAction, identifier string) (webhookActionWithIdentifierDataSourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, webhookAction.Aliases)
-	jsonAttrs := jsonToMap(webhookAction.Headers)
 	action := webhookActionWithIdentifierDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
-		Headers:     types.MapValueMust(types.StringType, jsonAttrs),
+		Headers:     jsonToMapValue(webhookAction.Headers),
 		Id:          RequiredStringValue(string(webhookAction.Id)),
 		Identifier:  types.StringValue(identifier),
 		Method:      types.StringValue(string(webhookAction.CustomActionsWebhookAction.HTTPMethod)),
@@ -81,11 +84,10 @@ func newWebhookActionWithIdentifierDataSourceModel(ctx context.Context, webhookA
 
 func newWebhookActionDataSourceModel(ctx context.Context, webhookAction opslevel.CustomActionsExternalAction) (webhookActionDataSourceModel, diag.Diagnostics) {
 	aliases, diags := OptionalStringListValue(ctx, webhookAction.Aliases)
-	jsonAttrs := jsonToMap(webhookAction.Headers)
 	action := webhookActionDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
-		Headers:     types.MapValueMust(types.StringType, jsonAttrs),
+		Headers:     jsonToMapValue(webhookAction.Headers),
 		Id:          RequiredStringValue(string(webhookAction.Id)),
 		Method:      types.StringValue(string(webhookAction.CustomActionsWebhookAction.HTTPMethod)),
 		Name:        types.StringValue(webhookAction.Name),

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -37,16 +38,16 @@ type UserResourceModel struct {
 	LastUpdated      types.String `tfsdk:"last_updated"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
-	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"` // not usable but kept for backwards compatibility
+	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"`
 }
 
-func NewUserResourceModel(user opslevel.User) UserResourceModel {
+func NewUserResourceModel(user opslevel.User, model UserResourceModel) UserResourceModel {
 	return UserResourceModel{
 		Email:            RequiredStringValue(user.Email),
 		Id:               ComputedStringValue(string(user.Id)),
 		Name:             RequiredStringValue(user.Name),
 		Role:             OptionalStringValue(string(user.Role)),
-		SkipWelcomeEmail: types.BoolNull(),
+		SkipWelcomeEmail: model.SkipWelcomeEmail,
 	}
 }
 
@@ -92,86 +93,85 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 			},
 			"skip_welcome_email": schema.BoolAttribute{
-				DeprecationMessage: "The skip_welcome_email attribute is deprecated and only kept for backward compatibility.",
-				Description:        "Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.",
-				Optional:           true,
+				Description: "Don't send an email welcoming the user to OpsLevel. (default: true)",
+				Default:     booldefault.StaticBool(true),
+				Computed:    true,
+				Optional:    true,
 			},
 		},
 	}
 }
 
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data UserResourceModel
+	var planModel, stateModel UserResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	user, err := r.client.InviteUser(data.Email.ValueString(), opslevel.UserInput{
-		Name: opslevel.RefOf(data.Name.ValueString()),
-		Role: opslevel.RefOf(opslevel.UserRole(data.Role.ValueString())),
+	user, err := r.client.InviteUser(planModel.Email.ValueString(), opslevel.UserInput{
+		Name:             planModel.Name.ValueStringPointer(),
+		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
+		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return
 	}
-	createdUserResourceModel := NewUserResourceModel(*user)
-	createdUserResourceModel.LastUpdated = timeLastUpdated()
+	stateModel = NewUserResourceModel(*user, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a user resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &createdUserResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data UserResourceModel
+	var stateModel, updatedStateModel UserResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	user, err := r.client.GetUser(data.Id.ValueString())
+	user, err := r.client.GetUser(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read user, got error: %s", err))
 		return
 	}
 
-	data.Email = types.StringValue(user.Email)
-	data.Id = types.StringValue(string(user.Id))
-	data.Name = types.StringValue(user.Name)
-	data.Role = types.StringValue(string(user.Role))
+	updatedStateModel = NewUserResourceModel(*user, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedStateModel)...)
 }
 
 func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data UserResourceModel
+	var planModel, stateModel UserResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resource, err := r.client.UpdateUser(data.Id.ValueString(), opslevel.UserInput{
-		Name: opslevel.RefOf(data.Name.ValueString()),
-		Role: opslevel.RefOf(opslevel.UserRole(data.Role.ValueString())),
+	resource, err := r.client.UpdateUser(planModel.Id.ValueString(), opslevel.UserInput{
+		Name:             planModel.Name.ValueStringPointer(),
+		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
+		SkipWelcomeEmail: opslevel.RefOf(planModel.SkipWelcomeEmail.ValueBool()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update user, got error: %s", err))
 		return
 	}
-	updatedUserResourceModel := NewUserResourceModel(*resource)
-	updatedUserResourceModel.LastUpdated = timeLastUpdated()
+	stateModel = NewUserResourceModel(*resource, planModel)
+	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a user resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedUserResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
