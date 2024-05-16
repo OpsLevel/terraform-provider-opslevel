@@ -186,8 +186,8 @@ tasks:
         vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}/local" }
       # - task: run-acceptance-tests
 
-  test-acceptance:
-    desc: Run acceptance tests
+  test-integration:
+    desc: Run integration tests
     requires:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:
