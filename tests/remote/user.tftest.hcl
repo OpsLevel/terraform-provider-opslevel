@@ -66,7 +66,7 @@ run "resource_user_create_with_all_fields" {
 run "resource_user_update_unset_fields_return_default_value" {
 
   variables {
-    skip_welcome_email         = null
+    skip_welcome_email = null
   }
 
   module {
