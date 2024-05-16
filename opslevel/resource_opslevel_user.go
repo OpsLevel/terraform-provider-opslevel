@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -85,8 +84,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					"The access role of the user. One of `%s`",
 					strings.Join(opslevel.AllUserRole, "`, `"),
 				),
-				Default:  stringdefault.StaticString("user"),
-				Computed: true,
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllUserRole...),
