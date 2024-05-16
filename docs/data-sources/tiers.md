@@ -13,11 +13,18 @@ List of all Tier data sources
 ## Example Usage
 
 ```terraform
-data "opslevel_tiers" "all" {
+data "opslevel_tiers" "all" {}
+
+output "all" {
+  value = data.opslevel_tiers.all.tiers
 }
 
-output "found" {
-  value = data.opslevel_tiers.all.aliases[0]
+output "tier_aliases" {
+  value = sort(data.opslevel_tiers.all.tiers[*].alias)
+}
+
+output "tier_names" {
+  value = sort(data.opslevel_tiers.all.tiers[*].name)
 }
 ```
 

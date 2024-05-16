@@ -13,6 +13,8 @@ List of all Repository data sources
 ## Example Usage
 
 ```terraform
+data "opslevel_repositories" "all" {}
+
 data "opslevel_tier" "tier2" {
   filter {
     field = "alias"
@@ -20,22 +22,23 @@ data "opslevel_tier" "tier2" {
   }
 }
 
-data "opslevel_repositories" "all" {
-}
-
 data "opslevel_repositories" "tier2" {
-  filter {
+  filter = {
     field = "tier"
     value = data.opslevel_tier.tier2.alias
   }
 }
 
 output "all" {
-  value = data.opslevel_repositories.all.names
+  value = data.opslevel_repositories.all.repositories
 }
 
-output "tier2" {
-  value = data.opslevel_repositories.tier2.names
+output "tier2_repositories" {
+  value = data.opslevel_repositories.tier2.repositories
+}
+
+output "all_repository_names" {
+  value = sort(data.opslevel_repositories.all.repositories[*].name)
 }
 ```
 
@@ -69,7 +72,16 @@ Optional:
 
 Read-Only:
 
+- `languages` (Attributes List) The list of programming languages used in the repository. (see [below for nested schema](#nestedatt--repositories--languages))
 - `name` (String) The display name of the repository.
 - `url` (String) The url of the the repository.
+
+<a id="nestedatt--repositories--languages"></a>
+### Nested Schema for `repositories.languages`
+
+Optional:
+
+- `name` (String)
+- `usage` (Number)
 
 

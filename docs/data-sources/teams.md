@@ -13,18 +13,14 @@ List of all Team data sources
 ## Example Usage
 
 ```terraform
-data "opslevel_teams" "all" {
+data "opslevel_teams" "all" {}
+
+output "all" {
+  value = data.opslevel_teams.all.teams
 }
 
-data "opslevel_teams" "leet" {
-  filter {
-    field = "manager-email"
-    value = "0p5l3v3l@example.com"
-  }
-}
-
-output "found" {
-  value = data.opslevel_teams.all.ids[3]
+output "team_names" {
+  value = sort(data.opslevel_teams.all.teams[*].name)
 }
 ```
 

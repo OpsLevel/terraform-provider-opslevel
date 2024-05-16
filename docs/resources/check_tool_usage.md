@@ -48,11 +48,11 @@ resource "opslevel_check_tool_usage" "example" {
   owner         = data.opslevel_team.devs.id
   filter        = data.opslevel_filter.tier1.id
   tool_category = "metrics"
-  tool_name_predicate {
+  tool_name_predicate = {
     type  = "equals"
     value = "datadog"
   }
-  environment_predicate {
+  environment_predicate = {
     type  = "equals"
     value = "production"
   }

@@ -13,11 +13,14 @@ Lifecycle data source
 ## Example Usage
 
 ```terraform
-data "opslevel_lifecycles" "all" {
+data "opslevel_lifecycles" "all" {}
+
+output "all" {
+  value = data.opslevel_lifecycles.all.lifecycles
 }
 
-output "found" {
-  value = data.opslevel_lifecycles.all.aliases[0]
+output "lifecycle_names" {
+  value = sort(data.opslevel_lifecycles.all.lifecycles[*].name)
 }
 ```
 

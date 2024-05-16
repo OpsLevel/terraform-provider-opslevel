@@ -1,3 +1,0 @@
-kind: Bugfix
-body: Fix bug where `owner` on resource `opslevel_service` could not be unset
-time: 2024-05-08T12:50:46.828737-04:00

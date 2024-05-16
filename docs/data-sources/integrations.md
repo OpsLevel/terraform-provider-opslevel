@@ -13,11 +13,14 @@ Integrations data source
 ## Example Usage
 
 ```terraform
-data "opslevel_integrations" "all" {
+data "opslevel_integrations" "all" {}
+
+output "all" {
+  value = data.opslevel_integrations.all.integrations
 }
 
-output "found" {
-  value = data.opslevel_integrations.all.id[0]
+output "integration_names" {
+  value = sort(data.opslevel_integrations.all.integrations[*].name)
 }
 ```
 
