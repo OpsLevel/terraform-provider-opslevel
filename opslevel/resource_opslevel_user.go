@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -92,7 +93,9 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 			},
 			"skip_welcome_email": schema.BoolAttribute{
-				Description: "Don't send an email welcoming the user to OpsLevel.",
+				Description: "Don't send an email welcoming the user to OpsLevel. (default: true)",
+				Default:     booldefault.StaticBool(true),
+				Computed:    true,
 				Optional:    true,
 			},
 		},

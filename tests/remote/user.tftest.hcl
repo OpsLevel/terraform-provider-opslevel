@@ -8,7 +8,7 @@ variables {
 
   # optional fields
   role               = "user"
-  skip_welcome_email = true
+  skip_welcome_email = false
 }
 
 run "resource_user_create_with_all_fields" {
@@ -63,10 +63,10 @@ run "resource_user_create_with_all_fields" {
 
 }
 
-run "resource_user_update_unset_optional_fields" {
+run "resource_user_update_unset_fields_return_default_value" {
 
   variables {
-    skip_welcome_email = null
+    skip_welcome_email         = null
   }
 
   module {
@@ -74,8 +74,8 @@ run "resource_user_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_user.test.skip_welcome_email == null
-    error_message = var.error_expected_null_field
+    condition     = opslevel_user.test.skip_welcome_email == true
+    error_message = "expected 'true' default for skip_welcome_email in opslevel_user resource"
   }
 
 }
