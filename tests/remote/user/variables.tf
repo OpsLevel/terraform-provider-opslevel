@@ -20,3 +20,8 @@ variable "role" {
     error_message = "expected role to be 'admin', 'basic_user', or 'user'"
   }
 }
+
+variable "skip_welcome_email" {
+  type        = bool
+  description = "Don't send an email welcoming the user to OpsLevel."
+}

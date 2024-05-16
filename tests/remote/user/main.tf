@@ -9,7 +9,8 @@ data "opslevel_user" "first_user_by_id" {
 }
 
 resource "opslevel_user" "test" {
-  email = var.email
-  name  = var.name
-  role  = var.role
+  email              = var.email
+  name               = var.name
+  role               = var.role
+  skip_welcome_email = var.skip_welcome_email
 }

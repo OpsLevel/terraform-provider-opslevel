@@ -7,15 +7,17 @@ variables {
   name  = "TF Test User"
 
   # optional fields
-  role = "user"
+  role               = "user"
+  skip_welcome_email = true
 }
 
 run "resource_user_create_with_all_fields" {
 
   variables {
-    email = var.email
-    name  = var.name
-    role  = var.role
+    email              = var.email
+    name               = var.name
+    role               = var.role
+    skip_welcome_email = var.skip_welcome_email
   }
 
   module {
@@ -29,6 +31,7 @@ run "resource_user_create_with_all_fields" {
       can(opslevel_user.test.last_updated),
       can(opslevel_user.test.name),
       can(opslevel_user.test.role),
+      can(opslevel_user.test.skip_welcome_email),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.user_one)
   }
@@ -53,20 +56,42 @@ run "resource_user_create_with_all_fields" {
     error_message = "wrong role for opslevel_user resource"
   }
 
+  assert {
+    condition     = opslevel_user.test.skip_welcome_email == var.skip_welcome_email
+    error_message = "wrong email for opslevel_user resource"
+  }
+
 }
 
-run "resource_user_update_set_all_fields" {
+run "resource_user_update_unset_optional_fields" {
 
   variables {
-    email = var.email
-    name  = "${var.name} updated"
-    role  = "admin"
+    skip_welcome_email = null
   }
 
   module {
     source = "./user"
   }
 
+  assert {
+    condition     = opslevel_user.test.skip_welcome_email == null
+    error_message = var.error_expected_null_field
+  }
+
+}
+
+run "resource_user_update_set_all_fields" {
+
+  variables {
+    email              = var.email
+    name               = "${var.name} updated"
+    role               = var.role == "user" ? "admin" : var.role
+    skip_welcome_email = !var.skip_welcome_email
+  }
+
+  module {
+    source = "./user"
+  }
 
   assert {
     condition     = opslevel_user.test.email == var.email
@@ -81,6 +106,11 @@ run "resource_user_update_set_all_fields" {
   assert {
     condition     = opslevel_user.test.role == var.role
     error_message = "wrong role for opslevel_user resource"
+  }
+
+  assert {
+    condition     = opslevel_user.test.skip_welcome_email == var.skip_welcome_email
+    error_message = "wrong skip_welcome_email for opslevel_user resource"
   }
 
 }
