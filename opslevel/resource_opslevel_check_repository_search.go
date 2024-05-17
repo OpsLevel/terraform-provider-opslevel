@@ -70,7 +70,9 @@ func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.C
 
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositorySearchCheckFragment.FileExtensions)
 	stateModel.FileExtensions = data
-	stateModel.FileContentsPredicate = NewPredicateModel(check.RepositorySearchCheckFragment.FileContentsPredicate)
+	if check.RepositorySearchCheckFragment.FileContentsPredicate != nil {
+		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositorySearchCheckFragment.FileContentsPredicate)
+	}
 
 	return stateModel, diags
 }

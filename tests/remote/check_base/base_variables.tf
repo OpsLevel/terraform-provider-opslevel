@@ -8,14 +8,14 @@ variable "category" {
   }
 }
 
-variable "enabled" {
-  type        = bool
-  description = "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'."
-}
-
 variable "enable_on" {
   type        = bool
   description = "The date when the check will be automatically enabled."
+}
+
+variable "enabled" {
+  type        = bool
+  description = "Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'."
 }
 
 variable "filter" {

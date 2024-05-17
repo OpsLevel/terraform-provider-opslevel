@@ -1,11 +1,22 @@
 variables {
   check_manual = "opslevel_check_manual"
 
+  # -- check_manual fields --
   # required fields
-  category                = null
-  level                   = null
-  name                    = "TF Test Check Manual"
   update_requires_comment = true
+
+  # optional fields
+  update_frequency = {
+    starting_date = "2020-02-12T06:36:13Z"
+    time_scale    = "week"
+    value         = 1
+  }
+
+  # -- check base fields --
+  # required fields
+  category = null
+  level    = null
+  name     = "TF Test Check Manual"
 
   # optional fields
   enable_on = null
@@ -13,11 +24,6 @@ variables {
   filter    = null
   notes     = "Notes on manual check"
   owner     = null
-  update_frequency = {
-    starting_date = "2020-02-12T06:36:13Z"
-    time_scale    = "week"
-    value         = 1
-  }
 }
 
 run "from_filter_get_filter_id" {
@@ -217,6 +223,7 @@ run "resource_check_manual_update_unset_optional_fields" {
   }
 
 }
+
 run "resource_check_manual_update_all_fields" {
 
   variables {
