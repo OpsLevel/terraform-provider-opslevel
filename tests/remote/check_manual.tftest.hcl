@@ -87,7 +87,7 @@ run "resource_check_manual_create_with_all_fields" {
     enable_on               = var.enable_on
     enabled                 = var.enabled
     filter                  = run.from_filter_get_filter_id.first_filter.id
-    level                   = run.from_rubric_level_get_level_id.first_level.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
     name                    = var.name
     notes                   = var.notes
     owner                   = run.from_team_get_owner_id.first_team.id
@@ -180,9 +180,9 @@ run "resource_check_manual_update_unset_optional_fields" {
   variables {
     category         = run.from_rubric_category_get_category_id.first_category.id
     enable_on        = null
-    enabled          = null
+    enabled          = !var.enabled
     filter           = null
-    level            = run.from_rubric_level_get_level_id.first_level.id
+    level            = run.from_rubric_level_get_level_id.greatest_level.id
     notes            = null
     owner            = null
     update_frequency = null
@@ -198,8 +198,8 @@ run "resource_check_manual_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.test.enabled == null
-    error_message = var.error_expected_null_field
+    condition     = opslevel_check_manual.test.enabled == var.enabled
+    error_message = "expected 'enabled' to be unchanged from create, field included in 'ignore_changes' lifecycle"
   }
 
   assert {
@@ -231,7 +231,7 @@ run "resource_check_manual_update_all_fields" {
     enable_on               = var.enable_on
     enabled                 = !var.enabled
     filter                  = run.from_filter_get_filter_id.first_filter.id
-    level                   = run.from_rubric_level_get_level_id.first_level.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
     name                    = "${var.name} updated"
     notes                   = "${var.notes} updated"
     owner                   = run.from_team_get_owner_id.first_team.id
@@ -254,7 +254,7 @@ run "resource_check_manual_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.test.enabled == var.enabled
+    condition     = opslevel_check_manual.test.enabled == !var.enabled
     error_message = "wrong enabled of opslevel_check_manual resource"
   }
 

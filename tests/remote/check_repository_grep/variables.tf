@@ -11,7 +11,7 @@ variable "file_contents_predicate" {
   description = "A condition that should be satisfied."
 
   validation {
-    condition = var.file_contents_predicate == null ? true : contains([
+    condition = contains([
       "contains",
       "does_not_contain",
       "does_not_equal",
@@ -37,4 +37,9 @@ variable "file_contents_predicate" {
 variable "filepaths" {
   type        = list(string)
   description = "Restrict the search to certain file paths."
+
+  validation {
+    condition     = length(var.filepaths) > 0
+    error_message = "expected at least one file path"
+  }
 }

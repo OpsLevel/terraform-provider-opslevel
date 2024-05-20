@@ -41,8 +41,8 @@ type CheckRepositorySearchResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 	LastUpdated types.String `tfsdk:"last_updated"`
 
-	FileExtensions        types.List      `tfsdk:"file_extensions"`
-	FileContentsPredicate *PredicateModel `tfsdk:"file_contents_predicate"`
+	FileExtensions        types.List     `tfsdk:"file_extensions"`
+	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
 }
 
 func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositorySearchResourceModel) (CheckRepositorySearchResourceModel, diag.Diagnostics) {
@@ -70,9 +70,7 @@ func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.C
 
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositorySearchCheckFragment.FileExtensions)
 	stateModel.FileExtensions = data
-	if check.RepositorySearchCheckFragment.FileContentsPredicate != nil {
-		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositorySearchCheckFragment.FileContentsPredicate)
-	}
+	stateModel.FileContentsPredicate = *NewPredicateModel(check.RepositorySearchCheckFragment.FileContentsPredicate)
 
 	return stateModel, diags
 }
@@ -82,6 +80,10 @@ func (r *CheckRepositorySearchResource) Metadata(ctx context.Context, req resour
 }
 
 func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	predicateSchema := PredicateSchema()
+	predicateSchema.Optional = false
+	predicateSchema.Required = true
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository Search Resource",
@@ -92,7 +94,7 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 				Optional:    true,
 				ElementType: types.StringType,
 			},
-			"file_contents_predicate": PredicateSchema(),
+			"file_contents_predicate": predicateSchema,
 		}),
 	}
 }
@@ -125,9 +127,7 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
-	}
+	input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
 
 	data, err := r.client.CreateCheckRepositorySearch(input)
 	if err != nil {
@@ -194,9 +194,7 @@ func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
-	}
+	input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositorySearch(input)
 	if err != nil {

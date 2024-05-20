@@ -71,11 +71,17 @@ func NewCheckServiceOwnershipResourceModel(ctx context.Context, check opslevel.C
 	stateModel.Name = RequiredStringValue(check.Name)
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
-
 	stateModel.RequireContactMethod = OptionalBoolValue(check.ServiceOwnershipCheckFragment.RequireContactMethod)
+
 	if check.ServiceOwnershipCheckFragment.ContactMethod != nil {
-		stateModel.ContactMethod = OptionalStringValue(string(*check.ServiceOwnershipCheckFragment.ContactMethod))
+		contactMethod := string(*check.ServiceOwnershipCheckFragment.ContactMethod)
+		if strings.ToLower(planModel.ContactMethod.ValueString()) == strings.ToLower(contactMethod) {
+			stateModel.ContactMethod = planModel.ContactMethod
+		} else {
+			stateModel.ContactMethod = OptionalStringValue(contactMethod)
+		}
 	}
+
 	stateModel.TagKey = OptionalStringValue(check.ServiceOwnershipCheckFragment.TeamTagKey)
 	if check.ServiceOwnershipCheckFragment.TeamTagPredicate != nil {
 		stateModel.TagPredicate = NewPredicateModel(*check.ServiceOwnershipCheckFragment.TeamTagPredicate)
@@ -105,7 +111,7 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 					strings.Join(enumAllContactTypes, "`, `"),
 				),
 				Optional:   true,
-				Validators: []validator.String{stringvalidator.OneOf(enumAllContactTypes...)},
+				Validators: []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
 			},
 			"tag_key": schema.StringAttribute{
 				Description: "The tag key where the tag predicate should be applied.",
@@ -144,7 +150,7 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 	}
 
 	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
-	input.ContactMethod = opslevel.RefOf(planModel.ContactMethod.ValueString())
+	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
 	input.TagKey = planModel.TagKey.ValueStringPointer()
 	if planModel.TagPredicate != nil {
 		input.TagPredicate = planModel.TagPredicate.ToCreateInput()
@@ -213,7 +219,7 @@ func (r *CheckServiceOwnershipResource) Update(ctx context.Context, req resource
 	}
 
 	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
-	input.ContactMethod = opslevel.RefOf(planModel.ContactMethod.ValueString())
+	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
 	input.TagKey = planModel.TagKey.ValueStringPointer()
 	if planModel.TagPredicate != nil {
 		input.TagPredicate = planModel.TagPredicate.ToUpdateInput()

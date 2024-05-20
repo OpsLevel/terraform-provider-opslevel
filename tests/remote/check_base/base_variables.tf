@@ -9,7 +9,7 @@ variable "category" {
 }
 
 variable "enable_on" {
-  type        = bool
+  type        = string
   description = "The date when the check will be automatically enabled."
 }
 

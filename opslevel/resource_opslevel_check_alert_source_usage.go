@@ -71,8 +71,8 @@ func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.C
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.AlertType = types.StringValue(string(check.AlertSourceType))
-	if planModel.AlertNamePredicate != nil {
-		stateModel.AlertNamePredicate = NewPredicateModel(check.AlertSourceNamePredicate)
+	if planModel.AlertNamePredicate != nil && check.AlertSourceNamePredicate != nil {
+		stateModel.AlertNamePredicate = NewPredicateModel(*check.AlertSourceNamePredicate)
 	}
 
 	return stateModel
