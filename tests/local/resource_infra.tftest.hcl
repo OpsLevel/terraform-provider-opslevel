@@ -62,7 +62,7 @@ run "resource_infra_big" {
   }
 
   assert {
-    condition     = startswith(opslevel_infrastructure.big_infra.owner, var.id_prefix)
+    condition     = startswith(opslevel_infrastructure.big_infra.owner, "Z2lkOi8v")
     error_message = "wrong owner in opslevel_infrastructure.big_infra"
   }
 
