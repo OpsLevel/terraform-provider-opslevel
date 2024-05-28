@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/opslevel/opslevel-go/v2024 v2024.5.13
+	github.com/opslevel/opslevel-go/v2024 v2024.5.28
 	github.com/relvacode/iso8601 v1.4.0
 	golang.org/x/net v0.25.0
 )

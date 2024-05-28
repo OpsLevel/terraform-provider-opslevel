@@ -41,9 +41,9 @@ type CheckRepositoryGrepResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 	LastUpdated types.String `tfsdk:"last_updated"`
 
-	DirectorySearch       types.Bool      `tfsdk:"directory_search"`
-	Filepaths             types.List      `tfsdk:"filepaths"`
-	FileContentsPredicate *PredicateModel `tfsdk:"file_contents_predicate"`
+	DirectorySearch       types.Bool     `tfsdk:"directory_search"`
+	Filepaths             types.List     `tfsdk:"filepaths"`
+	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
 }
 
 func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
@@ -72,9 +72,7 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
 	stateModel.Filepaths = data
-	if check.RepositoryGrepCheckFragment.FileContentsPredicate != nil {
-		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryGrepCheckFragment.FileContentsPredicate)
-	}
+	stateModel.FileContentsPredicate = *NewPredicateModel(check.RepositoryGrepCheckFragment.FileContentsPredicate)
 
 	return stateModel, diags
 }
@@ -136,9 +134,7 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
-	}
+	input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
 
 	data, err := r.client.CreateCheckRepositoryGrep(input)
 	if err != nil {
@@ -206,11 +202,7 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
-	} else {
-		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{}
-	}
+	input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositoryGrep(input)
 	if err != nil {
