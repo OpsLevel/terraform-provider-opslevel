@@ -225,6 +225,10 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
+	if serviceRepository == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("expected ServiceRepository not found for service '%s'", currentStateModel.Service.ValueString()))
+		return
+	}
 
 	verifiedStateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 
