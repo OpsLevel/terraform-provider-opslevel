@@ -1,0 +1,24 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Tests
+        run: task test-integration
+        env:
+          OPSLEVEL_API_TOKEN: ${{ secrets.OPSLEVEL_PAT_API_TOKEN }}
