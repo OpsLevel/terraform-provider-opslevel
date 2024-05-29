@@ -192,7 +192,7 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var currentStateModel ServiceRepositoryResourceModel
+	var currentStateModel, verifiedStateModel ServiceRepositoryResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
@@ -225,8 +225,11 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
-
-	verifiedStateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
+	if serviceRepository == nil {
+		verifiedStateModel = ServiceRepositoryResourceModel{}
+	} else {
+		verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
@@ -283,11 +286,16 @@ func (r *ServiceRepositoryResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
+	if planModel.Id.IsNull() {
+		tflog.Trace(ctx, "ServiceRepository resource to delete already does not exist")
+		return
+	}
+
 	if err := r.client.DeleteServiceRepository(opslevel.ID(planModel.Id.ValueString())); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service repository, got error: %s", err))
 		return
 	}
-	tflog.Trace(ctx, "deleted a serviceRepository resource")
+	tflog.Trace(ctx, "deleted a ServiceRepository resource")
 }
 
 func (r *ServiceRepositoryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
