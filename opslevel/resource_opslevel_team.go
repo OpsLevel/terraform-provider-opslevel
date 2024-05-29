@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -80,7 +79,6 @@ func (teamResource *TeamResource) Metadata(ctx context.Context, req resource.Met
 }
 
 func (teamResource *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	userRoles := []string{"contributor", "manager"}
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Team Resource",
 		Attributes: map[string]schema.Attribute{
@@ -126,9 +124,6 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 						"role": schema.StringAttribute{
 							Description: "The role of the team member.",
 							Required:    true,
-							Validators: []validator.String{
-								stringvalidator.OneOf(userRoles...),
-							},
 						},
 					},
 				},
