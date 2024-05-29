@@ -22,7 +22,7 @@ run "resource_rubric_category_create_with_all_fields" {
   }
 
   assert {
-    condition     = startswith(opslevel_rubric_category.test.id, "Z2lkOi8v")
+    condition     = startswith(opslevel_rubric_category.test.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.rubric_category_one)
   }
 

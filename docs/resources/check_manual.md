@@ -48,7 +48,7 @@ resource "opslevel_check_manual" "example" {
   owner     = data.opslevel_team.devs.id
   filter    = data.opslevel_filter.tier1.id
   update_frequency = {
-    starting_data = time_static.initial.id
+    starting_date = time_static.initial.id
     time_scale    = "week"
     value         = 1
   }

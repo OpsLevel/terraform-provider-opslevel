@@ -52,7 +52,7 @@ run "resource_webhook_action_create_with_all_fields" {
   }
 
   assert {
-    condition     = startswith(opslevel_webhook_action.test.id, "Z2lkOi8v")
+    condition     = startswith(opslevel_webhook_action.test.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.webhook_action_one)
   }
 
@@ -127,7 +127,7 @@ run "resource_webhook_action_update_all_fields" {
   }
 
   assert {
-    condition     = startswith(opslevel_webhook_action.test.id, "Z2lkOi8v")
+    condition     = startswith(opslevel_webhook_action.test.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.webhook_action_one)
   }
 
