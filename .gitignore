@@ -44,6 +44,7 @@ examples/.terraform.lock.hcl
 .terraform.lock.hcl
 ./workspace/main.tf
 tests/**/backend.tf
+tests/**/main.tf
 workspace/*.tf*
 workspace/.terraform.d/
 workspace/tophatting.md

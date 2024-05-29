@@ -14,17 +14,17 @@ data "opslevel_rubric_level" "first_level_by_id" {
   }
 }
 
-data "opslevel_rubric_level" "first_level_by_index" {
-  filter {
-    field = "index"
-    value = data.opslevel_rubric_levels.all.rubric_levels[0].index
-  }
-}
-
 data "opslevel_rubric_level" "first_level_by_name" {
   filter {
     field = "name"
     value = data.opslevel_rubric_levels.all.rubric_levels[0].name
+  }
+}
+
+data "opslevel_rubric_level" "greatest_level_by_index" {
+  filter {
+    field = "index"
+    value = max(data.opslevel_rubric_levels.all.rubric_levels[*].index...)
   }
 }
 
