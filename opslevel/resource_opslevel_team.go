@@ -166,7 +166,10 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(team, planModel); err != nil {
+
+	aliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	resp.Diagnostics.Append(diags...)
+	if err = teamResource.reconcileTeamAliases(team, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
@@ -264,7 +267,10 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(updatedTeam, planModel); err != nil {
+
+	aliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	resp.Diagnostics.Append(diags...)
+	if err = teamResource.reconcileTeamAliases(updatedTeam, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
@@ -316,13 +322,7 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 	return nil, nil
 }
 
-func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data TeamResourceModel) error {
-	// get list of expected aliases from terraform
-	tmp := data.Aliases.Elements()
-	expectedAliases := make([]string, len(tmp))
-	for i, alias := range tmp {
-		expectedAliases[i] = unquote(alias.String())
-	}
+func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, expectedAliases []string) error {
 	// get list of existing aliases from OpsLevel
 	existingAliases := team.ManagedAliases
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -94,6 +95,9 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 				ElementType: types.StringType,
 				Description: "The aliases for the infrastructure resource.",
 				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.UniqueValues(),
+				},
 			},
 			"data": schema.StringAttribute{
 				Description: "The data of the infrastructure resource in JSON format.",
