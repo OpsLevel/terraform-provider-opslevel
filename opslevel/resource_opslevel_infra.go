@@ -95,6 +95,9 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 				ElementType: types.StringType,
 				Description: "The aliases for the infrastructure resource.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listSortStringModifier{},
+				},
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 				},

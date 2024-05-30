@@ -86,6 +86,9 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the team.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listSortStringModifier{},
+				},
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 				},

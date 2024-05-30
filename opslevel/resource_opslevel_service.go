@@ -124,6 +124,9 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the service.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listSortStringModifier{},
+				},
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 				},
