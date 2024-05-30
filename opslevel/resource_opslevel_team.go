@@ -64,6 +64,9 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel Te
 		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
+	if ListValueStringsAreEqual(ctx, givenModel.Aliases, teamResourceModel.Aliases) {
+		teamResourceModel.Aliases = givenModel.Aliases
+	}
 
 	if len(givenModel.Member) > 0 && team.Memberships != nil {
 		for _, mem := range team.Memberships.Nodes {

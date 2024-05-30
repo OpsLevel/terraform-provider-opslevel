@@ -52,7 +52,7 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func newServiceResourceModel(ctx context.Context, service opslevel.Service, ownerIdentifier string) (ServiceResourceModel, diag.Diagnostics) {
+func newServiceResourceModel(ctx context.Context, service opslevel.Service, givenModel ServiceResourceModel) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -62,7 +62,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, owne
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
-		Owner:           OptionalStringValue(ownerIdentifier),
+		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
@@ -74,6 +74,9 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, owne
 		if diags.HasError() {
 			return serviceResourceModel, diags
 		}
+	}
+	if ListValueStringsAreEqual(ctx, givenModel.Aliases, serviceResourceModel.Aliases) {
+		serviceResourceModel.Aliases = givenModel.Aliases
 	}
 
 	if service.Tags != nil && len(service.Tags.Nodes) > 0 {
@@ -277,7 +280,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -305,7 +308,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -401,7 +404,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
