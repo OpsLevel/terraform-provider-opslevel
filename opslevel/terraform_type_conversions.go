@@ -83,7 +83,7 @@ func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) 
 	return dataAsSlice, diags
 }
 
-// Converts a basetypes.ListValue to a []string
+// Converts a basetypes.SetValue to a []string
 func SetValueToStringSlice(ctx context.Context, setValue basetypes.SetValue) ([]string, diag.Diagnostics) {
 	dataAsSlice := []string{}
 	if setValue.IsNull() {

@@ -38,7 +38,7 @@ run "resource_infra_big" {
   }
 
   assert {
-    condition     = opslevel_infrastructure.big_infra.aliases == tolist(["big-infra"])
+    condition     = contains(opslevel_infrastructure.big_infra.aliases, "big-infra")
     error_message = "wrong aliases in opslevel_infrastructure.big_infra"
   }
 

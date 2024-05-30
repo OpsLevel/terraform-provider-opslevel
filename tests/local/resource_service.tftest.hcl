@@ -9,7 +9,10 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.aliases == tolist(["service-1", "service-2"])
+    condition = alltrue([
+      contains(opslevel_service.big.aliases, "service-1"),
+      contains(opslevel_service.big.aliases, "service-2"),
+    ])
     error_message = "wrong aliases in opslevel_service.big"
   }
 

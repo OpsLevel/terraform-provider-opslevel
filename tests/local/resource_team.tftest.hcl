@@ -9,7 +9,10 @@ run "resource_team_big" {
   }
 
   assert {
-    condition     = opslevel_team.big.aliases[0] == "the_big_team" && opslevel_team.big.aliases[1] == "big_team"
+    condition = alltrue([
+      contains(opslevel_team.big.aliases, "big_team"),
+      contains(opslevel_team.big.aliases, "the_big_team"),
+    ])
     error_message = "wrong aliases in opslevel_team.big"
   }
 
