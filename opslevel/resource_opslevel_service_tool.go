@@ -35,7 +35,6 @@ type ServiceToolResourceModel struct {
 	Category     types.String `tfsdk:"category"`
 	Environment  types.String `tfsdk:"environment"`
 	Id           types.String `tfsdk:"id"`
-	LastUpdated  types.String `tfsdk:"last_updated"`
 	Name         types.String `tfsdk:"name"`
 	Service      types.String `tfsdk:"service"`
 	ServiceAlias types.String `tfsdk:"service_alias"`
@@ -85,9 +84,6 @@ func (r *ServiceToolResource) Schema(ctx context.Context, req resource.SchemaReq
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The display name of the tool.",
@@ -160,7 +156,6 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 	stateModel := NewServiceToolResourceModel(ctx, *serviceTool, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service tool resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -228,7 +223,6 @@ func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	stateModel := NewServiceToolResourceModel(ctx, *serviceTool, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a service tool resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

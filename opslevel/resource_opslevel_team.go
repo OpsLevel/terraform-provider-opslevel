@@ -34,7 +34,6 @@ func NewTeamResource() resource.Resource {
 type TeamResourceModel struct {
 	Aliases          types.List   `tfsdk:"aliases"`
 	Id               types.String `tfsdk:"id"`
-	LastUpdated      types.String `tfsdk:"last_updated"`
 	Member           []TeamMember `tfsdk:"member"`
 	Name             types.String `tfsdk:"name"`
 	Parent           types.String `tfsdk:"parent"`
@@ -96,9 +95,6 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The team's display name.",
@@ -182,7 +178,6 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		createdTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
 	}
 
-	createdTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamResourceModel)...)
 }
@@ -278,7 +273,6 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		// TODO: error thrown if config has alias from the parent team that is not the default alias
 		updatedTeamResourceModel.Parent = OptionalStringValue(updatedTeam.ParentTeam.Alias)
 	}
-	updatedTeamResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamResourceModel)...)
 }

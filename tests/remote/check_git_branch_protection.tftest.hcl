@@ -97,7 +97,6 @@ run "resource_check_git_branch_protection_create_with_all_fields" {
       can(opslevel_check_git_branch_protection.test.enabled),
       can(opslevel_check_git_branch_protection.test.filter),
       can(opslevel_check_git_branch_protection.test.id),
-      can(opslevel_check_git_branch_protection.test.last_updated),
       can(opslevel_check_git_branch_protection.test.level),
       can(opslevel_check_git_branch_protection.test.name),
       can(opslevel_check_git_branch_protection.test.notes),

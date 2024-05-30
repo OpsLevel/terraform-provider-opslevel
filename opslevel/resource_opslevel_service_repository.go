@@ -35,7 +35,6 @@ type ServiceRepositoryResource struct {
 type ServiceRepositoryResourceModel struct {
 	BaseDirectory   types.String `tfsdk:"base_directory"`
 	Id              types.String `tfsdk:"id"`
-	LastUpdated     types.String `tfsdk:"last_updated"`
 	Name            types.String `tfsdk:"name"`
 	Repository      types.String `tfsdk:"repository"`
 	RepositoryAlias types.String `tfsdk:"repository_alias"`
@@ -47,7 +46,6 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 	stateModel := ServiceRepositoryResourceModel{
 		BaseDirectory: OptionalStringValue(serviceRepository.BaseDirectory),
 		Id:            ComputedStringValue(string(serviceRepository.Id)),
-		LastUpdated:   planModel.LastUpdated,
 		Name:          OptionalStringValue(serviceRepository.DisplayName),
 	}
 	if planModel.Repository.ValueString() == string(serviceRepository.Repository.Id) {
@@ -91,9 +89,6 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name displayed in the UI for the service repository.",
@@ -185,7 +180,6 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service repository resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -271,7 +265,6 @@ func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	stateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a service repository resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

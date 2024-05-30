@@ -1,5 +1,5 @@
 mock_resource "opslevel_integration_aws" {
-  # placeholder - only computed fields here are "id" and "last_updated"
+  # placeholder - only computed fields here are "id"
   defaults = {}
 }
 

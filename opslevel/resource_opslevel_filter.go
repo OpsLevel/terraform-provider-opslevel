@@ -33,11 +33,10 @@ type FilterResource struct {
 
 // FilterResourceModel describes the Filter managed resource.
 type FilterResourceModel struct {
-	Connective  types.String      `tfsdk:"connective"`
-	Id          types.String      `tfsdk:"id"`
-	LastUpdated types.String      `tfsdk:"last_updated"`
-	Name        types.String      `tfsdk:"name"`
-	Predicate   []filterPredicate `tfsdk:"predicate"`
+	Connective types.String      `tfsdk:"connective"`
+	Id         types.String      `tfsdk:"id"`
+	Name       types.String      `tfsdk:"name"`
+	Predicate  []filterPredicate `tfsdk:"predicate"`
 }
 
 type filterPredicate struct {
@@ -110,9 +109,6 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The filter's display name.",
@@ -194,7 +190,6 @@ func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	stateModel := NewFilterResourceModel(*filter)
 	stateModel.Connective = planModel.Connective
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a filter resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -254,7 +249,6 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	stateModel := NewFilterResourceModel(*updatedFilter)
 	stateModel.Connective = planModel.Connective
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a filter resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

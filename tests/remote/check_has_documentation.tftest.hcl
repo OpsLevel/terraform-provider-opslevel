@@ -99,7 +99,6 @@ run "resource_check_has_documentation_create_with_all_fields" {
       can(opslevel_check_has_documentation.test.enabled),
       can(opslevel_check_has_documentation.test.filter),
       can(opslevel_check_has_documentation.test.id),
-      can(opslevel_check_has_documentation.test.last_updated),
       can(opslevel_check_has_documentation.test.level),
       can(opslevel_check_has_documentation.test.name),
       can(opslevel_check_has_documentation.test.notes),

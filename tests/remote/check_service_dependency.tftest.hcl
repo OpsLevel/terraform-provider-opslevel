@@ -97,7 +97,6 @@ run "resource_check_service_dependency_create_with_all_fields" {
       can(opslevel_check_service_dependency.test.enabled),
       can(opslevel_check_service_dependency.test.filter),
       can(opslevel_check_service_dependency.test.id),
-      can(opslevel_check_service_dependency.test.last_updated),
       can(opslevel_check_service_dependency.test.level),
       can(opslevel_check_service_dependency.test.name),
       can(opslevel_check_service_dependency.test.notes),

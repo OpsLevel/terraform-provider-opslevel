@@ -62,7 +62,6 @@ run "resource_system_create_with_all_fields" {
       can(opslevel_system.test.description),
       can(opslevel_system.test.domain),
       can(opslevel_system.test.id),
-      can(opslevel_system.test.last_updated),
       can(opslevel_system.test.name),
       can(opslevel_system.test.note),
       can(opslevel_system.test.owner),

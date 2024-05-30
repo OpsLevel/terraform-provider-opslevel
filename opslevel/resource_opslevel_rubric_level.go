@@ -35,7 +35,6 @@ type RubricLevelResourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Id          types.String `tfsdk:"id"`
 	Index       types.Int64  `tfsdk:"index"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 	Name        types.String `tfsdk:"name"`
 }
 
@@ -77,9 +76,6 @@ func (r *RubricLevelResource) Schema(ctx context.Context, req resource.SchemaReq
 					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
 			"name": schema.StringAttribute{
 				Description: "The display name of the rubric level.",
 				Required:    true,
@@ -112,7 +108,6 @@ func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	createdRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel)
-	createdRubricLevelResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a rubric level resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdRubricLevelResourceModel)...)
@@ -158,7 +153,6 @@ func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 	updatedRubricLevelResourceModel := NewRubricLevelResourceModel(*updatedRubricLevel)
-	updatedRubricLevelResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a rubric level resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedRubricLevelResourceModel)...)

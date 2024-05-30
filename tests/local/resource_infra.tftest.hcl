@@ -14,11 +14,6 @@ run "resource_infra_small" {
   }
 
   assert {
-    condition     = !contains([null, ""], opslevel_infrastructure.small_infra.last_updated)
-    error_message = "opslevel_infrastructure.small_infra last_updated should not be empty"
-  }
-
-  assert {
     condition = opslevel_infrastructure.small_infra.data == jsonencode({
       name = "small-query"
     })

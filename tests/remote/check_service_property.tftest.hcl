@@ -101,7 +101,6 @@ run "resource_check_service_property_create_with_all_fields" {
       can(opslevel_check_service_property.test.enabled),
       can(opslevel_check_service_property.test.filter),
       can(opslevel_check_service_property.test.id),
-      can(opslevel_check_service_property.test.last_updated),
       can(opslevel_check_service_property.test.level),
       can(opslevel_check_service_property.test.name),
       can(opslevel_check_service_property.test.notes),

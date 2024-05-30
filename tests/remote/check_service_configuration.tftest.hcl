@@ -97,7 +97,6 @@ run "resource_check_service_configuration_create_with_all_fields" {
       can(opslevel_check_service_configuration.test.enabled),
       can(opslevel_check_service_configuration.test.filter),
       can(opslevel_check_service_configuration.test.id),
-      can(opslevel_check_service_configuration.test.last_updated),
       can(opslevel_check_service_configuration.test.level),
       can(opslevel_check_service_configuration.test.name),
       can(opslevel_check_service_configuration.test.notes),

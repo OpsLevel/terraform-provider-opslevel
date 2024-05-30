@@ -32,7 +32,6 @@ func NewServiceTagResource() resource.Resource {
 type ServiceTagResourceModel struct {
 	Id           types.String `tfsdk:"id"`
 	Key          types.String `tfsdk:"key"`
-	LastUpdated  types.String `tfsdk:"last_updated"`
 	Service      types.String `tfsdk:"service"`
 	ServiceAlias types.String `tfsdk:"service_alias"`
 	Value        types.String `tfsdk:"value"`
@@ -62,9 +61,6 @@ func (serviceTagResource *ServiceTagResource) Schema(ctx context.Context, req re
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"key": schema.StringAttribute{
 				Description: "The tag's key.",
@@ -136,7 +132,6 @@ func (serviceTagResource *ServiceTagResource) Create(ctx context.Context, req re
 	} else {
 		createdServiceTagResourceModel.ServiceAlias = OptionalStringValue(serviceIdentifier)
 	}
-	createdServiceTagResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a service tag resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdServiceTagResourceModel)...)
 }
@@ -223,7 +218,6 @@ func (serviceTagResource *ServiceTagResource) Update(ctx context.Context, req re
 	} else {
 		updatedServiceTagResourceModel.ServiceAlias = OptionalStringValue(serviceIdentifier)
 	}
-	updatedServiceTagResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a service tag")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedServiceTagResourceModel)...)
 }

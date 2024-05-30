@@ -31,12 +31,11 @@ func NewTeamContactResource() resource.Resource {
 }
 
 type TeamContactResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Name        types.String `tfsdk:"name"`
-	Team        types.String `tfsdk:"team"`
-	Type        types.String `tfsdk:"type"`
-	Value       types.String `tfsdk:"value"`
+	Id    types.String `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	Team  types.String `tfsdk:"team"`
+	Type  types.String `tfsdk:"type"`
+	Value types.String `tfsdk:"value"`
 }
 
 func NewTeamContactResourceModel(teamContact opslevel.Contact) TeamContactResourceModel {
@@ -64,9 +63,6 @@ func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name shown in the UI for the contact.",
@@ -117,7 +113,6 @@ func (teamContactResource *TeamContactResource) Create(ctx context.Context, req 
 
 	createdTeamContactModel := NewTeamContactResourceModel(*contact)
 	createdTeamContactModel.Team = RequiredStringValue(teamIdentifier)
-	createdTeamContactModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team contact resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamContactModel)...)
 }
@@ -189,7 +184,6 @@ func (teamContactResource *TeamContactResource) Update(ctx context.Context, req 
 
 	updatedTeamContactResourceModel := NewTeamContactResourceModel(*contact)
 	updatedTeamContactResourceModel.Team = RequiredStringValue(teamIdentifier)
-	updatedTeamContactResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team contact resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamContactResourceModel)...)
 }

@@ -31,7 +31,6 @@ run "resource_property_definition_create_with_all_fields" {
       can(opslevel_property_definition.test.allowed_in_config_files),
       can(opslevel_property_definition.test.description),
       can(opslevel_property_definition.test.id),
-      can(opslevel_property_definition.test.last_updated),
       can(opslevel_property_definition.test.name),
       can(opslevel_property_definition.test.property_display_status),
       can(opslevel_property_definition.test.schema),

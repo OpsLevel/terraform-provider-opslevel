@@ -25,12 +25,11 @@ func NewPropertyAssignmentResource() resource.Resource {
 }
 
 type PropertyAssignmentResourceModel struct {
-	Definition  types.String `tfsdk:"definition"`
-	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Locked      types.Bool   `tfsdk:"locked"`
-	Owner       types.String `tfsdk:"owner"`
-	Value       types.String `tfsdk:"value"`
+	Definition types.String `tfsdk:"definition"`
+	Id         types.String `tfsdk:"id"`
+	Locked     types.Bool   `tfsdk:"locked"`
+	Owner      types.String `tfsdk:"owner"`
+	Value      types.String `tfsdk:"value"`
 }
 
 func NewPropertyAssignmentResourceModel(assignment opslevel.Property) PropertyAssignmentResourceModel {
@@ -61,9 +60,6 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"locked": schema.BoolAttribute{
 				Description: "If locked = true, the property has been set in opslevel.yml and cannot be modified in Terraform!",
@@ -119,7 +115,6 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 	}
 
 	stateModel := NewPropertyAssignmentResourceModel(*assignment)
-	stateModel.LastUpdated = timeLastUpdated()
 	// user is free to use either alias or ID for 'owner' and 'definition' fields
 	stateModel.Owner = planModel.Owner
 	stateModel.Definition = planModel.Definition

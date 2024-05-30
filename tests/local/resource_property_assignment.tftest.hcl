@@ -14,11 +14,6 @@ run "resource_property_assignment_using_aliases" {
   }
 
   assert {
-    condition     = can(opslevel_property_assignment.color_picker_using_aliases.last_updated)
-    error_message = "expected last updated to exist"
-  }
-
-  assert {
     condition     = opslevel_property_assignment.color_picker_using_aliases.owner == "some_service"
     error_message = "unexpected value for owner"
   }
@@ -47,11 +42,6 @@ run "resource_property_assignment_using_ids" {
   assert {
     condition     = opslevel_property_assignment.color_picker_using_id.id == "Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS85MzMyOQ:Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8zNzU"
     error_message = "expected ID (legacy field) to have 2 aliases separated by a ':'"
-  }
-
-  assert {
-    condition     = can(opslevel_property_assignment.color_picker_using_id.last_updated)
-    error_message = "expected last updated to exist"
   }
 
   assert {

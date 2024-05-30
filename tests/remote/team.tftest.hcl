@@ -44,7 +44,6 @@ run "resource_team_create_with_all_fields" {
     condition = alltrue([
       can(opslevel_team.test.aliases),
       can(opslevel_team.test.id),
-      can(opslevel_team.test.last_updated),
       can(opslevel_team.test.member),
       can(opslevel_team.test.name),
       can(opslevel_team.test.parent),

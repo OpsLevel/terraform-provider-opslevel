@@ -72,7 +72,6 @@ run "datasource_repository_first" {
 #    condition = alltrue([
 #      can(opslevel_repository.test.id),
 #      can(opslevel_repository.test.identifier),
-#      can(opslevel_repository.test.last_updated),
 #      can(opslevel_repository.test.owner),
 #    ])
 #    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.repository_one)

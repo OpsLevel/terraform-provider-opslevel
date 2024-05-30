@@ -30,10 +30,9 @@ type RepositoryResource struct {
 
 // RepositoryResourceModel describes the Repository managed resource.
 type RepositoryResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Identifier  types.String `tfsdk:"identifier"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Owner       types.String `tfsdk:"owner"`
+	Id         types.String `tfsdk:"id"`
+	Identifier types.String `tfsdk:"identifier"`
+	Owner      types.String `tfsdk:"owner"`
 }
 
 func NewRepositoryResourceModel(ctx context.Context, repository opslevel.Repository) RepositoryResourceModel {
@@ -66,9 +65,6 @@ func (r *RepositoryResource) Schema(ctx context.Context, req resource.SchemaRequ
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"owner": schema.StringAttribute{
 				Description: "The ID of the owner of the repository.",
@@ -127,8 +123,6 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		)
 		return
 	}
-
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a repository resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -221,7 +215,6 @@ func (r *RepositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 		)
 		return
 	}
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a repository resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

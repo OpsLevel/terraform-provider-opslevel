@@ -101,7 +101,6 @@ run "resource_check_service_ownership_create_with_all_fields" {
       can(opslevel_check_service_ownership.test.enabled),
       can(opslevel_check_service_ownership.test.filter),
       can(opslevel_check_service_ownership.test.id),
-      can(opslevel_check_service_ownership.test.last_updated),
       can(opslevel_check_service_ownership.test.level),
       can(opslevel_check_service_ownership.test.name),
       can(opslevel_check_service_ownership.test.notes),

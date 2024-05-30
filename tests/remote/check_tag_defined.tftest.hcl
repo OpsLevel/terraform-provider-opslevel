@@ -101,7 +101,6 @@ run "resource_check_tag_defined_create_with_all_fields" {
       can(opslevel_check_tag_defined.test.enabled),
       can(opslevel_check_tag_defined.test.filter),
       can(opslevel_check_tag_defined.test.id),
-      can(opslevel_check_tag_defined.test.last_updated),
       can(opslevel_check_tag_defined.test.level),
       can(opslevel_check_tag_defined.test.name),
       can(opslevel_check_tag_defined.test.notes),

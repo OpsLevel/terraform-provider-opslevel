@@ -41,7 +41,6 @@ type CheckAlertSourceUsageResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	AlertType          types.String    `tfsdk:"alert_type"`
 	AlertNamePredicate *PredicateModel `tfsdk:"alert_name_predicate"`
@@ -140,7 +139,6 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 	}
 
 	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check alert source usage resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -207,7 +205,6 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 	}
 
 	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check alert source usage resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

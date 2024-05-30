@@ -34,7 +34,6 @@ type DomainResourceModel struct {
 	Aliases     types.List   `tfsdk:"aliases"`
 	Description types.String `tfsdk:"description"`
 	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 	Name        types.String `tfsdk:"name"`
 	Note        types.String `tfsdk:"note"`
 	Owner       types.String `tfsdk:"owner"`
@@ -80,9 +79,6 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
 			"name": schema.StringAttribute{
 				Description: "The name of the domain.",
 				Required:    true,
@@ -122,7 +118,6 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
-	createdDomainResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdDomainResourceModel)...)
@@ -172,7 +167,6 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
 	resp.Diagnostics.Append(diags...)
-	updatedDomainResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)

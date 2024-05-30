@@ -19,11 +19,6 @@ run "resource_user" {
   }
 
   assert {
-    condition     = opslevel_user.mock_user.last_updated == "2022-02-24T13:50:07Z"
-    error_message = "wrong last_updated timestamp for opslevel_user"
-  }
-
-  assert {
     condition     = opslevel_user.mock_user.name == "Mock User"
     error_message = "wrong name for opslevel_user"
   }

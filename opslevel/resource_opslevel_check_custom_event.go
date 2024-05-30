@@ -38,7 +38,6 @@ type CheckCustomEventResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	Integration      types.String `tfsdk:"integration"`
 	PassPending      types.Bool   `tfsdk:"pass_pending"`
@@ -153,7 +152,6 @@ func (r *CheckCustomEventResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	stateModel := NewCheckCustomEventResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check custom event resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -221,7 +219,6 @@ func (r *CheckCustomEventResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	stateModel := NewCheckCustomEventResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check custom event resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

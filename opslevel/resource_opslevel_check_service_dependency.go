@@ -38,7 +38,6 @@ type CheckServiceDependencyResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
 func NewCheckServiceDependencyResourceModel(ctx context.Context, check opslevel.Check, planModel CheckServiceDependencyResourceModel) CheckServiceDependencyResourceModel {
@@ -114,7 +113,6 @@ func (r *CheckServiceDependencyResource) Create(ctx context.Context, req resourc
 	}
 
 	stateModel := NewCheckServiceDependencyResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check service dependency resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -176,7 +174,6 @@ func (r *CheckServiceDependencyResource) Update(ctx context.Context, req resourc
 	}
 
 	stateModel := NewCheckServiceDependencyResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check service dependency resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

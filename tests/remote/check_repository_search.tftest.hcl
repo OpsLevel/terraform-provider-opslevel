@@ -102,7 +102,6 @@ run "resource_check_repository_search_create_with_all_fields" {
       can(opslevel_check_repository_search.test.enabled),
       can(opslevel_check_repository_search.test.filter),
       can(opslevel_check_repository_search.test.id),
-      can(opslevel_check_repository_search.test.last_updated),
       can(opslevel_check_repository_search.test.level),
       can(opslevel_check_repository_search.test.name),
       can(opslevel_check_repository_search.test.notes),

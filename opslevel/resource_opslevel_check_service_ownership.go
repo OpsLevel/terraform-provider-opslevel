@@ -41,7 +41,6 @@ type CheckServiceOwnershipResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	RequireContactMethod types.Bool      `tfsdk:"require_contact_method"`
 	ContactMethod        types.String    `tfsdk:"contact_method"`
@@ -163,7 +162,6 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 	}
 
 	stateModel := NewCheckServiceOwnershipResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check service ownership resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -234,7 +232,6 @@ func (r *CheckServiceOwnershipResource) Update(ctx context.Context, req resource
 	}
 
 	stateModel := NewCheckServiceOwnershipResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check service ownership resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

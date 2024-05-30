@@ -41,7 +41,6 @@ type CheckToolUsageResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	ToolCategory         types.String    `tfsdk:"tool_category"`
 	ToolNamePredicate    *PredicateModel `tfsdk:"tool_name_predicate"`
@@ -156,7 +155,6 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 	}
 
 	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check tool usage resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -235,7 +233,6 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 	}
 
 	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check tool usage resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

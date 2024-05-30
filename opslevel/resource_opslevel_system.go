@@ -35,7 +35,6 @@ type SystemResourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Domain      types.String `tfsdk:"domain"`
 	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 	Name        types.String `tfsdk:"name"`
 	Note        types.String `tfsdk:"note"`
 	Owner       types.String `tfsdk:"owner"`
@@ -86,9 +85,6 @@ func (r *SystemResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
 			"name": schema.StringAttribute{
 				Description: "The name for the system.",
 				Required:    true,
@@ -131,7 +127,6 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	stateModel, diags := NewSystemResourceModel(ctx, *system)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a system resource")
@@ -190,7 +185,6 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	stateModel, diags := NewSystemResourceModel(ctx, *system)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a system resource")

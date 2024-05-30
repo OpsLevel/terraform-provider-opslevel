@@ -42,7 +42,6 @@ type ServiceResourceModel struct {
 	Framework                  types.String `tfsdk:"framework"`
 	Id                         types.String `tfsdk:"id"`
 	Language                   types.String `tfsdk:"language"`
-	LastUpdated                types.String `tfsdk:"last_updated"`
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
 	Owner                      types.String `tfsdk:"owner"`
@@ -156,9 +155,6 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"language": schema.StringAttribute{
 				Description: "The primary programming language that the service is written in.",
 				Optional:    true,
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"lifecycle_alias": schema.StringAttribute{
 				Description: "The lifecycle stage of the service.",
@@ -280,7 +276,6 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 	updateServiceResourceModelWithPlan(&newStateModel, planModel)
-	newStateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
@@ -404,7 +399,6 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 	updateServiceResourceModelWithPlan(&newStateModel, planModel)
-	newStateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a service resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
