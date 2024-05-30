@@ -38,7 +38,6 @@ type CheckRepositoryIntegratedResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
 func NewCheckRepositoryIntegratedResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryIntegratedResourceModel) CheckRepositoryIntegratedResourceModel {
@@ -114,7 +113,6 @@ func (r *CheckRepositoryIntegratedResource) Create(ctx context.Context, req reso
 	}
 
 	stateModel := NewCheckRepositoryIntegratedResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check repository integrated resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -176,7 +174,6 @@ func (r *CheckRepositoryIntegratedResource) Update(ctx context.Context, req reso
 	}
 
 	stateModel := NewCheckRepositoryIntegratedResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check repository integrated resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

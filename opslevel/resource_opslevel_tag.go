@@ -37,8 +37,7 @@ type TagResourceModel struct {
 	Key            types.String `tfsdk:"key"`
 	Value          types.String `tfsdk:"value"`
 
-	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
+	Id types.String `tfsdk:"id"`
 }
 
 func NewTagResourceModel(ctx context.Context, tag opslevel.Tag, planModel TagResourceModel) TagResourceModel {
@@ -98,9 +97,6 @@ func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
 		},
 	}
 }
@@ -134,7 +130,6 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 	stateModel := NewTagResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a tag resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

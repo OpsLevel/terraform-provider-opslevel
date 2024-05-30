@@ -28,7 +28,6 @@ run "resource_user_create_with_all_fields" {
     condition = alltrue([
       can(opslevel_user.test.email),
       can(opslevel_user.test.id),
-      can(opslevel_user.test.last_updated),
       can(opslevel_user.test.name),
       can(opslevel_user.test.role),
       can(opslevel_user.test.skip_welcome_email),

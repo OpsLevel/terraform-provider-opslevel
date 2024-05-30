@@ -1,4 +1,4 @@
-# TODO: finish
+# TODO: test predicate_list
 variables {
   filter_one  = "opslevel_filter"
   filters_all = "opslevel_filters"
@@ -27,7 +27,6 @@ run "resource_filter_create_with_all_fields" {
     condition = alltrue([
       can(opslevel_filter.test.connective),
       can(opslevel_filter.test.id),
-      can(opslevel_filter.test.last_updated),
       can(opslevel_filter.test.name),
       can(opslevel_filter.test.predicate),
     ])

@@ -31,9 +31,8 @@ type RubricCategoryResource struct {
 
 // RubricCategoryResourceModel describes the rubric category managed resource.
 type RubricCategoryResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Name        types.String `tfsdk:"name"`
+	Id   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
 }
 
 func NewRubricCategoryResourceModel(rubricCategory opslevel.Category) RubricCategoryResourceModel {
@@ -59,9 +58,6 @@ func (r *RubricCategoryResource) Schema(ctx context.Context, req resource.Schema
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The display name of the rubric category.",
@@ -89,7 +85,6 @@ func (r *RubricCategoryResource) Create(ctx context.Context, req resource.Create
 	}
 
 	createdRubricCategoryResourceModel := NewRubricCategoryResourceModel(*rubricCategory)
-	createdRubricCategoryResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a rubric category resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdRubricCategoryResourceModel)...)
@@ -134,7 +129,6 @@ func (r *RubricCategoryResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	updatedRubricCategoryResourceModel := NewRubricCategoryResourceModel(*updatedRubricCategory)
-	updatedRubricCategoryResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a rubric category resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedRubricCategoryResourceModel)...)

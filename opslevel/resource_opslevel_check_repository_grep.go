@@ -39,7 +39,6 @@ type CheckRepositoryGrepResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	DirectorySearch       types.Bool     `tfsdk:"directory_search"`
 	Filepaths             types.List     `tfsdk:"filepaths"`
@@ -143,7 +142,6 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 	}
 
 	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a check repository grep resource")
@@ -211,7 +209,6 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 	}
 
 	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a check repository grep resource")

@@ -53,7 +53,6 @@ type InfrastructureResourceModel struct {
 	Aliases      types.List         `tfsdk:"aliases"`
 	Data         types.String       `tfsdk:"data"`
 	Id           types.String       `tfsdk:"id"`
-	LastUpdated  types.String       `tfsdk:"last_updated"`
 	ProviderData *InfraProviderData `tfsdk:"provider_data"`
 	Owner        types.String       `tfsdk:"owner"`
 	Schema       types.String       `tfsdk:"schema"`
@@ -109,9 +108,6 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"owner": schema.StringAttribute{
 				Description: "The id of the team that owns the infrastructure resource. Does not support aliases!",
@@ -182,7 +178,6 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 	createdInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure)
 	resp.Diagnostics.Append(diags...)
 	createdInfrastructureResourceModel.Aliases = data.Aliases
-	createdInfrastructureResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdInfrastructureResourceModel)...)
@@ -250,7 +245,6 @@ func (r *InfrastructureResource) Update(ctx context.Context, req resource.Update
 
 	resp.Diagnostics.Append(diags...)
 	updatedInfrastructureResourceModel.Aliases = data.Aliases
-	updatedInfrastructureResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedInfrastructureResourceModel)...)

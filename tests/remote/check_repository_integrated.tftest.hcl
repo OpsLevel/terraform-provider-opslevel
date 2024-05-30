@@ -97,7 +97,6 @@ run "resource_check_repository_integrated_create_with_all_fields" {
       can(opslevel_check_repository_integrated.test.enabled),
       can(opslevel_check_repository_integrated.test.filter),
       can(opslevel_check_repository_integrated.test.id),
-      can(opslevel_check_repository_integrated.test.last_updated),
       can(opslevel_check_repository_integrated.test.level),
       can(opslevel_check_repository_integrated.test.name),
       can(opslevel_check_repository_integrated.test.notes),

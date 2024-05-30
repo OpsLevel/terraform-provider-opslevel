@@ -32,7 +32,6 @@ type PropertyDefinitionResourceModel struct {
 	AllowedInConfigFiles  types.Bool   `tfsdk:"allowed_in_config_files"`
 	Description           types.String `tfsdk:"description"`
 	Id                    types.String `tfsdk:"id"`
-	LastUpdated           types.String `tfsdk:"last_updated"`
 	Name                  types.String `tfsdk:"name"`
 	PropertyDisplayStatus types.String `tfsdk:"property_display_status"`
 	Schema                types.String `tfsdk:"schema"`
@@ -65,9 +64,6 @@ func (resource *PropertyDefinitionResource) Schema(ctx context.Context, req reso
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"allowed_in_config_files": schema.BoolAttribute{
 				Description: "Whether or not the property is allowed to be set in opslevel.yml config files.",
@@ -133,7 +129,6 @@ func (resource *PropertyDefinitionResource) Create(ctx context.Context, req reso
 	}
 
 	stateModel := NewPropertyDefinitionResourceModel(*definition)
-	stateModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, fmt.Sprintf("created a definition resource with id '%s'", definition.Id))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
@@ -189,7 +184,6 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 	}
 
 	stateModel := NewPropertyDefinitionResourceModel(*definition)
-	stateModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, fmt.Sprintf("updated a definition resource with id '%s'", id))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }

@@ -98,7 +98,6 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
       can(opslevel_check_has_recent_deploy.test.enabled),
       can(opslevel_check_has_recent_deploy.test.filter),
       can(opslevel_check_has_recent_deploy.test.id),
-      can(opslevel_check_has_recent_deploy.test.last_updated),
       can(opslevel_check_has_recent_deploy.test.level),
       can(opslevel_check_has_recent_deploy.test.name),
       can(opslevel_check_has_recent_deploy.test.notes),

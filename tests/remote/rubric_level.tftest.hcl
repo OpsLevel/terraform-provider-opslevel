@@ -27,7 +27,6 @@ run "resource_rubric_level_create_with_all_fields" {
       can(opslevel_rubric_level.test.description),
       can(opslevel_rubric_level.test.id),
       can(opslevel_rubric_level.test.index),
-      can(opslevel_rubric_level.test.last_updated),
       can(opslevel_rubric_level.test.name),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.rubric_level_one)

@@ -38,7 +38,6 @@ type CheckServiceConfigurationResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
 func NewCheckServiceConfigurationResourceModel(ctx context.Context, check opslevel.Check, planModel CheckServiceConfigurationResourceModel) CheckServiceConfigurationResourceModel {
@@ -114,7 +113,6 @@ func (r *CheckServiceConfigurationResource) Create(ctx context.Context, req reso
 	}
 
 	stateModel := NewCheckServiceConfigurationResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check service configuration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -176,7 +174,6 @@ func (r *CheckServiceConfigurationResource) Update(ctx context.Context, req reso
 	}
 
 	stateModel := NewCheckServiceConfigurationResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check service configuration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

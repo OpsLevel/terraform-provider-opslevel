@@ -41,7 +41,6 @@ type CheckHasDocumentationResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	DocumentType    types.String `tfsdk:"document_type"`
 	DocumentSubtype types.String `tfsdk:"document_subtype"`
@@ -143,7 +142,6 @@ func (r *CheckHasDocumentationResource) Create(ctx context.Context, req resource
 	}
 
 	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check has documentation resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

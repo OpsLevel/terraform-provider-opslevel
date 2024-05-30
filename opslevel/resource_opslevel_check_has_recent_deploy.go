@@ -38,7 +38,6 @@ type CheckHasRecentDeployResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	Days types.Int64 `tfsdk:"days"`
 }
@@ -124,7 +123,6 @@ func (r *CheckHasRecentDeployResource) Create(ctx context.Context, req resource.
 	}
 
 	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check has recent deploy resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -188,7 +186,6 @@ func (r *CheckHasRecentDeployResource) Update(ctx context.Context, req resource.
 	}
 
 	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check has recent deploy resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

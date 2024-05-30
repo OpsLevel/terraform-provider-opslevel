@@ -40,7 +40,6 @@ type CheckGitBranchProtectionResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
 func NewCheckGitBranchProtectionResourceModel(ctx context.Context, check opslevel.Check, planModel CheckGitBranchProtectionResourceModel) CheckGitBranchProtectionResourceModel {
@@ -116,7 +115,6 @@ func (r *CheckGitBranchProtectionResource) Create(ctx context.Context, req resou
 	}
 
 	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check git branch protection resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -178,7 +176,6 @@ func (r *CheckGitBranchProtectionResource) Update(ctx context.Context, req resou
 	}
 
 	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check git branch protection resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

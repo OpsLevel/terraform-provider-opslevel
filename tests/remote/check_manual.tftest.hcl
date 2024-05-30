@@ -107,7 +107,6 @@ run "resource_check_manual_create_with_all_fields" {
       can(opslevel_check_manual.test.enabled),
       can(opslevel_check_manual.test.filter),
       can(opslevel_check_manual.test.id),
-      can(opslevel_check_manual.test.last_updated),
       can(opslevel_check_manual.test.level),
       can(opslevel_check_manual.test.name),
       can(opslevel_check_manual.test.notes),

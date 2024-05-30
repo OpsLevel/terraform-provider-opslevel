@@ -31,13 +31,12 @@ type SecretResource struct {
 
 // SecretResourceModel describes the Secret managed resource.
 type SecretResourceModel struct {
-	Alias       types.String `tfsdk:"alias"`
-	CreatedAt   types.String `tfsdk:"created_at"`
-	Id          types.String `tfsdk:"id"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Owner       types.String `tfsdk:"owner"`
-	UpdatedAt   types.String `tfsdk:"updated_at"`
-	Value       types.String `tfsdk:"value"`
+	Alias     types.String `tfsdk:"alias"`
+	CreatedAt types.String `tfsdk:"created_at"`
+	Id        types.String `tfsdk:"id"`
+	Owner     types.String `tfsdk:"owner"`
+	UpdatedAt types.String `tfsdk:"updated_at"`
+	Value     types.String `tfsdk:"value"`
 }
 
 func NewSecretResourceModel(secret opslevel.Secret, ownerIdentifier, sensitiveValue string) SecretResourceModel {
@@ -78,9 +77,6 @@ func (r *SecretResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
 			"owner": schema.StringAttribute{
 				Description: "The owner of this secret.",
 				Required:    true,
@@ -117,7 +113,6 @@ func (r *SecretResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	createdSecretResourceModel := NewSecretResourceModel(*secret, data.Owner.ValueString(), data.Value.ValueString())
-	createdSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a secret resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdSecretResourceModel)...)
@@ -162,7 +157,6 @@ func (r *SecretResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	updatedSecretResourceModel := NewSecretResourceModel(*updatedSecret, data.Owner.ValueString(), data.Value.ValueString())
-	updatedSecretResourceModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a secret resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedSecretResourceModel)...)

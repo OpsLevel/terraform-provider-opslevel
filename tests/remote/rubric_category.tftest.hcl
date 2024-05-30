@@ -15,7 +15,6 @@ run "resource_rubric_category_create_with_all_fields" {
   assert {
     condition = alltrue([
       can(opslevel_rubric_category.test.id),
-      can(opslevel_rubric_category.test.last_updated),
       can(opslevel_rubric_category.test.name),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.rubric_category_one)

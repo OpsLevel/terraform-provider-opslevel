@@ -37,12 +37,11 @@ func NewTeamTagResource() resource.Resource {
 }
 
 type TeamTagResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Key         types.String `tfsdk:"key"`
-	LastUpdated types.String `tfsdk:"last_updated"`
-	Team        types.String `tfsdk:"team"`
-	TeamAlias   types.String `tfsdk:"team_alias"`
-	Value       types.String `tfsdk:"value"`
+	Id        types.String `tfsdk:"id"`
+	Key       types.String `tfsdk:"key"`
+	Team      types.String `tfsdk:"team"`
+	TeamAlias types.String `tfsdk:"team_alias"`
+	Value     types.String `tfsdk:"value"`
 }
 
 func NewTeamTagResourceModel(teamTag opslevel.Tag) TeamTagResourceModel {
@@ -69,9 +68,6 @@ func (teamTagResource *TeamTagResource) Schema(ctx context.Context, req resource
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"key": schema.StringAttribute{
 				Description: "The tag's key.",
@@ -143,7 +139,6 @@ func (teamTagResource *TeamTagResource) Create(ctx context.Context, req resource
 	} else {
 		createdTeamTagResourceModel.TeamAlias = OptionalStringValue(teamIdentifier)
 	}
-	createdTeamTagResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "created a team tag resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdTeamTagResourceModel)...)
 }
@@ -230,7 +225,6 @@ func (teamTagResource *TeamTagResource) Update(ctx context.Context, req resource
 	} else {
 		updatedTeamTagResourceModel.TeamAlias = OptionalStringValue(teamIdentifier)
 	}
-	updatedTeamTagResourceModel.LastUpdated = timeLastUpdated()
 	tflog.Trace(ctx, "updated a team tag")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamTagResourceModel)...)
 }

@@ -35,7 +35,6 @@ type UserResource struct {
 type UserResourceModel struct {
 	Email            types.String `tfsdk:"email"`
 	Id               types.String `tfsdk:"id"`
-	LastUpdated      types.String `tfsdk:"last_updated"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
 	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"`
@@ -74,9 +73,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the user.",
@@ -122,7 +118,6 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 	stateModel = NewUserResourceModel(*user, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -168,7 +163,6 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 	stateModel = NewUserResourceModel(*resource, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

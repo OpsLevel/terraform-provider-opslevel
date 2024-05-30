@@ -38,7 +38,6 @@ type CheckTagDefinedResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	TagKey       types.String    `tfsdk:"tag_key"`
 	TagPredicate *PredicateModel `tfsdk:"tag_predicate"`
@@ -133,7 +132,6 @@ func (r *CheckTagDefinedResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check tag defined resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -202,7 +200,6 @@ func (r *CheckTagDefinedResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check tag defined resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

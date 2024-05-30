@@ -80,7 +80,6 @@ run "resource_service_create_with_all_fields" {
       can(opslevel_service.test.framework),
       can(opslevel_service.test.id),
       can(opslevel_service.test.language),
-      can(opslevel_service.test.last_updated),
       can(opslevel_service.test.lifecycle_alias),
       can(opslevel_service.test.owner),
       can(opslevel_service.test.preferred_api_document_source),

@@ -103,7 +103,6 @@ run "resource_check_repository_grep_create_with_all_fields" {
       can(opslevel_check_repository_grep.test.enabled),
       can(opslevel_check_repository_grep.test.filter),
       can(opslevel_check_repository_grep.test.id),
-      can(opslevel_check_repository_grep.test.last_updated),
       can(opslevel_check_repository_grep.test.level),
       can(opslevel_check_repository_grep.test.name),
       can(opslevel_check_repository_grep.test.notes),

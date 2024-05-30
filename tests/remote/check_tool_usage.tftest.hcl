@@ -103,7 +103,6 @@ run "resource_check_tool_usage_create_with_all_fields" {
       can(opslevel_check_tool_usage.test.enabled),
       can(opslevel_check_tool_usage.test.filter),
       can(opslevel_check_tool_usage.test.id),
-      can(opslevel_check_tool_usage.test.last_updated),
       can(opslevel_check_tool_usage.test.level),
       can(opslevel_check_tool_usage.test.name),
       can(opslevel_check_tool_usage.test.notes),

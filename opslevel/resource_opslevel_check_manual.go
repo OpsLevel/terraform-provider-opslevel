@@ -47,7 +47,6 @@ type CheckManualResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	UpdateFrequency       *CheckUpdateFrequency `tfsdk:"update_frequency"`
 	UpdateRequiresComment types.Bool            `tfsdk:"update_requires_comment"`
@@ -171,7 +170,6 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -241,7 +239,6 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check manual resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

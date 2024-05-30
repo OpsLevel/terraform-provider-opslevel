@@ -39,7 +39,6 @@ type CheckRepositoryFileResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	DirectorySearch       types.Bool      `tfsdk:"directory_search"`
 	Filepaths             types.List      `tfsdk:"filepaths"`
@@ -150,7 +149,6 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 	}
 
 	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a check repository file resource")
@@ -222,7 +220,6 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 	}
 
 	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a check repository file resource")

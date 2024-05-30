@@ -41,7 +41,6 @@ type CheckServicePropertyResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	Property  types.String    `tfsdk:"property"`
 	Predicate *PredicateModel `tfsdk:"predicate"`
@@ -142,7 +141,6 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 	}
 
 	stateModel := NewCheckServicePropertyResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created a check service property resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -211,7 +209,6 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	}
 
 	stateModel := NewCheckServicePropertyResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated a check service property resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

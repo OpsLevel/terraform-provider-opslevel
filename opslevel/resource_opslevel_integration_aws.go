@@ -35,7 +35,6 @@ type IntegrationAwsResourceModel struct {
 	ExternalID            types.String `tfsdk:"external_id"`
 	IamRole               types.String `tfsdk:"iam_role"`
 	Id                    types.String `tfsdk:"id"`
-	LastUpdated           types.String `tfsdk:"last_updated"`
 	Name                  types.String `tfsdk:"name"`
 	OwnershipTagOverrides types.Bool   `tfsdk:"ownership_tag_overrides"`
 	OwnershipTagKeys      types.List   `tfsdk:"ownership_tag_keys"`
@@ -79,9 +78,6 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
 			},
 			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -136,7 +132,6 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "created an AWS integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -201,7 +196,6 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-	stateModel.LastUpdated = timeLastUpdated()
 
 	tflog.Trace(ctx, "updated an AWS integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

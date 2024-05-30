@@ -103,7 +103,6 @@ run "resource_check_repository_file_create_with_all_fields" {
       can(opslevel_check_repository_file.test.enabled),
       can(opslevel_check_repository_file.test.filter),
       can(opslevel_check_repository_file.test.id),
-      can(opslevel_check_repository_file.test.last_updated),
       can(opslevel_check_repository_file.test.level),
       can(opslevel_check_repository_file.test.name),
       can(opslevel_check_repository_file.test.notes),

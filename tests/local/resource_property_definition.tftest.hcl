@@ -14,11 +14,6 @@ run "resource_property_definition" {
   }
 
   assert {
-    condition     = can(opslevel_property_definition.color_picker.last_updated)
-    error_message = "expected last updated to be set"
-  }
-
-  assert {
     condition     = opslevel_property_definition.color_picker.allowed_in_config_files == false
     error_message = "unexpected value for allowed_in_config_files"
   }

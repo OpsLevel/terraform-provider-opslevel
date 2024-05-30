@@ -39,7 +39,6 @@ type CheckRepositorySearchResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
-	LastUpdated types.String `tfsdk:"last_updated"`
 
 	FileExtensions        types.List     `tfsdk:"file_extensions"`
 	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
@@ -136,7 +135,6 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 	}
 
 	stateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a check repository search resource")
@@ -203,7 +201,6 @@ func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource
 	}
 
 	stateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, planModel)
-	stateModel.LastUpdated = timeLastUpdated()
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a check repository search resource")

@@ -44,7 +44,6 @@ run "resource_domain_create_with_all_fields" {
       can(opslevel_domain.test.aliases),
       can(opslevel_domain.test.description),
       can(opslevel_domain.test.id),
-      can(opslevel_domain.test.last_updated),
       can(opslevel_domain.test.name),
       can(opslevel_domain.test.note),
       can(opslevel_domain.test.owner),
