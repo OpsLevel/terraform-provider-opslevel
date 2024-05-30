@@ -50,7 +50,7 @@ func newInfraProviderData(infrastructure opslevel.InfrastructureResource) *Infra
 
 // InfrastructureResourceModel describes the Infrastructure managed resource.
 type InfrastructureResourceModel struct {
-	Aliases      types.List         `tfsdk:"aliases"`
+	Aliases      types.Set          `tfsdk:"aliases"`
 	Data         types.String       `tfsdk:"data"`
 	Id           types.String       `tfsdk:"id"`
 	ProviderData *InfraProviderData `tfsdk:"provider_data"`
@@ -58,25 +58,33 @@ type InfrastructureResourceModel struct {
 	Schema       types.String       `tfsdk:"schema"`
 }
 
-func NewInfrastructureResourceModel(ctx context.Context, infrastructure opslevel.InfrastructureResource) (InfrastructureResourceModel, diag.Diagnostics) {
+func NewInfrastructureResourceModel(ctx context.Context, infrastructure opslevel.InfrastructureResource, givenModel InfrastructureResourceModel) (InfrastructureResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	var providerData *InfraProviderData
+
 	if infrastructure.ProviderData.AccountName != "" {
 		providerData = newInfraProviderData(infrastructure)
 	}
 
-	aliases, diags := OptionalStringListValue(ctx, infrastructure.Aliases)
-	if diags != nil && diags.HasError() {
-		return InfrastructureResourceModel{}, diags
-	}
-
-	return InfrastructureResourceModel{
-		Aliases:      aliases,
+	infrastructureResourceModel := InfrastructureResourceModel{
 		Data:         OptionalStringValue(infrastructure.Data.ToJSON()),
 		Id:           ComputedStringValue(infrastructure.Id),
 		ProviderData: providerData,
 		Owner:        RequiredStringValue(string(infrastructure.Owner.Id())),
 		Schema:       RequiredStringValue(infrastructure.Schema),
-	}, diags
+	}
+
+	if len(infrastructure.Aliases) == 0 && givenModel.Aliases.IsNull() {
+		infrastructureResourceModel.Aliases = types.SetNull(types.StringType)
+	} else {
+		aliases, diags := types.SetValueFrom(ctx, types.StringType, infrastructure.Aliases)
+		if diags != nil && diags.HasError() {
+			return InfrastructureResourceModel{}, diags
+		}
+		infrastructureResourceModel.Aliases = aliases
+	}
+
+	return infrastructureResourceModel, diags
 }
 
 func (r *InfrastructureResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -89,7 +97,7 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 		MarkdownDescription: "Infrastructure Resource",
 
 		Attributes: map[string]schema.Attribute{
-			"aliases": schema.ListAttribute{
+			"aliases": schema.SetAttribute{
 				ElementType: types.StringType,
 				Description: "The aliases for the infrastructure resource.",
 				Optional:    true,
@@ -145,15 +153,15 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 }
 
 func (r *InfrastructureResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data InfrastructureResourceModel
+	var planModel InfrastructureResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	infraInput, err := newInfraInput(data)
+	infraInput, err := newInfraInput(planModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel InfraInput, got error: %s", err))
 		return
@@ -165,9 +173,9 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	givenAliases, diags := ListValueToStringSlice(ctx, data.Aliases)
+	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", data.Aliases))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
 		return
 	}
 	if err = reconcileInfraAliases(*r.client, givenAliases, infrastructure); err != nil {
@@ -175,60 +183,60 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	createdInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure)
+	createdInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure, planModel)
 	resp.Diagnostics.Append(diags...)
-	createdInfrastructureResourceModel.Aliases = data.Aliases
+	createdInfrastructureResourceModel.Aliases = planModel.Aliases
 
 	tflog.Trace(ctx, "created a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdInfrastructureResourceModel)...)
 }
 
 func (r *InfrastructureResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data InfrastructureResourceModel
+	var stateModel InfrastructureResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	infrastructure, err := r.client.GetInfrastructure(data.Id.ValueString())
+	infrastructure, err := r.client.GetInfrastructure(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read infrastructure, got error: %s", err))
 		return
 	}
-	readInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure)
+	readInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure, stateModel)
 	resp.Diagnostics.Append(diags...)
-	readInfrastructureResourceModel.Aliases = data.Aliases
+	readInfrastructureResourceModel.Aliases = stateModel.Aliases
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readInfrastructureResourceModel)...)
 }
 
 func (r *InfrastructureResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data InfrastructureResourceModel
+	var planModel InfrastructureResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	infraInput, err := newInfraInput(data)
+	infraInput, err := newInfraInput(planModel)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create opslevel InfraInput, got error: %s", err))
 		return
 	}
-	updatedInfrastructure, err := r.client.UpdateInfrastructure(data.Id.ValueString(), infraInput)
+	updatedInfrastructure, err := r.client.UpdateInfrastructure(planModel.Id.ValueString(), infraInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update infrastructure, got error: %s", err))
 		return
 	}
 
-	givenAliases, diags := ListValueToStringSlice(ctx, data.Aliases)
+	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", data.Aliases))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
 		return
 	}
 	if err = reconcileInfraAliases(*r.client, givenAliases, updatedInfrastructure); err != nil {
@@ -236,30 +244,30 @@ func (r *InfrastructureResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	updatedInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *updatedInfrastructure)
+	updatedInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *updatedInfrastructure, planModel)
 
-	if data.ProviderData == nil && updatedInfrastructureResourceModel.ProviderData != nil {
+	if planModel.ProviderData == nil && updatedInfrastructureResourceModel.ProviderData != nil {
 		resp.Diagnostics.AddError("Known error", "Unable to unset 'provider_data' field for now. We have a planned fix for this.")
 		return
 	}
 
 	resp.Diagnostics.Append(diags...)
-	updatedInfrastructureResourceModel.Aliases = data.Aliases
+	updatedInfrastructureResourceModel.Aliases = planModel.Aliases
 
 	tflog.Trace(ctx, "updated a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedInfrastructureResourceModel)...)
 }
 
 func (r *InfrastructureResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data InfrastructureResourceModel
+	var stateModel InfrastructureResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteInfrastructure(data.Id.ValueString())
+	err := r.client.DeleteInfrastructure(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete infrastructure, got error: %s", err))
 		return
