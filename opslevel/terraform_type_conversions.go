@@ -83,6 +83,16 @@ func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) 
 	return dataAsSlice, diags
 }
 
+// Converts a basetypes.SetValue to a []string
+func SetValueToStringSlice(ctx context.Context, setValue basetypes.SetValue) ([]string, diag.Diagnostics) {
+	dataAsSlice := []string{}
+	if setValue.IsNull() {
+		return dataAsSlice, nil
+	}
+	diags := setValue.ElementsAs(ctx, &dataAsSlice, true)
+	return dataAsSlice, diags
+}
+
 // Converts a basetypes.MapValue to an opslevel.JSON
 func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (opslevel.JSON, diag.Diagnostics) {
 	mapAsJson := opslevel.JSON{}

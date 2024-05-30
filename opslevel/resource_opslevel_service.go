@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -36,7 +35,7 @@ type ServiceResource struct {
 
 // ServiceResourceModel describes the Service managed resource.
 type ServiceResourceModel struct {
-	Aliases                    types.List   `tfsdk:"aliases"`
+	Aliases                    types.Set    `tfsdk:"aliases"`
 	ApiDocumentPath            types.String `tfsdk:"api_document_path"`
 	Description                types.String `tfsdk:"description"`
 	Framework                  types.String `tfsdk:"framework"`
@@ -51,7 +50,7 @@ type ServiceResourceModel struct {
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
-func newServiceResourceModel(ctx context.Context, service opslevel.Service, ownerIdentifier string) (ServiceResourceModel, diag.Diagnostics) {
+func newServiceResourceModel(ctx context.Context, service opslevel.Service, givenModel ServiceResourceModel) (ServiceResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	serviceResourceModel := ServiceResourceModel{
 		ApiDocumentPath: OptionalStringValue(service.ApiDocumentPath),
@@ -61,18 +60,19 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, owne
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
-		Owner:           OptionalStringValue(ownerIdentifier),
+		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
 
-	if len(service.ManagedAliases) == 0 {
-		serviceResourceModel.Aliases = types.ListNull(types.StringType)
+	if len(service.ManagedAliases) == 0 && givenModel.Aliases.IsNull() {
+		serviceResourceModel.Aliases = types.SetNull(types.StringType)
 	} else {
-		serviceResourceModel.Aliases, diags = types.ListValueFrom(ctx, types.StringType, service.ManagedAliases)
-		if diags.HasError() {
-			return serviceResourceModel, diags
+		aliases, diags := types.SetValueFrom(ctx, types.StringType, service.ManagedAliases)
+		if diags != nil && diags.HasError() {
+			return ServiceResourceModel{}, diags
 		}
+		serviceResourceModel.Aliases = aliases
 	}
 
 	if service.Tags != nil && len(service.Tags.Nodes) > 0 {
@@ -119,13 +119,10 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 		MarkdownDescription: "Service Resource",
 
 		Attributes: map[string]schema.Attribute{
-			"aliases": schema.ListAttribute{
+			"aliases": schema.SetAttribute{
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the service.",
 				Optional:    true,
-				Validators: []validator.List{
-					listvalidator.UniqueValues(),
-				},
 			},
 			"api_document_path": schema.StringAttribute{
 				Description: "The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.",
@@ -227,7 +224,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// TODO: the post create/update steps are the same and can be extracted into a function so we repeat less code
-	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
@@ -270,7 +267,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -297,7 +294,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -337,7 +334,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	givenAliases, diags := ListValueToStringSlice(ctx, planModel.Aliases)
+	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
@@ -393,7 +390,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel.Owner.ValueString())
+	newStateModel, diags := newServiceResourceModel(ctx, *service, planModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

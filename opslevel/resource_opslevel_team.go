@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -32,7 +30,7 @@ func NewTeamResource() resource.Resource {
 
 // TeamResourceModel describes the Team managed resource.
 type TeamResourceModel struct {
-	Aliases          types.List   `tfsdk:"aliases"`
+	Aliases          types.Set    `tfsdk:"aliases"`
 	Id               types.String `tfsdk:"id"`
 	Member           []TeamMember `tfsdk:"member"`
 	Name             types.String `tfsdk:"name"`
@@ -53,15 +51,21 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 }
 
 func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel TeamResourceModel) (TeamResourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, team.ManagedAliases)
-	if diags != nil && diags.HasError() {
-		return TeamResourceModel{}, diags
-	}
+	var diags diag.Diagnostics
 	teamResourceModel := TeamResourceModel{
-		Aliases:          aliases,
 		Id:               ComputedStringValue(string(team.Id)),
 		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
+	}
+
+	if len(team.ManagedAliases) == 0 && givenModel.Aliases.IsNull() {
+		teamResourceModel.Aliases = types.SetNull(types.StringType)
+	} else {
+		aliases, diags := types.SetValueFrom(ctx, types.StringType, team.ManagedAliases)
+		if diags != nil && diags.HasError() {
+			return TeamResourceModel{}, diags
+		}
+		teamResourceModel.Aliases = aliases
 	}
 
 	if len(givenModel.Member) > 0 && team.Memberships != nil {
@@ -81,13 +85,10 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Team Resource",
 		Attributes: map[string]schema.Attribute{
-			"aliases": schema.ListAttribute{
+			"aliases": schema.SetAttribute{
 				ElementType: types.StringType,
 				Description: "A list of human-friendly, unique identifiers for the team.",
 				Optional:    true,
-				Validators: []validator.List{
-					listvalidator.UniqueValues(),
-				},
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of this resource.",
@@ -162,7 +163,10 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(team, planModel); err != nil {
+
+	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+	resp.Diagnostics.Append(diags...)
+	if err = teamResource.reconcileTeamAliases(team, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
@@ -259,7 +263,10 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
 		return
 	}
-	if err = teamResource.reconcileTeamAliases(updatedTeam, planModel); err != nil {
+
+	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+	resp.Diagnostics.Append(diags...)
+	if err = teamResource.reconcileTeamAliases(updatedTeam, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
@@ -310,13 +317,7 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 	return nil, nil
 }
 
-func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, data TeamResourceModel) error {
-	// get list of expected aliases from terraform
-	tmp := data.Aliases.Elements()
-	expectedAliases := make([]string, len(tmp))
-	for i, alias := range tmp {
-		expectedAliases[i] = unquote(alias.String())
-	}
+func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, expectedAliases []string) error {
 	// get list of existing aliases from OpsLevel
 	existingAliases := team.ManagedAliases
 
