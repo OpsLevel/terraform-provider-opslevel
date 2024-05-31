@@ -6,7 +6,7 @@ variables {
   directory_search = true
   file_contents_predicate = {
     type  = "does_not_exist",
-    value = "something_unlikely.txt",
+    value = null,
   }
   filepaths = tolist(["one/two.py", "three/four.rs"])
 

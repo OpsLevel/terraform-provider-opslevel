@@ -6,7 +6,7 @@ variables {
   name = "TF Test Service"
 
   # lifecycle_alias fields
-  aliases                       = tolist(["idk"])
+  aliases                       = ["service_one"]
   api_document_path             = "test.json"
   description                   = "Service description"
   framework                     = "Ruby on Rails"
@@ -91,7 +91,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.test.aliases == var.aliases
+    condition     = opslevel_service.test.aliases == toset(var.aliases)
     error_message = "wrong aliases of opslevel_service resource"
   }
 
@@ -232,7 +232,7 @@ run "resource_service_update_unset_optional_fields" {
 run "resource_service_update_set_all_fields" {
 
   variables {
-    aliases                       = concat(var.aliases, ["test_alias"])
+    aliases                       = setunion(var.aliases, ["test_alias"])
     api_document_path             = var.api_document_path
     description                   = "${var.description} updated"
     framework                     = upper(var.framework)
@@ -251,7 +251,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.test.aliases == var.aliases
+    condition     = opslevel_service.test.aliases == toset(var.aliases)
     error_message = "wrong aliases of opslevel_service resource"
   }
 
