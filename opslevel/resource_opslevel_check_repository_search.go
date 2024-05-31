@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckRepositorySearchResource{}
-	_ resource.ResourceWithImportState = &CheckRepositorySearchResource{}
+	_ resource.ResourceWithConfigure      = &CheckRepositorySearchResource{}
+	_ resource.ResourceWithImportState    = &CheckRepositorySearchResource{}
+	_ resource.ResourceWithValidateConfig = &CheckRepositorySearchResource{}
 )
 
 func NewCheckRepositorySearchResource() resource.Resource {
@@ -95,6 +96,17 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
+	}
+}
+
+func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckRepositorySearchResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if err := configModel.FileContentsPredicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

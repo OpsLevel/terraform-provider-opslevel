@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckServiceOwnershipResource{}
-	_ resource.ResourceWithImportState = &CheckServiceOwnershipResource{}
+	_ resource.ResourceWithConfigure      = &CheckServiceOwnershipResource{}
+	_ resource.ResourceWithImportState    = &CheckServiceOwnershipResource{}
+	_ resource.ResourceWithValidateConfig = &CheckServiceOwnershipResource{}
 )
 
 func NewCheckServiceOwnershipResource() resource.Resource {
@@ -118,6 +119,17 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckServiceOwnershipResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckServiceOwnershipResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() || configModel.TagPredicate == nil {
+		return
+	}
+	if err := configModel.TagPredicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

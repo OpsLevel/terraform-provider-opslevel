@@ -92,10 +92,18 @@ func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {
 	}
 }
 
-func (s PredicateModel) ToCreateInput() *opslevel.PredicateInput {
+func (p PredicateModel) Validate() error {
+	predicate := opslevel.Predicate{
+		Type:  opslevel.PredicateTypeEnum(p.Type.ValueString()),
+		Value: p.Value.ValueString(),
+	}
+	return predicate.Validate()
+}
+
+func (p PredicateModel) ToCreateInput() *opslevel.PredicateInput {
 	return &opslevel.PredicateInput{
-		Type:  opslevel.PredicateTypeEnum(s.Type.ValueString()),
-		Value: opslevel.RefOf(s.Value.ValueString()),
+		Type:  opslevel.PredicateTypeEnum(p.Type.ValueString()),
+		Value: opslevel.RefOf(p.Value.ValueString()),
 	}
 }
 

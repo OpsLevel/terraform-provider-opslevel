@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckServicePropertyResource{}
-	_ resource.ResourceWithImportState = &CheckServicePropertyResource{}
+	_ resource.ResourceWithConfigure      = &CheckServicePropertyResource{}
+	_ resource.ResourceWithImportState    = &CheckServicePropertyResource{}
+	_ resource.ResourceWithValidateConfig = &CheckServicePropertyResource{}
 )
 
 func NewCheckServicePropertyResource() resource.Resource {
@@ -99,6 +100,17 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 			},
 			"predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckServicePropertyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() || configModel.Predicate == nil {
+		return
+	}
+	if err := configModel.Predicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

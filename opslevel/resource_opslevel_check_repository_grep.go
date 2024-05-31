@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckRepositoryGrepResource{}
-	_ resource.ResourceWithImportState = &CheckRepositoryGrepResource{}
+	_ resource.ResourceWithConfigure      = &CheckRepositoryGrepResource{}
+	_ resource.ResourceWithImportState    = &CheckRepositoryGrepResource{}
+	_ resource.ResourceWithValidateConfig = &CheckRepositoryGrepResource{}
 )
 
 func NewCheckRepositoryGrepResource() resource.Resource {
@@ -101,6 +102,17 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
+	}
+}
+
+func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckRepositoryGrepResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if err := configModel.FileContentsPredicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

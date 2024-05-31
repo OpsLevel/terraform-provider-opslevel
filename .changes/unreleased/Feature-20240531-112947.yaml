@@ -1,0 +1,3 @@
+kind: Feature
+body: add Terraform config validation to filter predicates
+time: 2024-05-31T11:29:47.949371-05:00
