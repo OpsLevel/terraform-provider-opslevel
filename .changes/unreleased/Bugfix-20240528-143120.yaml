@@ -1,3 +1,0 @@
-kind: Bugfix
-body: accept case insensitive contact types - i.e. slack,email,web,github
-time: 2024-05-28T14:31:20.950387-05:00
