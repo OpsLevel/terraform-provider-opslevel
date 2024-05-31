@@ -51,7 +51,6 @@ resource "opslevel_system" "example" {
 
 - `aliases` (List of String) The aliases of the system.
 - `id` (String) The ID of the system.
-- `last_updated` (String)
 
 ## Import
 

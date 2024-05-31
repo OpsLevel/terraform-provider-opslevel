@@ -96,6 +96,5 @@ resource "opslevel_tag" "foo_user" {
 ### Read-Only
 
 - `id` (String) The id of the tag created.
-- `last_updated` (String)
 
 

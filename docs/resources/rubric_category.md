@@ -32,7 +32,6 @@ output "category" {
 ### Read-Only
 
 - `id` (String) The ID of the rubric category.
-- `last_updated` (String)
 
 ## Import
 

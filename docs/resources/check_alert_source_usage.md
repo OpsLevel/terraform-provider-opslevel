@@ -82,7 +82,6 @@ resource "opslevel_check_alert_source_usage" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--alert_name_predicate"></a>
 ### Nested Schema for `alert_name_predicate`

@@ -42,6 +42,5 @@ resource "opslevel_service_tag" "service_tag_2" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `last_updated` (String)
 
 

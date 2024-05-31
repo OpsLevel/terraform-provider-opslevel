@@ -72,13 +72,12 @@ resource "opslevel_infrastructure" "example_2" {
 
 ### Optional
 
-- `aliases` (List of String) The aliases for the infrastructure resource.
+- `aliases` (Set of String) The aliases for the infrastructure resource.
 - `provider_data` (Attributes) The provider specific data for the infrastructure resource. (see [below for nested schema](#nestedatt--provider_data))
 
 ### Read-Only
 
 - `id` (String) The ID of the infrastructure.
-- `last_updated` (String)
 
 <a id="nestedatt--provider_data"></a>
 ### Nested Schema for `provider_data`

@@ -26,7 +26,7 @@ resource "opslevel_service_repository" "foo" {
   repository = data.opslevel_repository.foo.id
 
   name           = "Foo"
-  base_directory = "foo"
+  base_directory = "/"
 }
 
 resource "opslevel_service_repository" "bar" {
@@ -34,7 +34,7 @@ resource "opslevel_service_repository" "bar" {
   repository_alias = "github.com:example/bar"
 
   name           = "Bar"
-  base_directory = "foo/bar"
+  base_directory = "/"
 }
 ```
 
@@ -53,7 +53,6 @@ resource "opslevel_service_repository" "bar" {
 ### Read-Only
 
 - `id` (String) The ID of the Service Repository.
-- `last_updated` (String)
 
 ## Import
 

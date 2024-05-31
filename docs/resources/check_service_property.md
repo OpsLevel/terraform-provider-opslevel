@@ -81,7 +81,6 @@ resource "opslevel_check_service_property" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--predicate"></a>
 ### Nested Schema for `predicate`

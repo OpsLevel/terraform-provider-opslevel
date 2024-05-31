@@ -70,7 +70,7 @@ output "foo_aliases" {
 
 ### Optional
 
-- `aliases` (List of String) A list of human-friendly, unique identifiers for the service.
+- `aliases` (Set of String) A list of human-friendly, unique identifiers for the service.
 - `api_document_path` (String) The relative path from which to fetch the API document. If null, the API document is fetched from the account's default path.
 - `description` (String) A brief description of the service.
 - `framework` (String) The primary software development framework that the service uses.
@@ -85,7 +85,6 @@ output "foo_aliases" {
 ### Read-Only
 
 - `id` (String) The id of the service to find
-- `last_updated` (String)
 
 ## Import
 

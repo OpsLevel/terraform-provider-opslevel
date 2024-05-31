@@ -42,7 +42,6 @@ resource "opslevel_domain" "example" {
 
 - `aliases` (List of String) The aliases of the domain.
 - `id` (String) Example identifier
-- `last_updated` (String)
 
 ## Import
 

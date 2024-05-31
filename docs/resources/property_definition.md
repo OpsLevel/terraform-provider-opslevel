@@ -45,7 +45,6 @@ resource "opslevel_property_definition" "color_picker" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `last_updated` (String)
 
 ## Import
 

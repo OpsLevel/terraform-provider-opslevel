@@ -47,7 +47,7 @@ output "team" {
 
 ### Optional
 
-- `aliases` (List of String) A list of human-friendly, unique identifiers for the team.
+- `aliases` (Set of String) A list of human-friendly, unique identifiers for the team.
 - `member` (Block List) (see [below for nested schema](#nestedblock--member))
 - `parent` (String) The id or alias of the parent team.
 - `responsibilities` (String) A description of what the team is responsible for.
@@ -55,7 +55,6 @@ output "team" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `last_updated` (String)
 
 <a id="nestedblock--member"></a>
 ### Nested Schema for `member`

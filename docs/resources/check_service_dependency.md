@@ -74,7 +74,6 @@ resource "opslevel_check_service_dependency" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 ## Import
 

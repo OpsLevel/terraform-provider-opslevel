@@ -54,7 +54,6 @@ resource "opslevel_service_tool" "bar_datadog" {
 ### Read-Only
 
 - `id` (String) The ID of the serviceTool.
-- `last_updated` (String)
 
 ## Import
 

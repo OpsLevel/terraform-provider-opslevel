@@ -74,7 +74,6 @@ resource "opslevel_filter" "case_sensitive" {
 ### Read-Only
 
 - `id` (String) The ID of the filter.
-- `last_updated` (String)
 
 <a id="nestedblock--predicate"></a>
 ### Nested Schema for `predicate`

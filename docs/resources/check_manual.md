@@ -89,7 +89,6 @@ resource "opslevel_check_manual" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--update_frequency"></a>
 ### Nested Schema for `update_frequency`

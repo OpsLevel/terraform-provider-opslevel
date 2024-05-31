@@ -132,7 +132,6 @@ resource "opslevel_integration_aws" "dev" {
 ### Read-Only
 
 - `id` (String) The ID of the AWS integration.
-- `last_updated` (String)
 
 ## Import
 

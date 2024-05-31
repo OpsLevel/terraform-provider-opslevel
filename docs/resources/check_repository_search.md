@@ -62,6 +62,7 @@ resource "opslevel_check_repository_search" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
+- `file_contents_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--file_contents_predicate))
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 
@@ -71,7 +72,6 @@ resource "opslevel_check_repository_search" "example" {
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
-- `file_contents_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--file_contents_predicate))
 - `file_extensions` (List of String) Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: ["py", "rb"].
 - `filter` (String) The id of the filter of the check.
 - `notes` (String) Additional information to display to the service owner about the check.
@@ -81,7 +81,6 @@ resource "opslevel_check_repository_search" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--file_contents_predicate"></a>
 ### Nested Schema for `file_contents_predicate`

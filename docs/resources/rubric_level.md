@@ -39,7 +39,6 @@ output "level" {
 ### Read-Only
 
 - `id` (String) The ID of the rubric level.
-- `last_updated` (String)
 
 ## Import
 

@@ -37,7 +37,6 @@ resource "opslevel_repository" "repo" {
 ### Read-Only
 
 - `id` (String) The ID of the repository.
-- `last_updated` (String)
 
 ## Import
 

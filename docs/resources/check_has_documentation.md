@@ -78,7 +78,6 @@ resource "opslevel_check_has_documentation" "has_docs" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 ## Import
 

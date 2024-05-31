@@ -14,9 +14,10 @@ User Resource
 
 ```terraform
 resource "opslevel_user" "john" {
-  name  = "John Doe"
-  email = "john.doe@example.com"
-  role  = "user" # or "admin"
+  name               = "John Doe"
+  email              = "john.doe@example.com"
+  role               = "user" # or "admin"
+  skip_welcome_email = true
 }
 ```
 
@@ -31,12 +32,11 @@ resource "opslevel_user" "john" {
 ### Optional
 
 - `role` (String) The access role of the user. One of `user`, `admin`, `basic_user`
-- `skip_welcome_email` (Boolean, Deprecated) Don't send an email welcoming the user to OpsLevel. Applies during creation only, this value cannot be read or updated.
+- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. (default: true)
 
 ### Read-Only
 
 - `id` (String) The ID of the user.
-- `last_updated` (String)
 
 ## Import
 

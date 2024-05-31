@@ -52,7 +52,6 @@ resource "opslevel_team_contact" "example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `last_updated` (String)
 
 ## Import
 

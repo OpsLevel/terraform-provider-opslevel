@@ -83,7 +83,6 @@ resource "opslevel_check_repository_grep" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--file_contents_predicate"></a>
 ### Nested Schema for `file_contents_predicate`

@@ -99,7 +99,6 @@ resource "opslevel_check_custom_event" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 ## Import
 

@@ -43,7 +43,6 @@ resource "opslevel_secret" "my_secret_2" {
 
 - `created_at` (String) Timestamp of time created at.
 - `id` (String) The ID of the secret.
-- `last_updated` (String)
 - `updated_at` (String) Timestamp of last update.
 
 ## Import

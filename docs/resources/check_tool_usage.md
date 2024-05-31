@@ -87,7 +87,6 @@ resource "opslevel_check_tool_usage" "example" {
 
 - `description` (String) The description the check.
 - `id` (String) The id of the check.
-- `last_updated` (String)
 
 <a id="nestedatt--environment_predicate"></a>
 ### Nested Schema for `environment_predicate`
