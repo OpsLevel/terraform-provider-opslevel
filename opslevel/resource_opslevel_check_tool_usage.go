@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckToolUsageResource{}
-	_ resource.ResourceWithImportState = &CheckToolUsageResource{}
+	_ resource.ResourceWithConfigure      = &CheckToolUsageResource{}
+	_ resource.ResourceWithImportState    = &CheckToolUsageResource{}
+	_ resource.ResourceWithValidateConfig = &CheckToolUsageResource{}
 )
 
 func NewCheckToolUsageResource() resource.Resource {
@@ -103,10 +104,34 @@ func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.Schema
 				Required:   true,
 				Validators: []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
 			},
+			"environment_predicate": PredicateSchema(),
 			"tool_name_predicate":   PredicateSchema(),
 			"tool_url_predicate":    PredicateSchema(),
-			"environment_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckToolUsageResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if configModel.EnvironmentPredicate != nil {
+		if err := configModel.EnvironmentPredicate.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if configModel.ToolNamePredicate != nil {
+		if err := configModel.ToolNamePredicate.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if configModel.ToolUrlPredicate != nil {
+		if err := configModel.ToolUrlPredicate.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
 	}
 }
 

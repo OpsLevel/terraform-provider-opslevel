@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckAlertSourceUsageResource{}
-	_ resource.ResourceWithImportState = &CheckAlertSourceUsageResource{}
+	_ resource.ResourceWithConfigure      = &CheckAlertSourceUsageResource{}
+	_ resource.ResourceWithImportState    = &CheckAlertSourceUsageResource{}
+	_ resource.ResourceWithValidateConfig = &CheckAlertSourceUsageResource{}
 )
 
 func NewCheckAlertSourceUsageResource() resource.Resource {
@@ -97,6 +98,17 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 			},
 			"alert_name_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckAlertSourceUsageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckAlertSourceUsageResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() || configModel.AlertNamePredicate == nil {
+		return
+	}
+	if err := configModel.AlertNamePredicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure   = &CheckTagDefinedResource{}
-	_ resource.ResourceWithImportState = &CheckTagDefinedResource{}
+	_ resource.ResourceWithConfigure      = &CheckTagDefinedResource{}
+	_ resource.ResourceWithImportState    = &CheckTagDefinedResource{}
+	_ resource.ResourceWithValidateConfig = &CheckTagDefinedResource{}
 )
 
 func NewCheckTagDefinedResource() resource.Resource {
@@ -90,6 +91,17 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckTagDefinedResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckTagDefinedResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() || configModel.TagPredicate == nil {
+		return
+	}
+	if err := configModel.TagPredicate.Validate(); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 
