@@ -179,7 +179,7 @@ run "resource_check_manual_update_unset_optional_fields" {
   variables {
     category         = run.from_rubric_category_get_category_id.first_category.id
     enable_on        = null
-    enabled          = !var.enabled
+    enabled          = null
     filter           = null
     level            = run.from_rubric_level_get_level_id.greatest_level.id
     notes            = null
@@ -197,7 +197,7 @@ run "resource_check_manual_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.test.enabled == var.enabled
+    condition     = opslevel_check_manual.test.enabled == true
     error_message = "expected 'enabled' to be unchanged from create, field included in 'ignore_changes' lifecycle"
   }
 

@@ -6,7 +6,7 @@ variables {
   name = "TF Test Team"
 
   # optional fields
-  aliases          = tolist(["test_team_one"])
+  aliases          = ["test_team_one"]
   parent           = null
   responsibilities = "Team responsibilities"
   # member block
@@ -53,7 +53,7 @@ run "resource_team_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_team.test.aliases == var.aliases
+    condition     = opslevel_team.test.aliases == toset(var.aliases)
     error_message = "wrong aliases for opslevel_team resource"
   }
 
@@ -111,7 +111,7 @@ run "resource_team_update_unset_optional_fields" {
 run "resource_team_update_set_all_fields" {
 
   variables {
-    aliases          = concat(var.aliases, ["test_alias"])
+    aliases          = setunion(var.aliases, ["test_alias"])
     name             = "${var.name} updated"
     parent           = run.from_team_get_owner_id.first_team.id
     responsibilities = "${var.responsibilities} updated"
@@ -122,7 +122,7 @@ run "resource_team_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_team.test.aliases == var.aliases
+    condition     = opslevel_team.test.aliases == toset(var.aliases)
     error_message = "wrong aliases for opslevel_team resource"
   }
 

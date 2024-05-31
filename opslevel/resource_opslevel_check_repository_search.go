@@ -109,13 +109,14 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 	}
 
 	input := opslevel.CheckRepositorySearchCreateInput{
-		CategoryId: asID(planModel.Category),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		LevelId:    asID(planModel.Level),
-		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		CategoryId:            asID(planModel.Category),
+		Enabled:               planModel.Enabled.ValueBoolPointer(),
+		FilterId:              opslevel.RefOf(asID(planModel.Filter)),
+		LevelId:               asID(planModel.Level),
+		Name:                  planModel.Name.ValueString(),
+		Notes:                 planModel.Notes.ValueStringPointer(),
+		OwnerId:               opslevel.RefOf(asID(planModel.Owner)),
+		FileContentsPredicate: *planModel.FileContentsPredicate.ToCreateInput(),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -126,7 +127,6 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
-	input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
 
 	data, err := r.client.CreateCheckRepositorySearch(input)
 	if err != nil {
