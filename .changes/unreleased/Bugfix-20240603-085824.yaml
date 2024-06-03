@@ -1,0 +1,3 @@
+kind: Bugfix
+body: convert service tags to type set from list, skip reorder only updates
+time: 2024-06-03T08:58:24.439857-05:00

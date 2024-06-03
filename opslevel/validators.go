@@ -126,7 +126,7 @@ func JsonHasNameKeyValidator() validator.String {
 	return jsonHasNameKeyValidator{}
 }
 
-var _ validator.List = tagFormatValidator{}
+var _ validator.Set = tagFormatValidator{}
 
 // tagFormatValidator validates that list contains items with tag format.
 type tagFormatValidator struct {
@@ -141,7 +141,7 @@ func (v tagFormatValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (v tagFormatValidator) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+func (v tagFormatValidator) ValidateSet(ctx context.Context, req validator.SetRequest, resp *validator.SetResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -162,6 +162,6 @@ func (v tagFormatValidator) ValidateList(ctx context.Context, req validator.List
 	}
 }
 
-func TagFormatValidator() validator.List {
+func TagFormatValidator() validator.Set {
 	return tagFormatValidator{}
 }

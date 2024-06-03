@@ -46,7 +46,7 @@ type ServiceResourceModel struct {
 	Owner                      types.String `tfsdk:"owner"`
 	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
 	Product                    types.String `tfsdk:"product"`
-	Tags                       types.List   `tfsdk:"tags"`
+	Tags                       types.Set    `tfsdk:"tags"`
 	TierAlias                  types.String `tfsdk:"tier_alias"`
 }
 
@@ -75,13 +75,13 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		serviceResourceModel.Aliases = aliases
 	}
 
-	if service.Tags != nil && len(service.Tags.Nodes) > 0 {
-		serviceResourceModel.Tags, diags = types.ListValueFrom(ctx, types.StringType, flattenTagArray(service.Tags.Nodes))
+	if givenModel.Tags.IsNull() && (service.Tags != nil || len(service.Tags.Nodes) == 0) {
+		serviceResourceModel.Tags = types.SetNull(types.StringType)
+	} else {
+		serviceResourceModel.Tags, diags = types.SetValueFrom(ctx, types.StringType, flattenTagArray(service.Tags.Nodes))
 		if diags.HasError() {
 			return serviceResourceModel, diags
 		}
-	} else {
-		serviceResourceModel.Tags = types.ListNull(types.StringType)
 	}
 
 	if service.PreferredApiDocumentSource != nil {
@@ -179,11 +179,11 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "A product is an application that your end user interacts with. Multiple services can work together to power a single product.",
 				Optional:    true,
 			},
-			"tags": schema.ListAttribute{
+			"tags": schema.SetAttribute{
 				ElementType: types.StringType,
 				Description: "A list of tags applied to the service.",
 				Optional:    true,
-				Validators:  []validator.List{TagFormatValidator()},
+				Validators:  []validator.Set{TagFormatValidator()},
 			},
 			"tier_alias": schema.StringAttribute{
 				Description: "The software tier that the service belongs to.",
@@ -235,7 +235,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
+	givenTags, diags := SetValueToStringSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
@@ -345,7 +345,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	givenTags, diags := ListValueToStringSlice(ctx, planModel.Tags)
+	givenTags, diags := SetValueToStringSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
