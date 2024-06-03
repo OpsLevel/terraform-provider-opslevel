@@ -101,7 +101,11 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 					"The entity type to associate with the Trigger Definition. One of `%s`",
 					strings.Join(opslevel.AllCustomActionsEntityTypeEnum, "`, `"),
 				),
+				Computed: true,
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllCustomActionsEntityTypeEnum...),
 				},
@@ -158,7 +162,6 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	accessControl := opslevel.CustomActionsTriggerDefinitionAccessControlEnum(planModel.AccessControl.ValueString())
-	entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		AccessControl:          &accessControl,
 		ActionId:               opslevel.NewID(planModel.Action.ValueString()),
@@ -169,8 +172,12 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		ManualInputsDefinition: planModel.ManualInputsDefinition.ValueStringPointer(),
 		Published:              planModel.Published.ValueBoolPointer(),
 		ResponseTemplate:       planModel.ResponseTemplate.ValueStringPointer(),
-		EntityType:             &entityType,
 	}
+	if !planModel.EntityType.IsNull() && !planModel.EntityType.IsUnknown() {
+		entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
+		triggerDefinitionInput.EntityType = &entityType
+	}
+
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
 	if diags.HasError() {
 		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extended_team_access' to string slice")

@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix unwanted update to trigger_definition.entity_type when specified
+time: 2024-06-03T10:38:16.67209-05:00
