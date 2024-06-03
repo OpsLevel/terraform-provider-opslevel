@@ -15,7 +15,7 @@ variables {
   owner                         = null
   preferred_api_document_source = "PUSH"
   product                       = "widgets"
-  tags                          = tolist(["key1:value1", "key2:value2"])
+  tags                          = toset(["key1:value1", "key2:value2"])
   tier_alias                    = null
 }
 
@@ -242,7 +242,7 @@ run "resource_service_update_set_all_fields" {
     owner                         = run.from_team_get_owner_id.first_team.id
     preferred_api_document_source = var.preferred_api_document_source
     product                       = var.product
-    tags                          = concat(var.tags, ["key3:value3"])
+    tags                          = setunion(var.tags, ["key3:value3"])
     tier_alias                    = run.from_tier_get_tier_alias.first_tier.alias
   }
 

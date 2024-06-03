@@ -62,7 +62,7 @@ run "resource_service_big" {
   }
 
   assert {
-    condition     = opslevel_service.big.tags == tolist(["key1:value1", "key2:value2"])
+    condition     = opslevel_service.big.tags == toset(["key1:value1", "key2:value2"])
     error_message = "wrong tags in opslevel_service.big"
   }
 

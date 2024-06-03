@@ -71,8 +71,8 @@ variable "product" {
 }
 
 variable "tags" {
-  type        = list(string)
-  description = "A list of tags applied to the service."
+  type        = set(string)
+  description = "A list of unique tags applied to the service."
 }
 
 variable "tier_alias" {
