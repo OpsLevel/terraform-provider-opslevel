@@ -1,3 +1,0 @@
-kind: Bugfix
-body: skip unneeded update on service tag ordering, convert tags from list type to set type
-time: 2024-06-03T08:58:24.439857-05:00
