@@ -68,11 +68,10 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 	if len(service.ManagedAliases) == 0 && givenModel.Aliases.IsNull() {
 		serviceResourceModel.Aliases = types.SetNull(types.StringType)
 	} else {
-		aliases, diags := types.SetValueFrom(ctx, types.StringType, service.ManagedAliases)
+		serviceResourceModel.Aliases, diags = types.SetValueFrom(ctx, types.StringType, service.ManagedAliases)
 		if diags != nil && diags.HasError() {
 			return ServiceResourceModel{}, diags
 		}
-		serviceResourceModel.Aliases = aliases
 	}
 
 	if givenModel.Tags.IsNull() && (service.Tags != nil || len(service.Tags.Nodes) == 0) {

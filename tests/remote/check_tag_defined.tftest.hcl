@@ -6,7 +6,10 @@ variables {
   tag_key = "test-tag-key"
 
   # optional fields
-  tag_predicate = null
+  tag_predicate = {
+    type  = "exists"
+    value = null
+  }
 
   # -- check base fields --
   # required fields
@@ -79,14 +82,15 @@ run "from_team_get_owner_id" {
 run "resource_check_tag_defined_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category      = run.from_rubric_category_get_category_id.first_category.id
+    enable_on     = var.enable_on
+    enabled       = var.enabled
+    filter        = run.from_filter_get_filter_id.first_filter.id
+    level         = run.from_rubric_level_get_level_id.greatest_level.id
+    name          = var.name
+    notes         = var.notes
+    owner         = run.from_team_get_owner_id.first_team.id
+    tag_predicate = var.tag_predicate
   }
 
   module {
@@ -166,6 +170,7 @@ run "resource_check_tag_defined_update_unset_optional_fields" {
     level     = run.from_rubric_level_get_level_id.greatest_level.id
     notes     = null
     owner     = null
+    # tag_predicate = null
   }
 
   module {
@@ -203,14 +208,15 @@ run "resource_check_tag_defined_update_unset_optional_fields" {
 run "resource_check_tag_defined_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category      = run.from_rubric_category_get_category_id.first_category.id
+    enable_on     = var.enable_on
+    enabled       = var.enabled
+    filter        = run.from_filter_get_filter_id.first_filter.id
+    level         = run.from_rubric_level_get_level_id.greatest_level.id
+    name          = var.name
+    notes         = var.notes
+    owner         = run.from_team_get_owner_id.first_team.id
+    tag_predicate = var.tag_predicate
   }
 
   module {

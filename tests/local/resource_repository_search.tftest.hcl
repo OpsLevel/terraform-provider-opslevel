@@ -14,7 +14,7 @@ run "resource_check_repository_search" {
   }
 
   assert {
-    condition     = opslevel_check_repository_search.example.file_extensions == tolist(["sbt", "py"])
+    condition     = opslevel_check_repository_search.example.file_extensions == toset(["sbt", "py"])
     error_message = "wrong value for file_extensions in opslevel_check_repository_search.example"
   }
 

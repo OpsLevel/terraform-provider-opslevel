@@ -6,9 +6,18 @@ variables {
   tool_category = "api_documentation"
 
   # optional fields
-  tool_name_predicate   = null
-  tool_url_predicate    = null
-  environment_predicate = null
+  environment_predicate = {
+    type  = "exists"
+    value = null
+  }
+  tool_name_predicate = {
+    type  = "exists"
+    value = null
+  }
+  tool_url_predicate = {
+    type  = "exists"
+    value = null
+  }
 
   # -- check base fields --
   # required fields
@@ -81,14 +90,17 @@ run "from_team_get_owner_id" {
 run "resource_check_tool_usage_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category              = run.from_rubric_category_get_category_id.first_category.id
+    enable_on             = var.enable_on
+    enabled               = var.enabled
+    environment_predicate = var.environment_predicate
+    filter                = run.from_filter_get_filter_id.first_filter.id
+    level                 = run.from_rubric_level_get_level_id.greatest_level.id
+    name                  = var.name
+    notes                 = var.notes
+    owner                 = run.from_team_get_owner_id.first_team.id
+    tool_name_predicate   = var.tool_name_predicate
+    tool_url_predicate    = var.tool_url_predicate
   }
 
   module {
@@ -205,14 +217,17 @@ run "resource_check_tool_usage_update_unset_optional_fields" {
 run "resource_check_tool_usage_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category              = run.from_rubric_category_get_category_id.first_category.id
+    enable_on             = var.enable_on
+    enabled               = var.enabled
+    environment_predicate = var.environment_predicate
+    filter                = run.from_filter_get_filter_id.first_filter.id
+    level                 = run.from_rubric_level_get_level_id.greatest_level.id
+    name                  = var.name
+    notes                 = var.notes
+    owner                 = run.from_team_get_owner_id.first_team.id
+    tool_name_predicate   = var.tool_name_predicate
+    tool_url_predicate    = var.tool_url_predicate
   }
 
   module {
