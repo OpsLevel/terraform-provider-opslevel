@@ -165,14 +165,14 @@ run "resource_check_repository_file_create_with_all_fields" {
 run "resource_check_repository_file_update_unset_optional_fields" {
 
   variables {
-    category                = run.from_rubric_category_get_category_id.first_category.id
-    enable_on               = null
-    enabled                 = null
+    category  = run.from_rubric_category_get_category_id.first_category.id
+    enable_on = null
+    enabled   = null
     # file_contents_predicate = null
-    filter                  = null
-    level                   = run.from_rubric_level_get_level_id.greatest_level.id
-    notes                   = null
-    owner                   = null
+    filter = null
+    level  = run.from_rubric_level_get_level_id.greatest_level.id
+    notes  = null
+    owner  = null
   }
 
   module {

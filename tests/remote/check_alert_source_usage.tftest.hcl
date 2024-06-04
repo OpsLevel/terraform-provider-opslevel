@@ -165,13 +165,13 @@ run "resource_check_alert_source_usage_update_unset_optional_fields" {
 
   variables {
     # alert_name_predicate = null
-    category             = run.from_rubric_category_get_category_id.first_category.id
-    enable_on            = null
-    enabled              = null
-    filter               = null
-    level                = run.from_rubric_level_get_level_id.greatest_level.id
-    notes                = null
-    owner                = null
+    category  = run.from_rubric_category_get_category_id.first_category.id
+    enable_on = null
+    enabled   = null
+    filter    = null
+    level     = run.from_rubric_level_get_level_id.greatest_level.id
+    notes     = null
+    owner     = null
   }
 
   module {

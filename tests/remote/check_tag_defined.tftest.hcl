@@ -163,13 +163,13 @@ run "resource_check_tag_defined_create_with_all_fields" {
 run "resource_check_tag_defined_update_unset_optional_fields" {
 
   variables {
-    category      = run.from_rubric_category_get_category_id.first_category.id
-    enable_on     = null
-    enabled       = null
-    filter        = null
-    level         = run.from_rubric_level_get_level_id.greatest_level.id
-    notes         = null
-    owner         = null
+    category  = run.from_rubric_category_get_category_id.first_category.id
+    enable_on = null
+    enabled   = null
+    filter    = null
+    level     = run.from_rubric_level_get_level_id.greatest_level.id
+    notes     = null
+    owner     = null
     # tag_predicate = null
   }
 
