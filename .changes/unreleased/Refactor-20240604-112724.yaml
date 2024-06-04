@@ -1,0 +1,4 @@
+kind: Refactor
+body: convert opslevel_check_repository_search.file_extensions to set type from list
+  type
+time: 2024-06-04T11:27:24.309038-05:00
