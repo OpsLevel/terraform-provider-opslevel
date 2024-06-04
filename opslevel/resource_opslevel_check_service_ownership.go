@@ -125,7 +125,9 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 func (r *CheckServiceOwnershipResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckServiceOwnershipResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.TagPredicate == nil {
+	if resp.Diagnostics.HasError() ||
+		configModel.TagPredicate == nil ||
+		configModel.TagPredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.TagPredicate.Validate(); err != nil {

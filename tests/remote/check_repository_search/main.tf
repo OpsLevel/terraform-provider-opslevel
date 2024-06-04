@@ -1,6 +1,9 @@
 resource "opslevel_check_repository_search" "test" {
-  file_contents_predicate = var.file_contents_predicate
-  file_extensions         = var.file_extensions
+  file_contents_predicate = {
+    type  = var.file_contents_predicate.type
+    value = var.file_contents_predicate.value
+  }
+  file_extensions = var.file_extensions
 
   # -- check base fields --
   category  = var.category

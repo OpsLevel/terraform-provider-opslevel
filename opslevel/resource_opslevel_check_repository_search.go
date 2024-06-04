@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -41,11 +43,12 @@ type CheckRepositorySearchResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	FileExtensions        types.List     `tfsdk:"file_extensions"`
+	FileExtensions        types.Set      `tfsdk:"file_extensions"`
 	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
 }
 
 func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositorySearchResourceModel) (CheckRepositorySearchResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	var stateModel CheckRepositorySearchResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
@@ -68,8 +71,15 @@ func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.C
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositorySearchCheckFragment.FileExtensions)
-	stateModel.FileExtensions = data
+	if planModel.FileExtensions.IsNull() {
+		stateModel.FileExtensions = types.SetNull(types.StringType)
+	} else {
+		stateModel.FileExtensions, diags = types.SetValueFrom(ctx, types.StringType, check.RepositorySearchCheckFragment.FileExtensions)
+		if diags != nil && diags.HasError() {
+			return CheckRepositorySearchResourceModel{}, diags
+		}
+	}
+
 	stateModel.FileContentsPredicate = *NewPredicateModel(check.RepositorySearchCheckFragment.FileContentsPredicate)
 
 	return stateModel, diags
@@ -89,10 +99,13 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 		MarkdownDescription: "Check Repository Search Resource",
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
-			"file_extensions": schema.ListAttribute{
+			"file_extensions": schema.SetAttribute{
 				Description: "Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: [\"py\", \"rb\"].",
 				Optional:    true,
 				ElementType: types.StringType,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+				},
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
@@ -102,7 +115,7 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositorySearchResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || configModel.FileContentsPredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.FileContentsPredicate.Validate(); err != nil {
@@ -138,7 +151,9 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
+	fileExtensions, diags := SetValueToStringSlice(ctx, planModel.FileExtensions)
+	resp.Diagnostics.Append(diags...)
+	input.FileExtensions = opslevel.RefOf(fileExtensions)
 
 	data, err := r.client.CreateCheckRepositorySearch(input)
 	if err != nil {
@@ -154,25 +169,25 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 }
 
 func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckRepositorySearchResourceModel
+	var currentStateModel, verifiedStateModel CheckRepositorySearchResourceModel
 
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	// Read Terraform prior state data into the currentStateModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(currentStateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository search, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, planModel)
+	verifiedStateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, currentStateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -203,7 +218,11 @@ func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
+	fileExtensions, diags := SetValueToStringSlice(ctx, planModel.FileExtensions)
+	resp.Diagnostics.Append(diags...)
+	input.FileExtensions = opslevel.RefOf(fileExtensions)
+
+	// resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
 	input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositorySearch(input)

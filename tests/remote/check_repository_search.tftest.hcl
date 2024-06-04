@@ -4,10 +4,12 @@ variables {
   # -- check_repository_search fields --
   # required fields
   file_contents_predicate = {
-    type  = "does_not_exist",
+    type  = "does_not_contain",
     value = "something_unlikely.txt",
   }
-  file_extensions = tolist([])
+
+  # optional fields
+  file_extensions = toset(["go", "py", "rs"])
 
   # -- check base fields --
   # required fields
@@ -80,14 +82,16 @@ run "from_team_get_owner_id" {
 run "resource_check_repository_search_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category                = run.from_rubric_category_get_category_id.first_category.id
+    enable_on               = var.enable_on
+    enabled                 = var.enabled
+    file_contents_predicate = var.file_contents_predicate
+    file_extensions         = var.file_extensions
+    filter                  = run.from_filter_get_filter_id.first_filter.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
+    name                    = var.name
+    notes                   = var.notes
+    owner                   = run.from_team_get_owner_id.first_team.id
   }
 
   module {
@@ -100,6 +104,7 @@ run "resource_check_repository_search_create_with_all_fields" {
       can(opslevel_check_repository_search.test.description),
       can(opslevel_check_repository_search.test.enable_on),
       can(opslevel_check_repository_search.test.enabled),
+      can(opslevel_check_repository_search.test.file_extensions),
       can(opslevel_check_repository_search.test.filter),
       can(opslevel_check_repository_search.test.id),
       can(opslevel_check_repository_search.test.level),
@@ -128,6 +133,11 @@ run "resource_check_repository_search_create_with_all_fields" {
   assert {
     condition     = startswith(opslevel_check_repository_search.test.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_repository_search)
+  }
+
+  assert {
+    condition     = opslevel_check_repository_search.test.file_extensions == var.file_extensions
+    error_message = "wrong file_extensions of opslevel_check_repository_search resource"
   }
 
   assert {
@@ -160,13 +170,14 @@ run "resource_check_repository_search_create_with_all_fields" {
 run "resource_check_repository_search_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    notes     = null
-    owner     = null
+    category        = run.from_rubric_category_get_category_id.first_category.id
+    enable_on       = null
+    enabled         = null
+    filter          = null
+    file_extensions = null
+    level           = run.from_rubric_level_get_level_id.greatest_level.id
+    notes           = null
+    owner           = null
   }
 
   module {
@@ -181,6 +192,11 @@ run "resource_check_repository_search_update_unset_optional_fields" {
   assert {
     condition     = opslevel_check_repository_search.test.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_repository_search resource"
+  }
+
+  assert {
+    condition     = opslevel_check_repository_search.test.file_extensions == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
@@ -204,14 +220,16 @@ run "resource_check_repository_search_update_unset_optional_fields" {
 run "resource_check_repository_search_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = !var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category                = run.from_rubric_category_get_category_id.first_category.id
+    enable_on               = var.enable_on
+    enabled                 = var.enabled
+    file_contents_predicate = var.file_contents_predicate
+    file_extensions         = setunion(var.file_extensions, ["yaml"])
+    filter                  = run.from_filter_get_filter_id.first_filter.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
+    name                    = var.name
+    notes                   = var.notes
+    owner                   = run.from_team_get_owner_id.first_team.id
   }
 
   module {
@@ -229,8 +247,13 @@ run "resource_check_repository_search_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_repository_search.test.enabled == !var.enabled
+    condition     = opslevel_check_repository_search.test.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_search resource"
+  }
+
+  assert {
+    condition     = opslevel_check_repository_search.test.file_extensions == var.file_extensions
+    error_message = "wrong file_extensions of opslevel_check_repository_search resource"
   }
 
   assert {

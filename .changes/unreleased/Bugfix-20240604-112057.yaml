@@ -1,0 +1,4 @@
+kind: Bugfix
+body: enforce opslevel_check_repository_search.file_extensions is null or non-empty
+  to match API
+time: 2024-06-04T11:20:57.520063-05:00

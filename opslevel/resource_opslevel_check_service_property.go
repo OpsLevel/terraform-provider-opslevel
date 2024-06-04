@@ -106,7 +106,9 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckServicePropertyResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.Predicate == nil {
+	if resp.Diagnostics.HasError() ||
+		configModel.Predicate == nil ||
+		configModel.Predicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.Predicate.Validate(); err != nil {

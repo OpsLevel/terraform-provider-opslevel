@@ -108,7 +108,7 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositoryGrepResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || configModel.FileContentsPredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.FileContentsPredicate.Validate(); err != nil {

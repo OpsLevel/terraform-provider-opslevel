@@ -118,17 +118,17 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 		return
 	}
 
-	if configModel.EnvironmentPredicate != nil {
+	if configModel.EnvironmentPredicate != nil && !configModel.EnvironmentPredicate.Type.IsUnknown() {
 		if err := configModel.EnvironmentPredicate.Validate(); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
-	if configModel.ToolNamePredicate != nil {
+	if configModel.ToolNamePredicate != nil && !configModel.ToolNamePredicate.Type.IsUnknown() {
 		if err := configModel.ToolNamePredicate.Validate(); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
-	if configModel.ToolUrlPredicate != nil {
+	if configModel.ToolUrlPredicate != nil && !configModel.ToolUrlPredicate.Type.IsUnknown() {
 		if err := configModel.ToolUrlPredicate.Validate(); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
 		}

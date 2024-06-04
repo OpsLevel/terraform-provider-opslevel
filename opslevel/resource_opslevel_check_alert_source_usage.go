@@ -104,7 +104,9 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 func (r *CheckAlertSourceUsageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckAlertSourceUsageResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.AlertNamePredicate == nil {
+	if resp.Diagnostics.HasError() ||
+		configModel.AlertNamePredicate == nil ||
+		configModel.AlertNamePredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.AlertNamePredicate.Validate(); err != nil {

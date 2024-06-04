@@ -112,7 +112,9 @@ func (r *CheckRepositoryFileResource) Schema(ctx context.Context, req resource.S
 func (r *CheckRepositoryFileResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositoryFileResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.FileContentsPredicate == nil {
+	if resp.Diagnostics.HasError() ||
+		configModel.FileContentsPredicate == nil ||
+		configModel.FileContentsPredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.FileContentsPredicate.Validate(); err != nil {

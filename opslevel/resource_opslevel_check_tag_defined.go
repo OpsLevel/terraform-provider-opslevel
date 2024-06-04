@@ -97,7 +97,9 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 func (r *CheckTagDefinedResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckTagDefinedResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.TagPredicate == nil {
+	if resp.Diagnostics.HasError() ||
+		configModel.TagPredicate == nil ||
+		configModel.TagPredicate.Type.IsUnknown() {
 		return
 	}
 	if err := configModel.TagPredicate.Validate(); err != nil {

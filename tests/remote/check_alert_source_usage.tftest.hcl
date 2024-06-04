@@ -6,7 +6,10 @@ variables {
   alert_type = "datadog"
 
   # optional fields
-  alert_name_predicate = null
+  alert_name_predicate = {
+    type  = "exists"
+    value = null
+  }
 
   # -- check base fields --
   # required fields
@@ -79,14 +82,16 @@ run "from_team_get_owner_id" {
 run "resource_check_alert_source_usage_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    alert_type           = var.alert_type
+    alert_name_predicate = var.alert_name_predicate
+    category             = run.from_rubric_category_get_category_id.first_category.id
+    enable_on            = var.enable_on
+    enabled              = var.enabled
+    filter               = run.from_filter_get_filter_id.first_filter.id
+    level                = run.from_rubric_level_get_level_id.greatest_level.id
+    name                 = var.name
+    notes                = var.notes
+    owner                = run.from_team_get_owner_id.first_team.id
   }
 
   module {
@@ -159,13 +164,14 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
 run "resource_check_alert_source_usage_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    notes     = null
-    owner     = null
+    # alert_name_predicate = null
+    category             = run.from_rubric_category_get_category_id.first_category.id
+    enable_on            = null
+    enabled              = null
+    filter               = null
+    level                = run.from_rubric_level_get_level_id.greatest_level.id
+    notes                = null
+    owner                = null
   }
 
   module {
@@ -203,14 +209,16 @@ run "resource_check_alert_source_usage_update_unset_optional_fields" {
 run "resource_check_alert_source_usage_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    alert_type           = var.alert_type
+    alert_name_predicate = var.alert_name_predicate
+    category             = run.from_rubric_category_get_category_id.first_category.id
+    enable_on            = var.enable_on
+    enabled              = var.enabled
+    filter               = run.from_filter_get_filter_id.first_filter.id
+    level                = run.from_rubric_level_get_level_id.greatest_level.id
+    name                 = var.name
+    notes                = var.notes
+    owner                = run.from_team_get_owner_id.first_team.id
   }
 
   module {

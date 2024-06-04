@@ -6,7 +6,10 @@ variables {
   property = "lifecycle_index"
 
   # optional fields
-  predicate = null
+  predicate = {
+    type  = "exists"
+    value = null
+  }
 
   # -- check base fields --
   # required fields
@@ -87,6 +90,7 @@ run "resource_check_service_property_create_with_all_fields" {
     name      = var.name
     notes     = var.notes
     owner     = run.from_team_get_owner_id.first_team.id
+    predicate = var.predicate
   }
 
   module {
@@ -166,6 +170,7 @@ run "resource_check_service_property_update_unset_optional_fields" {
     level     = run.from_rubric_level_get_level_id.greatest_level.id
     notes     = null
     owner     = null
+    # predicate = null
   }
 
   module {
@@ -211,6 +216,7 @@ run "resource_check_service_property_update_all_fields" {
     name      = var.name
     notes     = var.notes
     owner     = run.from_team_get_owner_id.first_team.id
+    predicate = var.predicate
   }
 
   module {
