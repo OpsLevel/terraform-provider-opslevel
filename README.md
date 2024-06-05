@@ -20,6 +20,10 @@
 Terraform Provider for [OpsLevel](https://opslevel.com)
 ===============================
 
+# Migrating to v1.0.0
+
+Notes on migrating to v1.0.0 and fixes to migration issues can be found in [./MIGRATION.md].
+
 [Provider Documentation](https://registry.terraform.io/providers/OpsLevel/opslevel/latest/docs)
 [Quickstart](https://www.opslevel.com/docs/terraform)
 [Importing All Existing Account Data](https://www.opslevel.com/docs/terraform/#Importing)
