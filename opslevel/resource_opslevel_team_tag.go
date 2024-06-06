@@ -120,7 +120,6 @@ func (teamTagResource *TeamTagResource) Create(ctx context.Context, req resource
 	}
 
 	tagCreateInput := opslevel.TagCreateInput{
-		Alias: planModel.TeamAlias.ValueStringPointer(),
 		Id:    &team.Id,
 		Type:  opslevel.RefOf(opslevel.TaggableResourceTeam),
 		Key:   planModel.Key.ValueString(),
@@ -196,15 +195,17 @@ func (teamTagResource *TeamTagResource) Update(ctx context.Context, req resource
 		return
 	}
 
+	ids := strings.Split(planModel.Id.ValueString(), ":")
+	teamTagId := ids[1]
 	tagUpdateInput := opslevel.TagUpdateInput{
-		Id:    team.Id,
+		Id:    opslevel.ID(teamTagId),
 		Key:   planModel.Key.ValueStringPointer(),
 		Value: planModel.Value.ValueStringPointer(),
 	}
 
 	teamTag, err := teamTagResource.client.UpdateTag(tagUpdateInput)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update team tag (with id '%s'), got error: %s", planModel.Id.ValueString(), err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update team tag (with id '%s'), got error: %s", teamTagId, err))
 		return
 	}
 
@@ -220,7 +221,9 @@ func (teamTagResource *TeamTagResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	err := teamTagResource.client.DeleteTag(opslevel.ID(data.Id.ValueString()))
+	ids := strings.Split(data.Id.ValueString(), ":")
+	teamTagId := ids[1]
+	err := teamTagResource.client.DeleteTag(opslevel.ID(teamTagId))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete team tag (with id '%s'), got error: %s", data.Id.ValueString(), err))
 		return
@@ -235,33 +238,6 @@ func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req res
 			fmt.Sprintf("Id expected to be formatted as '<team-id>:<tag-id>'. Given '%s'", req.ID),
 		)
 	}
-	// ids := strings.Split(req.ID, ":")
-	// teamId := ids[0]
-	// tagId := ids[1]
-
-	// team, err := getTeamWithIdOrAlias(*teamTagResource.client, teamId)
-	// if err != nil || team == nil {
-	// 	resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team with id '%s', got error: %s", teamId, err))
-	// 	return
-	// }
-
-	// _, err = team.GetTags(teamTagResource.client, nil)
-	// if err != nil || team.Tags == nil {
-	// 	resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on team (%s), got error: %s", teamId, err))
-	// 	return
-	// }
-	// var teamTag *opslevel.Tag
-	// for _, readTag := range team.Tags.Nodes {
-	// 	if readTag.Id == opslevel.ID(tagId) {
-	// 		teamTag = &readTag
-	// 		break
-	// 	}
-	// }
-	// if teamTag == nil {
-	// 	resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team tag (with id '%s') not found on team (%s)", tagId, teamId))
-	// 	return
-	// }
-
 	// put these into req - this is passed to Read() - it works
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
