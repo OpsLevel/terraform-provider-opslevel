@@ -238,7 +238,6 @@ func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req res
 			fmt.Sprintf("Id expected to be formatted as '<team-id>:<tag-id>'. Given '%s'", req.ID),
 		)
 	}
-	// put these into req - this is passed to Read() - it works
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
