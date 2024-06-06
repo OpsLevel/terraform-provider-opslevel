@@ -37,6 +37,40 @@ func IdStringValidator() validator.String {
 	return idStringValidator{}
 }
 
+// Tag - "<resource-id>:<tag-id>" String Validator
+type tagStringValidator struct{}
+
+func (v tagStringValidator) Description(_ context.Context) string {
+	return "tag expected to be a string with '<resource-id>:<tag-id>' format"
+}
+
+func (v tagStringValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v tagStringValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
+		return
+	}
+
+	tag := request.ConfigValue.ValueString()
+	if !isTagValid(tag) {
+		response.Diagnostics.AddError(
+			"Config error",
+			fmt.Sprintf("expected Tag to be formatted as '<team-id>:<tag-id>'. '%s' was set to '%s'", request.Path, tag),
+		)
+	}
+}
+
+func isTagValid(tag string) bool {
+	ids := strings.Split(tag, ":")
+	return len(ids) == 2 && opslevel.IsID(ids[0]) && opslevel.IsID(ids[1])
+}
+
+func TagStringValidator() validator.String {
+	return tagStringValidator{}
+}
+
 // jsonStringValidator accepts any valid JSON (does not have to be an object), but not null and unknown
 type jsonStringValidator struct{}
 

@@ -1,0 +1,3 @@
+kind: Bugfix
+body: update team_tag id format, fixes terraform import opslevel_team_tag
+time: 2024-06-06T12:29:54.448731-05:00
