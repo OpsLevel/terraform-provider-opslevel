@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -245,5 +246,54 @@ func (teamTagResource *TeamTagResource) Delete(ctx context.Context, req resource
 }
 
 func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	if !isTagValid(req.ID) {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<team-id>:<tag-id>'. Given '%s'", req.ID),
+		)
+	}
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+
+	ids := strings.Split(req.ID, ":")
+	teamId := ids[0]
+	tagId := ids[1]
+
+	team, err := teamTagResource.client.GetTeam(opslevel.ID(teamId))
+	if err != nil || team == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamId, err))
+		return
+	}
+	_, err = team.GetTags(teamTagResource.client, nil)
+	if err != nil || team.Tags == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on team (%s), got error: %s", teamId, err))
+	}
+
+	var teamTag *opslevel.Tag
+	for _, readTag := range team.Tags.Nodes {
+		if tagId == string(readTag.Id) {
+			teamTag = &readTag
+			break
+		}
+	}
+	if teamTag == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find team tag with team id '%s' and tag id '%s'", teamId, tagId))
+		return
+	}
+
+	keyPath := path.Root("key")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, keyPath, teamTag.Key)...)
+
+	teamPath := path.Root("team")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamPath, string(team.Id))...)
+
+	teamAliasPath := path.Root("team_alias")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamAliasPath, team.Alias)...)
+
+	valuePath := path.Root("value")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, valuePath, teamTag.Value)...)
+}
+
+func isTagValid(tag string) bool {
+	ids := strings.Split(tag, ":")
+	return len(ids) == 2 && opslevel.IsID(ids[0]) && opslevel.IsID(ids[1])
 }
