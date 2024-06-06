@@ -1,0 +1,4 @@
+kind: Bugfix
+body: provider arg 'api_token' is optional, defaults to env var token instead of raising
+  error
+time: 2024-06-06T11:28:19.279859-05:00
