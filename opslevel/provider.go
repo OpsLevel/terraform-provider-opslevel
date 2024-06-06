@@ -40,7 +40,7 @@ func (p *OpslevelProvider) Schema(ctx context.Context, req provider.SchemaReques
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The API authorization token. It can also be sourced from the OPSLEVEL_API_TOKEN environment variable.",
 				Sensitive:   true,
 			},
