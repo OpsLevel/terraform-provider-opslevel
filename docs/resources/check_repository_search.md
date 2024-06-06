@@ -72,7 +72,7 @@ resource "opslevel_check_repository_search" "example" {
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.
 - `enabled` (Boolean) Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.
-- `file_extensions` (List of String) Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: ["py", "rb"].
+- `file_extensions` (Set of String) Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: ["py", "rb"].
 - `filter` (String) The id of the filter of the check.
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.

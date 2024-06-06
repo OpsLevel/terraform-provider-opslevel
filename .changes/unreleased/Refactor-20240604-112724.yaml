@@ -1,4 +1,0 @@
-kind: Refactor
-body: ensure unique file_extensions in opslevel_check_repository_search by converting
-  this field from list type to set type
-time: 2024-06-04T11:27:24.309038-05:00
