@@ -105,6 +105,15 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 	return mapAsJson, diags
 }
 
+// Converts a basetypes.ObjectValue to a PredicateModel
+func PredicateObjectToModel(ctx context.Context, predicateObj basetypes.ObjectValue) (PredicateModel, diag.Diagnostics) {
+	var predicateModel PredicateModel
+
+	objOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
+	diags := predicateObj.As(ctx, &predicateModel, objOptions)
+	return predicateModel, diags
+}
+
 // asID converts a types.String to an opslevel.ID
 func asID(input types.String) opslevel.ID {
 	return opslevel.ID(input.ValueString())
