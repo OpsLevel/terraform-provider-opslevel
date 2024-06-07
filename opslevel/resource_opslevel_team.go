@@ -111,7 +111,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"member": schema.ListNestedBlock{
+			"member": schema.SetNestedBlock{
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
