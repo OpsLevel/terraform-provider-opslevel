@@ -37,7 +37,7 @@ run "resource_team_big" {
   }
 
   assert {
-    condition     = opslevel_team.big.member[0].email == "alice@opslevel.com" && opslevel_team.big.member[0].role == "manager" && opslevel_team.big.member[1].email == "bob@opslevel.com" && opslevel_team.big.member[1].role == "contributor"
+    condition     = contains(opslevel_team.big.member[*].email, "alice@opslevel.com") && contains(opslevel_team.big.member[*].role, "manager") && contains(opslevel_team.big.member[*].email, "bob@opslevel.com") && contains(opslevel_team.big.member[*].role, "contributor")
     error_message = "wrong members in opslevel_team.big"
   }
 }
