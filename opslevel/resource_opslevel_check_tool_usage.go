@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -51,7 +51,6 @@ type CheckToolUsageResourceModel struct {
 }
 
 func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, planModel CheckToolUsageResourceModel) CheckToolUsageResourceModel {
-	var diags diag.Diagnostics
 	var stateModel CheckToolUsageResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
@@ -78,25 +77,34 @@ func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, p
 	if check.ToolNamePredicate == nil {
 		stateModel.ToolNamePredicate = types.ObjectNull(predicateType)
 	} else {
-		toolNamePredicate, toolNamePredicateDiags := types.ObjectValueFrom(ctx, predicateType, *check.ToolNamePredicate)
-		stateModel.ToolNamePredicate = toolNamePredicate
-		diags.Append(toolNamePredicateDiags...)
+		predicate := *check.ToolNamePredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.ToolNamePredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	if check.ToolUrlPredicate == nil {
 		stateModel.ToolUrlPredicate = types.ObjectNull(predicateType)
 	} else {
-		toolUrlPredicate, toolUrlPredicateDiags := types.ObjectValueFrom(ctx, predicateType, *check.ToolUrlPredicate)
-		stateModel.ToolUrlPredicate = toolUrlPredicate
-		diags.Append(toolUrlPredicateDiags...)
+		predicate := *check.ToolUrlPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.ToolUrlPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	if check.EnvironmentPredicate == nil {
-		stateModel.ToolUrlPredicate = types.ObjectNull(predicateType)
+		stateModel.EnvironmentPredicate = types.ObjectNull(predicateType)
 	} else {
-		toolUrlPredicate, environmentPredicateDiags := types.ObjectValueFrom(ctx, predicateType, *check.EnvironmentPredicate)
-		stateModel.EnvironmentPredicate = toolUrlPredicate
-		diags.Append(environmentPredicateDiags...)
+		predicate := *check.EnvironmentPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.EnvironmentPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
