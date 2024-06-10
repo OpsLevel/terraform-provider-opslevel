@@ -298,17 +298,19 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 	}
 
 	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
+	nullPredicateModel := PredicateModel{}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.EnvironmentPredicate)
 	resp.Diagnostics.Append(diags...)
-	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
-		if err := predicateModel.Validate(); err == nil {
-			input.EnvironmentPredicate = predicateModel.ToUpdateInput()
-		} else {
-			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
-		}
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.EnvironmentPredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.EnvironmentPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -316,12 +318,12 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 	// convert tool_name_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolNamePredicate)
 	resp.Diagnostics.Append(diags...)
-	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
-		if err := predicateModel.Validate(); err == nil {
-			input.ToolNamePredicate = predicateModel.ToUpdateInput()
-		} else {
-			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
-		}
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.ToolNamePredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.ToolNamePredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -330,12 +332,12 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 	// convert tool_url_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolUrlPredicate)
 	resp.Diagnostics.Append(diags...)
-	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
-		if err := predicateModel.Validate(); err == nil {
-			input.ToolUrlPredicate = predicateModel.ToUpdateInput()
-		} else {
-			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
-		}
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.ToolUrlPredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.ToolUrlPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 	if resp.Diagnostics.HasError() {
 		return
