@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -41,10 +42,10 @@ type CheckRepositoryFileResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	DirectorySearch       types.Bool      `tfsdk:"directory_search"`
-	Filepaths             types.List      `tfsdk:"filepaths"`
-	FileContentsPredicate *PredicateModel `tfsdk:"file_contents_predicate"`
-	UseAbsoluteRoot       types.Bool      `tfsdk:"use_absolute_root"`
+	DirectorySearch       types.Bool   `tfsdk:"directory_search"`
+	Filepaths             types.List   `tfsdk:"filepaths"`
+	FileContentsPredicate types.Object `tfsdk:"file_contents_predicate"`
+	UseAbsoluteRoot       types.Bool   `tfsdk:"use_absolute_root"`
 }
 
 func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryFileResourceModel) (CheckRepositoryFileResourceModel, diag.Diagnostics) {
@@ -73,8 +74,16 @@ func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryFileCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryFileCheckFragment.Filepaths)
 	stateModel.Filepaths = data
-	if check.RepositoryFileCheckFragment.FileContentsPredicate != nil {
-		stateModel.FileContentsPredicate = NewPredicateModel(*check.RepositoryFileCheckFragment.FileContentsPredicate)
+
+	if check.RepositoryFileCheckFragment.FileContentsPredicate == nil {
+		stateModel.FileContentsPredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.RepositoryFileCheckFragment.FileContentsPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 	stateModel.UseAbsoluteRoot = RequiredBoolValue(check.RepositoryFileCheckFragment.UseAbsoluteRoot)
 
@@ -112,12 +121,15 @@ func (r *CheckRepositoryFileResource) Schema(ctx context.Context, req resource.S
 func (r *CheckRepositoryFileResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositoryFileResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() ||
-		configModel.FileContentsPredicate == nil ||
-		configModel.FileContentsPredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.FileContentsPredicate.Validate(); err != nil {
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		return
+	}
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -151,8 +163,19 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = planModel.FileContentsPredicate.ToCreateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.FileContentsPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	input.UseAbsoluteRoot = planModel.UseAbsoluteRoot.ValueBoolPointer()
 
@@ -222,8 +245,16 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	if planModel.FileContentsPredicate != nil {
-		input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.FileContentsPredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.FileContentsPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 	input.UseAbsoluteRoot = planModel.UseAbsoluteRoot.ValueBoolPointer()
 

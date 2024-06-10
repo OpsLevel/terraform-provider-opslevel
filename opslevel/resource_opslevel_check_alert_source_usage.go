@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -43,8 +44,8 @@ type CheckAlertSourceUsageResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	AlertType          types.String    `tfsdk:"alert_type"`
-	AlertNamePredicate *PredicateModel `tfsdk:"alert_name_predicate"`
+	AlertType          types.String `tfsdk:"alert_type"`
+	AlertNamePredicate types.Object `tfsdk:"alert_name_predicate"`
 }
 
 func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.Check, planModel CheckAlertSourceUsageResourceModel) CheckAlertSourceUsageResourceModel {
@@ -69,10 +70,17 @@ func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.C
 	stateModel.Name = RequiredStringValue(check.Name)
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
-
 	stateModel.AlertType = types.StringValue(string(check.AlertSourceType))
-	if planModel.AlertNamePredicate != nil && check.AlertSourceNamePredicate != nil {
-		stateModel.AlertNamePredicate = NewPredicateModel(*check.AlertSourceNamePredicate)
+
+	if check.AlertSourceNamePredicate == nil {
+		stateModel.AlertNamePredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.AlertSourceNamePredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.AlertNamePredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
@@ -104,12 +112,15 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 func (r *CheckAlertSourceUsageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckAlertSourceUsageResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() ||
-		configModel.AlertNamePredicate == nil ||
-		configModel.AlertNamePredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.AlertNamePredicate.Validate(); err != nil {
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.AlertNamePredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		return
+	}
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -140,10 +151,17 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
-
 	input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(planModel.AlertType.ValueString()))
-	if planModel.AlertNamePredicate != nil {
-		input.AlertSourceNamePredicate = planModel.AlertNamePredicate.ToCreateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.AlertSourceNamePredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
 	}
 
 	data, err := r.client.CreateCheckAlertSourceUsage(input)
@@ -206,10 +224,17 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
-
 	input.AlertSourceType = opslevel.RefOf(opslevel.AlertSourceTypeEnum(planModel.AlertType.ValueString()))
-	if planModel.AlertNamePredicate != nil {
-		input.AlertSourceNamePredicate = planModel.AlertNamePredicate.ToUpdateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.AlertSourceNamePredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.AlertSourceNamePredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 
 	data, err := r.client.UpdateCheckAlertSourceUsage(input)

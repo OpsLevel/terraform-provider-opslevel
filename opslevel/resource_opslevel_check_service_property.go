@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -43,8 +44,8 @@ type CheckServicePropertyResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	Property  types.String    `tfsdk:"property"`
-	Predicate *PredicateModel `tfsdk:"predicate"`
+	Property  types.String `tfsdk:"property"`
+	Predicate types.Object `tfsdk:"predicate"`
 }
 
 func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Check, planModel CheckServicePropertyResourceModel) CheckServicePropertyResourceModel {
@@ -71,8 +72,16 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.Property = RequiredStringValue(string(check.ServicePropertyCheckFragment.Property))
-	if check.ServicePropertyCheckFragment.Predicate != nil {
-		stateModel.Predicate = NewPredicateModel(*check.ServicePropertyCheckFragment.Predicate)
+
+	if check.ServicePropertyCheckFragment.Predicate == nil {
+		stateModel.Predicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.ServicePropertyCheckFragment.Predicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.Predicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
@@ -106,12 +115,15 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckServicePropertyResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() ||
-		configModel.Predicate == nil ||
-		configModel.Predicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.Predicate.Validate(); err != nil {
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.Predicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		return
+	}
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -144,8 +156,19 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 	}
 
 	input.ServiceProperty = opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString())
-	if planModel.Predicate != nil {
-		input.PropertyValuePredicate = planModel.Predicate.ToCreateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.PropertyValuePredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.CreateCheckServiceProperty(input)
@@ -210,10 +233,16 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	}
 
 	input.ServiceProperty = opslevel.RefOf(opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString()))
-	if planModel.Predicate != nil {
-		input.PropertyValuePredicate = planModel.Predicate.ToUpdateInput()
-	} else {
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
 		input.PropertyValuePredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.PropertyValuePredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 
 	data, err := r.client.UpdateCheckServiceProperty(input)

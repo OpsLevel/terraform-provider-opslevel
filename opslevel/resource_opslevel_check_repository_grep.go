@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -41,9 +42,9 @@ type CheckRepositoryGrepResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	DirectorySearch       types.Bool     `tfsdk:"directory_search"`
-	Filepaths             types.List     `tfsdk:"filepaths"`
-	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
+	DirectorySearch       types.Bool   `tfsdk:"directory_search"`
+	Filepaths             types.List   `tfsdk:"filepaths"`
+	FileContentsPredicate types.Object `tfsdk:"file_contents_predicate"`
 }
 
 func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
@@ -72,7 +73,13 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
 	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
 	stateModel.Filepaths = data
-	stateModel.FileContentsPredicate = *NewPredicateModel(check.RepositoryGrepCheckFragment.FileContentsPredicate)
+
+	predicate := check.RepositoryGrepCheckFragment.FileContentsPredicate
+	predicateAttrValues := map[string]attr.Value{
+		"type":  types.StringValue(string(predicate.Type)),
+		"value": types.StringValue(predicate.Value),
+	}
+	stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 
 	return stateModel, diags
 }
@@ -108,10 +115,13 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositoryGrepResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.FileContentsPredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.FileContentsPredicate.Validate(); err != nil {
+
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -145,7 +155,9 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	input.FileContentsPredicate = *planModel.FileContentsPredicate.ToCreateInput()
+
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	input.FileContentsPredicate = *predicateModel.ToCreateInput()
 
 	data, err := r.client.CreateCheckRepositoryGrep(input)
 	if err != nil {
@@ -212,7 +224,9 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 
 	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
-	input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
+
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	input.FileContentsPredicate = predicateModel.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositoryGrep(input)
 	if err != nil {

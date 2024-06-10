@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -43,8 +44,8 @@ type CheckRepositorySearchResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	FileExtensions        types.Set      `tfsdk:"file_extensions"`
-	FileContentsPredicate PredicateModel `tfsdk:"file_contents_predicate"`
+	FileExtensions        types.Set    `tfsdk:"file_extensions"`
+	FileContentsPredicate types.Object `tfsdk:"file_contents_predicate"`
 }
 
 func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositorySearchResourceModel) (CheckRepositorySearchResourceModel, diag.Diagnostics) {
@@ -80,7 +81,12 @@ func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.C
 		}
 	}
 
-	stateModel.FileContentsPredicate = *NewPredicateModel(check.RepositorySearchCheckFragment.FileContentsPredicate)
+	predicate := check.RepositorySearchCheckFragment.FileContentsPredicate
+	predicateAttrValues := map[string]attr.Value{
+		"type":  types.StringValue(string(predicate.Type)),
+		"value": types.StringValue(predicate.Value),
+	}
+	stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 
 	return stateModel, diags
 }
@@ -115,10 +121,12 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckRepositorySearchResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() || configModel.FileContentsPredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.FileContentsPredicate.Validate(); err != nil {
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -133,6 +141,7 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 		return
 	}
 
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
 	input := opslevel.CheckRepositorySearchCreateInput{
 		CategoryId:            asID(planModel.Category),
 		Enabled:               planModel.Enabled.ValueBoolPointer(),
@@ -141,7 +150,7 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 		Name:                  planModel.Name.ValueString(),
 		Notes:                 planModel.Notes.ValueStringPointer(),
 		OwnerId:               opslevel.RefOf(asID(planModel.Owner)),
-		FileContentsPredicate: *planModel.FileContentsPredicate.ToCreateInput(),
+		FileContentsPredicate: *predicateModel.ToCreateInput(),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -222,8 +231,9 @@ func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource
 	resp.Diagnostics.Append(diags...)
 	input.FileExtensions = opslevel.RefOf(fileExtensions)
 
-	// resp.Diagnostics.Append(planModel.FileExtensions.ElementsAs(ctx, &input.FileExtensions, false)...)
-	input.FileContentsPredicate = planModel.FileContentsPredicate.ToUpdateInput()
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
+	input.FileContentsPredicate = predicateModel.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositorySearch(input)
 	if err != nil {
