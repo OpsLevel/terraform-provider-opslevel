@@ -185,6 +185,9 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	input.ToolCategory = opslevel.ToolCategory(planModel.ToolCategory.ValueString())
 
@@ -198,6 +201,9 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// convert tool_name_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolNamePredicate)
@@ -209,6 +215,9 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// convert tool_url_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolUrlPredicate)
@@ -219,6 +228,9 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 		} else {
 			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.CreateCheckToolUsage(input)
@@ -281,6 +293,9 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
 
@@ -294,6 +309,9 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// convert tool_name_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolNamePredicate)
@@ -305,6 +323,9 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// convert tool_url_predicate object to model from plan
 	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolUrlPredicate)
@@ -315,6 +336,9 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		} else {
 			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
