@@ -99,6 +99,7 @@ run "resource_check_tool_usage_create_with_all_fields" {
     name                  = var.name
     notes                 = var.notes
     owner                 = run.from_team_get_owner_id.first_team.id
+    tool_category         = var.tool_category
     tool_name_predicate   = var.tool_name_predicate
     tool_url_predicate    = var.tool_url_predicate
   }
@@ -226,6 +227,7 @@ run "resource_check_tool_usage_update_all_fields" {
     name                  = var.name
     notes                 = var.notes
     owner                 = run.from_team_get_owner_id.first_team.id
+    tool_category         = var.tool_category
     tool_name_predicate   = var.tool_name_predicate
     tool_url_predicate    = var.tool_url_predicate
   }

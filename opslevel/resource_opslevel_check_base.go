@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -83,6 +84,11 @@ func CheckBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 type PredicateModel struct {
 	Type  types.String `tfsdk:"type"`
 	Value types.String `tfsdk:"value"`
+}
+
+var predicateType = map[string]attr.Type{
+	"type":  types.StringType,
+	"value": types.StringType,
 }
 
 func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {

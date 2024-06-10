@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -43,10 +44,10 @@ type CheckToolUsageResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	ToolCategory         types.String    `tfsdk:"tool_category"`
-	ToolNamePredicate    *PredicateModel `tfsdk:"tool_name_predicate"`
-	ToolUrlPredicate     *PredicateModel `tfsdk:"tool_url_predicate"`
-	EnvironmentPredicate *PredicateModel `tfsdk:"environment_predicate"`
+	ToolCategory         types.String `tfsdk:"tool_category"`
+	ToolNamePredicate    types.Object `tfsdk:"tool_name_predicate"`
+	ToolUrlPredicate     types.Object `tfsdk:"tool_url_predicate"`
+	EnvironmentPredicate types.Object `tfsdk:"environment_predicate"`
 }
 
 func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, planModel CheckToolUsageResourceModel) CheckToolUsageResourceModel {
@@ -71,16 +72,39 @@ func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, p
 	stateModel.Name = RequiredStringValue(check.Name)
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
-
 	stateModel.ToolCategory = RequiredStringValue(string(check.ToolCategory))
-	if check.ToolNamePredicate != nil {
-		stateModel.ToolNamePredicate = NewPredicateModel(*check.ToolNamePredicate)
+
+	if check.ToolNamePredicate == nil {
+		stateModel.ToolNamePredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.ToolNamePredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.ToolNamePredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
-	if check.ToolUrlPredicate != nil {
-		stateModel.ToolUrlPredicate = NewPredicateModel(*check.ToolUrlPredicate)
+
+	if check.ToolUrlPredicate == nil {
+		stateModel.ToolUrlPredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.ToolUrlPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.ToolUrlPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
-	if check.EnvironmentPredicate != nil {
-		stateModel.EnvironmentPredicate = NewPredicateModel(*check.EnvironmentPredicate)
+
+	if check.EnvironmentPredicate == nil {
+		stateModel.EnvironmentPredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.EnvironmentPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.EnvironmentPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
@@ -118,19 +142,19 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 		return
 	}
 
-	if configModel.EnvironmentPredicate != nil && !configModel.EnvironmentPredicate.Type.IsUnknown() {
-		if err := configModel.EnvironmentPredicate.Validate(); err != nil {
-			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
-		}
+	checkToolUsagePredicates := map[string]types.Object{
+		"environment_predicate": configModel.EnvironmentPredicate,
+		"tool_name_predicate":   configModel.ToolNamePredicate,
+		"tool_url_predicate":    configModel.ToolUrlPredicate,
 	}
-	if configModel.ToolNamePredicate != nil && !configModel.ToolNamePredicate.Type.IsUnknown() {
-		if err := configModel.ToolNamePredicate.Validate(); err != nil {
-			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
+	for predicateSchemaName, predicate := range checkToolUsagePredicates {
+		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
+		resp.Diagnostics.Append(diags...)
+		if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+			continue
 		}
-	}
-	if configModel.ToolUrlPredicate != nil && !configModel.ToolUrlPredicate.Type.IsUnknown() {
-		if err := configModel.ToolUrlPredicate.Validate(); err != nil {
-			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
+		if err := predicateModel.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root(predicateSchemaName), "Invalid Attribute Configuration", err.Error())
 		}
 	}
 }
@@ -161,16 +185,52 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	input.ToolCategory = opslevel.ToolCategory(planModel.ToolCategory.ValueString())
-	if planModel.ToolNamePredicate != nil {
-		input.ToolNamePredicate = planModel.ToolNamePredicate.ToCreateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.EnvironmentPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.EnvironmentPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
 	}
-	if planModel.ToolUrlPredicate != nil {
-		input.ToolUrlPredicate = planModel.ToolUrlPredicate.ToCreateInput()
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	if planModel.EnvironmentPredicate != nil {
-		input.EnvironmentPredicate = planModel.EnvironmentPredicate.ToCreateInput()
+
+	// convert tool_name_predicate object to model from plan
+	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolNamePredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.ToolNamePredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// convert tool_url_predicate object to model from plan
+	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolUrlPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.ToolUrlPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.CreateCheckToolUsage(input)
@@ -233,23 +293,57 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
-	if planModel.ToolNamePredicate != nil {
-		input.ToolNamePredicate = planModel.ToolNamePredicate.ToUpdateInput()
+	nullPredicateModel := PredicateModel{}
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.EnvironmentPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.EnvironmentPredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.EnvironmentPredicate = predicateModel.ToUpdateInput()
 	} else {
-		input.ToolNamePredicate = &opslevel.PredicateUpdateInput{}
+		resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
-	if planModel.ToolUrlPredicate != nil {
-		input.ToolUrlPredicate = planModel.ToolUrlPredicate.ToUpdateInput()
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// convert tool_name_predicate object to model from plan
+	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolNamePredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.ToolNamePredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.ToolNamePredicate = predicateModel.ToUpdateInput()
 	} else {
-		input.ToolUrlPredicate = &opslevel.PredicateUpdateInput{}
+		resp.Diagnostics.AddAttributeError(path.Root("tool_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
-	if planModel.EnvironmentPredicate != nil {
-		input.EnvironmentPredicate = planModel.EnvironmentPredicate.ToUpdateInput()
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// convert tool_url_predicate object to model from plan
+	predicateModel, diags = PredicateObjectToModel(ctx, planModel.ToolUrlPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.ToolUrlPredicate = nullPredicateModel.ToUpdateInput()
+	} else if err := predicateModel.Validate(); err == nil {
+		input.ToolUrlPredicate = predicateModel.ToUpdateInput()
 	} else {
-		input.EnvironmentPredicate = &opslevel.PredicateUpdateInput{}
+		resp.Diagnostics.AddAttributeError(path.Root("tool_url_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	input.ToolCategory = opslevel.RefOf(opslevel.ToolCategory(planModel.ToolCategory.ValueString()))
 
 	data, err := r.client.UpdateCheckToolUsage(input)
 	if err != nil {
