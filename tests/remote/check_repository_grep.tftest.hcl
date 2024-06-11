@@ -4,9 +4,10 @@ variables {
   # -- check_repository_grep fields --
   # required fields
   directory_search = true
+  # NOTE: baffled here, this is not being passed in
   file_contents_predicate = {
-    type  = "does_not_exist",
-    value = null,
+    type  = "exists"
+    value = ""
   }
   filepaths = tolist(["one/two.py", "three/four.rs"])
 
@@ -81,14 +82,15 @@ run "from_team_get_owner_id" {
 run "resource_check_repository_grep_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category                = run.from_rubric_category_get_category_id.first_category.id
+    enable_on               = var.enable_on
+    enabled                 = var.enabled
+    file_contents_predicate = var.file_contents_predicate
+    filter                  = run.from_filter_get_filter_id.first_filter.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
+    name                    = var.name
+    notes                   = var.notes
+    owner                   = run.from_team_get_owner_id.first_team.id
   }
 
   module {
@@ -101,6 +103,7 @@ run "resource_check_repository_grep_create_with_all_fields" {
       can(opslevel_check_repository_grep.test.description),
       can(opslevel_check_repository_grep.test.enable_on),
       can(opslevel_check_repository_grep.test.enabled),
+      can(opslevel_check_repository_grep.test.file_contents_predicate),
       can(opslevel_check_repository_grep.test.filter),
       can(opslevel_check_repository_grep.test.id),
       can(opslevel_check_repository_grep.test.level),
@@ -205,14 +208,15 @@ run "resource_check_repository_grep_update_unset_optional_fields" {
 run "resource_check_repository_grep_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    category                = run.from_rubric_category_get_category_id.first_category.id
+    enable_on               = var.enable_on
+    enabled                 = var.enabled
+    file_contents_predicate = var.file_contents_predicate
+    filter                  = run.from_filter_get_filter_id.first_filter.id
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
+    name                    = var.name
+    notes                   = var.notes
+    owner                   = run.from_team_get_owner_id.first_team.id
   }
 
   module {

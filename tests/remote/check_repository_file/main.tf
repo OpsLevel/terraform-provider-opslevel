@@ -1,11 +1,8 @@
 resource "opslevel_check_repository_file" "test" {
-  directory_search = var.directory_search
-  file_contents_predicate = {
-    type  = var.file_contents_predicate.type
-    value = var.file_contents_predicate.value
-  }
-  filepaths         = var.filepaths
-  use_absolute_root = var.use_absolute_root
+  directory_search        = var.directory_search
+  file_contents_predicate = var.file_contents_predicate
+  filepaths               = var.filepaths
+  use_absolute_root       = var.use_absolute_root
 
   # -- check base fields --
   category  = var.category

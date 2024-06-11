@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,8 +41,8 @@ type CheckTagDefinedResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	TagKey       types.String    `tfsdk:"tag_key"`
-	TagPredicate *PredicateModel `tfsdk:"tag_predicate"`
+	TagKey       types.String `tfsdk:"tag_key"`
+	TagPredicate types.Object `tfsdk:"tag_predicate"`
 }
 
 func NewCheckTagDefinedResourceModel(ctx context.Context, check opslevel.Check, planModel CheckTagDefinedResourceModel) CheckTagDefinedResourceModel {
@@ -68,8 +69,16 @@ func NewCheckTagDefinedResourceModel(ctx context.Context, check opslevel.Check, 
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.TagKey = RequiredStringValue(check.TagKey)
-	if check.TagPredicate != nil {
-		stateModel.TagPredicate = NewPredicateModel(*check.TagPredicate)
+
+	if check.TagPredicate == nil {
+		stateModel.TagPredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *check.TagPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.TagPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
@@ -97,12 +106,15 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 func (r *CheckTagDefinedResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckTagDefinedResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() ||
-		configModel.TagPredicate == nil ||
-		configModel.TagPredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.TagPredicate.Validate(); err != nil {
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		return
+	}
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -135,8 +147,19 @@ func (r *CheckTagDefinedResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	input.TagKey = planModel.TagKey.ValueString()
-	if planModel.TagPredicate != nil {
-		input.TagPredicate = planModel.TagPredicate.ToCreateInput()
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.TagPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.CreateCheckTagDefined(input)
@@ -201,10 +224,19 @@ func (r *CheckTagDefinedResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	input.TagKey = planModel.TagKey.ValueStringPointer()
-	if planModel.TagPredicate != nil {
-		input.TagPredicate = planModel.TagPredicate.ToUpdateInput()
-	} else {
+
+	// convert environment_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
 		input.TagPredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.TagPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.UpdateCheckTagDefined(input)

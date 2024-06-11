@@ -8,7 +8,7 @@ variables {
   # optional fields
   alert_name_predicate = {
     type  = "exists"
-    value = null
+    value = ""
   }
 
   # -- check base fields --
@@ -164,18 +164,23 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
 run "resource_check_alert_source_usage_update_unset_optional_fields" {
 
   variables {
-    # alert_name_predicate = null
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    notes     = null
-    owner     = null
+    alert_name_predicate = null
+    category             = run.from_rubric_category_get_category_id.first_category.id
+    enable_on            = null
+    enabled              = null
+    filter               = null
+    level                = run.from_rubric_level_get_level_id.greatest_level.id
+    notes                = null
+    owner                = null
   }
 
   module {
     source = "./check_alert_source_usage"
+  }
+
+  assert {
+    condition     = opslevel_check_alert_source_usage.test.alert_name_predicate == null
+    error_message = var.error_expected_null_field
   }
 
   assert {

@@ -1,9 +1,6 @@
 resource "opslevel_check_service_property" "test" {
-  property = var.property
-  predicate = {
-    type  = var.predicate.type
-    value = var.predicate.value
-  }
+  property  = var.property
+  predicate = var.predicate
 
   # -- check base fields --
   category  = var.category

@@ -1,9 +1,6 @@
 resource "opslevel_check_tag_defined" "test" {
-  tag_key = var.tag_key
-  tag_predicate = {
-    type  = var.tag_predicate.type
-    value = var.tag_predicate.value
-  }
+  tag_key       = var.tag_key
+  tag_predicate = var.tag_predicate
 
   # -- check base fields --
   category  = var.category

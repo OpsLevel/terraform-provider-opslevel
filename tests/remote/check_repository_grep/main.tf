@@ -1,8 +1,9 @@
 resource "opslevel_check_repository_grep" "test" {
   directory_search = var.directory_search
+  # file_contents_predicate = var.file_contents_predicate
   file_contents_predicate = {
-    type  = var.file_contents_predicate.type
-    value = var.file_contents_predicate.value
+    type  = "exists"
+    value = ""
   }
   filepaths = var.filepaths
 

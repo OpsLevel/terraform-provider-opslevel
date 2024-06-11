@@ -2,10 +2,7 @@ resource "opslevel_check_service_ownership" "test" {
   contact_method         = var.contact_method
   require_contact_method = var.require_contact_method
   tag_key                = var.tag_key
-  tag_predicate = {
-    type  = var.tag_predicate.type
-    value = var.tag_predicate.value
-  }
+  tag_predicate          = var.tag_predicate
 
   # -- check base fields --
   category  = var.category

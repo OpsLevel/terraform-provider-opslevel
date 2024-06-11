@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -43,10 +46,10 @@ type CheckServiceOwnershipResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	RequireContactMethod types.Bool      `tfsdk:"require_contact_method"`
-	ContactMethod        types.String    `tfsdk:"contact_method"`
-	TagKey               types.String    `tfsdk:"tag_key"`
-	TagPredicate         *PredicateModel `tfsdk:"tag_predicate"`
+	RequireContactMethod types.Bool   `tfsdk:"require_contact_method"`
+	ContactMethod        types.String `tfsdk:"contact_method"`
+	TagKey               types.String `tfsdk:"tag_key"`
+	TagPredicate         types.Object `tfsdk:"tag_predicate"`
 }
 
 func NewCheckServiceOwnershipResourceModel(ctx context.Context, check opslevel.Check, planModel CheckServiceOwnershipResourceModel) CheckServiceOwnershipResourceModel {
@@ -81,10 +84,17 @@ func NewCheckServiceOwnershipResourceModel(ctx context.Context, check opslevel.C
 			stateModel.ContactMethod = OptionalStringValue(contactMethod)
 		}
 	}
-
 	stateModel.TagKey = OptionalStringValue(check.ServiceOwnershipCheckFragment.TeamTagKey)
-	if check.ServiceOwnershipCheckFragment.TeamTagPredicate != nil {
-		stateModel.TagPredicate = NewPredicateModel(*check.ServiceOwnershipCheckFragment.TeamTagPredicate)
+
+	if check.ServiceOwnershipCheckFragment.TeamTagPredicate == nil {
+		stateModel.TagPredicate = types.ObjectNull(predicateType)
+	} else {
+		predicate := *&check.ServiceOwnershipCheckFragment.TeamTagPredicate
+		predicateAttrValues := map[string]attr.Value{
+			"type":  types.StringValue(string(predicate.Type)),
+			"value": types.StringValue(predicate.Value),
+		}
+		stateModel.TagPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
 	return stateModel
@@ -103,14 +113,18 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"require_contact_method": schema.BoolAttribute{
 				Description: "True if a service's owner must have a contact method, False otherwise.",
+				Computed:    true,
 				Optional:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 			"contact_method": schema.StringAttribute{
 				Description: fmt.Sprintf(
 					"The type of contact method that is required. One of `%s`",
 					strings.Join(enumAllContactTypes, "`, `"),
 				),
+				Computed:   true,
 				Optional:   true,
+				Default:    stringdefault.StaticString("ANY"),
 				Validators: []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
 			},
 			"tag_key": schema.StringAttribute{
@@ -125,12 +139,16 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 func (r *CheckServiceOwnershipResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckServiceOwnershipResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() ||
-		configModel.TagPredicate == nil ||
-		configModel.TagPredicate.Type.IsUnknown() {
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := configModel.TagPredicate.Validate(); err != nil {
+
+	predicateModel, diags := PredicateObjectToModel(ctx, configModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		return
+	}
+	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
@@ -163,10 +181,23 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 	}
 
 	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
-	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
+	if planModel.ContactMethod.ValueString() != "" {
+		input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
+	}
 	input.TagKey = planModel.TagKey.ValueStringPointer()
-	if planModel.TagPredicate != nil {
-		input.TagPredicate = planModel.TagPredicate.ToCreateInput()
+
+	// convert tool_name_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.TagPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.CreateCheckServiceOwnership(input)
@@ -233,10 +264,19 @@ func (r *CheckServiceOwnershipResource) Update(ctx context.Context, req resource
 	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
 	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
 	input.TagKey = planModel.TagKey.ValueStringPointer()
-	if planModel.TagPredicate != nil {
-		input.TagPredicate = planModel.TagPredicate.ToUpdateInput()
-	} else {
+
+	// convert tool_name_predicate object to model from plan
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
 		input.TagPredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.TagPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.UpdateCheckServiceOwnership(input)
