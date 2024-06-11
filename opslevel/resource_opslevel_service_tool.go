@@ -182,6 +182,10 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if err := service.Hydrate(r.client); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate service (%s), got error: %s", service.Id, err))
+	}
+
 	var serviceTool *opslevel.Tool
 	id := currentStateModel.Id.ValueString()
 	for _, tool := range service.Tools.Nodes {
