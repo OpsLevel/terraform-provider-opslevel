@@ -1,0 +1,3 @@
+kind: Refactor
+body: fix unsetting opslevel_check_service_property.predicate. Type of field Predicate was PredicateModel is now types.Object
+time: 2024-06-11T08:58:44.173408-05:00

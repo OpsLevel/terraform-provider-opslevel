@@ -82,15 +82,16 @@ run "from_team_get_owner_id" {
 run "resource_check_service_ownership_create_with_all_fields" {
 
   variables {
-    category      = run.from_rubric_category_get_category_id.first_category.id
-    enable_on     = var.enable_on
-    enabled       = var.enabled
-    filter        = run.from_filter_get_filter_id.first_filter.id
-    level         = run.from_rubric_level_get_level_id.greatest_level.id
-    name          = var.name
-    notes         = var.notes
-    owner         = run.from_team_get_owner_id.first_team.id
-    tag_predicate = var.tag_predicate
+    category       = run.from_rubric_category_get_category_id.first_category.id
+    contact_method = var.contact_method
+    enable_on      = var.enable_on
+    enabled        = var.enabled
+    filter         = run.from_filter_get_filter_id.first_filter.id
+    level          = run.from_rubric_level_get_level_id.greatest_level.id
+    name           = var.name
+    notes          = var.notes
+    owner          = run.from_team_get_owner_id.first_team.id
+    tag_predicate  = var.tag_predicate
   }
 
   module {
@@ -100,6 +101,7 @@ run "resource_check_service_ownership_create_with_all_fields" {
   assert {
     condition = alltrue([
       can(opslevel_check_service_ownership.test.category),
+      can(opslevel_check_service_ownership.test.contact_method),
       can(opslevel_check_service_ownership.test.description),
       can(opslevel_check_service_ownership.test.enable_on),
       can(opslevel_check_service_ownership.test.enabled),
@@ -109,6 +111,9 @@ run "resource_check_service_ownership_create_with_all_fields" {
       can(opslevel_check_service_ownership.test.name),
       can(opslevel_check_service_ownership.test.notes),
       can(opslevel_check_service_ownership.test.owner),
+      can(opslevel_check_service_ownership.test.require_contact_method),
+      can(opslevel_check_service_ownership.test.tag_key),
+      can(opslevel_check_service_ownership.test.tag_predicate),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_service_ownership)
   }
@@ -116,6 +121,11 @@ run "resource_check_service_ownership_create_with_all_fields" {
   assert {
     condition     = opslevel_check_service_ownership.test.category == var.category
     error_message = "wrong category of opslevel_check_service_ownership resource"
+  }
+
+  assert {
+    condition     = lower(opslevel_check_service_ownership.test.contact_method) == lower(var.contact_method)
+    error_message = "wrong contact_method of opslevel_check_service_ownership resource"
   }
 
   assert {
@@ -163,14 +173,14 @@ run "resource_check_service_ownership_create_with_all_fields" {
 run "resource_check_service_ownership_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    notes     = null
-    owner     = null
-    # tag_predicate = null
+    category      = run.from_rubric_category_get_category_id.first_category.id
+    enable_on     = null
+    enabled       = null
+    filter        = null
+    level         = run.from_rubric_level_get_level_id.greatest_level.id
+    notes         = null
+    owner         = null
+    tag_predicate = null
   }
 
   module {
@@ -202,21 +212,26 @@ run "resource_check_service_ownership_update_unset_optional_fields" {
     error_message = var.error_expected_null_field
   }
 
+  assert {
+    condition     = opslevel_check_service_ownership.test.tag_predicate == null
+    error_message = var.error_expected_null_field
+  }
 
 }
 
 run "resource_check_service_ownership_update_all_fields" {
 
   variables {
-    category      = run.from_rubric_category_get_category_id.first_category.id
-    enable_on     = var.enable_on
-    enabled       = var.enabled
-    filter        = run.from_filter_get_filter_id.first_filter.id
-    level         = run.from_rubric_level_get_level_id.greatest_level.id
-    name          = var.name
-    notes         = var.notes
-    owner         = run.from_team_get_owner_id.first_team.id
-    tag_predicate = var.tag_predicate
+    category       = run.from_rubric_category_get_category_id.first_category.id
+    contact_method = var.contact_method
+    enable_on      = var.enable_on
+    enabled        = var.enabled
+    filter         = run.from_filter_get_filter_id.first_filter.id
+    level          = run.from_rubric_level_get_level_id.greatest_level.id
+    name           = var.name
+    notes          = var.notes
+    owner          = run.from_team_get_owner_id.first_team.id
+    tag_predicate  = var.tag_predicate
   }
 
   module {
@@ -226,6 +241,11 @@ run "resource_check_service_ownership_update_all_fields" {
   assert {
     condition     = opslevel_check_service_ownership.test.category == var.category
     error_message = "wrong category of opslevel_check_service_ownership resource"
+  }
+
+  assert {
+    condition     = lower(opslevel_check_service_ownership.test.contact_method) == lower(var.contact_method)
+    error_message = "wrong contact_method of opslevel_check_service_ownership resource"
   }
 
   assert {

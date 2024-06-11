@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -111,14 +113,18 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"require_contact_method": schema.BoolAttribute{
 				Description: "True if a service's owner must have a contact method, False otherwise.",
+				Computed:    true,
 				Optional:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 			"contact_method": schema.StringAttribute{
 				Description: fmt.Sprintf(
 					"The type of contact method that is required. One of `%s`",
 					strings.Join(enumAllContactTypes, "`, `"),
 				),
+				Computed:   true,
 				Optional:   true,
+				Default:    stringdefault.StaticString("ANY"),
 				Validators: []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
 			},
 			"tag_key": schema.StringAttribute{
@@ -175,7 +181,9 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 	}
 
 	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
-	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
+	if planModel.ContactMethod.ValueString() != "" {
+		input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
+	}
 	input.TagKey = planModel.TagKey.ValueStringPointer()
 
 	// convert tool_name_predicate object to model from plan

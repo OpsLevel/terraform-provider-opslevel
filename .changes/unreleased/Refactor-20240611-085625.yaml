@@ -1,0 +1,3 @@
+kind: Refactor
+body: fix unsetting opslevel_check_repository_grep.file_contents_predicate. Type of field FileContentsPredicate was PredicateModel is now types.Object
+time: 2024-06-11T08:56:25.468086-05:00

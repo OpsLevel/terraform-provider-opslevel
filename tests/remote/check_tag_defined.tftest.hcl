@@ -163,14 +163,14 @@ run "resource_check_tag_defined_create_with_all_fields" {
 run "resource_check_tag_defined_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    notes     = null
-    owner     = null
-    # tag_predicate = null
+    category      = run.from_rubric_category_get_category_id.first_category.id
+    enable_on     = null
+    enabled       = null
+    filter        = null
+    level         = run.from_rubric_level_get_level_id.greatest_level.id
+    notes         = null
+    owner         = null
+    tag_predicate = null
   }
 
   module {
@@ -202,6 +202,10 @@ run "resource_check_tag_defined_update_unset_optional_fields" {
     error_message = var.error_expected_null_field
   }
 
+  assert {
+    condition     = opslevel_check_tag_defined.test.tag_predicate == null
+    error_message = var.error_expected_null_field
+  }
 
 }
 
