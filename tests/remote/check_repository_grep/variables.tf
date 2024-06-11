@@ -1,3 +1,4 @@
+# NOTE: if directory_search is true, file_contents_predicate can only be "exists" or "does_not_exist"
 variable "directory_search" {
   type        = bool
   description = "Whether the check looks for the existence of a directory instead of a file."

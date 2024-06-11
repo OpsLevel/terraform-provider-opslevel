@@ -1,7 +1,8 @@
 resource "opslevel_check_repository_search" "test" {
+  # file_contents_predicate = var.file_contents_predicate
   file_contents_predicate = {
-    type  = var.file_contents_predicate.type
-    value = var.file_contents_predicate.value
+    type  = "contains"
+    value = "dev"
   }
   file_extensions = var.file_extensions
 

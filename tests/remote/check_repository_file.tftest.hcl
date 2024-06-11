@@ -105,6 +105,7 @@ run "resource_check_repository_file_create_with_all_fields" {
       can(opslevel_check_repository_file.test.description),
       can(opslevel_check_repository_file.test.enable_on),
       can(opslevel_check_repository_file.test.enabled),
+      can(opslevel_check_repository_file.test.file_contents_predicate),
       can(opslevel_check_repository_file.test.filter),
       can(opslevel_check_repository_file.test.id),
       can(opslevel_check_repository_file.test.level),
@@ -133,6 +134,11 @@ run "resource_check_repository_file_create_with_all_fields" {
   assert {
     condition     = startswith(opslevel_check_repository_file.test.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_repository_file)
+  }
+
+  assert {
+    condition     = opslevel_check_repository_file.test.file_contents_predicate == var.file_contents_predicate
+    error_message = "wrong file_contents_predicate of opslevel_check_repository_file resource"
   }
 
   assert {
@@ -165,14 +171,14 @@ run "resource_check_repository_file_create_with_all_fields" {
 run "resource_check_repository_file_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
-    enable_on = null
-    enabled   = null
-    # file_contents_predicate = null
-    filter = null
-    level  = run.from_rubric_level_get_level_id.greatest_level.id
-    notes  = null
-    owner  = null
+    category                = run.from_rubric_category_get_category_id.first_category.id
+    enable_on               = null
+    enabled                 = null
+    file_contents_predicate = null
+    filter                  = null
+    level                   = run.from_rubric_level_get_level_id.greatest_level.id
+    notes                   = null
+    owner                   = null
   }
 
   module {
@@ -187,6 +193,11 @@ run "resource_check_repository_file_update_unset_optional_fields" {
   assert {
     condition     = opslevel_check_repository_file.test.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_repository_file resource"
+  }
+
+  assert {
+    condition     = opslevel_check_repository_file.test.file_contents_predicate == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
@@ -238,6 +249,11 @@ run "resource_check_repository_file_update_all_fields" {
   assert {
     condition     = opslevel_check_repository_file.test.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_file resource"
+  }
+
+  assert {
+    condition     = opslevel_check_repository_file.test.file_contents_predicate == var.file_contents_predicate
+    error_message = "wrong file_contents_predicate of opslevel_check_repository_file resource"
   }
 
   assert {
