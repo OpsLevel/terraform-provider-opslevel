@@ -257,42 +257,34 @@ func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req res
 	teamId := ids[0]
 	tagId := ids[1]
 
-	team, err := teamTagResource.client.GetTeam(opslevel.ID(teamId))
+	team, err := teamTagResource.client.GetTaggableResource(opslevel.TaggableResourceTeam, teamId)
 	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamId, err))
 		return
 	}
-	_, err = team.GetTags(teamTagResource.client, nil)
-	if err != nil || team.Tags == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on team (%s), got error: %s", teamId, err))
+	tags, diags := getTagsFromResource(teamTagResource.client, team)
+	resp.Diagnostics.Append(diags...)
+	if tags == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get tags from team with id '%s'", teamId))
 	}
-
-	var teamTag *opslevel.Tag
-	for _, readTag := range team.Tags.Nodes {
-		if tagId == string(readTag.Id) {
-			teamTag = &readTag
-			break
-		}
-	}
-	if teamTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find team tag with team id '%s' and tag id '%s'", teamId, tagId))
+	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	teamTag := extractTagFromTags(opslevel.ID(tagId), tags.Nodes)
+	if teamTag == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tag with id '%s' in team with id '%s'", tagId, teamId))
+	}
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, string(teamTag.Id))...)
 
 	keyPath := path.Root("key")
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, keyPath, teamTag.Key)...)
 
 	teamPath := path.Root("team")
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamPath, string(team.Id))...)
-
-	teamAliasPath := path.Root("team_alias")
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamAliasPath, team.Alias)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamPath, string(team.ResourceId()))...)
 
 	valuePath := path.Root("value")
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, valuePath, teamTag.Value)...)
-}
-
-func isTagValid(tag string) bool {
-	ids := strings.Split(tag, ":")
-	return len(ids) == 2 && opslevel.IsID(ids[0]) && opslevel.IsID(ids[1])
 }

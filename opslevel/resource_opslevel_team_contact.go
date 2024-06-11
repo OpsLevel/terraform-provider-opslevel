@@ -206,5 +206,44 @@ func (teamContactResource *TeamContactResource) Delete(ctx context.Context, req 
 }
 
 func (teamContactResource *TeamContactResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if !isTagValid(req.ID) {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<team-id>:<contact-id>'. Given '%s'", req.ID),
+		)
+	}
+
+	ids := strings.Split(req.ID, ":")
+	teamId := ids[0]
+	contactId := ids[1]
+
+	team, err := teamContactResource.client.GetTeam(opslevel.ID(teamId))
+	if err != nil || team == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get team with id '%s', got error: %s", teamId, err))
+		return
+	}
+	if err = team.Hydrate(teamContactResource.client); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team with id '%s', got error: %s", teamId, err))
+		return
+	}
+	teamContact := extractContactFromContacts(opslevel.ID(contactId), team.Contacts)
+	if teamContact == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find contact with id '%s' in team with id '%s'", contactId, teamId))
+		return
+	}
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, string(teamContact.Id))...)
+
+	keyPath := path.Root("name")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, keyPath, teamContact.DisplayName)...)
+
+	teamPath := path.Root("team")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, teamPath, string(team.Id))...)
+
+	typePath := path.Root("type")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, typePath, teamContact.Type)...)
+
+	valuePath := path.Root("value")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, valuePath, teamContact.Address)...)
 }
