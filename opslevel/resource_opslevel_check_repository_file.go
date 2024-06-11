@@ -256,6 +256,9 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 	} else {
 		resp.Diagnostics.AddAttributeError(path.Root("environment_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	input.UseAbsoluteRoot = planModel.UseAbsoluteRoot.ValueBoolPointer()
 
 	data, err := r.client.UpdateCheckRepositoryFile(input)

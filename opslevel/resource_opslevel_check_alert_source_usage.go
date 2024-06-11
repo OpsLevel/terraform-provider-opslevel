@@ -163,6 +163,9 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 			resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data, err := r.client.CreateCheckAlertSourceUsage(input)
 	if err != nil {
@@ -235,6 +238,9 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		input.AlertSourceNamePredicate = predicateModel.ToUpdateInput()
 	} else {
 		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data, err := r.client.UpdateCheckAlertSourceUsage(input)

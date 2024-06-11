@@ -244,6 +244,9 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	} else {
 		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data, err := r.client.UpdateCheckServiceProperty(input)
 	if err != nil {

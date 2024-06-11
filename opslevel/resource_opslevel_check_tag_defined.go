@@ -235,6 +235,9 @@ func (r *CheckTagDefinedResource) Update(ctx context.Context, req resource.Updat
 	} else {
 		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data, err := r.client.UpdateCheckTagDefined(input)
 	if err != nil {
