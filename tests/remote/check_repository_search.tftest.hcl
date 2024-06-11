@@ -104,6 +104,7 @@ run "resource_check_repository_search_create_with_all_fields" {
       can(opslevel_check_repository_search.test.description),
       can(opslevel_check_repository_search.test.enable_on),
       can(opslevel_check_repository_search.test.enabled),
+      can(opslevel_check_repository_search.test.file_contents_predicate),
       can(opslevel_check_repository_search.test.file_extensions),
       can(opslevel_check_repository_search.test.filter),
       can(opslevel_check_repository_search.test.id),

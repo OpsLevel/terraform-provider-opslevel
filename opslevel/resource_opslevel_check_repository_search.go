@@ -142,6 +142,7 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 	}
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
 	input := opslevel.CheckRepositorySearchCreateInput{
 		CategoryId:            asID(planModel.Category),
 		Enabled:               planModel.Enabled.ValueBoolPointer(),

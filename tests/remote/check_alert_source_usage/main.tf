@@ -1,9 +1,6 @@
 resource "opslevel_check_alert_source_usage" "test" {
-  alert_name_predicate = {
-    type  = var.alert_name_predicate.type
-    value = var.alert_name_predicate.value
-  }
-  alert_type = var.alert_type
+  alert_name_predicate = var.alert_name_predicate
+  alert_type           = var.alert_type
 
   # -- check base fields --
   category  = var.category

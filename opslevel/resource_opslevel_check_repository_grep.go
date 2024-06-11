@@ -157,6 +157,7 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
 	input.FileContentsPredicate = *predicateModel.ToCreateInput()
 
 	data, err := r.client.CreateCheckRepositoryGrep(input)
@@ -226,6 +227,7 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
+	resp.Diagnostics.Append(diags...)
 	input.FileContentsPredicate = predicateModel.ToUpdateInput()
 
 	data, err := r.client.UpdateCheckRepositoryGrep(input)
