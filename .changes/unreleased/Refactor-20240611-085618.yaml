@@ -1,3 +1,0 @@
-kind: Refactor
-body: fix unsetting opslevel_check_service_ownership.tag_predicate. Type of field TagPredicate was PredicateModel is now types.Object
-time: 2024-06-11T08:56:18.154783-05:00

@@ -1,3 +1,0 @@
-kind: Bugfix
-body: created opslevel_check_service_ownership use new defaults instead of crashing. Optional fields require_contact_method and contact_method now have default values.
-time: 2024-06-11T09:00:28.77618-05:00

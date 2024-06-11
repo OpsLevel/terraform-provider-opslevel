@@ -48,7 +48,7 @@ output "team" {
 ### Optional
 
 - `aliases` (Set of String) A list of human-friendly, unique identifiers for the team.
-- `member` (Block List) (see [below for nested schema](#nestedblock--member))
+- `member` (Block Set) (see [below for nested schema](#nestedblock--member))
 - `parent` (String) The id or alias of the parent team.
 - `responsibilities` (String) A description of what the team is responsible for.
 

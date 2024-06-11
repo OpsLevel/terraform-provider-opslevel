@@ -1,3 +1,0 @@
-kind: Refactor
-body: fix unsetting opslevel_check_repository_file.file_contents_predicate. Type of field FileContentsPredicate was PredicateModel is now types.Object
-time: 2024-06-11T08:56:11.805923-05:00

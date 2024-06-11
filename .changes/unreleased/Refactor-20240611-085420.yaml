@@ -1,3 +1,0 @@
-kind: Refactor
-body: fix unsetting opslevel_check_alert_source_usage.alert_name_predicate. Type of field AlertNamePredicate was PredicateModel is now types.Object
-time: 2024-06-11T08:54:20.876041-05:00
