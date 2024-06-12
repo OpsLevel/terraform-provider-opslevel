@@ -19,6 +19,11 @@ run "datasource_scorecard_mocked_fields" {
   }
 
   assert {
+    condition     = can(data.opslevel_scorecard.mock_scorecard.categories)
+    error_message = "categories attribute missing from opslevel_scorecard.mock_scorecard"
+  }
+
+  assert {
     condition     = data.opslevel_scorecard.mock_scorecard.description == "mock-scorecard-description"
     error_message = "wrong description in opslevel_scorecard mock"
   }
