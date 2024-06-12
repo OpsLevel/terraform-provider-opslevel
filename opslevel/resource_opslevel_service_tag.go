@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -238,5 +239,47 @@ func (serviceTagResource *ServiceTagResource) Delete(ctx context.Context, req re
 }
 
 func (serviceTagResource *ServiceTagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if !isTagValid(req.ID) {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<service-id>:<tag-id>'. Given '%s'", req.ID),
+		)
+		return
+	}
+
+	ids := strings.Split(req.ID, ":")
+	serviceId := ids[0]
+	tagId := ids[1]
+
+	service, err := serviceTagResource.client.GetTaggableResource(opslevel.TaggableResourceService, serviceId)
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read service (%s), got error: %s", serviceId, err))
+		return
+	}
+	tags, diags := getTagsFromResource(serviceTagResource.client, service)
+	resp.Diagnostics.Append(diags...)
+	if tags == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get tags from service with id '%s'", serviceId))
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	serviceTag := extractTagFromTags(opslevel.ID(tagId), tags.Nodes)
+	if serviceTag == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tag with id '%s' in service with id '%s'", tagId, serviceId))
+		return
+	}
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, string(serviceTag.Id))...)
+
+	keyPath := path.Root("key")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, keyPath, serviceTag.Key)...)
+
+	servicePath := path.Root("service")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, servicePath, string(service.ResourceId()))...)
+
+	valuePath := path.Root("value")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, valuePath, serviceTag.Value)...)
 }

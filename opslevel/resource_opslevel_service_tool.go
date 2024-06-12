@@ -182,6 +182,11 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if err := service.Hydrate(r.client); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate service (%s), got error: %s", service.Id, err))
+		return
+	}
+
 	var serviceTool *opslevel.Tool
 	id := currentStateModel.Id.ValueString()
 	for _, tool := range service.Tools.Nodes {
@@ -245,5 +250,56 @@ func (r *ServiceToolResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 func (r *ServiceToolResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if !isTagValid(req.ID) {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<service-id>:<tool-id>'. Given '%s'", req.ID),
+		)
+		return
+	}
+
+	ids := strings.Split(req.ID, ":")
+	serviceId := ids[0]
+	toolId := ids[1]
+
+	service, err := r.client.GetService(opslevel.ID(serviceId))
+	if err != nil || service == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get service with id '%s', got error: %s", serviceId, err))
+		return
+	}
+
+	tools, err := service.GetTools(r.client, nil)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get tools from service with id '%s', got error: %s", serviceId, err))
+	}
+	if tools == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("no tools found on service with id '%s'", serviceId))
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	serviceTool := extractToolFromTools(opslevel.ID(toolId), tools.Nodes)
+	if serviceTool == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tool with id '%s' in service with id '%s'", toolId, serviceId))
+		return
+	}
+
+	categoryPath := path.Root("category")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, categoryPath, string(serviceTool.Category))...)
+
+	environmentPath := path.Root("environment")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, environmentPath, serviceTool.Environment)...)
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, string(serviceTool.Id))...)
+
+	namePath := path.Root("name")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, namePath, serviceTool.DisplayName)...)
+
+	servicePath := path.Root("service")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, servicePath, string(service.Id))...)
+
+	urlPath := path.Root("url")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, urlPath, serviceTool.Url)...)
 }
