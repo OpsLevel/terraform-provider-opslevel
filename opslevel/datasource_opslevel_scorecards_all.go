@@ -25,16 +25,17 @@ type ScorecardDataSourcesAll struct {
 }
 
 type scorecardDataSourceModel struct {
-	AffectsOverallServiceLevels types.Bool   `tfsdk:"affects_overall_service_levels"`
-	Aliases                     types.List   `tfsdk:"aliases"`
-	Description                 types.String `tfsdk:"description"`
-	FilterId                    types.String `tfsdk:"filter_id"`
-	Id                          types.String `tfsdk:"id"`
-	Name                        types.String `tfsdk:"name"`
-	OwnerId                     types.String `tfsdk:"owner_id"`
-	PassingChecks               types.Int64  `tfsdk:"passing_checks"`
-	ServiceCount                types.Int64  `tfsdk:"service_count"`
-	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
+	AffectsOverallServiceLevels types.Bool                `tfsdk:"affects_overall_service_levels"`
+	Aliases                     types.List                `tfsdk:"aliases"`
+	Categories                  []categoryDataSourceModel `tfsdk:"categories"`
+	Description                 types.String              `tfsdk:"description"`
+	FilterId                    types.String              `tfsdk:"filter_id"`
+	Id                          types.String              `tfsdk:"id"`
+	Name                        types.String              `tfsdk:"name"`
+	OwnerId                     types.String              `tfsdk:"owner_id"`
+	PassingChecks               types.Int64               `tfsdk:"passing_checks"`
+	ServiceCount                types.Int64               `tfsdk:"service_count"`
+	TotalChecks                 types.Int64               `tfsdk:"total_checks"`
 }
 
 // scorecardDataSourcesAllModel describes the data source data model.
@@ -42,16 +43,24 @@ type scorecardDataSourcesAllModel struct {
 	Scorecards []scorecardDataSourceModel `tfsdk:"scorecards"`
 }
 
-func NewScorecardDataSourcesAllModel(ctx context.Context, scorecards []opslevel.Scorecard) (scorecardDataSourcesAllModel, diag.Diagnostics) {
+func NewScorecardDataSourcesAllModel(ctx context.Context, client *opslevel.Client, scorecards []opslevel.Scorecard) (scorecardDataSourcesAllModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	scorecardModels := []scorecardDataSourceModel{}
 	for _, scorecard := range scorecards {
 		scorecardAliases, scorecardDiag := OptionalStringListValue(ctx, scorecard.Aliases)
 		diags.Append(scorecardDiag...)
+
+		categoriesModel, categoriesDiags := getCategoriesModelFromScorecard(client, &scorecard)
+		diags.Append(categoriesDiags...)
+		if diags.HasError() {
+			return scorecardDataSourcesAllModel{}, diags
+		}
+
 		scorecardModel := scorecardDataSourceModel{
 			AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
 			Aliases:                     scorecardAliases,
+			Categories:                  categoriesModel,
 			Description:                 ComputedStringValue(scorecard.Description),
 			FilterId:                    ComputedStringValue(string(scorecard.Filter.Id)),
 			Id:                          ComputedStringValue(string(scorecard.Id)),
@@ -100,7 +109,7 @@ func (d *ScorecardDataSourcesAll) Read(ctx context.Context, req datasource.ReadR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list scorecards datasource, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewScorecardDataSourcesAllModel(ctx, scorecards.Nodes)
+	stateModel, diags := NewScorecardDataSourcesAllModel(ctx, d.client, scorecards.Nodes)
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state

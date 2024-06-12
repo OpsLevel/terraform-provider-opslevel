@@ -204,6 +204,7 @@ run "datasource_scorecard_first" {
     condition = alltrue([
       can(data.opslevel_scorecard.first_scorecard_by_id.affects_overall_service_levels),
       can(data.opslevel_scorecard.first_scorecard_by_id.aliases),
+      can(data.opslevel_scorecard.first_scorecard_by_id.categories),
       can(data.opslevel_scorecard.first_scorecard_by_id.description),
       can(data.opslevel_scorecard.first_scorecard_by_id.filter_id),
       can(data.opslevel_scorecard.first_scorecard_by_id.id),
