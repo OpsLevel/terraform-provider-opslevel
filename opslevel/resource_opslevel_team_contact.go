@@ -211,6 +211,7 @@ func (teamContactResource *TeamContactResource) ImportState(ctx context.Context,
 			"Invalid format for given Import Id",
 			fmt.Sprintf("Id expected to be formatted as '<team-id>:<contact-id>'. Given '%s'", req.ID),
 		)
+		return
 	}
 
 	ids := strings.Split(req.ID, ":")

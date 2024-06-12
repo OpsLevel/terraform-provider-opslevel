@@ -254,6 +254,7 @@ func (r *ServiceToolResource) ImportState(ctx context.Context, req resource.Impo
 			"Invalid format for given Import Id",
 			fmt.Sprintf("Id expected to be formatted as '<service-id>:<tool-id>'. Given '%s'", req.ID),
 		)
+		return
 	}
 
 	ids := strings.Split(req.ID, ":")
@@ -280,6 +281,7 @@ func (r *ServiceToolResource) ImportState(ctx context.Context, req resource.Impo
 	serviceTool := extractToolFromTools(opslevel.ID(toolId), tools.Nodes)
 	if serviceTool == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tool with id '%s' in service with id '%s'", toolId, serviceId))
+		return
 	}
 
 	categoryPath := path.Root("category")

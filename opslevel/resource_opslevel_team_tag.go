@@ -251,6 +251,7 @@ func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req res
 			"Invalid format for given Import Id",
 			fmt.Sprintf("Id expected to be formatted as '<team-id>:<tag-id>'. Given '%s'", req.ID),
 		)
+		return
 	}
 
 	ids := strings.Split(req.ID, ":")
@@ -274,6 +275,7 @@ func (teamTagResource *TeamTagResource) ImportState(ctx context.Context, req res
 	teamTag := extractTagFromTags(opslevel.ID(tagId), tags.Nodes)
 	if teamTag == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tag with id '%s' in team with id '%s'", tagId, teamId))
+		return
 	}
 
 	idPath := path.Root("id")

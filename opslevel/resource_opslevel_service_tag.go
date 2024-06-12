@@ -244,6 +244,7 @@ func (serviceTagResource *ServiceTagResource) ImportState(ctx context.Context, r
 			"Invalid format for given Import Id",
 			fmt.Sprintf("Id expected to be formatted as '<service-id>:<tag-id>'. Given '%s'", req.ID),
 		)
+		return
 	}
 
 	ids := strings.Split(req.ID, ":")
@@ -267,6 +268,7 @@ func (serviceTagResource *ServiceTagResource) ImportState(ctx context.Context, r
 	serviceTag := extractTagFromTags(opslevel.ID(tagId), tags.Nodes)
 	if serviceTag == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tag with id '%s' in service with id '%s'", tagId, serviceId))
+		return
 	}
 
 	idPath := path.Root("id")
