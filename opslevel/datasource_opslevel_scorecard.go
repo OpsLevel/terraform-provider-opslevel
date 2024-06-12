@@ -34,6 +34,13 @@ var scorecardSchemaAttrs = map[string]schema.Attribute{
 		Description: "The scorecard's aliases.",
 		Computed:    true,
 	},
+	"categories": schema.ListNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: rubricCategorySchemaAttrs,
+		},
+		Description: "The scorecard's rubric categories.",
+		Computed:    true,
+	},
 	"description": schema.StringAttribute{
 		Description: "The scorecard's description.",
 		Computed:    true,
@@ -77,24 +84,31 @@ func ScorecardAttributes(attrs map[string]schema.Attribute) map[string]schema.At
 
 // scorecardDataSourceWithIdentifierModel describes the data source data model.
 type scorecardDataSourceWithIdentifierModel struct {
-	AffectsOverallServiceLevels types.Bool   `tfsdk:"affects_overall_service_levels"`
-	Aliases                     types.List   `tfsdk:"aliases"`
-	Description                 types.String `tfsdk:"description"`
-	FilterId                    types.String `tfsdk:"filter_id"`
-	Id                          types.String `tfsdk:"id"`
-	Identifier                  types.String `tfsdk:"identifier"`
-	Name                        types.String `tfsdk:"name"`
-	OwnerId                     types.String `tfsdk:"owner_id"`
-	PassingChecks               types.Int64  `tfsdk:"passing_checks"`
-	ServiceCount                types.Int64  `tfsdk:"service_count"`
-	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
+	AffectsOverallServiceLevels types.Bool                `tfsdk:"affects_overall_service_levels"`
+	Aliases                     types.List                `tfsdk:"aliases"`
+	Categories                  []categoryDataSourceModel `tfsdk:"categories"`
+	Description                 types.String              `tfsdk:"description"`
+	FilterId                    types.String              `tfsdk:"filter_id"`
+	Id                          types.String              `tfsdk:"id"`
+	Identifier                  types.String              `tfsdk:"identifier"`
+	Name                        types.String              `tfsdk:"name"`
+	OwnerId                     types.String              `tfsdk:"owner_id"`
+	PassingChecks               types.Int64               `tfsdk:"passing_checks"`
+	ServiceCount                types.Int64               `tfsdk:"service_count"`
+	TotalChecks                 types.Int64               `tfsdk:"total_checks"`
 }
 
-func NewScorecardDataSourceWithIdentifierModel(ctx context.Context, scorecard opslevel.Scorecard, identifier string) (scorecardDataSourceWithIdentifierModel, diag.Diagnostics) {
+func NewScorecardDataSourceWithIdentifierModel(
+	ctx context.Context,
+	scorecard opslevel.Scorecard,
+	identifier string,
+	categoriesModel []categoryDataSourceModel,
+) (scorecardDataSourceWithIdentifierModel, diag.Diagnostics) {
 	scorecardAliases, diags := OptionalStringListValue(ctx, scorecard.Aliases)
 	return scorecardDataSourceWithIdentifierModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
 		Aliases:                     scorecardAliases,
+		Categories:                  categoriesModel,
 		Description:                 ComputedStringValue(scorecard.Description),
 		FilterId:                    ComputedStringValue(string(scorecard.Filter.Id)),
 		Id:                          ComputedStringValue(string(scorecard.Id)),
@@ -138,10 +152,26 @@ func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadReque
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read scorecard datasource, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewScorecardDataSourceWithIdentifierModel(ctx, *scorecard, planModel.Identifier.ValueString())
+	categoriesModel, diags := getCategoriesModelFromScorecard(d.client, scorecard)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	stateModel, diags = NewScorecardDataSourceWithIdentifierModel(ctx, *scorecard, planModel.Identifier.ValueString(), categoriesModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Scorecard data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func getCategoriesModelFromScorecard(client *opslevel.Client, scorecard *opslevel.Scorecard) ([]categoryDataSourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	categories, err := scorecard.ListCategories(client, nil)
+	if err != nil || categories == nil {
+		diags.AddError("Client Error", fmt.Sprintf("Unable to list categories from scorecard with id '%s', got error: %s", scorecard.Id, err))
+	}
+	categoriesModel := NewCategoryDataSourcesAllModel(categories.Nodes)
+	return categoriesModel.RubricCategories, diags
 }
