@@ -138,13 +138,13 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
 							Computed:    true,
-							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("case_sensitive"))},
+							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_sensitive"))},
 						},
 						"case_sensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
 							Computed:    true,
-							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("case_insensitive"))},
+							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_insensitive"))},
 						},
 						"key": schema.StringAttribute{
 							Description: fmt.Sprintf(
