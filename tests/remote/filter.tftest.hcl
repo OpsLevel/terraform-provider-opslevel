@@ -7,7 +7,7 @@ variables {
   name = "TF Test Filter"
 
   # optional fields
-  connective = "and"
+  connective     = "and"
   predicate_list = []
 }
 
