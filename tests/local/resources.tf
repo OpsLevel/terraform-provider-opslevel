@@ -21,12 +21,10 @@ resource "opslevel_filter" "big" {
     type = var.predicate_type_enum
   }
   predicate {
-    case_insensitive = false
-    case_sensitive   = true
-    key              = "lifecycle_index"
-    key_data         = "big_predicate"
-    type             = "ends_with"
-    value            = "1"
+    key      = "lifecycle_index"
+    key_data = "big_predicate"
+    type     = "ends_with"
+    value    = "1"
   }
 }
 

@@ -91,13 +91,6 @@ var predicateType = map[string]attr.Type{
 	"value": types.StringType,
 }
 
-func NewPredicateModel(predicate opslevel.Predicate) *PredicateModel {
-	return &PredicateModel{
-		Type:  RequiredStringValue(string(predicate.Type)),
-		Value: OptionalStringValue(predicate.Value),
-	}
-}
-
 func (p PredicateModel) Validate() error {
 	predicate := opslevel.Predicate{
 		Type:  opslevel.PredicateTypeEnum(p.Type.ValueString()),

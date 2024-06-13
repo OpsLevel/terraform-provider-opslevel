@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix opslevel_filter predicate fields 'case_sensitive', 'case_insensitive' - they were set incorrectly
+time: 2024-06-13T10:25:57.450254-05:00

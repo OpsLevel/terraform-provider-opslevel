@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,9 +19,11 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &FilterResource{}
-
-var _ resource.ResourceWithImportState = &FilterResource{}
+var (
+	_ resource.ResourceWithConfigure      = &FilterResource{}
+	_ resource.ResourceWithImportState    = &FilterResource{}
+	_ resource.ResourceWithValidateConfig = &FilterResource{}
+)
 
 func NewFilterResource() resource.Resource {
 	return &FilterResource{}
@@ -48,6 +51,20 @@ type filterPredicate struct {
 	Value           types.String `tfsdk:"value"`
 }
 
+func (fp filterPredicate) Validate() error {
+	opslevelFilterPredicate := opslevel.FilterPredicate{
+		CaseSensitive: fp.CaseSensitive.ValueBoolPointer(),
+		Key:           opslevel.PredicateKeyEnum(fp.Key.ValueString()),
+		KeyData:       fp.KeyData.ValueString(),
+		Type:          opslevel.PredicateTypeEnum(fp.Type.ValueString()),
+		Value:         fp.Value.ValueString(),
+	}
+	if opslevelFilterPredicate.CaseSensitive == nil && !fp.CaseInsensitive.IsNull() {
+		opslevelFilterPredicate.CaseSensitive = fp.CaseInsensitive.ValueBoolPointer()
+	}
+	return opslevelFilterPredicate.Validate()
+}
+
 func convertPredicate(predicate opslevel.FilterPredicate) filterPredicate {
 	convertedFilterPredicate := filterPredicate{
 		CaseSensitive:   types.BoolNull(),
@@ -61,10 +78,8 @@ func convertPredicate(predicate opslevel.FilterPredicate) filterPredicate {
 		isCaseSensitive := *predicate.CaseSensitive
 		if isCaseSensitive {
 			convertedFilterPredicate.CaseSensitive = types.BoolValue(true)
-			convertedFilterPredicate.CaseInsensitive = types.BoolValue(false)
 		} else {
 			convertedFilterPredicate.CaseSensitive = types.BoolValue(false)
-			convertedFilterPredicate.CaseInsensitive = types.BoolValue(true)
 		}
 	}
 	return convertedFilterPredicate
@@ -123,11 +138,13 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
 							Computed:    true,
+							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("case_sensitive"))},
 						},
 						"case_sensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
 							Computed:    true,
+							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRoot("case_insensitive"))},
 						},
 						"key": schema.StringAttribute{
 							Description: fmt.Sprintf(
@@ -161,6 +178,20 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				},
 			},
 		},
+	}
+}
+
+func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel FilterResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	for _, filterPredicate := range configModel.Predicate {
+		if err := filterPredicate.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
+		}
 	}
 }
 

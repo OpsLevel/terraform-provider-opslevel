@@ -39,16 +39,6 @@ run "resource_filter_big_predicate_one" {
   }
 
   assert {
-    condition     = opslevel_filter.big.predicate[0].case_insensitive == null
-    error_message = "expected 'case_insensitive' to be null for opslevel_filter.big.predicate[0]"
-  }
-
-  assert {
-    condition     = opslevel_filter.big.predicate[0].case_sensitive == null
-    error_message = "expected 'case_sensitive' to be null for opslevel_filter.big.predicate[0]"
-  }
-
-  assert {
     condition     = opslevel_filter.big.predicate[0].key == var.predicate_key_enum
     error_message = "invalid predicate key enum for opslevel_filter.big.predicate[0]"
   }
@@ -73,11 +63,6 @@ run "resource_filter_big_predicate_one" {
 run "resource_filter_big_predicate_two" {
   providers = {
     opslevel = opslevel.fake
-  }
-
-  assert {
-    condition     = opslevel_filter.big.predicate[1].case_sensitive == true
-    error_message = "expected case_sensitive to be true for opslevel_filter.big.predicate[1]"
   }
 
   assert {

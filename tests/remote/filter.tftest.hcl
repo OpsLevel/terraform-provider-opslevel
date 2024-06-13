@@ -8,7 +8,7 @@ variables {
 
   # optional fields
   connective = "and"
-  # predicate_list = null
+  predicate_list = []
 }
 
 run "resource_filter_create_with_all_fields" {
