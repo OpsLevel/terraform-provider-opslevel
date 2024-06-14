@@ -5,22 +5,28 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &FilterResource{}
-
-var _ resource.ResourceWithImportState = &FilterResource{}
+var (
+	_ resource.ResourceWithConfigure      = &FilterResource{}
+	_ resource.ResourceWithImportState    = &FilterResource{}
+	_ resource.ResourceWithValidateConfig = &FilterResource{}
+)
 
 func NewFilterResource() resource.Resource {
 	return &FilterResource{}
@@ -33,13 +39,13 @@ type FilterResource struct {
 
 // FilterResourceModel describes the Filter managed resource.
 type FilterResourceModel struct {
-	Connective types.String      `tfsdk:"connective"`
-	Id         types.String      `tfsdk:"id"`
-	Name       types.String      `tfsdk:"name"`
-	Predicate  []filterPredicate `tfsdk:"predicate"`
+	Connective types.String `tfsdk:"connective"`
+	Id         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Predicate  types.List   `tfsdk:"predicate"`
 }
 
-type filterPredicate struct {
+type filterPredicateModel struct {
 	CaseInsensitive types.Bool   `tfsdk:"case_insensitive"`
 	CaseSensitive   types.Bool   `tfsdk:"case_sensitive"`
 	Key             types.String `tfsdk:"key"`
@@ -48,39 +54,75 @@ type filterPredicate struct {
 	Value           types.String `tfsdk:"value"`
 }
 
-func convertPredicate(predicate opslevel.FilterPredicate) filterPredicate {
-	convertedFilterPredicate := filterPredicate{
-		CaseSensitive:   types.BoolNull(),
-		CaseInsensitive: types.BoolNull(),
-		Key:             RequiredStringValue(string(predicate.Key)),
-		KeyData:         OptionalStringValue(predicate.KeyData),
-		Type:            RequiredStringValue(string(predicate.Type)),
-		Value:           OptionalStringValue(predicate.Value),
-	}
-	if predicate.CaseSensitive != nil {
-		isCaseSensitive := *predicate.CaseSensitive
-		if isCaseSensitive {
-			convertedFilterPredicate.CaseSensitive = types.BoolValue(true)
-			convertedFilterPredicate.CaseInsensitive = types.BoolValue(false)
-		} else {
-			convertedFilterPredicate.CaseSensitive = types.BoolValue(false)
-			convertedFilterPredicate.CaseInsensitive = types.BoolValue(true)
-		}
-	}
-	return convertedFilterPredicate
+var filterPredicateType = map[string]attr.Type{
+	"case_insensitive": types.BoolType,
+	"case_sensitive":   types.BoolType,
+	"key":              types.StringType,
+	"key_data":         types.StringType,
+	"type":             types.StringType,
+	"value":            types.StringType,
 }
 
-func NewFilterResourceModel(filter opslevel.Filter) FilterResourceModel {
-	filterPredicates := []filterPredicate{}
-	for _, predicate := range filter.Predicates {
-		filterPredicates = append(filterPredicates, convertPredicate(predicate))
+func (fp filterPredicateModel) Validate() error {
+	opslevelFilterPredicate := opslevel.FilterPredicate{
+		CaseSensitive: fp.CaseSensitive.ValueBoolPointer(),
+		Key:           opslevel.PredicateKeyEnum(fp.Key.ValueString()),
+		KeyData:       fp.KeyData.ValueString(),
+		Type:          opslevel.PredicateTypeEnum(fp.Type.ValueString()),
+		Value:         fp.Value.ValueString(),
 	}
+	if opslevelFilterPredicate.CaseSensitive == nil && !fp.CaseInsensitive.IsNull() {
+		opslevelFilterPredicate.CaseSensitive = fp.CaseInsensitive.ValueBoolPointer()
+	}
+	return opslevelFilterPredicate.Validate()
+}
+
+func NewFilterResourceModel(ctx context.Context, filter opslevel.Filter, givenModel FilterResourceModel) (FilterResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var filterPredicateAttrs []attr.Value
+	var filterPredicatesListValue basetypes.ListValue
+	var givenPredicateModels []filterPredicateModel
+
+	// Convert predicates from plan to slice of models
+	givenModel.Predicate.ElementsAs(ctx, &givenPredicateModels, false)
+
+	for _, opslevelPredicate := range filter.Predicates {
+		predicateObj := OpslevelFilterPredicateToObjectValue(nil, &opslevelPredicate)
+		attrs := predicateObj.Attributes()
+
+		// find predicate from plan that matches predicateObj from API
+		foundPlanPredModel, extractDiags := ExtractFilterPredicateModel(ctx, attrs, givenPredicateModels)
+		diags.Append(extractDiags...)
+		if diags.HasError() {
+			return FilterResourceModel{}, diags
+		}
+
+		if !foundPlanPredModel.CaseSensitive.IsNull() && !foundPlanPredModel.CaseSensitive.IsUnknown() {
+			attrs["case_sensitive"] = types.BoolValue(*opslevelPredicate.CaseSensitive)
+		} else {
+			attrs["case_sensitive"] = types.BoolNull()
+		}
+		if !foundPlanPredModel.CaseInsensitive.IsNull() && !foundPlanPredModel.CaseInsensitive.IsUnknown() {
+			attrs["case_insensitive"] = types.BoolValue(*opslevelPredicate.CaseSensitive)
+		} else {
+			attrs["case_insensitive"] = types.BoolNull()
+		}
+
+		predicateObj = types.ObjectValueMust(filterPredicateType, attrs)
+		filterPredicateAttrs = append(filterPredicateAttrs, predicateObj)
+	}
+	if len(filterPredicateAttrs) == 0 {
+		filterPredicatesListValue = types.ListNull(types.ObjectType{AttrTypes: filterPredicateType})
+	} else {
+		filterPredicatesListValue = types.ListValueMust(types.ObjectType{AttrTypes: filterPredicateType}, filterPredicateAttrs)
+	}
+
 	return FilterResourceModel{
-		Connective: OptionalStringValue(string(filter.Connective)),
+		Connective: givenModel.Connective,
 		Id:         ComputedStringValue(string(filter.Id)),
 		Name:       RequiredStringValue(filter.Name),
-		Predicate:  filterPredicates,
-	}
+		Predicate:  filterPredicatesListValue,
+	}, diags
 }
 
 func (r *FilterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -120,14 +162,17 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"case_insensitive": schema.BoolAttribute{
-							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
-							Optional:    true,
-							Computed:    true,
+							Description:        "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
+							DeprecationMessage: "The 'case_insensitive' field is deprecated. Please use 'case_sensitive' only.",
+							Optional:           true,
+							Computed:           true,
+							Validators:         []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_sensitive"))},
 						},
 						"case_sensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
 							Optional:    true,
 							Computed:    true,
+							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_insensitive"))},
 						},
 						"key": schema.StringAttribute{
 							Description: fmt.Sprintf(
@@ -156,6 +201,9 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"value": schema.StringAttribute{
 							Description: "The condition value used by the predicate.",
 							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.NoneOf(""),
+							},
 						},
 					},
 				},
@@ -164,16 +212,40 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	}
 }
 
-func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel FilterResourceModel
+func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel FilterResourceModel
+	var predicateModels []filterPredicateModel
 
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicates, err := getFilterPredicates(planModel.Predicate)
+	resp.Diagnostics.Append(configModel.Predicate.ElementsAs(ctx, &predicateModels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	for _, filterPredicate := range predicateModels {
+		if err := filterPredicate.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
+}
+
+func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var planModel FilterResourceModel
+	var predicateModels []filterPredicateModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(planModel.Predicate.ElementsAs(ctx, &predicateModels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	predicates, err := getFilterPredicates(predicateModels)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("misconfigured filter predicate, got error: %s", err))
 		return
@@ -188,45 +260,55 @@ func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create filter, got error: %s", err))
 		return
 	}
-	stateModel := NewFilterResourceModel(*filter)
-	stateModel.Connective = planModel.Connective
+	stateModel, diags := NewFilterResourceModel(ctx, *filter, planModel)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Trace(ctx, "created a filter resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel FilterResourceModel
+	var stateModel FilterResourceModel
 
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	filter, err := r.client.GetFilter(opslevel.ID(planModel.Id.ValueString()))
+	filter, err := r.client.GetFilter(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return
 	}
-	stateModel := NewFilterResourceModel(*filter)
-	stateModel.Connective = planModel.Connective
+	verifiedStateModel, diags := NewFilterResourceModel(ctx, *filter, stateModel)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel FilterResourceModel
+	var predicateModels []filterPredicateModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	resp.Diagnostics.Append(planModel.Predicate.ElementsAs(ctx, &predicateModels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	predicates, err := getFilterPredicates(planModel.Predicate)
+	predicates, err := getFilterPredicates(predicateModels)
 	if err != nil {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("misconfigured filter predicate, got error: %s", err))
 		return
@@ -247,8 +329,11 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 		updatedFilter.Connective = *connectiveEnum
 	}
 
-	stateModel := NewFilterResourceModel(*updatedFilter)
-	stateModel.Connective = planModel.Connective
+	stateModel, diags := NewFilterResourceModel(ctx, *updatedFilter, planModel)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Trace(ctx, "updated a filter resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -286,8 +371,9 @@ func getConnectiveEnum(connective string) *opslevel.ConnectiveEnum {
 	}
 }
 
-func getFilterPredicates(predicates []filterPredicate) (*[]opslevel.FilterPredicateInput, error) {
+func getFilterPredicates(predicates []filterPredicateModel) (*[]opslevel.FilterPredicateInput, error) {
 	filterPredicateInputs := []opslevel.FilterPredicateInput{}
+
 	for _, predicate := range predicates {
 		tmpPredicateInput := opslevel.FilterPredicateInput{
 			Key:     opslevel.PredicateKeyEnum(predicate.Key.ValueString()),
@@ -295,19 +381,20 @@ func getFilterPredicates(predicates []filterPredicate) (*[]opslevel.FilterPredic
 			Type:    opslevel.PredicateTypeEnum(predicate.Type.ValueString()),
 			Value:   predicate.Value.ValueStringPointer(),
 		}
+		isCaseSensitiveSet := !predicate.CaseSensitive.IsNull() && !predicate.CaseSensitive.IsUnknown()
+		isCaseInsensitiveSet := !predicate.CaseInsensitive.IsNull() && !predicate.CaseInsensitive.IsUnknown()
 
-		if predicate.CaseSensitive.ValueBool() && predicate.CaseInsensitive.ValueBool() {
+		if isCaseSensitiveSet && isCaseInsensitiveSet {
 			return nil, fmt.Errorf("a predicate should not have 'case_sensitive' and 'case_insensitive' set at the same time")
-		} else if predicate.CaseSensitive.ValueBool() {
-			tmpPredicateInput.CaseSensitive = opslevel.RefOf(true)
-		} else if predicate.CaseInsensitive.ValueBool() {
-			tmpPredicateInput.CaseSensitive = opslevel.RefOf(false)
+		}
+		if isCaseSensitiveSet {
+			tmpPredicateInput.CaseSensitive = opslevel.RefOf(predicate.CaseSensitive.ValueBool())
+		} else if isCaseInsensitiveSet {
+			tmpPredicateInput.CaseSensitive = opslevel.RefOf(predicate.CaseInsensitive.ValueBool())
 		}
 
 		filterPredicateInputs = append(filterPredicateInputs, tmpPredicateInput)
 	}
-	if len(filterPredicateInputs) > 0 {
-		return &filterPredicateInputs, nil
-	}
-	return nil, nil
+
+	return &filterPredicateInputs, nil
 }

@@ -22,7 +22,7 @@ variable "property" {
 variable "predicate" {
   type = object({
     type  = string
-    value = optional(string, "")
+    value = optional(string)
   })
   description = "A condition that should be satisfied."
 }

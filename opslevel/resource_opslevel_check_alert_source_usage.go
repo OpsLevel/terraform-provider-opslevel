@@ -78,7 +78,7 @@ func NewCheckAlertSourceUsageResourceModel(ctx context.Context, check opslevel.C
 		predicate := *check.AlertSourceNamePredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.AlertNamePredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}

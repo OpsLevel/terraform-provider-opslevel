@@ -7,7 +7,7 @@ variables {
   # NOTE: baffled here, this is not being passed in
   file_contents_predicate = {
     type  = "exists"
-    value = ""
+    value = null
   }
   filepaths = tolist(["one/two.py", "three/four.rs"])
 

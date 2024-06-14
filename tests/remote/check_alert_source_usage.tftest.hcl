@@ -8,7 +8,7 @@ variables {
   # optional fields
   alert_name_predicate = {
     type  = "exists"
-    value = ""
+    value = null
   }
 
   # -- check base fields --

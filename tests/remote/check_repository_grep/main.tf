@@ -3,7 +3,7 @@ resource "opslevel_check_repository_grep" "test" {
   # file_contents_predicate = var.file_contents_predicate
   file_contents_predicate = {
     type  = "exists"
-    value = ""
+    value = null
   }
   filepaths = var.filepaths
 

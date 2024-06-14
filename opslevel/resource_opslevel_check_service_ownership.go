@@ -92,7 +92,7 @@ func NewCheckServiceOwnershipResourceModel(ctx context.Context, check opslevel.C
 		predicate := *&check.ServiceOwnershipCheckFragment.TeamTagPredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.TagPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}

@@ -20,7 +20,6 @@ variable "predicate_list" {
     type             = string
     value            = optional(string)
   }))
-  default = []
 }
 
 variable "name" {

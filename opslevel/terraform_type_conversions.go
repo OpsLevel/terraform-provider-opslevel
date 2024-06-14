@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -105,12 +106,65 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 	return mapAsJson, diags
 }
 
+// Converts an opslevel.FilterPredicate to a basetypes.ObjectValue
+// - both case sensitive fields need to be set by calling function
+func OpslevelFilterPredicateToObjectValue(ctx context.Context, filterPredicate *opslevel.FilterPredicate) basetypes.ObjectValue {
+	if filterPredicate == nil {
+		return types.ObjectNull(filterPredicateType)
+	}
+	predicateAttrValues := map[string]attr.Value{
+		"case_insensitive": types.BoolNull(),
+		"case_sensitive":   types.BoolNull(),
+		"key":              RequiredStringValue(string(filterPredicate.Key)),
+		"key_data":         OptionalStringValue(filterPredicate.KeyData),
+		"type":             RequiredStringValue(string(filterPredicate.Type)),
+		"value":            OptionalStringValue(filterPredicate.Value),
+	}
+	return types.ObjectValueMust(filterPredicateType, predicateAttrValues)
+}
+
+func FilterPredicateObjectToModel(ctx context.Context, filterPredicateObj basetypes.ObjectValue) (filterPredicateModel, diag.Diagnostics) {
+	var predicateModel filterPredicateModel
+
+	objOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
+	diags := filterPredicateObj.As(ctx, &predicateModel, objOptions)
+	return predicateModel, diags
+}
+
+func ExtractFilterPredicateModel(ctx context.Context, predicateWantedAttrs map[string]attr.Value, givenModels []filterPredicateModel) (filterPredicateModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	for _, givenPredicateModel := range givenModels {
+		if predicateWantedAttrs["key"] == givenPredicateModel.Key &&
+			predicateWantedAttrs["key_data"] == givenPredicateModel.KeyData &&
+			predicateWantedAttrs["type"] == givenPredicateModel.Type &&
+			predicateWantedAttrs["value"] == givenPredicateModel.Value {
+			return givenPredicateModel, diags
+		}
+	}
+	diags.AddError("Internal Error", "Could not find matching filter predicate")
+	return filterPredicateModel{}, diags
+}
+
+func OpslevelPredicateToObjectValue(ctx context.Context, predicate *opslevel.Predicate) basetypes.ObjectValue {
+	if predicate == nil {
+		return types.ObjectNull(predicateType)
+	}
+	predicateAttrValues := map[string]attr.Value{
+		"type":  types.StringValue(string(predicate.Type)),
+		"value": types.StringValue(predicate.Value),
+	}
+	return types.ObjectValueMust(predicateType, predicateAttrValues)
+}
+
 // Converts a basetypes.ObjectValue to a PredicateModel
 func PredicateObjectToModel(ctx context.Context, predicateObj basetypes.ObjectValue) (PredicateModel, diag.Diagnostics) {
 	var predicateModel PredicateModel
 
 	objOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
 	diags := predicateObj.As(ctx, &predicateModel, objOptions)
+	if predicateModel.Value.ValueString() == "" {
+		predicateModel.Value = types.StringNull()
+	}
 	return predicateModel, diags
 }
 

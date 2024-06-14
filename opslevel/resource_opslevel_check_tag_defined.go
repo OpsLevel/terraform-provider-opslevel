@@ -76,7 +76,7 @@ func NewCheckTagDefinedResourceModel(ctx context.Context, check opslevel.Check, 
 		predicate := *check.TagPredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.TagPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}

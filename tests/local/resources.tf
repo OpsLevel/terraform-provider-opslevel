@@ -17,16 +17,16 @@ resource "opslevel_filter" "big" {
   connective = var.connective_enum
   name       = "Big Filter"
   predicate {
-    key  = var.predicate_key_enum
-    type = var.predicate_type_enum
+    key   = var.predicate_key_enum
+    type  = var.predicate_type_enum
+    value = "1"
   }
   predicate {
-    case_insensitive = false
-    case_sensitive   = true
-    key              = "lifecycle_index"
-    key_data         = "big_predicate"
-    type             = "ends_with"
-    value            = "1"
+    case_sensitive = true
+    key            = "lifecycle_index"
+    key_data       = "big_predicate"
+    type           = "ends_with"
+    value          = "1"
   }
 }
 

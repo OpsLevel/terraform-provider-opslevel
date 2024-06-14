@@ -7,8 +7,8 @@ variables {
   name = "TF Test Filter"
 
   # optional fields
-  connective = "and"
-  # predicate_list = null
+  connective     = "and"
+  predicate_list = []
 }
 
 run "resource_filter_create_with_all_fields" {
