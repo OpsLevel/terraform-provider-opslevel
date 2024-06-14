@@ -173,7 +173,7 @@ data "opslevel_team" "mock_team_with_alias" {
 data "opslevel_tier" "mock_tier" {
   filter {
     field = "alias"
-    value = ""
+    value = "thing"
   }
 }
 

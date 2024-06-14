@@ -1,7 +1,7 @@
 variable "environment_predicate" {
   type = object({
     type  = string
-    value = optional(string, "")
+    value = optional(string)
   })
   description = "A condition that should be satisfied."
 }
@@ -14,7 +14,7 @@ variable "tool_category" {
 variable "tool_name_predicate" {
   type = object({
     type  = string
-    value = optional(string, "")
+    value = optional(string)
   })
   description = "A condition that should be satisfied."
 }
@@ -22,7 +22,7 @@ variable "tool_name_predicate" {
 variable "tool_url_predicate" {
   type = object({
     type  = string
-    value = optional(string, "")
+    value = optional(string)
   })
   description = "A condition that should be satisfied."
 }
