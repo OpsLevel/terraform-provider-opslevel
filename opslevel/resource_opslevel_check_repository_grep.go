@@ -78,7 +78,7 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	predicate := check.RepositoryGrepCheckFragment.FileContentsPredicate
 	predicateAttrValues := map[string]attr.Value{
 		"type":  types.StringValue(string(predicate.Type)),
-		"value": types.StringValue(predicate.Value),
+		"value": OptionalStringValue(predicate.Value),
 	}
 	stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 

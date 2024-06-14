@@ -1,0 +1,3 @@
+kind: Deprecated
+body: the case_insensitive field in opslevel_filter is marked for removal
+time: 2024-06-14T15:11:43.133723-05:00

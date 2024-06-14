@@ -162,10 +162,11 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"case_insensitive": schema.BoolAttribute{
-							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
-							Optional:    true,
-							Computed:    true,
-							Validators:  []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_sensitive"))},
+							Description:        "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
+							DeprecationMessage: "The 'case_insensitive' field is deprecated. Please use 'case_sensitive' only.",
+							Optional:           true,
+							Computed:           true,
+							Validators:         []validator.Bool{boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("case_sensitive"))},
 						},
 						"case_sensitive": schema.BoolAttribute{
 							Description: "Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.",
@@ -200,6 +201,9 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"value": schema.StringAttribute{
 							Description: "The condition value used by the predicate.",
 							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.NoneOf(""),
+							},
 						},
 					},
 				},

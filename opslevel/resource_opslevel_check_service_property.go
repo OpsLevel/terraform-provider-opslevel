@@ -79,7 +79,7 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 		predicate := *check.ServicePropertyCheckFragment.Predicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.Predicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}

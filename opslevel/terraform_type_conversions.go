@@ -162,6 +162,9 @@ func PredicateObjectToModel(ctx context.Context, predicateObj basetypes.ObjectVa
 
 	objOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
 	diags := predicateObj.As(ctx, &predicateModel, objOptions)
+	if predicateModel.Value.ValueString() == "" {
+		predicateModel.Value = types.StringNull()
+	}
 	return predicateModel, diags
 }
 

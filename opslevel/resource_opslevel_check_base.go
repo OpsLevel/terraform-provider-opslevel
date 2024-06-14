@@ -129,6 +129,9 @@ func PredicateSchema() schema.SingleNestedAttribute {
 			"value": schema.StringAttribute{
 				Description: "The condition value used by the predicate.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
 			},
 		},
 	}

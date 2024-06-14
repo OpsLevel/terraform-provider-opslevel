@@ -80,7 +80,7 @@ func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, p
 		predicate := *check.ToolNamePredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.ToolNamePredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
@@ -91,7 +91,7 @@ func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, p
 		predicate := *check.ToolUrlPredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.ToolUrlPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
@@ -102,7 +102,7 @@ func NewCheckToolUsageResourceModel(ctx context.Context, check opslevel.Check, p
 		predicate := *check.EnvironmentPredicate
 		predicateAttrValues := map[string]attr.Value{
 			"type":  types.StringValue(string(predicate.Type)),
-			"value": types.StringValue(predicate.Value),
+			"value": OptionalStringValue(predicate.Value),
 		}
 		stateModel.EnvironmentPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}

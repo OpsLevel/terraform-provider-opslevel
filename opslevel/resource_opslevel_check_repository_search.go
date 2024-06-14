@@ -84,7 +84,7 @@ func NewCheckRepositorySearchResourceModel(ctx context.Context, check opslevel.C
 	predicate := check.RepositorySearchCheckFragment.FileContentsPredicate
 	predicateAttrValues := map[string]attr.Value{
 		"type":  types.StringValue(string(predicate.Type)),
-		"value": types.StringValue(predicate.Value),
+		"value": OptionalStringValue(predicate.Value),
 	}
 	stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 
