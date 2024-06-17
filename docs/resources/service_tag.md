@@ -43,4 +43,10 @@ resource "opslevel_service_tag" "service_tag_2" {
 
 - `id` (String) The ID of this resource.
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import opslevel_service_tag.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS85MTQyOQ:Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8xODA
+```

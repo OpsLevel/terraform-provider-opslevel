@@ -38,6 +38,7 @@ Read-Only:
 
 - `affects_overall_service_levels` (Boolean) Specifies whether the checks on this scorecard affect services' overall maturity level.
 - `aliases` (List of String) The scorecard's aliases.
+- `categories` (Attributes List) The scorecard's rubric categories. (see [below for nested schema](#nestedatt--scorecards--categories))
 - `description` (String) The scorecard's description.
 - `filter_id` (String) The scorecard's filter.
 - `id` (String) The ID of this resource.
@@ -46,5 +47,13 @@ Read-Only:
 - `passing_checks` (Number) The scorecard's number of checks that are passing.
 - `service_count` (Number) The scorecard's number of services matched.
 - `total_checks` (Number) The scorecard's total number of checks.
+
+<a id="nestedatt--scorecards--categories"></a>
+### Nested Schema for `scorecards.categories`
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+- `name` (String) The name of the rubric category.
 
 

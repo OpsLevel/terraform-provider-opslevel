@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix unsetting case sensitive fields in opslevel_filter predicate list
-time: 2024-06-14T12:21:30.22545-05:00

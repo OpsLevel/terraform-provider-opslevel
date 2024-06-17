@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix terraform import of opslevel_team_contact resource
-time: 2024-06-11T15:50:47.407267-05:00

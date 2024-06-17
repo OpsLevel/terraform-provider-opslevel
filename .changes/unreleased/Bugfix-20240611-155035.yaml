@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix terraform import of opslevel_service_tag resource
-time: 2024-06-11T15:50:35.961086-05:00

@@ -85,7 +85,7 @@ Required:
 
 Optional:
 
-- `case_insensitive` (Boolean) Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.
+- `case_insensitive` (Boolean, Deprecated) Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.
 - `case_sensitive` (Boolean) Option for determining whether to compare strings case-sensitively. Not settable for all predicate types.
 - `key_data` (String) Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.
 - `value` (String) The condition value used by the predicate.
