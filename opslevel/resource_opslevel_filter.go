@@ -64,6 +64,11 @@ var filterPredicateType = map[string]attr.Type{
 }
 
 func (fp filterPredicateModel) Validate() error {
+	// Key and Value are required fields, but may be unknown at validation time
+	// Creating multiple predicates with a 'for_each' is one example
+	if fp.Key.IsUnknown() || fp.Value.IsUnknown() {
+		return nil
+	}
 	opslevelFilterPredicate := opslevel.FilterPredicate{
 		CaseSensitive: fp.CaseSensitive.ValueBoolPointer(),
 		Key:           opslevel.PredicateKeyEnum(fp.Key.ValueString()),
