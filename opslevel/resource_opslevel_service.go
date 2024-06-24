@@ -228,19 +228,18 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
 	}
-	err = reconcileServiceAliases(*r.client, givenAliases, service)
-	if err != nil {
+	if err = service.ReconcileAliases(r.client, givenAliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s', got error: %s", givenAliases, err))
 		return
 	}
 
-	givenTags, diags := SetValueToStringSlice(ctx, planModel.Tags)
+	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
-	if err = reconcileTags(*r.client, givenTags, service); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags: '%s', got error: %s", givenTags, err))
+	if err = r.client.ReconcileTags(service, givenTags); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
 		return
 	}
 	if planModel.ApiDocumentPath.ValueString() != "" {
@@ -338,18 +337,17 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
 		return
 	}
-	err = reconcileServiceAliases(*r.client, givenAliases, service)
-	if err != nil {
+	if err = service.ReconcileAliases(r.client, givenAliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases '%s', go error: %s", givenAliases, err))
 		return
 	}
 
-	givenTags, diags := SetValueToStringSlice(ctx, planModel.Tags)
+	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
 		return
 	}
-	if err = reconcileTags(*r.client, givenTags, service); err != nil {
+	if err = r.client.ReconcileTags(service, givenTags); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
 		return
 	}
@@ -445,40 +443,5 @@ func reconcileServiceAliases(client opslevel.Client, aliasesFromConfig []string,
 		}
 	}
 	service.ManagedAliases = aliasesFromConfig
-	return nil
-}
-
-// Assigns new tags from terraform config to service and deletes tags not in config
-func reconcileTags(client opslevel.Client, tagsFromConfig []string, service *opslevel.Service) error {
-	// delete service tags found in service but not listed in Terraform config
-	existingTags := []string{}
-	for _, tag := range service.Tags.Nodes {
-		flattenedTag := flattenTag(tag)
-		existingTags = append(existingTags, flattenedTag)
-		if !slices.Contains(tagsFromConfig, flattenedTag) {
-			if err := client.DeleteTag(tag.Id); err != nil {
-				return err
-			}
-		}
-	}
-
-	// format tags listed in Terraform config but not found in service
-	tagInput := map[string]string{}
-	for _, tag := range tagsFromConfig {
-		parts := strings.Split(tag, ":")
-		if len(parts) != 2 {
-			return fmt.Errorf("[%s] invalid tag, should be in format 'key:value' (only a single colon between the key and value, no spaces or special characters)", tag)
-		}
-		key := parts[0]
-		value := parts[1]
-		tagInput[key] = value
-	}
-	// assign tags listed in Terraform config but not found in service
-	assignedTags, err := client.AssignTags(string(service.Id), tagInput)
-	if err != nil {
-		return err
-	}
-
-	service.Tags.Nodes = assignedTags
 	return nil
 }

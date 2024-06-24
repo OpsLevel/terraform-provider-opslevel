@@ -166,7 +166,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 
 	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	resp.Diagnostics.Append(diags...)
-	if err = teamResource.reconcileTeamAliases(team, aliases); err != nil {
+	if err = team.ReconcileAliases(teamResource.client, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}
@@ -266,7 +266,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 
 	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	resp.Diagnostics.Append(diags...)
-	if err = teamResource.reconcileTeamAliases(updatedTeam, aliases); err != nil {
+	if err = updatedTeam.ReconcileAliases(teamResource.client, aliases); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
 		return
 	}

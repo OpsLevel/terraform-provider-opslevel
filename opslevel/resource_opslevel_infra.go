@@ -178,7 +178,7 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
 		return
 	}
-	if err = reconcileInfraAliases(*r.client, givenAliases, infrastructure); err != nil {
+	if err = infrastructure.ReconcileAliases(r.client, givenAliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s', got error: %s", givenAliases, err))
 		return
 	}
@@ -239,7 +239,7 @@ func (r *InfrastructureResource) Update(ctx context.Context, req resource.Update
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
 		return
 	}
-	if err = reconcileInfraAliases(*r.client, givenAliases, updatedInfrastructure); err != nil {
+	if err = updatedInfrastructure.ReconcileAliases(r.client, givenAliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s', got error: %s", givenAliases, err))
 		return
 	}
