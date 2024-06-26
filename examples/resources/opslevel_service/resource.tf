@@ -15,7 +15,7 @@ data "opslevel_tier" "tier3" {
 resource "opslevel_team" "foo" {
   name             = "foo"
   responsibilities = "Responsible for foo frontend and backend"
-  aliases          = ["foo", "bar", "baz"] # NOTE: if set, value of "name" must be included
+  aliases          = ["foo", "bar", "baz"] # NOTE: if set, slugified value of "name" must be included
 
   member {
     email = "john.doe@example.com"
