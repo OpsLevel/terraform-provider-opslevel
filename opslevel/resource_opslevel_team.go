@@ -161,12 +161,13 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		}
 		if err = team.ReconcileAliases(teamResource.client, aliases); err != nil {
 			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
+			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for teams. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
 		}
 	}
 
 	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, planModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

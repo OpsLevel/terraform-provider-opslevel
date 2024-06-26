@@ -224,6 +224,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	if len(givenAliases) > 0 {
 		if err = service.ReconcileAliases(r.client, givenAliases); err != nil {
 			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", givenAliases, err))
+			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for services. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
 		}
 	}
 
