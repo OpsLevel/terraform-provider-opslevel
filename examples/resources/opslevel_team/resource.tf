@@ -5,7 +5,7 @@ data "opslevel_team" "parent" {
 resource "opslevel_team" "example" {
   name             = "foo"
   responsibilities = "Responsible for foo frontend and backend"
-  aliases          = ["bar", "baz"]
+  aliases          = ["foo", "bar", "baz"] # NOTE: if set, slugified value of "name" must be included
   parent           = data.opslevel_team.parent.id
 
   member {

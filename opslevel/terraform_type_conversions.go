@@ -94,6 +94,26 @@ func SetValueToStringSlice(ctx context.Context, setValue basetypes.SetValue) ([]
 	return dataAsSlice, diags
 }
 
+func TagSetValueToTagSlice(ctx context.Context, setValue basetypes.SetValue) ([]opslevel.Tag, diag.Diagnostics) {
+	tagSlice := []opslevel.Tag{}
+	if setValue.IsNull() {
+		return tagSlice, nil
+	}
+	tagsAsStringSlice, diags := SetValueToStringSlice(ctx, setValue)
+	if diags.HasError() {
+		return tagSlice, diags
+	}
+	for _, tag := range tagsAsStringSlice {
+		if hasTagFormat(tag) {
+			parts := strings.Split(tag, ":")
+			tagSlice = append(tagSlice, opslevel.Tag{Key: parts[0], Value: parts[1]})
+		} else {
+			diags.AddWarning("Invalid tag format", tag)
+		}
+	}
+	return tagSlice, diags
+}
+
 // Converts a basetypes.MapValue to an opslevel.JSON
 func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (opslevel.JSON, diag.Diagnostics) {
 	mapAsJson := opslevel.JSON{}

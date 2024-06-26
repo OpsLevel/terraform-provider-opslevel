@@ -53,6 +53,13 @@ func getTagsFromResource(client *opslevel.Client, resource opslevel.TaggableReso
 	return tags, diags
 }
 
+// hasTagFormat returns true if the given tag is formatted as '<key>:<value>'
+func hasTagFormat(tag string) bool {
+	parts := strings.Split(tag, ":")
+	return len(parts) == 2 && len(parts[0]) > 0 && len(parts[1]) > 0
+}
+
+// isTagValid returns true if the given tag is formatted as '<resource-id>:<tag-id>'
 func isTagValid(tag string) bool {
 	ids := strings.Split(tag, ":")
 	return len(ids) == 2 && opslevel.IsID(ids[0]) && opslevel.IsID(ids[1])

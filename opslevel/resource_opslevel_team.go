@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -58,14 +57,9 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel Te
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 
-	if len(team.ManagedAliases) == 0 && givenModel.Aliases.IsNull() {
-		teamResourceModel.Aliases = types.SetNull(types.StringType)
-	} else {
-		aliases, diags := types.SetValueFrom(ctx, types.StringType, team.ManagedAliases)
-		if diags != nil && diags.HasError() {
-			return TeamResourceModel{}, diags
-		}
-		teamResourceModel.Aliases = aliases
+	teamResourceModel.Aliases, diags = stringAliasesToSetValue(ctx, team.Aliases, givenModel.Aliases)
+	if diags != nil && diags.HasError() {
+		return teamResourceModel, diags
 	}
 
 	if len(givenModel.Member) > 0 && team.Memberships != nil {
@@ -149,30 +143,33 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 	if len(members) > 0 {
 		teamCreateInput.Members = &members
 	}
-
 	if planModel.Parent.ValueString() != "" {
 		teamCreateInput.ParentTeam = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
+
 	team, err := teamResource.client.CreateTeam(teamCreateInput)
 	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
 		return
 	}
-	err = team.Hydrate(teamResource.client)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
-		return
-	}
 
-	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-	resp.Diagnostics.Append(diags...)
-	if err = teamResource.reconcileTeamAliases(team, aliases); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
-		return
+	if len(planModel.Aliases.Elements()) > 0 {
+		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+		if diags != nil && diags.HasError() {
+			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
+			return
+		}
+		if err = team.ReconcileAliases(teamResource.client, aliases); err != nil {
+			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
+			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for teams. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
+		}
 	}
 
 	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, planModel)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// if parent is set, use an ID or alias for this field based on what is currently in the state
 	if opslevel.IsID(planModel.Parent.ValueString()) {
@@ -265,10 +262,12 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-	resp.Diagnostics.Append(diags...)
-	if err = teamResource.reconcileTeamAliases(updatedTeam, aliases); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to reconcile aliases, got error: %s", err))
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
 		return
+	}
+	if err = updatedTeam.ReconcileAliases(teamResource.client, aliases); err != nil {
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
 	}
 
 	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam, planModel)
@@ -315,30 +314,4 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 		return memberInputs, nil
 	}
 	return nil, nil
-}
-
-func (teamResource *TeamResource) reconcileTeamAliases(team *opslevel.Team, expectedAliases []string) error {
-	// get list of existing aliases from OpsLevel
-	existingAliases := team.ManagedAliases
-
-	// if an existing alias is not supposed to be there, delete it
-	for _, existingAlias := range existingAliases {
-		if !slices.Contains(expectedAliases, existingAlias) {
-			err := teamResource.client.DeleteTeamAlias(existingAlias)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	// if an alias does not exist but is supposed to, create it
-	for _, expectedAlias := range expectedAliases {
-		if !slices.Contains(existingAliases, expectedAlias) {
-			_, err := teamResource.client.CreateAliases(team.Id, []string{expectedAlias})
-			if err != nil {
-				return err
-			}
-		}
-	}
-	team.ManagedAliases = expectedAliases
-	return nil
 }

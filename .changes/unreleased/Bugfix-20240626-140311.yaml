@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix management of aliases on Teams and Services. NOTE - aliases in Terraform config now require aliases generated from API. Missing aliases will be displayed by warning messages
+time: 2024-06-26T14:03:11.435544-05:00

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -148,9 +147,7 @@ func (v tagFormatValidator) ValidateSet(ctx context.Context, req validator.SetRe
 
 	elems := req.ConfigValue.Elements()
 	for _, elem := range elems {
-		elemAsString := unquote(elem.String())
-		parts := strings.Split(elemAsString, ":")
-		if len(parts) == 2 && len(parts[0]) > 0 && len(parts[1]) > 0 {
+		if hasTagFormat(unquote(elem.String())) {
 			continue
 		}
 

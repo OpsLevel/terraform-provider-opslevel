@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -109,6 +111,55 @@ func FilterAttrs(validFieldNames []string) map[string]schema.Attribute {
 		},
 	}
 	return filterAttrs
+}
+
+// return strings not in both slices
+func diffBetweenStringSlices(sliceOne, sliceTwo []string) []string {
+	var diffValues []string
+
+	// collect values that are in sliceOne but not in sliceTwo
+	for _, value := range sliceOne {
+		if !slices.Contains(sliceTwo, value) {
+			diffValues = append(diffValues, value)
+		}
+	}
+
+	// collect values that are in sliceTwo but not in sliceOne
+	for _, value := range sliceTwo {
+		if !slices.Contains(sliceOne, value) {
+			diffValues = append(diffValues, value)
+		}
+	}
+	return diffValues
+}
+
+// converts resourceAliases to SetValue for resourceModels. validates modelAliases contains slugs if not empty
+func stringAliasesToSetValue(ctx context.Context, resourceAliases []string, modelAliases basetypes.SetValue) (basetypes.SetValue, diag.Diagnostics) {
+	aliases := types.SetNull(types.StringType)
+
+	// config has `aliases = null` or omitted
+	if modelAliases.IsNull() {
+		return aliases, nil
+	}
+	// config has `aliases = []` - not null
+	if len(modelAliases.Elements()) == 0 {
+		return types.SetValueFrom(ctx, types.StringType, modelAliases)
+	}
+
+	// check if config has 'aliases' set, but is missing needed alias "slugs" from API
+	aliasesFromModel, diags := SetValueToStringSlice(ctx, modelAliases)
+	if diags != nil && diags.HasError() {
+		return aliases, diags
+	}
+	aliasesNeededInConfig := diffBetweenStringSlices(resourceAliases, aliasesFromModel)
+	if len(aliasesNeededInConfig) > 0 {
+		// setting aliases here blocks an erroneous error. The "Config error" is what matters
+		diags.AddError("Config error", fmt.Sprintf(`default aliases from API need to be added to config: %s`, aliasesNeededInConfig))
+		return aliases, diags
+	}
+
+	// aliases is set and contains alias "slugs" from API
+	return types.SetValueFrom(ctx, types.StringType, resourceAliases)
 }
 
 // getDatasourceFilter originally had a "required" bool input parameter - no longer needed
