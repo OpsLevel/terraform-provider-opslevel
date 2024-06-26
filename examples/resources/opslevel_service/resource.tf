@@ -15,7 +15,7 @@ data "opslevel_tier" "tier3" {
 resource "opslevel_team" "foo" {
   name             = "foo"
   responsibilities = "Responsible for foo frontend and backend"
-  aliases          = ["bar", "baz"]
+  aliases          = ["foo", "bar", "baz"] # NOTE: if set, value of "name" must be included
 
   member {
     email = "john.doe@example.com"
@@ -37,7 +37,7 @@ resource "opslevel_service" "foo" {
   api_document_path             = "/swagger.json"
   preferred_api_document_source = "PULL" //or "PUSH"
 
-  aliases = ["bar", "baz"]
+  aliases = ["foo", "bar", "baz"] # NOTE: if set, value of "name" must be included
   tags    = ["foo:bar"]
 }
 

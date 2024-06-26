@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -73,16 +72,7 @@ func NewInfrastructureResourceModel(ctx context.Context, infrastructure opslevel
 		Owner:        RequiredStringValue(string(infrastructure.Owner.Id())),
 		Schema:       RequiredStringValue(infrastructure.Schema),
 	}
-
-	if len(infrastructure.Aliases) == 0 && givenModel.Aliases.IsNull() {
-		infrastructureResourceModel.Aliases = types.SetNull(types.StringType)
-	} else {
-		aliases, diags := types.SetValueFrom(ctx, types.StringType, infrastructure.Aliases)
-		if diags != nil && diags.HasError() {
-			return InfrastructureResourceModel{}, diags
-		}
-		infrastructureResourceModel.Aliases = aliases
-	}
+	infrastructureResourceModel.Aliases, diags = stringAliasesToSetValue(ctx, infrastructure.Aliases, givenModel.Aliases)
 
 	return infrastructureResourceModel, diags
 }
@@ -173,19 +163,19 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
-		return
-	}
-	if err = infrastructure.ReconcileAliases(r.client, givenAliases); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s', got error: %s", givenAliases, err))
-		return
+	if len(planModel.Aliases.Elements()) > 0 {
+		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+		if diags != nil && diags.HasError() {
+			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given infrastructure aliases: '%s'", planModel.Aliases))
+			return
+		}
+		if err = infrastructure.ReconcileAliases(r.client, aliases); err != nil {
+			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s'\n%s", aliases, err))
+		}
 	}
 
 	createdInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure, planModel)
 	resp.Diagnostics.Append(diags...)
-	createdInfrastructureResourceModel.Aliases = planModel.Aliases
 
 	tflog.Trace(ctx, "created a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdInfrastructureResourceModel)...)
@@ -208,7 +198,6 @@ func (r *InfrastructureResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 	readInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *infrastructure, stateModel)
 	resp.Diagnostics.Append(diags...)
-	readInfrastructureResourceModel.Aliases = stateModel.Aliases
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readInfrastructureResourceModel)...)
@@ -240,19 +229,16 @@ func (r *InfrastructureResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	if err = updatedInfrastructure.ReconcileAliases(r.client, givenAliases); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s', got error: %s", givenAliases, err))
-		return
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s'\n%s", givenAliases, err))
 	}
 
 	updatedInfrastructureResourceModel, diags := NewInfrastructureResourceModel(ctx, *updatedInfrastructure, planModel)
+	resp.Diagnostics.Append(diags...)
 
 	if planModel.ProviderData == nil && updatedInfrastructureResourceModel.ProviderData != nil {
 		resp.Diagnostics.AddError("Known error", "Unable to unset 'provider_data' field for now. We have a planned fix for this.")
 		return
 	}
-
-	resp.Diagnostics.Append(diags...)
-	updatedInfrastructureResourceModel.Aliases = planModel.Aliases
 
 	tflog.Trace(ctx, "updated a infrastructure resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedInfrastructureResourceModel)...)
@@ -320,30 +306,4 @@ func expandInfraProviderData(providerData InfraProviderData) *opslevel.InfraProv
 		Type:    providerData.Type.ValueString(),
 		URL:     providerData.Url.ValueString(),
 	}
-}
-
-func reconcileInfraAliases(client opslevel.Client, aliasesFromConfig []string, infra *opslevel.InfrastructureResource) error {
-	// delete aliases found in infrastructure resource but not listed in Terraform config
-	for _, alias := range infra.Aliases {
-		if !slices.Contains(aliasesFromConfig, alias) {
-			if err := client.DeleteInfraAlias(alias); err != nil {
-				return err
-			}
-		}
-	}
-
-	// create aliases listed in Terraform config but not found in infrastructure resource
-	newInfraAliases := []string{}
-	for _, configAlias := range aliasesFromConfig {
-		if !slices.Contains(infra.Aliases, configAlias) {
-			newInfraAliases = append(newInfraAliases, configAlias)
-		}
-	}
-	if len(newInfraAliases) > 0 {
-		if _, err := client.CreateAliases(opslevel.ID(infra.Id), newInfraAliases); err != nil {
-			return err
-		}
-	}
-	infra.Aliases = aliasesFromConfig
-	return nil
 }
