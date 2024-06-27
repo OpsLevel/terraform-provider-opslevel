@@ -11,11 +11,11 @@ on:
       - 'tests/**'
 
 jobs:
-  test:
+  test-latest-versions:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tf_version: ["1.2.0", "1.7.0", "1.8.0", "1.9.0"]
+        tf_version: ["1.7.0", "1.8.0", "1.9.0"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,3 +49,38 @@ jobs:
       - name: Upload Coverage
         run: |-
           bash <(curl -s https://codecov.io/bash)
+
+  test-minimum-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+      - name: Fetch all tags
+        run: git fetch --force --tags
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.2.0"
+          terraform_wrapper: false
+      - name: Setup workspace
+        run: task workspace
+      - name: Run Tests
+        run: task test
