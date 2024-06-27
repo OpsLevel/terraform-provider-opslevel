@@ -129,6 +129,10 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	if len(planModel.Aliases.Elements()) > 0 {
+		resp.Diagnostics.AddError("Config error", "Setting 'aliases' field is only supported for existing teams. Please create team first, then update aliases on next 'terraform apply'")
+		return
+	}
 
 	teamCreateInput := opslevel.TeamCreateInput{
 		Name:             planModel.Name.ValueString(),
@@ -151,18 +155,6 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
 		return
-	}
-
-	if len(planModel.Aliases.Elements()) > 0 {
-		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-		if diags != nil && diags.HasError() {
-			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
-			return
-		}
-		if err = team.ReconcileAliases(teamResource.client, aliases); err != nil {
-			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
-			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for teams. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
-		}
 	}
 
 	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, planModel)

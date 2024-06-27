@@ -53,7 +53,7 @@ run "from_tier_get_tier_alias" {
 run "resource_service_create_with_all_fields" {
 
   variables {
-    aliases                       = var.aliases
+    aliases                       = []
     api_document_path             = var.api_document_path
     description                   = var.description
     framework                     = var.framework

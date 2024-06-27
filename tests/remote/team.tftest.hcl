@@ -30,7 +30,7 @@ run "from_team_get_owner_id" {
 run "resource_team_create_with_all_fields" {
 
   variables {
-    aliases          = var.aliases
+    aliases          = []
     name             = var.name
     parent           = run.from_team_get_owner_id.first_team.id
     responsibilities = var.responsibilities

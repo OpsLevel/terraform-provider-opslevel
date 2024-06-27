@@ -194,6 +194,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	if len(planModel.Aliases.Elements()) > 0 {
+		resp.Diagnostics.AddError("Config error", "Setting 'aliases' field is only supported for existing services. Please create service first, then update aliases on next 'terraform apply'")
+		return
+	}
+
 	serviceCreateInput := opslevel.ServiceCreateInput{
 		Description:    planModel.Description.ValueStringPointer(),
 		Framework:      planModel.Framework.ValueStringPointer(),
@@ -216,18 +221,6 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// TODO: the post create/update steps are the same and can be extracted into a function so we repeat less code
-	givenAliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
-		return
-	}
-	if len(givenAliases) > 0 {
-		if err = service.ReconcileAliases(r.client, givenAliases); err != nil {
-			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", givenAliases, err))
-			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for services. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
-		}
-	}
-
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service tags: '%s'", planModel.Tags))
@@ -328,15 +321,13 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if len(planModel.Aliases.Elements()) > 0 {
-		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-		if diags != nil && diags.HasError() {
-			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
-			return
-		}
-		if err = service.ReconcileAliases(r.client, aliases); err != nil {
-			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
-		}
+	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given service aliases: '%s'", planModel.Aliases))
+		return
+	}
+	if err = service.ReconcileAliases(r.client, aliases); err != nil {
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)

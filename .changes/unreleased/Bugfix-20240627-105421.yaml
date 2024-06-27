@@ -1,0 +1,4 @@
+kind: Bugfix
+body: 'BREAKING CHANGE: aliases field must be empty or null when creating opslevel_team
+  or opslevel_service. aliases can be updated after creation'
+time: 2024-06-27T10:54:21.569585-05:00
