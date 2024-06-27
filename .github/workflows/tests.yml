@@ -11,7 +11,7 @@ on:
       - 'tests/**'
 
 jobs:
-  test:
+  setup-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,6 +37,17 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tf_version: ["1.2.0", "1.7.0", "1.8.0", "1.9.0"]
+    steps:
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.tf_version }}
+          terraform_wrapper: false
       - name: Run Tests
         run: task ci
       - name: Upload Coverage
