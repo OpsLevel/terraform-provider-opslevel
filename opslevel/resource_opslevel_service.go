@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -339,19 +340,29 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if len(planModel.Aliases.Elements()) > 0 {
-		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
-		if diags != nil && diags.HasError() {
-			resp.Diagnostics.Append(diags...)
-			resp.Diagnostics.AddAttributeError(path.Root("aliases"), "Config error", "unable to handle given service aliases")
-			return
+	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		resp.Diagnostics.AddAttributeError(path.Root("aliases"), "Config error", "unable to handle given service aliases")
+		return
+	}
+
+	// Try deleting uniqueIdentifiers (aka default alias) if not declared in Terraform config
+	// Deleting this alias may fail according to the API but that's ok
+	uniqueIdentifiers := service.UniqueIdentifiers()
+	for _, uniqueIdentifier := range uniqueIdentifiers {
+		if !slices.Contains(aliases, uniqueIdentifier) {
+			_ = r.client.DeleteAlias(opslevel.AliasDeleteInput{
+				Alias:     uniqueIdentifier,
+				OwnerType: opslevel.AliasOwnerTypeEnumService,
+			})
 		}
-		// add "unique identifiers" (OpsLevel created aliases) before reconciling.
-		// this ensures that we don't try to create an alias that already exists
-		aliases = append(aliases, service.UniqueIdentifiers()...)
-		if err = service.ReconcileAliases(r.client, aliases); err != nil {
-			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
-		}
+	}
+	// add "unique identifiers" (OpsLevel created aliases) before reconciling.
+	// this ensures that we don't try to create an alias that already exists
+	aliases = append(aliases, uniqueIdentifiers...)
+	if err = service.ReconcileAliases(r.client, aliases); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)

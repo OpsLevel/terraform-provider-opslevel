@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -266,12 +267,24 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
+		resp.Diagnostics.AddAttributeError(path.Root("aliases"), "Config error", "unable to handle given team aliases")
 		return
 	}
 
+	// Try deleting uniqueIdentifiers (aka default alias) if not declared in Terraform config
+	// Deleting this alias may fail according to the API but that's ok
+	uniqueIdentifiers := updatedTeam.UniqueIdentifiers()
+	for _, uniqueIdentifier := range uniqueIdentifiers {
+		if !slices.Contains(aliases, uniqueIdentifier) {
+			_ = teamResource.client.DeleteAlias(opslevel.AliasDeleteInput{
+				Alias:     uniqueIdentifier,
+				OwnerType: opslevel.AliasOwnerTypeEnumTeam,
+			})
+		}
+	}
 	// add "unique identifiers" (OpsLevel created aliases) before reconciling.
 	// this ensures that we don't try to create an alias that already exists
-	aliases = append(aliases, updatedTeam.UniqueIdentifiers()...)
+	aliases = append(aliases, uniqueIdentifiers...)
 	if err = updatedTeam.ReconcileAliases(teamResource.client, aliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to reconcile team aliases: '%s'\n%s", aliases, err))
 		return
