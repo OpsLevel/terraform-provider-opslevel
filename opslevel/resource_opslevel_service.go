@@ -348,7 +348,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Try deleting uniqueIdentifiers (aka default alias) if not declared in Terraform config
-	// Deleting this alias may fail according to the API but that's ok
+	// Deleting this alias may fail because its locked but that's ok
 	uniqueIdentifiers := service.UniqueIdentifiers()
 	for _, uniqueIdentifier := range uniqueIdentifiers {
 		if !slices.Contains(aliases, uniqueIdentifier) {
