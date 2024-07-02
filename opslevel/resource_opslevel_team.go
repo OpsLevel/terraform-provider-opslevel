@@ -3,8 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"slices"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -49,17 +49,17 @@ func convertTeamMember(teamMember opslevel.TeamMembership) TeamMember {
 	}
 }
 
-func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel TeamResourceModel) (TeamResourceModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel TeamResourceModel) TeamResourceModel {
 	teamResourceModel := TeamResourceModel{
 		Id:               ComputedStringValue(string(team.Id)),
 		Name:             RequiredStringValue(team.Name),
 		Responsibilities: OptionalStringValue(team.Responsibilities),
 	}
 
-	teamResourceModel.Aliases, diags = stringAliasesToSetValue(ctx, team.Aliases, givenModel.Aliases)
-	if diags != nil && diags.HasError() {
-		return teamResourceModel, diags
+	if givenModel.Aliases.IsNull() {
+		teamResourceModel.Aliases = types.SetNull(types.StringType)
+	} else {
+		teamResourceModel.Aliases = givenModel.Aliases
 	}
 
 	if len(givenModel.Member) > 0 && team.Memberships != nil {
@@ -68,7 +68,7 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel Te
 		}
 	}
 
-	return teamResourceModel, diags
+	return teamResourceModel
 }
 
 func (teamResource *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -156,20 +156,24 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 	if len(planModel.Aliases.Elements()) > 0 {
 		aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 		if diags != nil && diags.HasError() {
-			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
+			resp.Diagnostics.AddAttributeError(path.Root("aliases"), "Config error", "unable to handle given team aliases")
 			return
 		}
+		// add "unique identifiers" (OpsLevel created aliases) before reconciling.
+		// this ensures that we don't try to create an alias that already exists
+		aliases = append(aliases, team.UniqueIdentifiers()...)
 		if err = team.ReconcileAliases(teamResource.client, aliases); err != nil {
-			resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
-			resp.Diagnostics.AddWarning("Config warning", "On create, OpsLevel API creates a new alias for teams. If this causes issues, create team with empty 'aliases'. Then update team with 'aliases'")
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to reconcile team aliases: '%s'\n%s", aliases, err))
+
+			// delete newly created team to avoid dupliate team creation on next 'terraform apply'
+			if err := teamResource.client.DeleteTeam(string(team.Id)); err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to delete incorrectly created team '%s' following aliases error:\n%s", team.Name, err))
+			}
+			return
 		}
 	}
 
-	createdTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, planModel)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	createdTeamResourceModel := NewTeamResourceModel(ctx, *team, planModel)
 
 	// if parent is set, use an ID or alias for this field based on what is currently in the state
 	if opslevel.IsID(planModel.Parent.ValueString()) {
@@ -201,8 +205,7 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	readTeamResourceModel, diags := NewTeamResourceModel(ctx, *team, stateModel)
-	resp.Diagnostics.Append(diags...)
+	readTeamResourceModel := NewTeamResourceModel(ctx, *team, stateModel)
 	// if parent is set, use an ID or alias for this field based on what is currently in the state
 	if opslevel.IsID(stateModel.Parent.ValueString()) {
 		readTeamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
@@ -264,14 +267,30 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	aliases, diags := SetValueToStringSlice(ctx, planModel.Aliases)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to handle given team aliases: '%s'", planModel.Aliases))
+		resp.Diagnostics.AddAttributeError(path.Root("aliases"), "Config error", "unable to handle given team aliases")
 		return
 	}
+
+	// Try deleting uniqueIdentifiers (aka default alias) if not declared in Terraform config
+	// Deleting this alias may fail because its locked but that's ok
+	uniqueIdentifiers := updatedTeam.UniqueIdentifiers()
+	for _, uniqueIdentifier := range uniqueIdentifiers {
+		if !slices.Contains(aliases, uniqueIdentifier) {
+			_ = teamResource.client.DeleteAlias(opslevel.AliasDeleteInput{
+				Alias:     uniqueIdentifier,
+				OwnerType: opslevel.AliasOwnerTypeEnumTeam,
+			})
+		}
+	}
+	// add "unique identifiers" (OpsLevel created aliases) before reconciling.
+	// this ensures that we don't try to create an alias that already exists
+	aliases = append(aliases, uniqueIdentifiers...)
 	if err = updatedTeam.ReconcileAliases(teamResource.client, aliases); err != nil {
-		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("warning while reconciling team aliases: '%s'\n%s", aliases, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to reconcile team aliases: '%s'\n%s", aliases, err))
+		return
 	}
 
-	updatedTeamResourceModel, diags := NewTeamResourceModel(ctx, *updatedTeam, planModel)
-	resp.Diagnostics.Append(diags...)
+	updatedTeamResourceModel := NewTeamResourceModel(ctx, *updatedTeam, planModel)
 	// if parent is set, use an ID or alias for this field based on what is currently in the state
 	if opslevel.IsID(planModel.Parent.ValueString()) {
 		updatedTeamResourceModel.Parent = types.StringValue(string(updatedTeam.ParentTeam.Id))
