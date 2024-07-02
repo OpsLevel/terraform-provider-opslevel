@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix filter predicate validation when created with for_each loop
-time: 2024-06-18T10:31:10.962551-05:00

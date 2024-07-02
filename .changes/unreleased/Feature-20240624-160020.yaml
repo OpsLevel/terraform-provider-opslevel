@@ -1,3 +1,0 @@
-kind: Feature
-body: add TagSetValueToTagSlice to convert tags as strings to slice of opslevel.Tag
-time: 2024-06-24T16:00:20.808257-05:00
