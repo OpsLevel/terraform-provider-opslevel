@@ -78,6 +78,30 @@ run "resource_domain_create_with_all_fields" {
 
 }
 
+run "resource_domain_create_with_empty_optional_fields" {
+
+  variables {
+    description = ""
+    name        = "New ${var.name} with empty fields"
+    note        = ""
+  }
+
+  module {
+    source = "./domain"
+  }
+
+  assert {
+    condition     = opslevel_domain.test.description == ""
+    error_message = var.error_expected_empty_string
+  }
+
+  assert {
+    condition     = opslevel_domain.test.note == ""
+    error_message = var.error_expected_empty_string
+  }
+
+}
+
 run "resource_domain_update_unset_optional_fields" {
 
   variables {

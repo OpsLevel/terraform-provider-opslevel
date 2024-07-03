@@ -56,6 +56,7 @@ enum_tool_category = [
   "wiki",
 ]
 error_empty_datasource             = "zero 'TYPE' found in 'TYPE' datasource"
+error_expected_empty_string        = "expected field to be an empty string"
 error_expected_null_field          = "expected field to be null"
 error_unexpected_datasource_fields = "cannot reference all expected 'TYPE' datasource fields"
 error_unexpected_resource_fields   = "cannot reference all expected 'TYPE' resource fields"
