@@ -101,6 +101,29 @@ run "resource_system_create_with_all_fields" {
 
 }
 
+run "resource_system_create_with_empty_optional_fields" {
+
+  variables {
+    description = ""
+    name        = "New ${var.name} with empty fields"
+  }
+
+  module {
+    source = "./system"
+  }
+
+  assert {
+    condition     = opslevel_system.test.description == ""
+    error_message = var.error_expected_empty_string
+  }
+
+  assert {
+    condition     = opslevel_system.test.note == ""
+    error_message = var.error_expected_empty_string
+  }
+
+}
+
 run "resource_system_update_unset_optional_fields" {
 
   variables {

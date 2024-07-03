@@ -79,6 +79,24 @@ run "resource_team_create_with_all_fields" {
 
 }
 
+run "resource_team_create_with_empty_optional_fields" {
+
+  variables {
+    name             = "New ${var.name} with empty fields"
+    responsibilities = ""
+  }
+
+  module {
+    source = "./team"
+  }
+
+  assert {
+    condition     = opslevel_team.test.responsibilities == ""
+    error_message = var.error_expected_empty_string
+  }
+
+}
+
 run "resource_team_update_unset_optional_fields" {
 
   variables {

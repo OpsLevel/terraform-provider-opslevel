@@ -102,6 +102,26 @@ run "resource_scorecard_create_with_all_fields" {
 
 }
 
+run "resource_scorecard_create_with_empty_optional_fields" {
+
+  variables {
+    affects_overall_service_levels = var.affects_overall_service_levels
+    description                    = ""
+    owner_id                       = run.from_team_get_owner_id.first_team.id
+    name                           = "New ${var.name} with empty fields"
+  }
+
+  module {
+    source = "./scorecard"
+  }
+
+  assert {
+    condition     = opslevel_scorecard.test.description == ""
+    error_message = var.error_expected_empty_string
+  }
+
+}
+
 run "resource_scorecard_update_unset_optional_fields" {
 
   variables {
