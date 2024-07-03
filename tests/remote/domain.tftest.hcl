@@ -82,6 +82,7 @@ run "resource_domain_create_with_empty_optional_fields" {
 
   variables {
     description = ""
+    name        = "New ${var.name} with empty fields"
     note        = ""
   }
 
