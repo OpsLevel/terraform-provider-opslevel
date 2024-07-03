@@ -17,6 +17,14 @@ func RequiredStringValue(value string) basetypes.StringValue {
 	return types.StringValue(unquote(value))
 }
 
+// Returns resourceValue wrapped in types.StringValue or types.StringNull if modelValue is null
+func StringValueFromResourceAndModelField(resourceValue string, modelValue basetypes.StringValue) basetypes.StringValue {
+	if modelValue.IsNull() {
+		return types.StringNull()
+	}
+	return types.StringValue(unquote(resourceValue))
+}
+
 // Returns value wrapped in a types.StringValue, or types.StringNull if blank
 func OptionalStringValue(value string) basetypes.StringValue {
 	if value == "" {

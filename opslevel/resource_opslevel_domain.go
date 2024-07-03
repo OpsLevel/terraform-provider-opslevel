@@ -39,16 +39,16 @@ type DomainResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain) (DomainResourceModel, diag.Diagnostics) {
-	var domainResourceModel DomainResourceModel
-
+func NewDomainResourceModel(ctx context.Context, domain opslevel.Domain, givenModel DomainResourceModel) (DomainResourceModel, diag.Diagnostics) {
 	domainAliases, diags := types.ListValueFrom(ctx, types.StringType, domain.Aliases)
-	domainResourceModel.Aliases = domainAliases
-	domainResourceModel.Description = OptionalStringValue(domain.Description)
-	domainResourceModel.Id = ComputedStringValue(string(domain.Id))
-	domainResourceModel.Name = RequiredStringValue(domain.Name)
-	domainResourceModel.Note = OptionalStringValue(domain.Note)
-	domainResourceModel.Owner = OptionalStringValue(string(domain.Owner.Id()))
+	domainResourceModel := DomainResourceModel{
+		Aliases:     domainAliases,
+		Description: StringValueFromResourceAndModelField(domain.Description, givenModel.Description),
+		Id:          ComputedStringValue(string(domain.Id)),
+		Name:        RequiredStringValue(domain.Name),
+		Note:        StringValueFromResourceAndModelField(domain.Note, givenModel.Note),
+		Owner:       StringValueFromResourceAndModelField(string(domain.Owner.Id()), givenModel.Owner),
+	}
 
 	return domainResourceModel, diags
 }
@@ -97,26 +97,26 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data DomainResourceModel
+	var planModel DomainResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	resource, err := r.client.CreateDomain(opslevel.DomainInput{
-		Description: opslevel.RefOf(data.Description.ValueString()),
-		Name:        opslevel.RefOf(data.Name.ValueString()),
-		Note:        opslevel.RefOf(data.Note.ValueString()),
-		OwnerId:     opslevel.NewID(data.Owner.ValueString()),
+		Description: planModel.Description.ValueStringPointer(),
+		Name:        opslevel.RefOf(planModel.Name.ValueString()),
+		Note:        planModel.Note.ValueStringPointer(),
+		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create domain, got error: %s", err))
 		return
 	}
-	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	createdDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a domain resource")
@@ -124,21 +124,21 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data DomainResourceModel
+	var stateModel DomainResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resource, err := r.client.GetDomain(data.Id.ValueString())
+	resource, err := r.client.GetDomain(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}
-	readDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	readDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource, stateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
@@ -146,26 +146,26 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 }
 
 func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data DomainResourceModel
+	var planModel DomainResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resource, err := r.client.UpdateDomain(data.Id.ValueString(), opslevel.DomainInput{
-		Description: opslevel.RefOf(data.Description.ValueString()),
-		Name:        opslevel.RefOf(data.Name.ValueString()),
-		Note:        opslevel.RefOf(data.Note.ValueString()),
-		OwnerId:     opslevel.NewID(data.Owner.ValueString()),
+	resource, err := r.client.UpdateDomain(planModel.Id.ValueString(), opslevel.DomainInput{
+		Description: opslevel.RefOf(planModel.Description.ValueString()),
+		Name:        opslevel.RefOf(planModel.Name.ValueString()),
+		Note:        opslevel.RefOf(planModel.Note.ValueString()),
+		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))
 		return
 	}
-	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource)
+	updatedDomainResourceModel, diags := NewDomainResourceModel(ctx, *resource, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "updated a domain resource")

@@ -25,10 +25,14 @@ func (v idStringValidator) ValidateString(ctx context.Context, request validator
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
 	}
+	if request.ConfigValue.ValueString() == "" {
+		response.Diagnostics.AddAttributeError(request.Path, "Config error", "expected a valid id but given an empty string. please set to 'null' or an id starting with 'Z2lkOi8v'")
+		return
+	}
 
 	value := request.ConfigValue.ValueString()
 	if !opslevel.IsID(value) {
-		response.Diagnostics.AddError("Config error", fmt.Sprintf("expected a valid id. id should start with Z2lkOi8v. '%s' was set to `%s`", request.Path, value))
+		response.Diagnostics.AddAttributeError(request.Path, "Config error", fmt.Sprintf("expected a valid id. id should start with 'Z2lkOi8v'. given '%s'", value))
 	}
 }
 
