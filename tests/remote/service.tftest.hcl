@@ -155,11 +155,11 @@ run "resource_service_create_with_all_fields" {
 run "resource_service_create_with_empty_optional_fields" {
 
   variables {
-    description                    = ""
-    framework                      = ""
-    language                       = ""
-    name                           = "New ${var.name} with empty fields"
-    product                        = ""
+    description = ""
+    framework   = ""
+    language    = ""
+    name        = "New ${var.name} with empty fields"
+    product     = ""
   }
 
   module {

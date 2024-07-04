@@ -73,8 +73,8 @@ run "resource_property_definition_create_with_all_fields" {
 run "resource_property_definition_create_with_empty_optional_fields" {
 
   variables {
-    description             = ""
-    name                    = "New ${var.name} with empty fields"
+    description = ""
+    name        = "New ${var.name} with empty fields"
   }
 
   module {
