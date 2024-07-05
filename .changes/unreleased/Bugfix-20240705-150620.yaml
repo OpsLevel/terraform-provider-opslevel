@@ -1,3 +1,0 @@
-kind: Bugfix
-body: correctly handle empty string or null for config string fields, like description
-time: 2024-07-05T15:06:20.104003-05:00

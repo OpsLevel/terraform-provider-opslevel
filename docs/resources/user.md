@@ -31,7 +31,7 @@ resource "opslevel_user" "john" {
 
 ### Optional
 
-- `role` (String) The access role of the user. One of `user`, `admin`, `basic_user`
+- `role` (String) The access role of the user. One of `user`, `admin`, `team_member`, `standards_admin`
 - `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. (default: true)
 
 ### Read-Only
