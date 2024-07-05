@@ -22,7 +22,7 @@ Terraform Provider for [OpsLevel](https://opslevel.com)
 
 ## Minimum requirements
 
-- Terraform 1.2 or newer. We recommend running the [latest version](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform) for optimal compatibility with the OpsLevel provider. Terraform versions older than 1.2 have known issues with newer features and internals.
+- Terraform 1.7.0 or newer. We recommend running the [latest version](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform) for optimal compatibility with the OpsLevel provider.
 
 # Migrating to v1.0.0
 
