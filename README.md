@@ -4,9 +4,9 @@
     <a href="http://golang.org" alt="Made With Go">
         <img src="https://img.shields.io/github/go-mod/go-version/OpsLevel/terraform-provider-opslevel" /></a>
     <a href="https://GitHub.com/OpsLevel/terraform-provider-opslevel/releases/" alt="Release">
-        <img src="https://img.shields.io/github/v/release/OpsLevel/terraform-provider-opslevel?include_prereleases" /></a>  
+        <img src="https://img.shields.io/github/v/release/OpsLevel/terraform-provider-opslevel?include_prereleases" /></a>
     <a href="https://masterminds.github.io/stability/active.html" alt="Stability: Active">
-        <img src="https://masterminds.github.io/stability/active.svg" /></a>   
+        <img src="https://masterminds.github.io/stability/active.svg" /></a>
     <a href="https://github.com/OpsLevel/terraform-provider-opslevel/graphs/contributors" alt="Contributors">
         <img src="https://img.shields.io/github/contributors/OpsLevel/terraform-provider-opslevel" /></a>
     <a href="https://github.com/OpsLevel/terraform-provider-opslevel/pulse" alt="Activity">
@@ -19,6 +19,10 @@
 
 Terraform Provider for [OpsLevel](https://opslevel.com)
 ===============================
+
+## Minimum requirements
+
+- Terraform 1.7.0 or newer. We recommend running the [latest version](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform) for optimal compatibility with the OpsLevel provider.
 
 # Migrating to v1.0.0
 
