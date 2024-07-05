@@ -37,10 +37,10 @@ type PropertyDefinitionResourceModel struct {
 	Schema                types.String `tfsdk:"schema"`
 }
 
-func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition) PropertyDefinitionResourceModel {
+func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition, givenModel PropertyDefinitionResourceModel) PropertyDefinitionResourceModel {
 	model := PropertyDefinitionResourceModel{
 		AllowedInConfigFiles:  types.BoolValue(definition.AllowedInConfigFiles),
-		Description:           OptionalStringValue(definition.Description),
+		Description:           StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
 		Id:                    ComputedStringValue(string(definition.Id)),
 		Name:                  RequiredStringValue(definition.Name),
 		PropertyDisplayStatus: RequiredStringValue(string(definition.PropertyDisplayStatus)),
@@ -128,28 +128,28 @@ func (resource *PropertyDefinitionResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	stateModel := NewPropertyDefinitionResourceModel(*definition, planModel)
 	tflog.Trace(ctx, fmt.Sprintf("created a definition resource with id '%s'", definition.Id))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (resource *PropertyDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel PropertyDefinitionResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	var stateModel PropertyDefinitionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	id := planModel.Id.ValueString()
+	id := stateModel.Id.ValueString()
 	definition, err := resource.client.GetPropertyDefinition(id)
 	if err != nil || definition == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read definition with id '%s', got error: %s", id, err))
 		return
 	}
 
-	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	verifiedStateModel := NewPropertyDefinitionResourceModel(*definition, stateModel)
 	tflog.Trace(ctx, fmt.Sprintf("read a definition resource with id '%s'", id))
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (resource *PropertyDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -183,7 +183,7 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	stateModel := NewPropertyDefinitionResourceModel(*definition)
+	stateModel := NewPropertyDefinitionResourceModel(*definition, planModel)
 	tflog.Trace(ctx, fmt.Sprintf("updated a definition resource with id '%s'", id))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }

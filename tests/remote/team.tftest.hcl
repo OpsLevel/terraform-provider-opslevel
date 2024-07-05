@@ -6,7 +6,7 @@ variables {
   name = "TF Test Team"
 
   # optional fields
-  aliases          = ["test_team_one"]
+  aliases          = ["test_team_foo_bar_baz"]
   parent           = null
   responsibilities = "Team responsibilities"
   # member block

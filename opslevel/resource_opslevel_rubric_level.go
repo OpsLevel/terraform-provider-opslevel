@@ -38,9 +38,9 @@ type RubricLevelResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 }
 
-func NewRubricLevelResourceModel(rubricLevel opslevel.Level) RubricLevelResourceModel {
+func NewRubricLevelResourceModel(rubricLevel opslevel.Level, givenModel RubricLevelResourceModel) RubricLevelResourceModel {
 	return RubricLevelResourceModel{
-		Description: OptionalStringValue(rubricLevel.Description),
+		Description: StringValueFromResourceAndModelField(rubricLevel.Description, givenModel.Description),
 		Id:          ComputedStringValue(string(rubricLevel.Id)),
 		Index:       types.Int64Value(int64(rubricLevel.Index)),
 		Name:        RequiredStringValue(rubricLevel.Name),
@@ -85,20 +85,20 @@ func (r *RubricLevelResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data RubricLevelResourceModel
+	var planModel RubricLevelResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	levelCreateInput := opslevel.LevelCreateInput{
-		Name:        data.Name.ValueString(),
-		Description: data.Description.ValueStringPointer(),
+		Name:        planModel.Name.ValueString(),
+		Description: planModel.Description.ValueStringPointer(),
 	}
-	if !data.Index.IsNull() && !data.Index.IsUnknown() {
-		index := int(data.Index.ValueInt64())
+	if !planModel.Index.IsNull() && !planModel.Index.IsUnknown() {
+		index := int(planModel.Index.ValueInt64())
 		levelCreateInput.Index = &index
 	}
 	rubricLevel, err := r.client.CreateLevel(levelCreateInput)
@@ -107,52 +107,52 @@ func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	createdRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel)
+	createdRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel, planModel)
 
 	tflog.Trace(ctx, "created a rubric level resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdRubricLevelResourceModel)...)
 }
 
 func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data RubricLevelResourceModel
+	var stateModel RubricLevelResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	rubricLevel, err := r.client.GetLevel(opslevel.ID(data.Id.ValueString()))
+	rubricLevel, err := r.client.GetLevel(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read rubric level, got error: %s", err))
 		return
 	}
-	readRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel)
+	readRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readRubricLevelResourceModel)...)
 }
 
 func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data RubricLevelResourceModel
+	var planModel RubricLevelResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	updatedRubricLevel, err := r.client.UpdateLevel(opslevel.LevelUpdateInput{
-		Description: opslevel.RefOf(data.Description.ValueString()),
-		Id:          opslevel.ID(data.Id.ValueString()),
-		Name:        data.Name.ValueStringPointer(),
+		Description: opslevel.RefOf(planModel.Description.ValueString()),
+		Id:          opslevel.ID(planModel.Id.ValueString()),
+		Name:        planModel.Name.ValueStringPointer(),
 	})
 	if err != nil || updatedRubricLevel == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update rubric level, got error: %s", err))
 		return
 	}
-	updatedRubricLevelResourceModel := NewRubricLevelResourceModel(*updatedRubricLevel)
+	updatedRubricLevelResourceModel := NewRubricLevelResourceModel(*updatedRubricLevel, planModel)
 
 	tflog.Trace(ctx, "updated a rubric level resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedRubricLevelResourceModel)...)

@@ -43,10 +43,10 @@ type ScorecardResourceModel struct {
 	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
 }
 
-func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard) (ScorecardResourceModel, diag.Diagnostics) {
+func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard, givenModel ScorecardResourceModel) (ScorecardResourceModel, diag.Diagnostics) {
 	scorecardDataSourceModel := ScorecardResourceModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
-		Description:                 OptionalStringValue(scorecard.Description),
+		Description:                 StringValueFromResourceAndModelField(scorecard.Description, givenModel.Description),
 		FilterId:                    OptionalStringValue(string(scorecard.Filter.Id)),
 		Id:                          ComputedStringValue(string(scorecard.Id)),
 		Name:                        RequiredStringValue(scorecard.Name),
@@ -123,27 +123,27 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 }
 
 func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ScorecardResourceModel
+	var planModel ScorecardResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	scorecard, err := r.client.CreateScorecard(opslevel.ScorecardInput{
-		AffectsOverallServiceLevels: data.AffectsOverallServiceLevels.ValueBoolPointer(),
-		Description:                 data.Description.ValueStringPointer(),
-		FilterId:                    opslevel.NewID(data.FilterId.ValueString()),
-		Name:                        data.Name.ValueString(),
-		OwnerId:                     opslevel.ID(data.OwnerId.ValueString()),
+		AffectsOverallServiceLevels: planModel.AffectsOverallServiceLevels.ValueBoolPointer(),
+		Description:                 planModel.Description.ValueStringPointer(),
+		FilterId:                    opslevel.NewID(planModel.FilterId.ValueString()),
+		Name:                        planModel.Name.ValueString(),
+		OwnerId:                     opslevel.ID(planModel.OwnerId.ValueString()),
 	})
 	if err != nil || scorecard == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create scorecard, got error: %s", err))
 		return
 	}
-	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard)
+	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -154,21 +154,21 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data ScorecardResourceModel
+	var stateModel ScorecardResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	readScorecard, err := r.client.GetScorecard(data.Id.ValueString())
+	readScorecard, err := r.client.GetScorecard(stateModel.Id.ValueString())
 	if err != nil || readScorecard == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
 		return
 	}
-	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard)
+	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard, stateModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -179,26 +179,26 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data ScorecardResourceModel
+	var planModel ScorecardResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	scorecard, err := r.client.UpdateScorecard(data.Id.ValueString(), opslevel.ScorecardInput{
-		AffectsOverallServiceLevels: data.AffectsOverallServiceLevels.ValueBoolPointer(),
-		Description:                 opslevel.RefOf(data.Description.ValueString()),
-		FilterId:                    opslevel.NewID(data.FilterId.ValueString()),
-		Name:                        data.Name.ValueString(),
-		OwnerId:                     opslevel.ID(data.OwnerId.ValueString()),
+	scorecard, err := r.client.UpdateScorecard(planModel.Id.ValueString(), opslevel.ScorecardInput{
+		AffectsOverallServiceLevels: planModel.AffectsOverallServiceLevels.ValueBoolPointer(),
+		Description:                 opslevel.RefOf(planModel.Description.ValueString()),
+		FilterId:                    opslevel.NewID(planModel.FilterId.ValueString()),
+		Name:                        planModel.Name.ValueString(),
+		OwnerId:                     opslevel.ID(planModel.OwnerId.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update scorecard, got error: %s", err))
 		return
 	}
-	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard)
+	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return

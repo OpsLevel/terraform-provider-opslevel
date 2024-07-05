@@ -45,7 +45,7 @@ type FilterResourceModel struct {
 	Predicate  types.List   `tfsdk:"predicate"`
 }
 
-type filterPredicateModel struct {
+type FilterPredicateModel struct {
 	CaseInsensitive types.Bool   `tfsdk:"case_insensitive"`
 	CaseSensitive   types.Bool   `tfsdk:"case_sensitive"`
 	Key             types.String `tfsdk:"key"`
@@ -54,7 +54,7 @@ type filterPredicateModel struct {
 	Value           types.String `tfsdk:"value"`
 }
 
-var filterPredicateType = map[string]attr.Type{
+var FilterPredicateType = map[string]attr.Type{
 	"case_insensitive": types.BoolType,
 	"case_sensitive":   types.BoolType,
 	"key":              types.StringType,
@@ -63,7 +63,7 @@ var filterPredicateType = map[string]attr.Type{
 	"value":            types.StringType,
 }
 
-func (fp filterPredicateModel) Validate() error {
+func (fp FilterPredicateModel) Validate() error {
 	// Key and Value are required fields, but may be unknown at validation time
 	// Creating multiple predicates with a 'for_each' is one example
 	if fp.Key.IsUnknown() || fp.Value.IsUnknown() {
@@ -86,7 +86,7 @@ func NewFilterResourceModel(ctx context.Context, filter opslevel.Filter, givenMo
 	var diags diag.Diagnostics
 	var filterPredicateAttrs []attr.Value
 	var filterPredicatesListValue basetypes.ListValue
-	var givenPredicateModels []filterPredicateModel
+	var givenPredicateModels []FilterPredicateModel
 
 	// Convert predicates from plan to slice of models
 	givenModel.Predicate.ElementsAs(ctx, &givenPredicateModels, false)
@@ -113,13 +113,13 @@ func NewFilterResourceModel(ctx context.Context, filter opslevel.Filter, givenMo
 			attrs["case_insensitive"] = types.BoolNull()
 		}
 
-		predicateObj = types.ObjectValueMust(filterPredicateType, attrs)
+		predicateObj = types.ObjectValueMust(FilterPredicateType, attrs)
 		filterPredicateAttrs = append(filterPredicateAttrs, predicateObj)
 	}
 	if len(filterPredicateAttrs) == 0 {
-		filterPredicatesListValue = types.ListNull(types.ObjectType{AttrTypes: filterPredicateType})
+		filterPredicatesListValue = types.ListNull(types.ObjectType{AttrTypes: FilterPredicateType})
 	} else {
-		filterPredicatesListValue = types.ListValueMust(types.ObjectType{AttrTypes: filterPredicateType}, filterPredicateAttrs)
+		filterPredicatesListValue = types.ListValueMust(types.ObjectType{AttrTypes: FilterPredicateType}, filterPredicateAttrs)
 	}
 
 	return FilterResourceModel{
@@ -192,6 +192,9 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"key_data": schema.StringAttribute{
 							Description: "Additional data used by the predicate. This field is used by predicates with key = 'tags' to specify the tag key. For example, to create a predicate for services containing the tag 'db:mysql', set key_data = 'db' and value = 'mysql'.",
 							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.NoneOf(""),
+							},
 						},
 						"type": schema.StringAttribute{
 							Description: fmt.Sprintf(
@@ -219,7 +222,7 @@ func (r *FilterResource) Schema(ctx context.Context, req resource.SchemaRequest,
 
 func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel FilterResourceModel
-	var predicateModels []filterPredicateModel
+	var predicateModels []FilterPredicateModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
 	if resp.Diagnostics.HasError() {
@@ -239,7 +242,7 @@ func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.Valida
 
 func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var planModel FilterResourceModel
-	var predicateModels []filterPredicateModel
+	var predicateModels []FilterPredicateModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
@@ -301,7 +304,7 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel FilterResourceModel
-	var predicateModels []filterPredicateModel
+	var predicateModels []FilterPredicateModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
@@ -376,7 +379,7 @@ func getConnectiveEnum(connective string) *opslevel.ConnectiveEnum {
 	}
 }
 
-func getFilterPredicates(predicates []filterPredicateModel) (*[]opslevel.FilterPredicateInput, error) {
+func getFilterPredicates(predicates []FilterPredicateModel) (*[]opslevel.FilterPredicateInput, error) {
 	filterPredicateInputs := []opslevel.FilterPredicateInput{}
 
 	for _, predicate := range predicates {

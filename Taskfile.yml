@@ -184,7 +184,7 @@ tasks:
         vars: { SETUP_DIR: "{{.TEST_DIR}}/local" }
       - task: terraform-command
         vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}/local" }
-      # - task: run-acceptance-tests
+      - task: run-acceptance-tests
 
   test-integration:
     desc: Run integration tests
