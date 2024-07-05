@@ -6,7 +6,7 @@ variables {
   name = "TF Test Team"
 
   # optional fields
-  aliases          = ["test_team_one"]
+  aliases          = ["test_team_foo_bar_baz"]
   parent           = null
   responsibilities = "Team responsibilities"
   # member block
@@ -75,6 +75,24 @@ run "resource_team_create_with_all_fields" {
   assert {
     condition     = opslevel_team.test.responsibilities == var.responsibilities
     error_message = "wrong responsibilities for opslevel_team resource"
+  }
+
+}
+
+run "resource_team_create_with_empty_optional_fields" {
+
+  variables {
+    name             = "New ${var.name} with empty fields"
+    responsibilities = ""
+  }
+
+  module {
+    source = "./team"
+  }
+
+  assert {
+    condition     = opslevel_team.test.responsibilities == ""
+    error_message = var.error_expected_empty_string
   }
 
 }

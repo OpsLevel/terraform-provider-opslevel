@@ -19,7 +19,7 @@ func RequiredStringValue(value string) basetypes.StringValue {
 
 // Returns resourceValue wrapped in types.StringValue or types.StringNull if modelValue is null
 func StringValueFromResourceAndModelField(resourceValue string, modelValue basetypes.StringValue) basetypes.StringValue {
-	if modelValue.IsNull() {
+	if resourceValue == "" && modelValue.IsNull() {
 		return types.StringNull()
 	}
 	return types.StringValue(unquote(resourceValue))
@@ -147,8 +147,9 @@ func MapValueToOpslevelJson(ctx context.Context, mapValue basetypes.MapValue) (o
 // - both case sensitive fields need to be set by calling function
 func OpslevelFilterPredicateToObjectValue(ctx context.Context, filterPredicate *opslevel.FilterPredicate) basetypes.ObjectValue {
 	if filterPredicate == nil {
-		return types.ObjectNull(filterPredicateType)
+		return types.ObjectNull(FilterPredicateType)
 	}
+	// 'key_data' and 'value' become StringNull if given values are empty
 	predicateAttrValues := map[string]attr.Value{
 		"case_insensitive": types.BoolNull(),
 		"case_sensitive":   types.BoolNull(),
@@ -157,29 +158,37 @@ func OpslevelFilterPredicateToObjectValue(ctx context.Context, filterPredicate *
 		"type":             RequiredStringValue(string(filterPredicate.Type)),
 		"value":            OptionalStringValue(filterPredicate.Value),
 	}
-	return types.ObjectValueMust(filterPredicateType, predicateAttrValues)
+	return types.ObjectValueMust(FilterPredicateType, predicateAttrValues)
 }
 
-func FilterPredicateObjectToModel(ctx context.Context, filterPredicateObj basetypes.ObjectValue) (filterPredicateModel, diag.Diagnostics) {
-	var predicateModel filterPredicateModel
+func FilterPredicateObjectToModel(ctx context.Context, filterPredicateObj basetypes.ObjectValue) (FilterPredicateModel, diag.Diagnostics) {
+	var predicateModel FilterPredicateModel
 
 	objOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
 	diags := filterPredicateObj.As(ctx, &predicateModel, objOptions)
 	return predicateModel, diags
 }
 
-func ExtractFilterPredicateModel(ctx context.Context, predicateWantedAttrs map[string]attr.Value, givenModels []filterPredicateModel) (filterPredicateModel, diag.Diagnostics) {
+func ExtractFilterPredicateModel(ctx context.Context, predicateWantedAttrs map[string]attr.Value, givenModels []FilterPredicateModel) (FilterPredicateModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	for _, givenPredicateModel := range givenModels {
-		if predicateWantedAttrs["key"] == givenPredicateModel.Key &&
-			predicateWantedAttrs["key_data"] == givenPredicateModel.KeyData &&
-			predicateWantedAttrs["type"] == givenPredicateModel.Type &&
-			predicateWantedAttrs["value"] == givenPredicateModel.Value {
+		// empty strings are forbidden by schema, convert to null if empty
+		if givenPredicateModel.KeyData.ValueString() == "" {
+			givenPredicateModel.KeyData = types.StringNull()
+		}
+		if givenPredicateModel.Value.ValueString() == "" {
+			givenPredicateModel.Value = types.StringNull()
+		}
+
+		if givenPredicateModel.Key.Equal(predicateWantedAttrs["key"]) &&
+			givenPredicateModel.KeyData.Equal(predicateWantedAttrs["key_data"]) &&
+			givenPredicateModel.Type.Equal(predicateWantedAttrs["type"]) &&
+			givenPredicateModel.Value.Equal(predicateWantedAttrs["value"]) {
 			return givenPredicateModel, diags
 		}
 	}
 	diags.AddError("Internal Error", "Could not find matching filter predicate")
-	return filterPredicateModel{}, diags
+	return FilterPredicateModel{}, diags
 }
 
 func OpslevelPredicateToObjectValue(ctx context.Context, predicate *opslevel.Predicate) basetypes.ObjectValue {

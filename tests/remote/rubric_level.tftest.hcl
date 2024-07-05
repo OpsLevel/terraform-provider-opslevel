@@ -54,6 +54,24 @@ run "resource_rubric_level_create_with_all_fields" {
 
 }
 
+run "resource_rubric_level_create_with_empty_optional_fields" {
+
+  variables {
+    description = ""
+    name        = "New ${var.name} with empty fields"
+  }
+
+  module {
+    source = "./rubric_level"
+  }
+
+  assert {
+    condition     = opslevel_rubric_level.test.description == ""
+    error_message = var.error_expected_empty_string
+  }
+
+}
+
 run "resource_rubric_level_update_unset_optional_fields" {
 
   variables {

@@ -53,7 +53,7 @@ func NewTeamResourceModel(ctx context.Context, team opslevel.Team, givenModel Te
 	teamResourceModel := TeamResourceModel{
 		Id:               ComputedStringValue(string(team.Id)),
 		Name:             RequiredStringValue(team.Name),
-		Responsibilities: OptionalStringValue(team.Responsibilities),
+		Responsibilities: StringValueFromResourceAndModelField(team.Responsibilities, givenModel.Responsibilities),
 	}
 
 	if givenModel.Aliases.IsNull() {

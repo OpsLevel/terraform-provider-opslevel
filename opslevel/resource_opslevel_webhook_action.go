@@ -41,9 +41,9 @@ type WebhookActionResourceModel struct {
 	Url         types.String `tfsdk:"url"`
 }
 
-func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction) WebhookActionResourceModel {
+func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction, givenModel WebhookActionResourceModel) WebhookActionResourceModel {
 	return WebhookActionResourceModel{
-		Description: OptionalStringValue(webhookAction.Description),
+		Description: StringValueFromResourceAndModelField(webhookAction.Description, givenModel.Description),
 		Headers:     jsonToMapValue(webhookAction.Headers),
 		Id:          ComputedStringValue(string(webhookAction.Id)),
 		Method:      RequiredStringValue(string(webhookAction.HTTPMethod)),
@@ -106,56 +106,56 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 }
 
 func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data WebhookActionResourceModel
+	var planModel WebhookActionResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	headersAsJson, diags := MapValueToOpslevelJson(ctx, data.Headers)
+	headersAsJson, diags := MapValueToOpslevelJson(ctx, planModel.Headers)
 	if diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", data.Headers))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", planModel.Headers))
 		return
 	}
 
 	webhookActionInput := opslevel.CustomActionsWebhookActionCreateInput{
-		Description:    data.Description.ValueStringPointer(),
+		Description:    planModel.Description.ValueStringPointer(),
 		Headers:        &headersAsJson,
-		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(data.Method.ValueString()),
-		LiquidTemplate: data.Payload.ValueStringPointer(),
-		Name:           data.Name.ValueString(),
-		WebhookUrl:     data.Url.ValueString(),
+		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString()),
+		LiquidTemplate: planModel.Payload.ValueStringPointer(),
+		Name:           planModel.Name.ValueString(),
+		WebhookUrl:     planModel.Url.ValueString(),
 	}
 	webhookAction, err := r.client.CreateWebhookAction(webhookActionInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create webhook action, got error: %s", err))
 		return
 	}
-	createdWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction)
+	createdWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction, planModel)
 
 	tflog.Trace(ctx, "created a webhook action resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdWebhookActionResourceModel)...)
 }
 
 func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data WebhookActionResourceModel
+	var stateModel WebhookActionResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	webhookAction, err := r.client.GetCustomAction(data.Id.ValueString())
+	webhookAction, err := r.client.GetCustomAction(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read webhookAction, got error: %s", err))
 		return
 	}
-	readWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction)
+	readWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction, stateModel)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a webhook action resource")
@@ -163,36 +163,36 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data WebhookActionResourceModel
+	var planModel WebhookActionResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	headersAsJson, diags := MapValueToOpslevelJson(ctx, data.Headers)
+	headersAsJson, diags := MapValueToOpslevelJson(ctx, planModel.Headers)
 	if diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", data.Headers))
+		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", planModel.Headers))
 		return
 	}
 
-	httpMethod := opslevel.CustomActionsHttpMethodEnum(data.Method.ValueString())
+	httpMethod := opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString())
 	updateWebhookActionInput := opslevel.CustomActionsWebhookActionUpdateInput{
-		Description:    opslevel.RefOf(data.Description.ValueString()),
+		Description:    opslevel.RefOf(planModel.Description.ValueString()),
 		Headers:        &headersAsJson,
 		HttpMethod:     &httpMethod,
-		Id:             opslevel.ID(data.Id.ValueString()),
-		LiquidTemplate: opslevel.RefOf(data.Payload.ValueString()),
-		Name:           opslevel.RefOf(data.Name.ValueString()),
-		WebhookUrl:     opslevel.RefOf(data.Url.ValueString()),
+		Id:             opslevel.ID(planModel.Id.ValueString()),
+		LiquidTemplate: opslevel.RefOf(planModel.Payload.ValueString()),
+		Name:           opslevel.RefOf(planModel.Name.ValueString()),
+		WebhookUrl:     opslevel.RefOf(planModel.Url.ValueString()),
 	}
 	resource, err := r.client.UpdateWebhookAction(updateWebhookActionInput)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update webhookAction, got error: %s", err))
 		return
 	}
-	updatedWebhookActionResourceModel := NewWebhookActionResourceModel(*resource)
+	updatedWebhookActionResourceModel := NewWebhookActionResourceModel(*resource, planModel)
 
 	tflog.Trace(ctx, "updated a webhook action resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedWebhookActionResourceModel)...)
