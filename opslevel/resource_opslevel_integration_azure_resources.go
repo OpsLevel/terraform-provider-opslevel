@@ -37,10 +37,12 @@ type IntegrationAzureResourcesResourceModel struct {
 	TenantId       types.String `tfsdk:"tenant_id"`
 }
 
-func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourcesIntegration opslevel.Integration) (IntegrationAzureResourcesResourceModel, diag.Diagnostics) {
+func NewIntegrationAzureResourcesResourceModel(ctx context.Context, planModel IntegrationAzureResourcesResourceModel, azureResourcesIntegration opslevel.Integration) (IntegrationAzureResourcesResourceModel, diag.Diagnostics) {
 	resourceModel := IntegrationAzureResourcesResourceModel{
+		ClientId:       planModel.ClientId,
+		ClientSecret:   planModel.ClientSecret,
 		Id:             ComputedStringValue(string(azureResourcesIntegration.Id)),
-		Name:           OptionalStringValue(azureResourcesIntegration.Name),
+		Name:           RequiredStringValue(azureResourcesIntegration.Name),
 		SubscriptionId: RequiredStringValue(azureResourcesIntegration.SubscriptionId),
 		TenantId:       RequiredStringValue(azureResourcesIntegration.TenantId),
 	}
@@ -77,16 +79,23 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 			"tenant_id": schema.StringAttribute{
 				Description: "The tenant OpsLevel uses to access the Azure account.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"subscription_id": schema.StringAttribute{
 				Description: "The subscription OpsLevel uses to access the Azure account.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"last_synced_at": schema.StringAttribute{
 				Description: "The time the Integration last imported data from Azure.",
 				Computed:    true,
 			},
 			"aliases": schema.ListAttribute{
+				ElementType: types.StringType,
 				Description: "All of the aliases attached to the resource.",
 				Computed:    true,
 			},
@@ -127,7 +136,7 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration)
+	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, planModel, *azureResourcesIntegration)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -151,7 +160,7 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 		return
 	}
 
-	verifiedStateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration)
+	verifiedStateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, stateModel, *azureResourcesIntegration)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -184,7 +193,7 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration)
+	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, planModel, *azureResourcesIntegration)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return

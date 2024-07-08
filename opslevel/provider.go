@@ -193,6 +193,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewFilterResource,
 		NewInfrastructureResource,
 		NewIntegrationAwsResource,
+		NewIntegrationAzureResourcesResource,
 		NewPropertyAssignmentResource,
 		NewPropertyDefinitionResource,
 		NewRepositoryResource,
