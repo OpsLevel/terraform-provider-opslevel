@@ -68,7 +68,7 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
-				Description: "The client OpsLevel uses to access the Azure account.",
+				Description: "The client id OpsLevel uses to access the Azure account.",
 				Required:    true,
 			},
 			"client_secret": schema.StringAttribute{
