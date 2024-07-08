@@ -37,10 +37,10 @@ type IntegrationAzureResourcesResourceModel struct {
 	TenantId       types.String `tfsdk:"tenant_id"`
 }
 
-func NewIntegrationAzureResourcesResourceModel(ctx context.Context, planModel IntegrationAzureResourcesResourceModel, azureResourcesIntegration opslevel.Integration) (IntegrationAzureResourcesResourceModel, diag.Diagnostics) {
+func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourcesIntegration opslevel.Integration, givenModel IntegrationAzureResourcesResourceModel) (IntegrationAzureResourcesResourceModel, diag.Diagnostics) {
 	resourceModel := IntegrationAzureResourcesResourceModel{
-		ClientId:       planModel.ClientId,
-		ClientSecret:   planModel.ClientSecret,
+		ClientId:       givenModel.ClientId,
+		ClientSecret:   givenModel.ClientSecret,
 		Id:             ComputedStringValue(string(azureResourcesIntegration.Id)),
 		Name:           RequiredStringValue(azureResourcesIntegration.Name),
 		SubscriptionId: RequiredStringValue(azureResourcesIntegration.SubscriptionId),
@@ -136,7 +136,7 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, planModel, *azureResourcesIntegration)
+	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -160,7 +160,7 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 		return
 	}
 
-	verifiedStateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, stateModel, *azureResourcesIntegration)
+	verifiedStateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, stateModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -193,7 +193,7 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, planModel, *azureResourcesIntegration)
+	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
