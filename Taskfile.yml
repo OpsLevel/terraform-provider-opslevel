@@ -184,7 +184,7 @@ tasks:
         vars: { SETUP_DIR: "{{.TEST_DIR}}/local" }
       - task: terraform-command
         vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}/local" }
-      - task: run-local-go-tests
+      - task: run-unit-tests
       # - task: run-acceptance-tests
 
   test-integration:
@@ -197,11 +197,10 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
 
-  run-local-go-tests:
+  run-unit-tests:
     internal: true
-    dir: "{{.TEST_DIR}}/acc"
     cmds:
-      - echo "Running acceptance tests..."
+      - echo "Running unit tests..."
       - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
 
   run-acceptance-tests:
