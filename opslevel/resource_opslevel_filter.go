@@ -63,6 +63,23 @@ var FilterPredicateType = map[string]attr.Type{
 	"value":            types.StringType,
 }
 
+func NewFilterPredicateModel(filterPredicate *opslevel.FilterPredicate) FilterPredicateModel {
+	if filterPredicate == nil {
+		return FilterPredicateModel{}
+	}
+	filterPredicateModel := FilterPredicateModel{
+		Key:  types.StringValue(string(filterPredicate.Key)),
+		Type: types.StringValue(string(filterPredicate.Type)),
+	}
+	if filterPredicate.KeyData != "" {
+		filterPredicateModel.KeyData = types.StringValue(filterPredicate.KeyData)
+	}
+	if filterPredicate.Value != "" {
+		filterPredicateModel.Value = types.StringValue(filterPredicate.Value)
+	}
+	return filterPredicateModel
+}
+
 func (fp FilterPredicateModel) Validate() error {
 	// Key and Value are required fields, but may be unknown at validation time
 	// Creating multiple predicates with a 'for_each' is one example
@@ -92,28 +109,23 @@ func NewFilterResourceModel(ctx context.Context, filter opslevel.Filter, givenMo
 	givenModel.Predicate.ElementsAs(ctx, &givenPredicateModels, false)
 
 	for _, opslevelPredicate := range filter.Predicates {
-		predicateObj := OpslevelFilterPredicateToObjectValue(nil, &opslevelPredicate)
-		attrs := predicateObj.Attributes()
+		// Use predicate known to Terraform matching predicate from API, use API predicate if no match
+		foundPlanPredModel := ExtractFilterPredicateModel(&opslevelPredicate, givenPredicateModels)
 
-		// find predicate from plan that matches predicateObj from API
-		foundPlanPredModel, extractDiags := ExtractFilterPredicateModel(ctx, attrs, givenPredicateModels)
-		diags.Append(extractDiags...)
-		if diags.HasError() {
-			return FilterResourceModel{}, diags
-		}
-
+		// Models from config/plan/state may have case sensitive fields set, API based models will not
 		if !foundPlanPredModel.CaseSensitive.IsNull() && !foundPlanPredModel.CaseSensitive.IsUnknown() {
-			attrs["case_sensitive"] = types.BoolValue(*opslevelPredicate.CaseSensitive)
+			foundPlanPredModel.CaseSensitive = types.BoolValue(*opslevelPredicate.CaseSensitive)
 		} else {
-			attrs["case_sensitive"] = types.BoolNull()
+			foundPlanPredModel.CaseSensitive = types.BoolNull()
 		}
 		if !foundPlanPredModel.CaseInsensitive.IsNull() && !foundPlanPredModel.CaseInsensitive.IsUnknown() {
-			attrs["case_insensitive"] = types.BoolValue(*opslevelPredicate.CaseSensitive)
+			foundPlanPredModel.CaseInsensitive = types.BoolValue(!*opslevelPredicate.CaseSensitive)
 		} else {
-			attrs["case_insensitive"] = types.BoolNull()
+			foundPlanPredModel.CaseInsensitive = types.BoolNull()
 		}
 
-		predicateObj = types.ObjectValueMust(FilterPredicateType, attrs)
+		predicateObj, diags := types.ObjectValueFrom(ctx, FilterPredicateType, foundPlanPredModel)
+		diags.Append(diags...)
 		filterPredicateAttrs = append(filterPredicateAttrs, predicateObj)
 	}
 	if len(filterPredicateAttrs) == 0 {
@@ -396,13 +408,39 @@ func getFilterPredicates(predicates []FilterPredicateModel) (*[]opslevel.FilterP
 			return nil, fmt.Errorf("a predicate should not have 'case_sensitive' and 'case_insensitive' set at the same time")
 		}
 		if isCaseSensitiveSet {
-			tmpPredicateInput.CaseSensitive = opslevel.RefOf(predicate.CaseSensitive.ValueBool())
+			tmpPredicateInput.CaseSensitive = predicate.CaseSensitive.ValueBoolPointer()
 		} else if isCaseInsensitiveSet {
-			tmpPredicateInput.CaseSensitive = opslevel.RefOf(predicate.CaseInsensitive.ValueBool())
+			tmpPredicateInput.CaseSensitive = opslevel.RefOf(!predicate.CaseInsensitive.ValueBool())
 		}
 
 		filterPredicateInputs = append(filterPredicateInputs, tmpPredicateInput)
 	}
 
 	return &filterPredicateInputs, nil
+}
+
+func ExtractFilterPredicateModel(opslevelFilterPredicate *opslevel.FilterPredicate, givenModels []FilterPredicateModel) FilterPredicateModel {
+	predicateFromApi := NewFilterPredicateModel(opslevelFilterPredicate)
+
+	for _, predicateFromTerraform := range givenModels {
+		// empty strings are forbidden by schema, convert to null if empty
+		if predicateFromTerraform.KeyData.ValueString() == "" {
+			predicateFromTerraform.KeyData = types.StringNull()
+		}
+		if predicateFromTerraform.Value.ValueString() == "" {
+			predicateFromTerraform.Value = types.StringNull()
+		}
+
+		if predicateFromApi.Key.Equal(predicateFromTerraform.Key) &&
+			predicateFromApi.KeyData.Equal(predicateFromTerraform.KeyData) &&
+			predicateFromApi.Type.Equal(predicateFromTerraform.Type) &&
+			predicateFromApi.Value.Equal(predicateFromTerraform.Value) {
+			return predicateFromTerraform
+		}
+	}
+
+	if opslevelFilterPredicate.CaseSensitive != nil {
+		predicateFromApi.CaseSensitive = types.BoolValue(*opslevelFilterPredicate.CaseSensitive)
+	}
+	return predicateFromApi
 }
