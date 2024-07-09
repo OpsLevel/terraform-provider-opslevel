@@ -439,7 +439,7 @@ func ExtractFilterPredicateModel(opslevelFilterPredicate *opslevel.FilterPredica
 		}
 	}
 
-	if opslevelFilterPredicate.CaseSensitive != nil {
+	if opslevelFilterPredicate != nil && opslevelFilterPredicate.CaseSensitive != nil {
 		predicateFromApi.CaseSensitive = types.BoolValue(*opslevelFilterPredicate.CaseSensitive)
 	}
 	return predicateFromApi
