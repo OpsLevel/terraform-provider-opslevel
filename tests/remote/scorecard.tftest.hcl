@@ -58,6 +58,7 @@ run "resource_scorecard_create_with_all_fields" {
     condition = alltrue([
       can(opslevel_scorecard.test.affects_overall_service_levels),
       can(opslevel_scorecard.test.aliases),
+      can(opslevel_scorecard.test.categories),
       can(opslevel_scorecard.test.description),
       can(opslevel_scorecard.test.filter_id),
       can(opslevel_scorecard.test.id),

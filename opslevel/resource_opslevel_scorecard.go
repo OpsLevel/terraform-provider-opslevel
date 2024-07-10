@@ -33,6 +33,7 @@ type ScorecardResource struct {
 type ScorecardResourceModel struct {
 	AffectsOverallServiceLevels types.Bool   `tfsdk:"affects_overall_service_levels"`
 	Aliases                     types.List   `tfsdk:"aliases"`
+	CategoryIds                 types.List   `tfsdk:"categories"`
 	Description                 types.String `tfsdk:"description"`
 	FilterId                    types.String `tfsdk:"filter_id"`
 	Id                          types.String `tfsdk:"id"`
@@ -43,7 +44,8 @@ type ScorecardResourceModel struct {
 	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
 }
 
-func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard, givenModel ScorecardResourceModel) (ScorecardResourceModel, diag.Diagnostics) {
+func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard, categoryIds []string, givenModel ScorecardResourceModel) (ScorecardResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	scorecardDataSourceModel := ScorecardResourceModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
 		Description:                 StringValueFromResourceAndModelField(scorecard.Description, givenModel.Description),
@@ -56,7 +58,12 @@ func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard
 		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
 	}
 
-	scorecardAliases, diags := types.ListValueFrom(ctx, types.StringType, scorecard.Aliases)
+	scorecardCategoryIds, idsDiags := types.ListValueFrom(ctx, types.StringType, categoryIds)
+	diags.Append(idsDiags...)
+	scorecardDataSourceModel.CategoryIds = scorecardCategoryIds
+
+	scorecardAliases, aliasesDiags := types.ListValueFrom(ctx, types.StringType, scorecard.Aliases)
+	diags.Append(aliasesDiags...)
 	scorecardDataSourceModel.Aliases = scorecardAliases
 
 	return scorecardDataSourceModel, diags
@@ -78,6 +85,11 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"aliases": schema.ListAttribute{
 				Description: "The scorecard's aliases.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"categories": schema.ListAttribute{
+				Description: "The ids of the categories on this scorecard.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},
@@ -143,7 +155,11 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create scorecard, got error: %s", err))
 		return
 	}
-	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, planModel)
+	categoryIds, err := getScorecardCategoyIds(r.client, *scorecard)
+	if err != nil {
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
+	}
+	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -151,6 +167,20 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 
 	tflog.Trace(ctx, "created a scorecard resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdScorecardResourceModel)...)
+}
+
+func getScorecardCategoyIds(client *opslevel.Client, scorecard opslevel.Scorecard) ([]string, error) {
+	var categoryIds []string
+
+	result, err := scorecard.ListCategories(client, nil)
+	if err != nil {
+		return categoryIds, err
+	}
+	for _, category := range result.Nodes {
+		categoryIds = append(categoryIds, string(category.Id))
+	}
+
+	return categoryIds, nil
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -168,7 +198,11 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
 		return
 	}
-	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard, stateModel)
+	categoryIds, err := getScorecardCategoyIds(r.client, *readScorecard)
+	if err != nil {
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
+	}
+	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard, categoryIds, stateModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -198,7 +232,11 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update scorecard, got error: %s", err))
 		return
 	}
-	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, planModel)
+	categoryIds, err := getScorecardCategoyIds(r.client, *scorecard)
+	if err != nil {
+		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
+	}
+	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
