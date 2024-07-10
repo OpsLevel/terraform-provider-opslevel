@@ -15,7 +15,7 @@ run "resource_scorecard_big" {
 
   assert {
     condition     = startswith(element(opslevel_scorecard.big.categories, 0), "Z2lkOi8v")
-    error_message = "wrong description in opslevel_scorecard.big"
+    error_message = "expected category id that starts with 'Z2lkOi8v'"
   }
 
   assert {
