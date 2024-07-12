@@ -107,6 +107,7 @@ func (r *CheckServiceOwnershipResource) Metadata(ctx context.Context, req resour
 func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	enumAllContactTypes := append(opslevel.AllContactType, "any")
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Service Ownership Resource",
 
@@ -133,6 +134,60 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	enumAllContactTypes := append(opslevel.AllContactType, "any")
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Service Ownership Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"contact_method": schema.StringAttribute{
+						Description: "The type of contact method that is required.",
+						Optional:    true,
+						Validators:  []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
+					},
+					"require_contact_method": schema.BoolAttribute{
+						Description: "True if a service's owner must have a contact method, False otherwise.",
+						Optional:    true,
+					},
+					"tag_key": schema.StringAttribute{
+						Description: "The tag key where the tag predicate should be applied.",
+						Optional:    true,
+					},
+					"tag_predicate": predicateSchemaV0,
+				}),
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) { /* ... */
+				upgradedStateModel := CheckServiceOwnershipResourceModel{}
+				predicateModel := types.ObjectNull(predicateType)
+
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("contact_method"), &upgradedStateModel.ContactMethod)...)
+				// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("description"), &upgradedStateData.Description)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("require_contact_method"), &upgradedStateModel.RequireContactMethod)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_key"), &upgradedStateModel.TagKey)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &predicateModel)...)
+				// resp.Diagnostics.Append(req.State.Get(ctx, &priorStateData)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				upgradedStateModel.TagPredicate = predicateModel
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 
