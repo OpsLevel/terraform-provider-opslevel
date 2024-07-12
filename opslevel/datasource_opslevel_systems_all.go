@@ -29,9 +29,7 @@ func NewSystemDataSourcesAllModel(ctx context.Context, systems []opslevel.System
 	var diags diag.Diagnostics
 	systemModels := make([]systemDataSourceModel, 0)
 	for _, system := range systems {
-		systemModel, systemDiag := newSystemDataSourceModel(ctx, system)
-		diags.Append(systemDiag...)
-		systemModels = append(systemModels, systemModel)
+		systemModels = append(systemModels, newSystemDataSourceModel(system))
 	}
 	return SystemDataSourcesAllModel{Systems: systemModels}, diags
 }

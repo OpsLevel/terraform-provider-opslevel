@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -78,8 +77,8 @@ type systemDataSourceModelWithIdentifier struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-func newSystemDataSourceModelWithIdentifier(ctx context.Context, system opslevel.System, identifier types.String) (systemDataSourceModelWithIdentifier, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
+func newSystemDataSourceModelWithIdentifier(system opslevel.System, identifier types.String) systemDataSourceModelWithIdentifier {
+	aliases := OptionalStringListValue(system.Aliases)
 	return systemDataSourceModelWithIdentifier{
 		Aliases:     aliases,
 		Description: ComputedStringValue(system.Description),
@@ -88,11 +87,11 @@ func newSystemDataSourceModelWithIdentifier(ctx context.Context, system opslevel
 		Identifier:  identifier,
 		Name:        ComputedStringValue(system.Name),
 		Owner:       ComputedStringValue(string(system.Owner.Id())),
-	}, diags
+	}
 }
 
-func newSystemDataSourceModel(ctx context.Context, system opslevel.System) (systemDataSourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
+func newSystemDataSourceModel(system opslevel.System) systemDataSourceModel {
+	aliases := OptionalStringListValue(system.Aliases)
 	return systemDataSourceModel{
 		Aliases:     aliases,
 		Description: ComputedStringValue(system.Description),
@@ -100,7 +99,7 @@ func newSystemDataSourceModel(ctx context.Context, system opslevel.System) (syst
 		Id:          ComputedStringValue(string(system.Id)),
 		Name:        ComputedStringValue(system.Name),
 		Owner:       ComputedStringValue(string(system.Owner.Id())),
-	}, diags
+	}
 }
 
 func (sys *SystemDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -135,10 +134,9 @@ func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to read system, got error: %s", err))
 		return
 	}
-	systemDataModel, diags := newSystemDataSourceModelWithIdentifier(ctx, *system, data.Identifier)
+	systemDataModel := newSystemDataSourceModelWithIdentifier(*system, data.Identifier)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel System data source")
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &systemDataModel)...)
 }

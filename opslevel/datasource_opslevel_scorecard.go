@@ -99,12 +99,11 @@ type scorecardDataSourceWithIdentifierModel struct {
 }
 
 func NewScorecardDataSourceWithIdentifierModel(
-	ctx context.Context,
 	scorecard opslevel.Scorecard,
 	identifier string,
 	categoriesModel []categoryDataSourceModel,
-) (scorecardDataSourceWithIdentifierModel, diag.Diagnostics) {
-	scorecardAliases, diags := OptionalStringListValue(ctx, scorecard.Aliases)
+) scorecardDataSourceWithIdentifierModel {
+	scorecardAliases := OptionalStringListValue(scorecard.Aliases)
 	return scorecardDataSourceWithIdentifierModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
 		Aliases:                     scorecardAliases,
@@ -118,7 +117,7 @@ func NewScorecardDataSourceWithIdentifierModel(
 		PassingChecks:               types.Int64Value(int64(scorecard.PassingChecks)),
 		ServiceCount:                types.Int64Value(int64(scorecard.ServiceCount)),
 		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
-	}, diags
+	}
 }
 
 func (d *ScorecardDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -157,7 +156,7 @@ func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if diags.HasError() {
 		return
 	}
-	stateModel, diags = NewScorecardDataSourceWithIdentifierModel(ctx, *scorecard, planModel.Identifier.ValueString(), categoriesModel)
+	stateModel = NewScorecardDataSourceWithIdentifierModel(*scorecard, planModel.Identifier.ValueString(), categoriesModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state

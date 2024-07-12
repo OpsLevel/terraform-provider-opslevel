@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -44,8 +43,7 @@ type ScorecardResourceModel struct {
 	TotalChecks                 types.Int64  `tfsdk:"total_checks"`
 }
 
-func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard, categoryIds []string, givenModel ScorecardResourceModel) (ScorecardResourceModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard, categoryIds []string, givenModel ScorecardResourceModel) ScorecardResourceModel {
 	scorecardDataSourceModel := ScorecardResourceModel{
 		AffectsOverallServiceLevels: types.BoolValue(scorecard.AffectsOverallServiceLevels),
 		Description:                 StringValueFromResourceAndModelField(scorecard.Description, givenModel.Description),
@@ -58,15 +56,10 @@ func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard
 		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
 	}
 
-	scorecardCategoryIds, idsDiags := types.ListValueFrom(ctx, types.StringType, categoryIds)
-	diags.Append(idsDiags...)
-	scorecardDataSourceModel.CategoryIds = scorecardCategoryIds
+	scorecardDataSourceModel.CategoryIds = OptionalStringListValue(categoryIds)
+	scorecardDataSourceModel.Aliases = OptionalStringListValue(scorecard.Aliases)
 
-	scorecardAliases, aliasesDiags := types.ListValueFrom(ctx, types.StringType, scorecard.Aliases)
-	diags.Append(aliasesDiags...)
-	scorecardDataSourceModel.Aliases = scorecardAliases
-
-	return scorecardDataSourceModel, diags
+	return scorecardDataSourceModel
 }
 
 func (r *ScorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -159,11 +152,7 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 	if err != nil {
 		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
 	}
-	createdScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	createdScorecardResourceModel := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
 
 	tflog.Trace(ctx, "created a scorecard resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdScorecardResourceModel)...)
@@ -202,11 +191,7 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if err != nil {
 		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
 	}
-	readScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *readScorecard, categoryIds, stateModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	readScorecardResourceModel := NewScorecardResourceModel(ctx, *readScorecard, categoryIds, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readScorecardResourceModel)...)
@@ -236,11 +221,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 	if err != nil {
 		resp.Diagnostics.AddWarning("opslevel client error", fmt.Sprintf("Unable to retrieve category ids from scorecard, got error: %s", err))
 	}
-	updatedScorecardResourceModel, diags := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	updatedScorecardResourceModel := NewScorecardResourceModel(ctx, *scorecard, categoryIds, planModel)
 
 	tflog.Trace(ctx, "updated a scorecard resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedScorecardResourceModel)...)

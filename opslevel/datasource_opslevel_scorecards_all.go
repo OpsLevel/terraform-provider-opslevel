@@ -48,8 +48,7 @@ func NewScorecardDataSourcesAllModel(ctx context.Context, client *opslevel.Clien
 
 	scorecardModels := []scorecardDataSourceModel{}
 	for _, scorecard := range scorecards {
-		scorecardAliases, scorecardDiag := OptionalStringListValue(ctx, scorecard.Aliases)
-		diags.Append(scorecardDiag...)
+		scorecardAliases := OptionalStringListValue(scorecard.Aliases)
 
 		categoriesModel, categoriesDiags := getCategoriesModelFromScorecard(client, &scorecard)
 		diags.Append(categoriesDiags...)

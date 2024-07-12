@@ -56,11 +56,8 @@ type propertyDefinitionModel struct {
 	Id      types.String `tfsdk:"id"`
 }
 
-func NewPropertyModel(ctx context.Context, opslevelProperty opslevel.Property) (propertyModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, opslevelProperty.Definition.Aliases)
-	if diags != nil && diags.HasError() {
-		return propertyModel{}, diags
-	}
+func NewPropertyModel(opslevelProperty opslevel.Property) propertyModel {
+	aliases := OptionalStringListValue(opslevelProperty.Definition.Aliases)
 	propModel := propertyModel{
 		Definition: propertyDefinitionModel{
 			Id:      ComputedStringValue(string(opslevelProperty.Definition.Id)),
@@ -70,16 +67,14 @@ func NewPropertyModel(ctx context.Context, opslevelProperty opslevel.Property) (
 	if opslevelProperty.Value != nil {
 		propModel.Value = ComputedStringValue(string(*opslevelProperty.Value))
 	}
-	return propModel, diags
+	return propModel
 }
 
 func NewPropertiesAllModel(ctx context.Context, opslevelProperties []opslevel.Property) ([]propertyModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	propertiesModel := []propertyModel{}
 	for _, property := range opslevelProperties {
-		propertyModel, propertyDiag := NewPropertyModel(ctx, property)
-		diags.Append(propertyDiag...)
-		propertiesModel = append(propertiesModel, propertyModel)
+		propertiesModel = append(propertiesModel, NewPropertyModel(property))
 	}
 	return propertiesModel, diags
 }
@@ -106,9 +101,7 @@ var opslevelPropertyAttrs = map[string]schema.Attribute{
 	},
 }
 
-func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, alias string) (ServiceDataSourceModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, alias string) ServiceDataSourceModel {
 	serviceDataSourceModel := ServiceDataSourceModel{
 		Alias:           OptionalStringValue(alias),
 		ApiDocumentPath: ComputedStringValue(service.ApiDocumentPath),
@@ -124,8 +117,7 @@ func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, al
 		TierAlias:       ComputedStringValue(service.Tier.Alias),
 	}
 
-	serviceAliases, svcDiags := OptionalStringListValue(ctx, service.Aliases)
-	diags = append(diags, svcDiags...)
+	serviceAliases := OptionalStringListValue(service.Aliases)
 	serviceDataSourceModel.Aliases = serviceAliases
 
 	if service.PreferredApiDocumentSource != nil {
@@ -135,12 +127,10 @@ func NewServiceDataSourceModel(ctx context.Context, service opslevel.Service, al
 	if service.Tags == nil {
 		serviceDataSourceModel.Tags = types.ListNull(types.StringType)
 	} else {
-		serviceTags, tagsDiags := types.ListValueFrom(ctx, types.StringType, flattenTagArray(service.Tags.Nodes))
-		serviceDataSourceModel.Tags = serviceTags
-		diags = append(diags, tagsDiags...)
+		serviceDataSourceModel.Tags = OptionalStringListValue(flattenTagArray(service.Tags.Nodes))
 	}
 
-	return serviceDataSourceModel, diags
+	return serviceDataSourceModel
 }
 
 func (d *ServiceDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -233,6 +223,7 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 }
 
 func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var diags diag.Diagnostics
 	var planModel, stateModel ServiceDataSourceModel
 	var service opslevel.Service
 	var err error
@@ -256,8 +247,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	stateModel, diags := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
-	resp.Diagnostics.Append(diags...)
+	stateModel = NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 
 	// NOTE: service's hydrate does not populate properties
 	properties, err := service.GetProperties(d.client, nil)

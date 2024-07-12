@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,8 +39,8 @@ type SystemResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-func NewSystemResourceModel(ctx context.Context, system opslevel.System, givenModel SystemResourceModel) (SystemResourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, system.Aliases)
+func NewSystemResourceModel(system opslevel.System, givenModel SystemResourceModel) SystemResourceModel {
+	aliases := OptionalStringListValue(system.Aliases)
 	systemDataSourceModel := SystemResourceModel{
 		Aliases:     aliases,
 		Description: StringValueFromResourceAndModelField(system.Description, givenModel.Description),
@@ -51,7 +50,7 @@ func NewSystemResourceModel(ctx context.Context, system opslevel.System, givenMo
 		Note:        StringValueFromResourceAndModelField(system.Note, givenModel.Note),
 		Owner:       OptionalStringValue(string(system.Owner.Id())),
 	}
-	return systemDataSourceModel, diags
+	return systemDataSourceModel
 }
 
 func (r *SystemResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -126,8 +125,7 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create system, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewSystemResourceModel(ctx, *system, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewSystemResourceModel(*system, planModel)
 
 	tflog.Trace(ctx, "created a system resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -148,11 +146,7 @@ func (r *SystemResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read system, got error: %s", err))
 		return
 	}
-	verifiedStateModel, diags := NewSystemResourceModel(ctx, *readSystem, stateModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	verifiedStateModel := NewSystemResourceModel(*readSystem, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
@@ -184,8 +178,7 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update system, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewSystemResourceModel(ctx, *system, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewSystemResourceModel(*system, planModel)
 
 	tflog.Trace(ctx, "updated a system resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

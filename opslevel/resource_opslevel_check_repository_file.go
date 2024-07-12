@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -48,7 +47,7 @@ type CheckRepositoryFileResourceModel struct {
 	UseAbsoluteRoot       types.Bool   `tfsdk:"use_absolute_root"`
 }
 
-func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryFileResourceModel) (CheckRepositoryFileResourceModel, diag.Diagnostics) {
+func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryFileResourceModel) CheckRepositoryFileResourceModel {
 	var stateModel CheckRepositoryFileResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
@@ -72,8 +71,7 @@ func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryFileCheckFragment.DirectorySearch)
-	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryFileCheckFragment.Filepaths)
-	stateModel.Filepaths = data
+	stateModel.Filepaths = OptionalStringListValue(check.RepositoryFileCheckFragment.Filepaths)
 
 	if check.RepositoryFileCheckFragment.FileContentsPredicate == nil {
 		stateModel.FileContentsPredicate = types.ObjectNull(predicateType)
@@ -87,7 +85,7 @@ func NewCheckRepositoryFileResourceModel(ctx context.Context, check opslevel.Che
 	}
 	stateModel.UseAbsoluteRoot = RequiredBoolValue(check.RepositoryFileCheckFragment.UseAbsoluteRoot)
 
-	return stateModel, diags
+	return stateModel
 }
 
 func (r *CheckRepositoryFileResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -185,7 +183,7 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
+	stateModel := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a check repository file resource")
@@ -207,9 +205,8 @@ func (r *CheckRepositoryFileResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository file, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
+	stateModel := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 	stateModel.EnableOn = planModel.EnableOn
-	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -267,8 +264,7 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "updated a check repository file resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

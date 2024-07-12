@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -75,8 +74,8 @@ type domainDataSourceModelWithIdentifier struct {
 }
 
 // newDomainDataSourceModelWithIdentifier used for a single Domain
-func newDomainDataSourceModelWithIdentifier(ctx context.Context, domain opslevel.Domain, identifier types.String) (domainDataSourceModelWithIdentifier, diag.Diagnostics) {
-	domainAliases, diags := OptionalStringListValue(ctx, domain.Aliases)
+func newDomainDataSourceModelWithIdentifier(domain opslevel.Domain, identifier types.String) domainDataSourceModelWithIdentifier {
+	domainAliases := OptionalStringListValue(domain.Aliases)
 	domainDataSourceModelWithIdentifier := domainDataSourceModelWithIdentifier{
 		Aliases:     domainAliases,
 		Description: ComputedStringValue(domain.Description),
@@ -85,11 +84,11 @@ func newDomainDataSourceModelWithIdentifier(ctx context.Context, domain opslevel
 		Name:        ComputedStringValue(domain.Name),
 		Owner:       ComputedStringValue(string(domain.Owner.Id())),
 	}
-	return domainDataSourceModelWithIdentifier, diags
+	return domainDataSourceModelWithIdentifier
 }
 
-func newDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (domainDataSourceModel, diag.Diagnostics) {
-	domainAliases, diags := OptionalStringListValue(ctx, domain.Aliases)
+func newDomainDataSourceModel(domain opslevel.Domain) domainDataSourceModel {
+	domainAliases := OptionalStringListValue(domain.Aliases)
 	domainDataSourceModel := domainDataSourceModel{
 		Aliases:     domainAliases,
 		Description: ComputedStringValue(domain.Description),
@@ -97,7 +96,7 @@ func newDomainDataSourceModel(ctx context.Context, domain opslevel.Domain) (doma
 		Name:        ComputedStringValue(domain.Name),
 		Owner:       ComputedStringValue(string(domain.Owner.Id())),
 	}
-	return domainDataSourceModel, diags
+	return domainDataSourceModel
 }
 
 func (d *DomainDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -133,10 +132,9 @@ func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}
-	domainDataModel, diags := newDomainDataSourceModelWithIdentifier(ctx, *domain, data.Identifier)
+	domainDataModel := newDomainDataSourceModelWithIdentifier(*domain, data.Identifier)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Domain data source")
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &domainDataModel)...)
 }

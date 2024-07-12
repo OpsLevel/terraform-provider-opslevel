@@ -65,11 +65,17 @@ func RequiredIntValue(value int) basetypes.Int64Value {
 }
 
 // Returns value wrapped in a types.StringValue, or types.ListNull if blank
-func OptionalStringListValue(ctx context.Context, value []string) (basetypes.ListValue, diag.Diagnostics) {
-	if len(value) == 0 {
-		return types.ListNull(types.StringType), diag.Diagnostics{}
+func OptionalStringListValue(values []string) basetypes.ListValue {
+	if len(values) == 0 {
+		return types.ListNull(types.StringType)
 	}
-	return types.ListValueFrom(ctx, types.StringType, value)
+
+	elems := make([]attr.Value, len(values))
+	for i, v := range values {
+		elems[i] = types.StringValue(v)
+	}
+
+	return types.ListValueMust(types.StringType, elems)
 }
 
 // unquotes unwanted quotes from strings in maps, returns original value in most cases
