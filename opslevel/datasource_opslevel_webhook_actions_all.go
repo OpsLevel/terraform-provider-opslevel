@@ -30,9 +30,7 @@ func newWebhookActionDataSourcesAllModel(ctx context.Context, webhookActions []o
 	var diags diag.Diagnostics
 	webhookActionModels := make([]webhookActionDataSourceModel, 0)
 	for _, webhookAction := range webhookActions {
-		webhookActionModel, tmpDiags := newWebhookActionDataSourceModel(ctx, webhookAction)
-		diags.Append(tmpDiags...)
-		webhookActionModels = append(webhookActionModels, webhookActionModel)
+		webhookActionModels = append(webhookActionModels, newWebhookActionDataSourceModel(webhookAction))
 	}
 	return webhookActionDataSourcesAllModel{WebhookActions: webhookActionModels}, diags
 }

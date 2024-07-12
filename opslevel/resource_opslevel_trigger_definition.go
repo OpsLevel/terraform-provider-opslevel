@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -197,11 +196,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
 		return
 	}
-	extendedTeamsAccess, diags := OptionalStringListValue(ctx, flattenTeamsArray(extendedTeams))
-	if diags.HasError() {
-		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extendedTeams' to 'basetypes.ListValue'")
-		return
-	}
+	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*triggerDefinition, extendedTeamsAccess)
 
 	tflog.Trace(ctx, "created a trigger definition resource")
@@ -210,7 +205,6 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 
 func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var planModel TriggerDefinitionResourceModel
-	var diags diag.Diagnostics
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
@@ -229,11 +223,7 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
 		return
 	}
-	extendedTeamsAccess, diags := OptionalStringListValue(ctx, flattenTeamsArray(extendedTeams))
-	if diags.HasError() {
-		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extendedTeams' to 'basetypes.ListValue'")
-		return
-	}
+	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*triggerDefinition, extendedTeamsAccess)
 
 	// Save updated data into Terraform state
@@ -283,11 +273,7 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
 		return
 	}
-	extendedTeamsAccess, diags := OptionalStringListValue(ctx, flattenTeamsArray(extendedTeams))
-	if diags.HasError() {
-		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extendedTeams' to 'basetypes.ListValue'")
-		return
-	}
+	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*updatedTriggerDefinition, extendedTeamsAccess)
 
 	tflog.Trace(ctx, "updated a trigger definition resource")

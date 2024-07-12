@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -48,7 +47,7 @@ type CheckRepositoryGrepResourceModel struct {
 	FileContentsPredicate types.Object `tfsdk:"file_contents_predicate"`
 }
 
-func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) (CheckRepositoryGrepResourceModel, diag.Diagnostics) {
+func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Check, planModel CheckRepositoryGrepResourceModel) CheckRepositoryGrepResourceModel {
 	var stateModel CheckRepositoryGrepResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
@@ -72,8 +71,7 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.DirectorySearch = RequiredBoolValue(check.RepositoryGrepCheckFragment.DirectorySearch)
-	data, diags := types.ListValueFrom(ctx, types.StringType, check.RepositoryGrepCheckFragment.Filepaths)
-	stateModel.Filepaths = data
+	stateModel.Filepaths = OptionalStringListValue(check.RepositoryGrepCheckFragment.Filepaths)
 
 	predicate := check.RepositoryGrepCheckFragment.FileContentsPredicate
 	predicateAttrValues := map[string]attr.Value{
@@ -82,7 +80,7 @@ func NewCheckRepositoryGrepResourceModel(ctx context.Context, check opslevel.Che
 	}
 	stateModel.FileContentsPredicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 
-	return stateModel, diags
+	return stateModel
 }
 
 func (r *CheckRepositoryGrepResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -171,8 +169,7 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "created a check repository grep resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -193,8 +190,7 @@ func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository grep, got error: %s", err))
 		return
 	}
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -241,8 +237,7 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	stateModel, diags := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
-	resp.Diagnostics.Append(diags...)
+	stateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "updated a check repository grep resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

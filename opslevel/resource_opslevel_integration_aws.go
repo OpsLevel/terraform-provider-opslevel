@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,7 +39,7 @@ type IntegrationAwsResourceModel struct {
 	OwnershipTagKeys      types.List   `tfsdk:"ownership_tag_keys"`
 }
 
-func NewIntegrationAwsResourceModel(ctx context.Context, awsIntegration opslevel.Integration) (IntegrationAwsResourceModel, diag.Diagnostics) {
+func NewIntegrationAwsResourceModel(awsIntegration opslevel.Integration) IntegrationAwsResourceModel {
 	integrationAwsResourceModel := IntegrationAwsResourceModel{
 		ExternalID:            RequiredStringValue(awsIntegration.ExternalID),
 		IamRole:               RequiredStringValue(awsIntegration.IAMRole),
@@ -48,10 +47,10 @@ func NewIntegrationAwsResourceModel(ctx context.Context, awsIntegration opslevel
 		Name:                  OptionalStringValue(awsIntegration.Name),
 		OwnershipTagOverrides: types.BoolValue(awsIntegration.OwnershipTagOverride),
 	}
-	ownershipTagKeys, diags := OptionalStringListValue(ctx, awsIntegration.OwnershipTagKeys)
+	ownershipTagKeys := OptionalStringListValue(awsIntegration.OwnershipTagKeys)
 	integrationAwsResourceModel.OwnershipTagKeys = ownershipTagKeys
 
-	return integrationAwsResourceModel, diags
+	return integrationAwsResourceModel
 }
 
 func (r *IntegrationAwsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -127,11 +126,7 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	stateModel, diags := NewIntegrationAwsResourceModel(ctx, *awsIntegration)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	stateModel := NewIntegrationAwsResourceModel(*awsIntegration)
 
 	tflog.Trace(ctx, "created an AWS integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -152,11 +147,7 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	verifiedStateModel, diags := NewIntegrationAwsResourceModel(ctx, *awsIntegration)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	verifiedStateModel := NewIntegrationAwsResourceModel(*awsIntegration)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read an AWS integration resource")
@@ -191,11 +182,7 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	stateModel, diags := NewIntegrationAwsResourceModel(ctx, *awsIntegration)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	stateModel := NewIntegrationAwsResourceModel(*awsIntegration)
 
 	tflog.Trace(ctx, "updated an AWS integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

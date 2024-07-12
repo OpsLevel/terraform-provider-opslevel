@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -65,8 +64,8 @@ func jsonToMapValue(json map[string]any) basetypes.MapValue {
 	return types.MapValueMust(types.StringType, jsonAttrs)
 }
 
-func newWebhookActionWithIdentifierDataSourceModel(ctx context.Context, webhookAction opslevel.CustomActionsExternalAction, identifier string) (webhookActionWithIdentifierDataSourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, webhookAction.Aliases)
+func newWebhookActionWithIdentifierDataSourceModel(webhookAction opslevel.CustomActionsExternalAction, identifier string) webhookActionWithIdentifierDataSourceModel {
+	aliases := OptionalStringListValue(webhookAction.Aliases)
 	action := webhookActionWithIdentifierDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
@@ -79,11 +78,11 @@ func newWebhookActionWithIdentifierDataSourceModel(ctx context.Context, webhookA
 		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookURL),
 	}
 
-	return action, diags
+	return action
 }
 
-func newWebhookActionDataSourceModel(ctx context.Context, webhookAction opslevel.CustomActionsExternalAction) (webhookActionDataSourceModel, diag.Diagnostics) {
-	aliases, diags := OptionalStringListValue(ctx, webhookAction.Aliases)
+func newWebhookActionDataSourceModel(webhookAction opslevel.CustomActionsExternalAction) webhookActionDataSourceModel {
+	aliases := OptionalStringListValue(webhookAction.Aliases)
 	action := webhookActionDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
@@ -95,7 +94,7 @@ func newWebhookActionDataSourceModel(ctx context.Context, webhookAction opslevel
 		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookURL),
 	}
 
-	return action, diags
+	return action
 }
 
 var webhookActionDatasourceSchemaAttrs = map[string]schema.Attribute{
@@ -173,8 +172,7 @@ func (d *WebhookActionDataSource) Read(ctx context.Context, req datasource.ReadR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read webhookAction datasource, got error: %s", err))
 		return
 	}
-	webhookActionDataModel, diags := newWebhookActionWithIdentifierDataSourceModel(ctx, *webhookAction, data.Identifier.ValueString())
-	resp.Diagnostics.Append(diags...)
+	webhookActionDataModel := newWebhookActionWithIdentifierDataSourceModel(*webhookAction, data.Identifier.ValueString())
 	if resp.Diagnostics.HasError() {
 		return
 	}
