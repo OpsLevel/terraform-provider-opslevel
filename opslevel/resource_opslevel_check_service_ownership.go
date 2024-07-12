@@ -22,6 +22,7 @@ import (
 var (
 	_ resource.ResourceWithConfigure      = &CheckServiceOwnershipResource{}
 	_ resource.ResourceWithImportState    = &CheckServiceOwnershipResource{}
+	_ resource.ResourceWithUpgradeState   = &CheckServiceOwnershipResource{}
 	_ resource.ResourceWithValidateConfig = &CheckServiceOwnershipResource{}
 )
 
@@ -137,7 +138,7 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 	}
 }
 
-func UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
 	enumAllContactTypes := append(opslevel.AllContactType, "any")
 	return map[int64]resource.StateUpgrader{
 		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
@@ -158,8 +159,12 @@ func UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
 						Description: "The tag key where the tag predicate should be applied.",
 						Optional:    true,
 					},
-					"tag_predicate": predicateSchemaV0,
 				}),
+				Blocks: map[string]schema.Block{
+					"tag_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) { /* ... */
 				upgradedStateModel := CheckServiceOwnershipResourceModel{}
@@ -171,7 +176,7 @@ func UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)

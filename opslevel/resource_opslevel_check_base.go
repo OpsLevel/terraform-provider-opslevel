@@ -186,9 +186,7 @@ See example in opslevel_check_manual for proper configuration.
 	return output
 }
 
-var predicateSchemaV0 = schema.SingleNestedAttribute{
-	Description: "A condition that should be satisfied.",
-	Optional:    true,
+var predicateSchemaV0 = schema.NestedBlockObject{
 	Attributes: map[string]schema.Attribute{
 		"type": schema.StringAttribute{
 			Description: "A condition that should be satisfied.",
