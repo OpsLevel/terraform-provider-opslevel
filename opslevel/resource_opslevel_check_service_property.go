@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -109,6 +110,59 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 			},
 			"predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Service Ownership Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+					"property": schema.StringAttribute{
+						Description: "The property of the service that the check will verify.",
+						Required:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var diags diag.Diagnostics
+				upgradedStateModel := CheckServicePropertyResourceModel{}
+				predicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// service property specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("property"), &upgradedStateModel.Property)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("predicate"), &predicateList)...)
+				if len(predicateList.Elements()) == 1 {
+					predicate := predicateList.Elements()[0]
+					upgradedStateModel.Predicate, diags = types.ObjectValueFrom(ctx, predicateType, predicate)
+					resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 
