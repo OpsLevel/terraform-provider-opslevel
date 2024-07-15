@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	// "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -34,6 +36,12 @@ type CheckUpdateFrequency struct {
 	StartingDate types.String `tfsdk:"starting_date"`
 	TimeScale    types.String `tfsdk:"time_scale"`
 	Value        types.Int64  `tfsdk:"value"`
+}
+
+var updateFrequencyType = map[string]attr.Type{
+	"starting_date": types.StringType,
+	"time_value":    types.StringType,
+	"value":         types.StringType,
 }
 
 type CheckManualResourceModel struct {
@@ -92,6 +100,7 @@ func (r *CheckManualResource) Metadata(ctx context.Context, req resource.Metadat
 
 func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Manual Resource",
 
@@ -125,6 +134,80 @@ func (r *CheckManualResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 		}),
+	}
+}
+
+func (r *CheckManualResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Repository File Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+					"update_requires_comment": schema.BoolAttribute{
+						Description: "Whether the check requires a comment or not.",
+						Optional:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"update_frequency": schema.ListNestedBlock{
+						NestedObject: schema.NestedBlockObject{
+							Attributes: map[string]schema.Attribute{
+								"starting_date": schema.StringAttribute{
+									Description: "The date that the check will start to evaluate.",
+									Required:    true,
+								},
+								"time_scale": schema.StringAttribute{
+									Description: "The time scale type for the frequency.",
+									Required:    true,
+								},
+								"value": schema.Int64Attribute{
+									Description: "The value to be used together with the frequency time_scale.",
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				// var diags diag.Diagnostics
+				upgradedStateModel := CheckManualResourceModel{}
+				updateFrequencyList := types.ListNull(types.ObjectType{AttrTypes: updateFrequencyType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// repository file specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("update_requires_comment"), &upgradedStateModel.UpdateRequiresComment)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("update_frequency"), &updateFrequencyList)...)
+				// TODO
+				// if len(updateFrequencyList.Elements()) == 1 {
+				// 	updateFrequency := updateFrequencyList.Elements()[0]
+				// updateFrequency, diags = types.ObjectValueFrom(ctx, updateFrequencyType, updateFrequency)
+				// upgradedStateModel.UpdateFrequency = &CheckUpdateFrequency{
+				// 	StartingDate: types.StringValue(updateFrequency["starting_date"]),
+				// 	TimeScale:    updateFrequency["time_scale"],
+				// 	Value:        updateFrequency["value"],
+				// }
+				// 	resp.Diagnostics.Append(diags...)
+				// }
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 

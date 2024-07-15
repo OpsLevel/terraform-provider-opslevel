@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	// "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -35,6 +37,13 @@ type InfraProviderData struct {
 	Name    types.String `tfsdk:"name"`
 	Type    types.String `tfsdk:"type"`
 	Url     types.String `tfsdk:"url"`
+}
+
+var infraProviderDataType = map[string]attr.Type{
+	"account": types.StringType,
+	"name":    types.StringType,
+	"type":    types.StringType,
+	"url":     types.StringType,
 }
 
 func newInfraProviderData(infrastructure opslevel.InfrastructureResource) *InfraProviderData {
@@ -85,6 +94,7 @@ func (r *InfrastructureResource) Metadata(ctx context.Context, req resource.Meta
 
 func (r *InfrastructureResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Infrastructure Resource",
 
@@ -139,6 +149,98 @@ func (r *InfrastructureResource) Schema(ctx context.Context, req resource.Schema
 			"schema": schema.StringAttribute{
 				Description: "The schema of the infrastructure resource that determines its data specification.",
 				Required:    true,
+			},
+		},
+	}
+}
+
+func (r *InfrastructureResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Infrastructure Resource",
+				Attributes: map[string]schema.Attribute{
+					"aliases": schema.SetAttribute{
+						ElementType: types.StringType,
+						Description: "The aliases for the infrastructure resource.",
+						Optional:    true,
+					},
+					"data": schema.StringAttribute{
+						Description: "The data of the infrastructure resource in JSON format.",
+						Required:    true,
+						Validators: []validator.String{
+							JsonStringValidator(),
+							JsonHasNameKeyValidator(),
+						},
+					},
+					"id": schema.StringAttribute{
+						Description: "The ID of the infrastructure.",
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"owner": schema.StringAttribute{
+						Description: "The id of the team that owns the infrastructure resource. Does not support aliases!",
+						Required:    true,
+						Validators:  []validator.String{IdStringValidator()},
+					},
+					"schema": schema.StringAttribute{
+						Description: "The schema of the infrastructure resource that determines its data specification.",
+						Required:    true,
+					},
+				},
+				Blocks: map[string]schema.Block{
+					"provider_data": schema.ListNestedBlock{
+						NestedObject: schema.NestedBlockObject{
+							Attributes: map[string]schema.Attribute{
+								"account": schema.StringAttribute{
+									Description: "The canonical account name for the provider of the infrastructure resource.",
+									Required:    true,
+								},
+								"name": schema.StringAttribute{
+									Description: "The name of the provider of the infrastructure resource. (eg. AWS, GCP, Azure)",
+									Optional:    true,
+								},
+								"type": schema.StringAttribute{
+									Description: "The type of the infrastructure resource as defined by its provider.",
+									Optional:    true,
+								},
+								"url": schema.StringAttribute{
+									Description: "The url for the provider of the infrastructure resource.",
+									Optional:    true,
+								},
+							},
+						},
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				// var diags diag.Diagnostics
+				upgradedStateModel := InfrastructureResourceModel{}
+				infraProviderDataList := types.ListNull(types.ObjectType{AttrTypes: infraProviderDataType})
+
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("aliases"), &upgradedStateModel.Aliases)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("data"), &upgradedStateModel.Data)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("schema"), &upgradedStateModel.Schema)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("provider_data"), &infraProviderDataList)...)
+				if len(infraProviderDataList.Elements()) == 1 {
+					infraProviderData := infraProviderDataList.Elements()[0]
+					panic(infraProviderData)
+					// upgradedStateModel.ProviderData = &InfraProviderData{
+					// 	Account: types.StringValue(infraProviderData["starting_date"]),
+					// 	Name:    infraProviderData["time_scale"],
+					// 	Type:    infraProviderData["value"],
+					// 	Url:     infraProviderData["url"],
+					// }
+					// upgradedStateModel.ProviderData, diags = types.ObjectValueFrom(ctx, infraProviderDataType, infraProviderData)
+					// resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},
 		},
 	}
