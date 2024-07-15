@@ -151,6 +151,10 @@ func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[in
 						Optional:    true,
 						Validators:  []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
 					},
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
 					"require_contact_method": schema.BoolAttribute{
 						Description: "True if a service's owner must have a contact method, False otherwise.",
 						Optional:    true,
@@ -168,28 +172,29 @@ func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[in
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) { /* ... */
 				upgradedStateModel := CheckServiceOwnershipResourceModel{}
-				predicateModel := types.ObjectNull(predicateType)
+				tagPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("contact_method"), &upgradedStateModel.ContactMethod)...)
-				// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("description"), &upgradedStateData.Description)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
-				// resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("require_contact_method"), &upgradedStateModel.RequireContactMethod)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_key"), &upgradedStateModel.TagKey)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &predicateModel)...)
-				// resp.Diagnostics.Append(req.State.Get(ctx, &priorStateData)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &tagPredicateList)...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
-				upgradedStateModel.TagPredicate = predicateModel
 
+				if len(tagPredicateList.Elements()) == 1 {
+					tagPredicate := tagPredicateList.Elements()[0]
+					upgradedStateModel.TagPredicate, _ = types.ObjectValueFrom(ctx, predicateType, tagPredicate)
+				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},
 		},
