@@ -125,7 +125,7 @@ func (r *CheckRepositoryFileResource) UpgradeState(ctx context.Context) map[int6
 			PriorSchema: &schema.Schema{
 				Description: "Check Repository File Resource",
 				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
-					"directory_search": schema.StringAttribute{
+					"directory_search": schema.BoolAttribute{
 						Description: "Whether the check looks for the existence of a directory instead of a file.",
 						Required:    true,
 					},
