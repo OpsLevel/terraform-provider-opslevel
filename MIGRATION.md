@@ -1,10 +1,12 @@
 # Migration Guide to v1.0.0
 
+For everyone upgrading from a version before v1.0.0, we recommend upgrading straight to v1.2 or higher.
+
 We at OpsLevel have been working on upgrading [our Terraform provider](https://github.com/OpsLevel/terraform-provider-opslevel) to version 1.0.0.
 
 While the majority of these improvements are under the hood, there are a few Terraform configuration changes to be aware of.
 
-For errors encountered during `terraform apply`, see the [State Migration](#state-migration) section below.
+For errors encountered during `terraform apply`, see the [State Migration](#state-migration) section below - Applies only to v1.0.0 up to v1.1.x
 
 # BREAKING CHANGES to some resource fields
 
@@ -169,7 +171,9 @@ Changes to Outputs:
     ]
 ```
 
-# State Migration
+# State Migration (Applies to v1.0.0 up to v1.1.x)
+
+We recommend upgrading straight to v1.2 or higher. But for versions between v1.0.0 and v1.1.x, the following may be needed.
 
 The structure of some resource data has changed from v0.11.0 to v1.0.0.
 If you encounter erros like `Error: Unable to Read Previously Saved State for UpgradeResourceState`
