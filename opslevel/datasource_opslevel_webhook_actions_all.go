@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -26,13 +24,12 @@ type webhookActionDataSourcesAllModel struct {
 	WebhookActions []webhookActionDataSourceModel `tfsdk:"webhook_actions"`
 }
 
-func newWebhookActionDataSourcesAllModel(ctx context.Context, webhookActions []opslevel.CustomActionsExternalAction) (webhookActionDataSourcesAllModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func newWebhookActionDataSourcesAllModel(webhookActions []opslevel.CustomActionsExternalAction) webhookActionDataSourcesAllModel {
 	webhookActionModels := make([]webhookActionDataSourceModel, 0)
 	for _, webhookAction := range webhookActions {
 		webhookActionModels = append(webhookActionModels, newWebhookActionDataSourceModel(webhookAction))
 	}
-	return webhookActionDataSourcesAllModel{WebhookActions: webhookActionModels}, diags
+	return webhookActionDataSourcesAllModel{WebhookActions: webhookActionModels}
 }
 
 func (d *WebhookActionDataSourcesAll) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -69,11 +66,7 @@ func (d *WebhookActionDataSourcesAll) Read(ctx context.Context, req datasource.R
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list webhookActions, got error: %s", err))
 		return
 	}
-	stateModel, diags := newWebhookActionDataSourcesAllModel(ctx, webhookActions.Nodes)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	stateModel = newWebhookActionDataSourcesAllModel(webhookActions.Nodes)
 
 	tflog.Trace(ctx, "listed all OpsLevel WebhookAction data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
