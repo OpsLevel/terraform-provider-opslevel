@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	// "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -217,7 +217,6 @@ func (r *InfrastructureResource) UpgradeState(ctx context.Context) map[int64]res
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				// var diags diag.Diagnostics
 				upgradedStateModel := InfrastructureResourceModel{}
 				infraProviderDataList := types.ListNull(types.ObjectType{AttrTypes: infraProviderDataType})
 
@@ -228,16 +227,14 @@ func (r *InfrastructureResource) UpgradeState(ctx context.Context) map[int64]res
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("schema"), &upgradedStateModel.Schema)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("provider_data"), &infraProviderDataList)...)
 				if len(infraProviderDataList.Elements()) == 1 {
-					infraProviderData := infraProviderDataList.Elements()[0]
-					panic(infraProviderData)
-					// upgradedStateModel.ProviderData = &InfraProviderData{
-					// 	Account: types.StringValue(infraProviderData["starting_date"]),
-					// 	Name:    infraProviderData["time_scale"],
-					// 	Type:    infraProviderData["value"],
-					// 	Url:     infraProviderData["url"],
-					// }
-					// upgradedStateModel.ProviderData, diags = types.ObjectValueFrom(ctx, infraProviderDataType, infraProviderData)
-					// resp.Diagnostics.Append(diags...)
+					infraProviderData := infraProviderDataList.Elements()[0].(basetypes.ObjectValue)
+					infraProviderDataAttrs := infraProviderData.Attributes()
+					upgradedStateModel.ProviderData = &InfraProviderData{
+						Account: infraProviderDataAttrs["account"].(basetypes.StringValue),
+						Name:    infraProviderDataAttrs["name"].(basetypes.StringValue),
+						Type:    infraProviderDataAttrs["type"].(basetypes.StringValue),
+						Url:     infraProviderDataAttrs["url"].(basetypes.StringValue),
+					}
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
