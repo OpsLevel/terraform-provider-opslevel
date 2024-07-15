@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -90,6 +91,7 @@ func (r *CheckTagDefinedResource) Metadata(ctx context.Context, req resource.Met
 
 func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Tag Defined Resource",
 
@@ -100,6 +102,59 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Tag Defined Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+					"tag_key": schema.StringAttribute{
+						Description: "The tag key where the tag predicate should be applied.",
+						Required:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"tag_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var diags diag.Diagnostics
+				upgradedStateModel := CheckTagDefinedResourceModel{}
+				tagPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// check tag defined specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_key"), &upgradedStateModel.TagKey)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &tagPredicateList)...)
+				if len(tagPredicateList.Elements()) == 1 {
+					tagPredicate := tagPredicateList.Elements()[0]
+					upgradedStateModel.TagPredicate, diags = types.ObjectValueFrom(ctx, predicateType, tagPredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 

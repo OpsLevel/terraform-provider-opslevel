@@ -136,3 +136,66 @@ func PredicateSchema() schema.SingleNestedAttribute {
 		},
 	}
 }
+
+// pre-v1.x base schema fields for checks used by StateUpgraders
+func getCheckBaseSchemaV0(extras map[string]schema.Attribute) map[string]schema.Attribute {
+	output := map[string]schema.Attribute{
+		"last_updated": schema.StringAttribute{
+			Optional: true,
+			Computed: true,
+		},
+		"name": schema.StringAttribute{
+			Description: "The display name of the check.",
+			Required:    true,
+		},
+		"enabled": schema.BoolAttribute{
+			Description: `Whether the check is enabled or not.  Do not use this field in tandem with 'enable_on'.`,
+			Required:    true,
+		},
+		"enable_on": schema.StringAttribute{
+			Description: `The date when the check will be automatically enabled.
+If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
+See example in opslevel_check_manual for proper configuration.
+`,
+			Optional: true,
+		},
+		"category": schema.StringAttribute{
+			Description: "The id of the category the check belongs to.",
+			Required:    true,
+		},
+		"level": schema.StringAttribute{
+			Description: "The id of the level the check belongs to.",
+			Required:    true,
+		},
+		"owner": schema.StringAttribute{
+			Description: "The id of the team that owns the check.",
+			Optional:    true,
+		},
+		"filter": schema.StringAttribute{
+			Description: "The id of the filter of the check.",
+			Optional:    true,
+		},
+		"notes": schema.StringAttribute{
+			Description: "Additional information about the check.",
+			Optional:    true,
+		},
+	}
+	for k, v := range extras {
+		output[k] = v
+	}
+	return output
+}
+
+var predicateSchemaV0 = schema.NestedBlockObject{
+	Attributes: map[string]schema.Attribute{
+		"type": schema.StringAttribute{
+			Description: "A condition that should be satisfied.",
+			Required:    true,
+			Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+		},
+		"value": schema.StringAttribute{
+			Description: "The condition value used by the predicate.",
+			Optional:    true,
+		},
+	},
+}

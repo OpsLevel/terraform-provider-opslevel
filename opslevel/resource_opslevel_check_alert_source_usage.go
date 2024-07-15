@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -92,6 +93,7 @@ func (r *CheckAlertSourceUsageResource) Metadata(ctx context.Context, req resour
 
 func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Alert Source Usage Resource",
 
@@ -106,6 +108,59 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 			},
 			"alert_name_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Alert Source Usage Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"alert_type": schema.StringAttribute{
+						Description: "The type of the alert source.",
+						Required:    true,
+					},
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"alert_name_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var diags diag.Diagnostics
+				upgradedStateModel := CheckAlertSourceUsageResourceModel{}
+				alertNamePredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// alert source specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alert_type"), &upgradedStateModel.AlertType)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alert_name_predicate"), &alertNamePredicateList)...)
+				if len(alertNamePredicateList.Elements()) == 1 {
+					alertNamePredicate := alertNamePredicateList.Elements()[0]
+					upgradedStateModel.AlertNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, alertNamePredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 

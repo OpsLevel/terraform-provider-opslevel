@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -116,6 +117,7 @@ func (r *CheckToolUsageResource) Metadata(ctx context.Context, req resource.Meta
 
 func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Tool Usage Resource",
 
@@ -132,6 +134,79 @@ func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.Schema
 			"tool_name_predicate":   PredicateSchema(),
 			"tool_url_predicate":    PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Tool Usage Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+					"tool_category": schema.StringAttribute{
+						Description: "The category that the tool belongs to.",
+						Required:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"environment_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+					"tool_name_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+					"tool_url_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var diags diag.Diagnostics
+				upgradedStateModel := CheckToolUsageResourceModel{}
+				environmentPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+				toolNamePredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+				toolUrlPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// tool usage specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_category"), &upgradedStateModel.ToolCategory)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("environment_predicate"), &environmentPredicateList)...)
+				if len(environmentPredicateList.Elements()) == 1 {
+					environmentPredicate := environmentPredicateList.Elements()[0]
+					upgradedStateModel.EnvironmentPredicate, diags = types.ObjectValueFrom(ctx, predicateType, environmentPredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_name_predicate"), &toolNamePredicateList)...)
+				if len(toolNamePredicateList.Elements()) == 1 {
+					toolNamePredicate := toolNamePredicateList.Elements()[0]
+					upgradedStateModel.ToolNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolNamePredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_url_predicate"), &toolUrlPredicateList)...)
+				if len(toolUrlPredicateList.Elements()) == 1 {
+					toolUrlPredicate := toolUrlPredicateList.Elements()[0]
+					upgradedStateModel.ToolUrlPredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolUrlPredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 

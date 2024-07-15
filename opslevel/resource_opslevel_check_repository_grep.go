@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -108,6 +109,65 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
+	}
+}
+
+func (r *CheckRepositoryGrepResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Check Repository Grep Resource",
+				Attributes: getCheckBaseSchemaV0(map[string]schema.Attribute{
+					"directory_search": schema.BoolAttribute{
+						Description: "Whether the check looks for the existence of a directory instead of a file.",
+						Required:    true,
+					},
+					"filepaths": schema.ListAttribute{
+						Description: "Restrict the search to certain file paths.",
+						ElementType: types.StringType,
+						Required:    true,
+					},
+					"id": schema.StringAttribute{
+						Description: "The ID of this resource.",
+						Computed:    true,
+					},
+				}),
+				Blocks: map[string]schema.Block{
+					"file_contents_predicate": schema.ListNestedBlock{
+						NestedObject: predicateSchemaV0,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var diags diag.Diagnostics
+				upgradedStateModel := CheckRepositoryGrepResourceModel{}
+				fileContentsPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
+
+				// base check attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enable_on"), &upgradedStateModel.EnableOn)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("enabled"), &upgradedStateModel.Enabled)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filter"), &upgradedStateModel.Filter)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &upgradedStateModel.Id)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("level"), &upgradedStateModel.Level)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("name"), &upgradedStateModel.Name)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("notes"), &upgradedStateModel.Notes)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
+
+				// repository grep specific attributes
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("directory_search"), &upgradedStateModel.DirectorySearch)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filepaths"), &upgradedStateModel.Filepaths)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicateList)...)
+				if len(fileContentsPredicateList.Elements()) == 1 {
+					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
+					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
+					resp.Diagnostics.Append(diags...)
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+			},
+		},
 	}
 }
 
