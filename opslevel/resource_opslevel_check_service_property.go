@@ -159,6 +159,8 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 					predicate := predicateList.Elements()[0]
 					upgradedStateModel.Predicate, diags = types.ObjectValueFrom(ctx, predicateType, predicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.Predicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)

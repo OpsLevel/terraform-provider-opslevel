@@ -235,6 +235,8 @@ func (r *InfrastructureResource) UpgradeState(ctx context.Context) map[int64]res
 						Type:    infraProviderDataAttrs["type"].(basetypes.StringValue),
 						Url:     infraProviderDataAttrs["url"].(basetypes.StringValue),
 					}
+				} else {
+					upgradedStateModel.ProviderData = &InfraProviderData{}
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)

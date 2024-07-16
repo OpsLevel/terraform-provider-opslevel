@@ -201,6 +201,8 @@ func (r *CheckManualResource) UpgradeState(ctx context.Context) map[int64]resour
 						TimeScale:    updateFrequencyAttrs["time_scale"].(basetypes.StringValue),
 						Value:        updateFrequencyAttrs["value"].(basetypes.Int64Value),
 					}
+				} else {
+					upgradedStateModel.UpdateFrequency = &CheckUpdateFrequency{}
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)

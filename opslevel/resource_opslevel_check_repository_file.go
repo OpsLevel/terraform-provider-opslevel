@@ -174,6 +174,8 @@ func (r *CheckRepositoryFileResource) UpgradeState(ctx context.Context) map[int6
 					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
 					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.FileContentsPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)

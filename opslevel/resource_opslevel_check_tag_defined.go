@@ -150,6 +150,8 @@ func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]re
 					tagPredicate := tagPredicateList.Elements()[0]
 					upgradedStateModel.TagPredicate, diags = types.ObjectValueFrom(ctx, predicateType, tagPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.TagPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
