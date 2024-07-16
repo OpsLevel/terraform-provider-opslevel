@@ -156,6 +156,8 @@ func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[in
 					alertNamePredicate := alertNamePredicateList.Elements()[0]
 					upgradedStateModel.AlertNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, alertNamePredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.AlertNamePredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
