@@ -144,7 +144,7 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 				var diags diag.Diagnostics
-				upgradedStateModel := CheckRepositoryFileResourceModel{}
+				upgradedStateModel := CheckRepositorySearchResourceModel{}
 				fileContentsPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
@@ -159,7 +159,7 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
 
 				// repository file specific attributes
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_extensions"), &upgradedStateModel.Filepaths)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_extensions"), &upgradedStateModel.FileExtensions)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicateList)...)
 				if len(fileContentsPredicateList.Elements()) == 1 {
 					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
