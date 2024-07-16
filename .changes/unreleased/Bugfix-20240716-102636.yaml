@@ -1,0 +1,3 @@
+kind: Bugfix
+body: fix empty predicate blocks in state migration from previous providers
+time: 2024-07-16T10:26:36.117826-05:00
