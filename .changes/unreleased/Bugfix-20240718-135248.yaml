@@ -1,0 +1,4 @@
+kind: Bugfix
+body: correctly handle validating fields set by variables or for loops during 'terraform
+  validate'
+time: 2024-07-18T13:52:48.822483-05:00
