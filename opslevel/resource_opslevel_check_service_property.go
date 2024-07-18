@@ -171,7 +171,7 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 
 func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	predicate := types.ObjectNull(predicateType)
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("file_contents_predicate"), &predicate)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("predicate"), &predicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
