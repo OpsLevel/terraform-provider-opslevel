@@ -170,16 +170,13 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 }
 
 func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckServicePropertyResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	predicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("file_contents_predicate"), &predicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.Predicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, predicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}

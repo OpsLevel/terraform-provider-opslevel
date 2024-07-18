@@ -176,13 +176,13 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 }
 
 func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckRepositorySearchResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	fileContentsPredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicate)...)
+	if resp.Diagnostics.HasError() || fileContentsPredicate.IsNull() || fileContentsPredicate.IsUnknown() {
 		return
 	}
 
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, fileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
 	if predicateModel.Type.ValueString() == "exists" || predicateModel.Type.ValueString() == "does_not_exist" {
 		resp.Diagnostics.AddError("Config Error", "file_contents_predicate type must not be 'exists' or 'does_not_exist'")
