@@ -44,6 +44,7 @@ type ServiceResourceModel struct {
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
 	Owner                      types.String `tfsdk:"owner"`
+	Parent                     types.String `tfsdk:"parent"`
 	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
 	Product                    types.String `tfsdk:"product"`
 	Tags                       types.Set    `tfsdk:"tags"`
@@ -61,6 +62,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
 		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
+		Parent:          OptionalStringValue(givenModel.Parent.ValueString()),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
@@ -161,6 +163,11 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "The team that owns the service. ID or Alias may be used.",
 				Optional:    true,
 			},
+			"parent": schema.StringAttribute{
+				Description: "The id of the parent system of this service",
+				Optional:    true,
+				Validators:  []validator.String{IdStringValidator()},
+			},
 			"preferred_api_document_source": schema.StringAttribute{
 				Description: fmt.Sprintf(
 					"The API document source (%s) used to determine the displayed document. If null, defaults to PUSH.",
@@ -203,12 +210,17 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
 		Name:           planModel.Name.ValueString(),
 		OwnerInput:     opslevel.NewIdentifier(),
+		Parent:         opslevel.NewIdentifier(),
 		Product:        planModel.Product.ValueStringPointer(),
 		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
 
 	if planModel.Owner.ValueString() != "" {
 		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	}
+
+	if planModel.Parent.ValueString() != "" {
+		serviceCreateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 
 	service, err := r.client.CreateService(serviceCreateInput)
@@ -327,11 +339,15 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
 		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
 		OwnerInput:     opslevel.NewIdentifier(),
+		Parent:         opslevel.NewIdentifier(),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	}
+	if planModel.Parent.ValueString() != "" {
+		serviceUpdateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
