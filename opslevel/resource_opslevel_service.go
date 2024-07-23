@@ -164,9 +164,8 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 			},
 			"parent": schema.StringAttribute{
-				Description: "The id of the parent system of this service",
+				Description: "The id or alias of the parent system of this service",
 				Optional:    true,
-				Validators:  []validator.String{IdStringValidator()},
 			},
 			"preferred_api_document_source": schema.StringAttribute{
 				Description: fmt.Sprintf(
