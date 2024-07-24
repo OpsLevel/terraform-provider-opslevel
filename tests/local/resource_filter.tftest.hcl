@@ -71,11 +71,6 @@ run "resource_filter_big_predicate_two" {
   }
 
   assert {
-    condition     = opslevel_filter.big.predicate[1].case_sensitive == true
-    error_message = "expected case_sensitive to be true for opslevel_filter.big.predicate[1]"
-  }
-
-  assert {
     condition     = opslevel_filter.big.predicate[1].key == "lifecycle_index"
     error_message = "wrong predicate 'key' for opslevel_filter.big.predicate[1]"
   }
@@ -86,7 +81,7 @@ run "resource_filter_big_predicate_two" {
   }
 
   assert {
-    condition     = opslevel_filter.big.predicate[1].type == "ends_with"
+    condition     = opslevel_filter.big.predicate[1].type == "greater_than_or_equal_to"
     error_message = "wrong predicate 'type' for opslevel_filter.big.predicate[1]"
   }
 
