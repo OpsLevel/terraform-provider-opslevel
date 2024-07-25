@@ -109,19 +109,12 @@ tasks:
     vars:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
     cmds:
-      - defer: rm {{.BINARY}}
-      - go build -gcflags="all=-N -l" -ldflags="-s -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
-      - dlv exec --accept-multiclient --continue --headless {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
-
-  debug-attach:
-    desc: Attach to headless debug sessions
-    vars:
-      LOCAL_PORT:
-        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f2 -f3
-      TF_REATTACH_PROVIDERS:
-        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d':' -f2
-    cmds:
-      - dlv connect {{.LOCAL_PORT}}
+      - >-
+        dlv debug .
+        --build-flags="-gcflags='all=-N -l' -ldflags='-X main.version={{.VERSION_DYNAMIC}}'"
+        --api-version=2
+        --
+        --debug
 
   terraform-clean:
     desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
