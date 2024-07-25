@@ -5,6 +5,10 @@ data "opslevel_lifecycle" "beta" {
   }
 }
 
+data "opslevel_system" "parent" {
+  identifier = "example"
+}
+
 data "opslevel_tier" "tier3" {
   filter {
     field = "index"
@@ -33,6 +37,7 @@ resource "opslevel_service" "foo" {
   lifecycle_alias = data.opslevel_lifecycle.beta.alias
   tier_alias      = data.opslevel_tier.tier3.alias
   owner           = opslevel_team.foo.id
+  parent          = data.opslevel_system.parent.id
 
   api_document_path             = "/swagger.json"
   preferred_api_document_source = "PULL" //or "PUSH"
