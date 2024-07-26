@@ -76,7 +76,7 @@ run "resource_filter_big_predicate_two" {
   }
 
   assert {
-    condition     = opslevel_filter.big.predicate[1].key_data == "big_predicate"
+    condition     = opslevel_filter.big.predicate[1].key_data == null
     error_message = "wrong 'key_data' for opslevel_filter.big.predicate[1]"
   }
 
