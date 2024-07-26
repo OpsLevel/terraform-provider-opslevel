@@ -207,17 +207,13 @@ func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[in
 }
 
 func (r *CheckServiceOwnershipResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckServiceOwnershipResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	tagPredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("tag_predicate"), &tagPredicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.TagPredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, tagPredicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
