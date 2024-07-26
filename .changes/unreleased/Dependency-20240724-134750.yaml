@@ -1,0 +1,3 @@
+kind: Dependency
+body: bump github.com/hashicorp/terraform-plugin-framework to v1.10.0
+time: 2024-07-24T13:47:50.22434-05:00
