@@ -3,9 +3,12 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -39,6 +42,23 @@ type CheckPackageVersionResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 
 	// TODO: Unique Fields Here
+	MissingPackageResult       types.String `tfsdk:"missing_package_result"`
+	PackageConstraint          types.String `tfsdk:"package_constraint"`
+	PackageManager             types.String `tfsdk:"package_manager"`
+	PackageName                types.String `tfsdk:"package_name"`
+	PackageNameIsRegex         types.Bool   `tfsdk:"package_name_is_regex"`
+	VersionConstraintPredicate types.Object `tfsdk:"version_constraint_predicate"`
+}
+
+func ParsePredicate(predicate *opslevel.Predicate) types.Object {
+	if predicate == nil {
+		return types.ObjectNull(predicateType)
+	}
+	predicateAttrValues := map[string]attr.Value{
+		"type":  types.StringValue(string(predicate.Type)),
+		"value": OptionalStringValue(predicate.Value),
+	}
+	return types.ObjectValueMust(predicateType, predicateAttrValues)
 }
 
 func NewCheckPackageVersionResourceModel(ctx context.Context, check opslevel.Check, planModel CheckPackageVersionResourceModel) CheckPackageVersionResourceModel {
@@ -63,7 +83,14 @@ func NewCheckPackageVersionResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.Notes = OptionalStringValue(check.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
-	// TODO: Unique Fields Here
+	if check.MissingPackageResult != nil {
+		stateModel.MissingPackageResult = RequiredStringValue(string(*check.MissingPackageResult))
+	}
+	stateModel.PackageConstraint = RequiredStringValue(string(check.PackageConstraint))
+	stateModel.PackageManager = RequiredStringValue(string(check.PackageManager))
+	stateModel.PackageName = RequiredStringValue(check.PackageName)
+	stateModel.PackageNameIsRegex = OptionalBoolValue(&check.PackageNameIsRegex)
+	stateModel.VersionConstraintPredicate = ParsePredicate(check.VersionConstraintPredicate)
 
 	return stateModel
 }
@@ -79,7 +106,36 @@ func (r *CheckPackageVersionResource) Schema(ctx context.Context, req resource.S
 		MarkdownDescription: "Check PackageVersion Resource",
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
-			// TODO: Unique Fields Here
+			"missing_package_result": schema.StringAttribute{
+				Description: "The check result if the package isn't being used by a service. (Optional.)",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllCheckResultStatusEnum...),
+				},
+			},
+			"package_constraint": schema.StringAttribute{
+				Description: "The package constraint the service is to be checked for. (Required.)",
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllPackageConstraintEnum...),
+				},
+			},
+			"package_manager": schema.StringAttribute{
+				Description: "The package manager (ecosystem) this package relates to. (Required.)",
+				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllPackageManagerEnum...),
+				},
+			},
+			"package_name": schema.StringAttribute{
+				Description: "The name of the package to be checked. (Required.)",
+				Required:    true,
+			},
+			"package_name_is_regex": schema.BoolAttribute{
+				Description: "Whether or not the value in the package name field is a regular expression. (Optional.)",
+				Optional:    true,
+			},
+			"version_constraint_predicate": PredicateSchema(),
 		}),
 	}
 }
@@ -102,6 +158,10 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 		Name:       planModel.Name.ValueString(),
 		Notes:      planModel.Notes.ValueStringPointer(),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+
+		PackageConstraint: opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString()),
+		PackageManager:    opslevel.PackageManagerEnum(planModel.PackageManager.ValueString()),
+		PackageName:       planModel.PackageName.ValueString(),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -111,7 +171,21 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	// TODO: Unique Fields Here
+	if !planModel.MissingPackageResult.IsNull() {
+		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
+	}
+	if !planModel.PackageNameIsRegex.IsNull() {
+		input.PackageNameIsRegex = planModel.PackageNameIsRegex.ValueBoolPointer()
+	}
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
+	resp.Diagnostics.Append(diags...)
+	if !predicateModel.Type.IsUnknown() && !predicateModel.Type.IsNull() {
+		if err := predicateModel.Validate(); err == nil {
+			input.VersionConstraintPredicate = predicateModel.ToCreateInput()
+		} else {
+			resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Attribute Configuration", err.Error())
+		}
+	}
 
 	data, err := r.client.CreateCheckPackageVersion(input)
 	if err != nil {
@@ -147,10 +221,11 @@ func (r *CheckPackageVersionResource) Read(ctx context.Context, req resource.Rea
 }
 
 func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckPackageVersionResourceModel
+	var planModel, stateModel CheckPackageVersionResourceModel
 
 	// Read Terraform plan data into the planModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -165,6 +240,10 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+
+		PackageConstraint: opslevel.RefOf(opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString())),
+		PackageManager:    opslevel.RefOf(opslevel.PackageManagerEnum(planModel.PackageManager.ValueString())),
+		PackageName:       opslevel.RefOf(planModel.PackageName.ValueString()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -174,7 +253,31 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	// TODO: Unique Fields Here
+	if !planModel.MissingPackageResult.IsNull() {
+		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
+	} else if !stateModel.MissingPackageResult.IsNull() { // Then Unset
+		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(""))
+	}
+
+	if !planModel.PackageNameIsRegex.IsNull() {
+		input.PackageNameIsRegex = planModel.PackageNameIsRegex.ValueBoolPointer()
+	} else if !stateModel.PackageNameIsRegex.IsNull() { // Then Unset
+		var v *bool
+		input.PackageNameIsRegex = v
+	}
+
+	predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
+	resp.Diagnostics.Append(diags...)
+	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		input.VersionConstraintPredicate = &opslevel.PredicateUpdateInput{}
+	} else if err := predicateModel.Validate(); err == nil {
+		input.VersionConstraintPredicate = predicateModel.ToUpdateInput()
+	} else {
+		resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Attribute Configuration", err.Error())
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data, err := r.client.UpdateCheckPackageVersion(input)
 	if err != nil {
@@ -182,10 +285,10 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	stateModel := NewCheckPackageVersionResourceModel(ctx, *data, planModel)
+	validatedModel := NewCheckPackageVersionResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "updated a check package_version resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &validatedModel)...)
 }
 
 func (r *CheckPackageVersionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
