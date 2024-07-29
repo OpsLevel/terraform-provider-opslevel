@@ -174,6 +174,8 @@ func (r *CheckRepositoryFileResource) UpgradeState(ctx context.Context) map[int6
 					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
 					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.FileContentsPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
@@ -183,16 +185,13 @@ func (r *CheckRepositoryFileResource) UpgradeState(ctx context.Context) map[int6
 }
 
 func (r *CheckRepositoryFileResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckRepositoryFileResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	fileContentsPredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, fileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}

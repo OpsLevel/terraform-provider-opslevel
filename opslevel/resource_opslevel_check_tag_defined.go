@@ -150,6 +150,8 @@ func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]re
 					tagPredicate := tagPredicateList.Elements()[0]
 					upgradedStateModel.TagPredicate, diags = types.ObjectValueFrom(ctx, predicateType, tagPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.TagPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
@@ -159,16 +161,13 @@ func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]re
 }
 
 func (r *CheckTagDefinedResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckTagDefinedResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	tagPredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("tag_predicate"), &tagPredicate)...)
+	if resp.Diagnostics.HasError() || tagPredicate.IsNull() || tagPredicate.IsUnknown() {
 		return
 	}
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.TagPredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, tagPredicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}

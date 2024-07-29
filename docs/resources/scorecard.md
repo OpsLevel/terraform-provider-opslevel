@@ -65,6 +65,7 @@ resource "opslevel_check_manual" "my_check" {
 ### Read-Only
 
 - `aliases` (List of String) The scorecard's aliases.
+- `categories` (List of String) The ids of the categories on this scorecard.
 - `id` (String) The ID of the scorecard.
 - `passing_checks` (Number) The scorecard's number of checks that are passing.
 - `service_count` (Number) The scorecard's number of services matched.

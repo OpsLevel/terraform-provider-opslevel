@@ -22,11 +22,9 @@ resource "opslevel_filter" "big" {
     value = "1"
   }
   predicate {
-    case_sensitive = true
-    key            = "lifecycle_index"
-    key_data       = "big_predicate"
-    type           = "ends_with"
-    value          = "1"
+    key   = "lifecycle_index"
+    type  = "greater_than_or_equal_to"
+    value = "1"
   }
 }
 

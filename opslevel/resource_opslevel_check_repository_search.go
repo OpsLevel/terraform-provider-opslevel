@@ -144,7 +144,7 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 				var diags diag.Diagnostics
-				upgradedStateModel := CheckRepositoryFileResourceModel{}
+				upgradedStateModel := CheckRepositorySearchResourceModel{}
 				fileContentsPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
@@ -159,12 +159,14 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &upgradedStateModel.Owner)...)
 
 				// repository file specific attributes
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_extensions"), &upgradedStateModel.Filepaths)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_extensions"), &upgradedStateModel.FileExtensions)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicateList)...)
 				if len(fileContentsPredicateList.Elements()) == 1 {
 					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
 					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.FileContentsPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
@@ -174,13 +176,13 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 }
 
 func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckRepositorySearchResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	fileContentsPredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicate)...)
+	if resp.Diagnostics.HasError() || fileContentsPredicate.IsNull() || fileContentsPredicate.IsUnknown() {
 		return
 	}
 
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.FileContentsPredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, fileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
 	if predicateModel.Type.ValueString() == "exists" || predicateModel.Type.ValueString() == "does_not_exist" {
 		resp.Diagnostics.AddError("Config Error", "file_contents_predicate type must not be 'exists' or 'does_not_exist'")

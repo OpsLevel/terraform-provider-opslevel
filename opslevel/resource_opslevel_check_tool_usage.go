@@ -190,18 +190,24 @@ func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]res
 					environmentPredicate := environmentPredicateList.Elements()[0]
 					upgradedStateModel.EnvironmentPredicate, diags = types.ObjectValueFrom(ctx, predicateType, environmentPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.EnvironmentPredicate = types.ObjectNull(predicateType)
 				}
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_name_predicate"), &toolNamePredicateList)...)
 				if len(toolNamePredicateList.Elements()) == 1 {
 					toolNamePredicate := toolNamePredicateList.Elements()[0]
 					upgradedStateModel.ToolNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolNamePredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.ToolNamePredicate = types.ObjectNull(predicateType)
 				}
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_url_predicate"), &toolUrlPredicateList)...)
 				if len(toolUrlPredicateList.Elements()) == 1 {
 					toolUrlPredicate := toolUrlPredicateList.Elements()[0]
 					upgradedStateModel.ToolUrlPredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolUrlPredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.ToolUrlPredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
@@ -223,11 +229,11 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 		"tool_url_predicate":    configModel.ToolUrlPredicate,
 	}
 	for predicateSchemaName, predicate := range checkToolUsagePredicates {
-		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
-		resp.Diagnostics.Append(diags...)
-		if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		if predicate.IsNull() || predicate.IsUnknown() {
 			continue
 		}
+		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
+		resp.Diagnostics.Append(diags...)
 		if err := predicateModel.Validate(); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root(predicateSchemaName), "Invalid Attribute Configuration", err.Error())
 		}

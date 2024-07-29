@@ -1,4 +1,0 @@
-kind: Bugfix
-body: fix Terraform state upgrades for previous provider versions on infrastructure
-  and manual check resources
-time: 2024-07-15T14:32:37.017279-05:00

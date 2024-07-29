@@ -156,6 +156,8 @@ func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[in
 					alertNamePredicate := alertNamePredicateList.Elements()[0]
 					upgradedStateModel.AlertNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, alertNamePredicate)
 					resp.Diagnostics.Append(diags...)
+				} else {
+					upgradedStateModel.AlertNamePredicate = types.ObjectNull(predicateType)
 				}
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
@@ -165,16 +167,13 @@ func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[in
 }
 
 func (r *CheckAlertSourceUsageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckAlertSourceUsageResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	alertNamePredicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("alert_name_predicate"), &alertNamePredicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.AlertNamePredicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, alertNamePredicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
