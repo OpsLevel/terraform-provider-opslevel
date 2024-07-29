@@ -44,6 +44,7 @@ type ServiceResourceModel struct {
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
 	Owner                      types.String `tfsdk:"owner"`
+	Parent                     types.String `tfsdk:"parent"`
 	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
 	Product                    types.String `tfsdk:"product"`
 	Tags                       types.Set    `tfsdk:"tags"`
@@ -61,6 +62,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
 		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
+		Parent:          OptionalStringValue(givenModel.Parent.ValueString()),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
 	}
@@ -160,6 +162,16 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"owner": schema.StringAttribute{
 				Description: "The team that owns the service. ID or Alias may be used.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
+			},
+			"parent": schema.StringAttribute{
+				Description: "The id or alias of the parent system of this service",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
 			},
 			"preferred_api_document_source": schema.StringAttribute{
 				Description: fmt.Sprintf(
@@ -203,12 +215,17 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
 		Name:           planModel.Name.ValueString(),
 		OwnerInput:     opslevel.NewIdentifier(),
+		Parent:         opslevel.NewIdentifier(),
 		Product:        planModel.Product.ValueStringPointer(),
 		TierAlias:      planModel.TierAlias.ValueStringPointer(),
 	}
 
 	if planModel.Owner.ValueString() != "" {
 		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	}
+
+	if planModel.Parent.ValueString() != "" {
+		serviceCreateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 
 	service, err := r.client.CreateService(serviceCreateInput)
@@ -312,7 +329,10 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel ServiceResourceModel
+	var ownerFromState, parentFromState types.String
 
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &ownerFromState)...)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("parent"), &parentFromState)...)
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
@@ -326,12 +346,21 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Language:       NullableStringConfigValue(planModel.Language),
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
 		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
-		OwnerInput:     opslevel.NewIdentifier(),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	} else if !ownerFromState.IsNull() && planModel.Owner.ValueString() == "" {
+		// unset owner field only if it's set in state and owner field in plan is not set
+		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier()
+	}
+
+	if planModel.Parent.ValueString() != "" {
+		serviceUpdateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
+	} else if !parentFromState.IsNull() && planModel.Parent.ValueString() == "" {
+		// unset parent field only if it's set in state and parent field in plan is not set
+		serviceUpdateInput.Parent = opslevel.NewIdentifier()
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
