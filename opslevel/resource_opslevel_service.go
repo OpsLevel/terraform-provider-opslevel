@@ -329,7 +329,10 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel ServiceResourceModel
+	var ownerFromState, parentFromState types.String
 
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &ownerFromState)...)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("parent"), &parentFromState)...)
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
@@ -343,16 +346,21 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		Language:       NullableStringConfigValue(planModel.Language),
 		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
 		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
-		OwnerInput:     opslevel.NewIdentifier(),
-		Parent:         opslevel.NewIdentifier(),
 		Product:        NullableStringConfigValue(planModel.Product),
 		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+	} else if !ownerFromState.IsNull() && planModel.Owner.ValueString() == "" {
+		// unset owner field only if it's set in state and owner field in plan is not set
+		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier()
 	}
+
 	if planModel.Parent.ValueString() != "" {
 		serviceUpdateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
+	} else if !parentFromState.IsNull() && planModel.Parent.ValueString() == "" {
+		// unset parent field only if it's set in state and parent field in plan is not set
+		serviceUpdateInput.Parent = opslevel.NewIdentifier()
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
