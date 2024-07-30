@@ -41,7 +41,6 @@ type CheckPackageVersionResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	// TODO: Unique Fields Here
 	MissingPackageResult       types.String `tfsdk:"missing_package_result"`
 	PackageConstraint          types.String `tfsdk:"package_constraint"`
 	PackageManager             types.String `tfsdk:"package_manager"`
