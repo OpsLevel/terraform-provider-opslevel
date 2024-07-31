@@ -89,7 +89,9 @@ func NewCheckPackageVersionResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.PackageConstraint = RequiredStringValue(string(check.PackageConstraint))
 	stateModel.PackageManager = RequiredStringValue(string(check.PackageManager))
 	stateModel.PackageName = RequiredStringValue(check.PackageName)
-	stateModel.PackageNameIsRegex = OptionalBoolValue(&check.PackageNameIsRegex)
+	if !planModel.PackageNameIsRegex.IsNull() {
+		stateModel.PackageNameIsRegex = OptionalBoolValue(&check.PackageNameIsRegex)
+	}
 	stateModel.VersionConstraintPredicate = ParsePredicate(check.VersionConstraintPredicate)
 
 	return stateModel
@@ -298,8 +300,7 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 	if !planModel.PackageNameIsRegex.IsNull() {
 		input.PackageNameIsRegex = planModel.PackageNameIsRegex.ValueBoolPointer()
 	} else if !stateModel.PackageNameIsRegex.IsNull() { // Then Unset
-		var v *bool
-		input.PackageNameIsRegex = v
+		input.PackageNameIsRegex = opslevel.RefOf(false)
 	}
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
