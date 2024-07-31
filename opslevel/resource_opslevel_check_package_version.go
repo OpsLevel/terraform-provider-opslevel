@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 	"github.com/relvacode/iso8601"
+	"slices"
 )
 
 var (
@@ -135,6 +136,43 @@ func (r *CheckPackageVersionResource) Schema(ctx context.Context, req resource.S
 			},
 			"version_constraint_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var configModel CheckPackageVersionResourceModel
+	var packageVersionPossiblePredicateTypes = []opslevel.PredicateTypeEnum{opslevel.PredicateTypeEnumSatisfiesVersionConstraint, opslevel.PredicateTypeEnumMatchesRegex, opslevel.PredicateTypeEnumDoesNotMatchRegex}
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if configModel.PackageConstraint.ValueString() == string(opslevel.PackageConstraintEnumMatchesVersion) {
+		if configModel.MissingPackageResult.IsNull() {
+			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is required when package_constraint is 'matches_version'")
+		}
+		if configModel.VersionConstraintPredicate.IsNull() {
+			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is required when package_constraint is 'matches_version'")
+		}
+		if !configModel.VersionConstraintPredicate.IsNull() {
+			predicateModel, diags := PredicateObjectToModel(ctx, configModel.VersionConstraintPredicate)
+			resp.Diagnostics.Append(diags...)
+			if !slices.Contains(packageVersionPossiblePredicateTypes, opslevel.PredicateTypeEnum(predicateModel.Type.ValueString())) {
+				resp.Diagnostics.AddError("version_constraint_predicate", fmt.Sprintf("version_constraint_predicate must be one of %v", packageVersionPossiblePredicateTypes))
+			} else {
+				if err := predicateModel.Validate(); err != nil {
+					resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Configuration", err.Error())
+				}
+			}
+		}
+	} else {
+		if !configModel.MissingPackageResult.IsNull() {
+			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is only valid when package_constraint is 'matches_version'")
+		}
+		if !configModel.VersionConstraintPredicate.IsNull() {
+			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is only valid when package_constraint is 'matches_version'")
+		}
 	}
 }
 
