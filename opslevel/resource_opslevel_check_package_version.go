@@ -85,7 +85,7 @@ func NewCheckPackageVersionResourceModel(ctx context.Context, check opslevel.Che
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	if check.MissingPackageResult != nil {
-		stateModel.MissingPackageResult = RequiredStringValue(string(*check.MissingPackageResult))
+		stateModel.MissingPackageResult = OptionalStringValue(string(*check.MissingPackageResult))
 	}
 	stateModel.PackageConstraint = RequiredStringValue(string(check.PackageConstraint))
 	stateModel.PackageManager = RequiredStringValue(string(check.PackageManager))
