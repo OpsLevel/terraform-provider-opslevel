@@ -49,7 +49,8 @@ tasks:
       - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
       - golangci-lint run
       # - nilaway -test=false -include-pkgs='github.com/opslevel/terraform-provider-opslevel' ./...
-      - task: terraform-validate
+      - task: terraform-command
+        vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
       - task: terraform-format-check
 
   setup:
@@ -161,6 +162,14 @@ tasks:
       - task: setup-terraform
       - task: terraform-command
         vars: { TF_COMMAND: 'plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+
+  terraform-validate:
+    desc: Rebuild and run "terraform validate" in "{{.WORKSPACE_DIR}}"
+    aliases: ["validate"]
+    cmds:
+      - task: setup-terraform
+      - task: terraform-command
+        vars: { TF_COMMAND: 'validate', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-rm-local-provider-no-prompt:
     internal: true
@@ -328,13 +337,6 @@ tasks:
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-
-  terraform-validate:
-    internal: true
-    desc: Run "terraform validate" in current directory
-    cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
 
   update-opslevel-go:
     internal: true
