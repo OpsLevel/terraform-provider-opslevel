@@ -22,9 +22,11 @@ resource "opslevel_filter" "big" {
     value = "1"
   }
   predicate {
-    key   = "lifecycle_index"
-    type  = "greater_than_or_equal_to"
-    value = "1"
+    case_sensitive = true
+    key            = "lifecycle_index"
+    key_data       = "big_predicate"
+    type           = "ends_with"
+    value          = "1"
   }
 }
 
@@ -69,6 +71,16 @@ resource "opslevel_integration_aws" "example" {
   name                    = "dev"
   ownership_tag_overrides = true
   ownership_tag_keys      = ["owner", "team", "group"]
+}
+
+# Integration Azure Resources resources
+
+resource "opslevel_integration_azure_resources" "example" {
+  client_id       = "XXX_CLIENT_ID_XXX"
+  client_secret   = "XXX_CLIENT_SECRET_XXX"
+  name            = "dev"
+  subscription_id = "XXX_SUBSCRIPTION_ID_XXX"
+  tenant_id       = "XXX_TENANT_ID_XXX"
 }
 
 # Property Assignment
