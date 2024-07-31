@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -13,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 	"github.com/relvacode/iso8601"
-	"slices"
 )
 
 var (
@@ -143,7 +144,7 @@ func (r *CheckPackageVersionResource) Schema(ctx context.Context, req resource.S
 
 func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckPackageVersionResourceModel
-	var packageVersionPossiblePredicateTypes = []opslevel.PredicateTypeEnum{opslevel.PredicateTypeEnumSatisfiesVersionConstraint, opslevel.PredicateTypeEnumMatchesRegex, opslevel.PredicateTypeEnumDoesNotMatchRegex}
+	packageVersionPossiblePredicateTypes := []opslevel.PredicateTypeEnum{opslevel.PredicateTypeEnumSatisfiesVersionConstraint, opslevel.PredicateTypeEnumMatchesRegex, opslevel.PredicateTypeEnumDoesNotMatchRegex}
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
 	if resp.Diagnostics.HasError() {
