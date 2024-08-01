@@ -3,21 +3,28 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &IntegrationAzureResourcesResource{}
+const AzureIdRegexPattern = `^[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}$`
 
-var _ resource.ResourceWithImportState = &IntegrationAzureResourcesResource{}
+var (
+	_ resource.ResourceWithConfigure   = &IntegrationAzureResourcesResource{}
+	_ resource.ResourceWithImportState = &IntegrationAzureResourcesResource{}
+)
 
 func NewIntegrationAzureResourcesResource() resource.Resource {
 	return &IntegrationAzureResourcesResource{}
@@ -28,35 +35,43 @@ type IntegrationAzureResourcesResource struct {
 }
 
 type IntegrationAzureResourcesResourceModel struct {
-	Aliases        types.List   `tfsdk:"aliases"`
-	ClientId       types.String `tfsdk:"client_id"`
-	ClientSecret   types.String `tfsdk:"client_secret"`
-	Id             types.String `tfsdk:"id"`
-	LastSyncedAt   types.String `tfsdk:"last_synced_at"`
-	Name           types.String `tfsdk:"name"`
-	SubscriptionId types.String `tfsdk:"subscription_id"`
-	TenantId       types.String `tfsdk:"tenant_id"`
+	Aliases               types.List   `tfsdk:"aliases"`
+	ClientId              types.String `tfsdk:"client_id"`
+	ClientSecret          types.String `tfsdk:"client_secret"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	Id                    types.String `tfsdk:"id"`
+	InstalledAt           types.String `tfsdk:"installed_at"`
+	Name                  types.String `tfsdk:"name"`
+	OwnershipTagKeys      types.Set    `tfsdk:"ownership_tag_keys"`
+	SubscriptionId        types.String `tfsdk:"subscription_id"`
+	TagsOverrideOwnership types.Bool   `tfsdk:"ownership_tag_overrides"`
+	TenantId              types.String `tfsdk:"tenant_id"`
 }
 
-func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourcesIntegration opslevel.Integration, givenModel IntegrationAzureResourcesResourceModel) (IntegrationAzureResourcesResourceModel, diag.Diagnostics) {
+func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourcesIntegration opslevel.Integration, givenModel IntegrationAzureResourcesResourceModel) IntegrationAzureResourcesResourceModel {
 	resourceModel := IntegrationAzureResourcesResourceModel{
+		Aliases:        OptionalStringListValue(azureResourcesIntegration.Aliases),
 		ClientId:       givenModel.ClientId,
 		ClientSecret:   givenModel.ClientSecret,
+		CreatedAt:      ComputedStringValue(azureResourcesIntegration.CreatedAt.Local().Format(time.RFC850)),
 		Id:             ComputedStringValue(string(azureResourcesIntegration.Id)),
+		InstalledAt:    ComputedStringValue(azureResourcesIntegration.InstalledAt.Local().Format(time.RFC850)),
 		Name:           RequiredStringValue(azureResourcesIntegration.Name),
 		SubscriptionId: RequiredStringValue(azureResourcesIntegration.SubscriptionId),
 		TenantId:       RequiredStringValue(azureResourcesIntegration.TenantId),
 	}
-
-	if azureResourcesIntegration.LastSyncedAt == nil {
-		resourceModel.LastSyncedAt = types.StringNull()
+	if givenModel.OwnershipTagKeys.IsNull() {
+		resourceModel.OwnershipTagKeys = types.SetNull(types.StringType)
 	} else {
-		resourceModel.LastSyncedAt = types.StringValue(azureResourcesIntegration.LastSyncedAt.String())
+		resourceModel.OwnershipTagKeys = StringSliceToSetValue(azureResourcesIntegration.AzureResourcesIntegrationFragment.OwnershipTagKeys)
 	}
-	var diags diag.Diagnostics
-	resourceModel.Aliases, diags = types.ListValueFrom(ctx, types.StringType, azureResourcesIntegration.Aliases)
+	if givenModel.TagsOverrideOwnership.IsNull() {
+		resourceModel.TagsOverrideOwnership = types.BoolNull()
+	} else {
+		resourceModel.TagsOverrideOwnership = types.BoolValue(azureResourcesIntegration.TagsOverrideOwnership)
+	}
 
-	return resourceModel, diags
+	return resourceModel
 }
 
 func (r *IntegrationAzureResourcesResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -68,6 +83,11 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 		MarkdownDescription: "Azure Resources Integration resource",
 
 		Attributes: map[string]schema.Attribute{
+			"aliases": schema.ListAttribute{
+				Description: "All of the aliases attached to the integration.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
 			"client_id": schema.StringAttribute{
 				Description: "The client id OpsLevel uses to access the Azure account.",
 				Required:    true,
@@ -77,27 +97,8 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 				Required:    true,
 				Sensitive:   true,
 			},
-			"tenant_id": schema.StringAttribute{
-				Description: "The tenant OpsLevel uses to access the Azure account.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"subscription_id": schema.StringAttribute{
-				Description: "The subscription OpsLevel uses to access the Azure account.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"last_synced_at": schema.StringAttribute{
-				Description: "The time the Integration last imported data from Azure.",
-				Computed:    true,
-			},
-			"aliases": schema.ListAttribute{
-				ElementType: types.StringType,
-				Description: "All of the aliases attached to the resource.",
+			"created_at": schema.StringAttribute{
+				Description: "The time this integration was created.",
 				Computed:    true,
 			},
 			"id": schema.StringAttribute{
@@ -107,9 +108,51 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"installed_at": schema.StringAttribute{
+				Description: "The time that this integration was successfully installed, if null, this indicates the integration was not completely installed.",
+				Computed:    true,
+			},
 			"name": schema.StringAttribute{
 				Description: "The name of the integration.",
 				Required:    true,
+			},
+			"ownership_tag_keys": schema.SetAttribute{
+				ElementType: types.StringType,
+				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
+				Optional:    true,
+				Validators: []validator.Set{
+					setvalidator.SizeBetween(1, 5),
+				},
+			},
+			"subscription_id": schema.StringAttribute{
+				MarkdownDescription: "The subscription OpsLevel uses to access the Azure account. [Microsoft's docs on regex pattern for ID](https://learn.microsoft.com/en-us/rest/api/defenderforcloud/tasks/get-subscription-level-task?view=rest-defenderforcloud-2015-06-01-preview&tabs=HTTP#uri-parameters)",
+				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(AzureIdRegexPattern),
+						fmt.Sprintf("expected ID matching regex pattern: ' %s '", AzureIdRegexPattern),
+					),
+				},
+			},
+			"ownership_tag_overrides": schema.BoolAttribute{
+				Description: "Allow tags imported from Azure to override ownership set in OpsLevel directly.",
+				Optional:    true,
+			},
+			"tenant_id": schema.StringAttribute{
+				MarkdownDescription: "The tenant OpsLevel uses to access the Azure account. [Microsoft's docs on regex pattern for ID](https://learn.microsoft.com/en-us/rest/api/defenderforcloud/tasks/get-subscription-level-task?view=rest-defenderforcloud-2015-06-01-preview&tabs=HTTP#uri-parameters)",
+				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(AzureIdRegexPattern),
+						fmt.Sprintf("expected ID matching regex pattern: ' %s '", AzureIdRegexPattern),
+					),
+				},
 			},
 		},
 	}
@@ -123,12 +166,22 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 		return
 	}
 
+	ownershipTagKeys, diags := SetValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	input := opslevel.AzureResourcesIntegrationInput{
-		Name:           planModel.Name.ValueStringPointer(),
-		TenantId:       planModel.TenantId.ValueStringPointer(),
-		SubscriptionId: planModel.SubscriptionId.ValueStringPointer(),
-		ClientId:       planModel.ClientId.ValueStringPointer(),
-		ClientSecret:   planModel.ClientSecret.ValueStringPointer(),
+		ClientId:              planModel.ClientId.ValueStringPointer(),
+		ClientSecret:          planModel.ClientSecret.ValueStringPointer(),
+		Name:                  planModel.Name.ValueStringPointer(),
+		SubscriptionId:        planModel.SubscriptionId.ValueStringPointer(),
+		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
+		TenantId:              planModel.TenantId.ValueStringPointer(),
+	}
+	if len(ownershipTagKeys) > 0 {
+		input.OwnershipTagKeys = &ownershipTagKeys
 	}
 
 	azureResourcesIntegration, err := r.client.CreateIntegrationAzureResources(input)
@@ -137,11 +190,7 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	stateModel := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
 
 	tflog.Trace(ctx, "created an Azure Resources integration")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -161,11 +210,7 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 		return
 	}
 
-	verifiedStateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, stateModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	verifiedStateModel := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, stateModel)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read an Azure Resources integration")
@@ -181,11 +226,23 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 	}
 
 	input := opslevel.AzureResourcesIntegrationInput{
-		Name:           planModel.Name.ValueStringPointer(),
-		TenantId:       planModel.TenantId.ValueStringPointer(),
-		SubscriptionId: planModel.SubscriptionId.ValueStringPointer(),
-		ClientId:       planModel.ClientId.ValueStringPointer(),
-		ClientSecret:   planModel.ClientSecret.ValueStringPointer(),
+		ClientId:              planModel.ClientId.ValueStringPointer(),
+		ClientSecret:          planModel.ClientSecret.ValueStringPointer(),
+		Name:                  planModel.Name.ValueStringPointer(),
+		SubscriptionId:        planModel.SubscriptionId.ValueStringPointer(),
+		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
+		TenantId:              planModel.TenantId.ValueStringPointer(),
+	}
+	ownershipTagKeys, diags := SetValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	// schema requires at least one ownership tag,
+	if planModel.OwnershipTagKeys.IsNull() {
+		input.OwnershipTagKeys = new([]string)
+	} else if len(ownershipTagKeys) > 0 {
+		input.OwnershipTagKeys = &ownershipTagKeys
 	}
 
 	azureResourcesIntegration, err := r.client.UpdateIntegrationAzureResources(planModel.Id.ValueString(), input)
@@ -194,11 +251,7 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	stateModel, diags := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	stateModel := NewIntegrationAzureResourcesResourceModel(ctx, *azureResourcesIntegration, planModel)
 
 	tflog.Trace(ctx, "updated an Azure Resources integration")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

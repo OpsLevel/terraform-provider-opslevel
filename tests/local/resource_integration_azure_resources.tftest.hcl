@@ -24,12 +24,12 @@ run "resource_infra_azure_resources_small" {
   }
 
   assert {
-    condition     = opslevel_integration_azure_resources.example.tenant_id == "XXX_TENANT_ID_XXX"
+    condition     = opslevel_integration_azure_resources.example.tenant_id == "98765432-9876-9876-9876-987654321098"
     error_message = "wrong tenant_id for opslevel_integration_azure_resources.example"
   }
 
   assert {
-    condition     = opslevel_integration_azure_resources.example.subscription_id == "XXX_SUBSCRIPTION_ID_XXX"
+    condition     = opslevel_integration_azure_resources.example.subscription_id == "01234567-0123-0123-0123-012345678901"
     error_message = "wrong subscription_id for opslevel_integration_azure_resources.example"
   }
 
