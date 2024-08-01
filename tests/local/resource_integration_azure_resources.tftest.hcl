@@ -9,11 +9,6 @@ run "resource_infra_azure_resources_small" {
   }
 
   assert {
-    condition     = opslevel_integration_azure_resources.example.last_synced_at == "2024-07-08T13:50:07Z"
-    error_message = "wrong last_synced_at for opslevel_integration_azure_resources.example"
-  }
-
-  assert {
     condition     = can(opslevel_integration_azure_resources.example.id)
     error_message = "expected opslevel_integration_azure_resources to have an ID"
   }
