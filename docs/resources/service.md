@@ -20,6 +20,10 @@ data "opslevel_lifecycle" "beta" {
   }
 }
 
+data "opslevel_system" "parent" {
+  identifier = "example"
+}
+
 data "opslevel_tier" "tier3" {
   filter {
     field = "index"
@@ -48,6 +52,7 @@ resource "opslevel_service" "foo" {
   lifecycle_alias = data.opslevel_lifecycle.beta.alias
   tier_alias      = data.opslevel_tier.tier3.alias
   owner           = opslevel_team.foo.id
+  parent          = data.opslevel_system.parent.id
 
   api_document_path             = "/swagger.json"
   preferred_api_document_source = "PULL" //or "PUSH"
@@ -77,6 +82,7 @@ output "foo_aliases" {
 - `language` (String) The primary programming language that the service is written in.
 - `lifecycle_alias` (String) The lifecycle stage of the service.
 - `owner` (String) The team that owns the service. ID or Alias may be used.
+- `parent` (String) The id or alias of the parent system of this service
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, defaults to PUSH.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (Set of String) A list of tags applied to the service.

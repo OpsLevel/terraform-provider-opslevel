@@ -1,3 +1,0 @@
-kind: Bugfix
-body: tags validation no longer fails when given input variables
-time: 2024-07-31T08:40:25.885967-05:00
