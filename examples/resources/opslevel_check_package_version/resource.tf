@@ -62,7 +62,7 @@ resource "opslevel_check_package_version" "example3" {
   package_constraint     = "matches-version"
   package_manager        = "go"
   package_name           = "client-go/.*"
-  pakcage_name_is_regex  = true
+  package_name_is_regex  = true
   missing_package_result = "passed"
   version_constraint_predicate = {
     type  = "matches_regex"
