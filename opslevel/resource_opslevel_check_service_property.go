@@ -304,7 +304,7 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	if !planModel.PropertyDefinition.IsNull() {
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	} else if !stateModel.PropertyDefinition.IsNull() {
-		input.PropertyDefinition = opslevel.NewIdentifier("")
+		input.PropertyDefinition = &opslevel.IdentifierInput{}
 	}
 
 	// convert environment_predicate object to model from plan
