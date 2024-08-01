@@ -1,0 +1,4 @@
+kind: Feature
+body: Add ability for 'opslevel_check_service_property' to target custom properties
+  of a service
+time: 2024-08-01T12:43:10.20199-05:00
