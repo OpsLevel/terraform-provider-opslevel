@@ -50,7 +50,7 @@ resource "opslevel_check_service_property" "example2" {
   property            = "custom_property"
   property_definition = "my_custom_property"
   predicate = {
-    type  = "exists"
+    type = "exists"
   }
   notes = "Optional additional info on why this check is run or how to fix it"
 }
