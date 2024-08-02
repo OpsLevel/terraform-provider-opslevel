@@ -180,6 +180,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewCheckHasDocumentationResource,
 		NewCheckAlertSourceUsageResource,
 		NewCheckHasRecentDeployResource,
+		NewCheckPackageVersionResource,
 		NewCheckRepositoryFileResource,
 		NewCheckRepositorySearchResource,
 		NewCheckServiceConfigurationResource,

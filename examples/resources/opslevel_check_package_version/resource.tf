@@ -25,7 +25,7 @@ data "opslevel_filter" "tier1" {
 
 resource "opslevel_check_package_version" "example" {
   name     = "foo"
-  enable   = true
+  enabled  = true
   category = data.opslevel_rubric_category.security.id
   level    = data.opslevel_rubric_level.bronze.id
   notes    = "Optional additional info on why this check is run or how to fix it"
@@ -37,12 +37,12 @@ resource "opslevel_check_package_version" "example" {
 
 resource "opslevel_check_package_version" "example2" {
   name     = "foo"
-  enable   = true
+  enabled  = true
   category = data.opslevel_rubric_category.security.id
   level    = data.opslevel_rubric_level.bronze.id
   notes    = "Optional additional info on why this check is run or how to fix it"
 
-  package_constraint     = "matches-version"
+  package_constraint     = "matches_version"
   package_manager        = "npm"
   package_name           = "leftpad"
   missing_package_result = "passed"
@@ -54,13 +54,13 @@ resource "opslevel_check_package_version" "example2" {
 
 resource "opslevel_check_package_version" "example3" {
   name     = "foo"
-  enable   = true
+  enabled  = true
   category = data.opslevel_rubric_category.security.id
   level    = data.opslevel_rubric_level.bronze.id
   notes    = "Optional additional info on why this check is run or how to fix it"
 
-  package_constraint     = "matches-version"
-  package_manager        = "go"
+  package_constraint     = "matches_version"
+  package_manager        = "golang"
   package_name           = "client-go/.*"
   package_name_is_regex  = true
   missing_package_result = "passed"
