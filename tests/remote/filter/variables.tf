@@ -9,6 +9,7 @@ variable "connective" {
     ], var.connective)
     error_message = "expected connective_enum to be 'and' or 'or'"
   }
+  default = null
 }
 
 variable "predicates" {
