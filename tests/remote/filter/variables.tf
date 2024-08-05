@@ -11,18 +11,33 @@ variable "connective" {
   }
 }
 
-variable "predicate_list" {
-  type = list(object({
-    case_insensitive = optional(bool)
-    case_sensitive   = optional(bool)
-    key              = string
-    key_data         = optional(string)
-    type             = string
-    value            = optional(string)
+variable "predicates" {
+  type = map(object({
+    case_sensitive = optional(bool)
+    key            = string
+    key_data       = optional(string)
+    type           = string
+    value          = optional(string)
   }))
+  default = {}
 }
 
 variable "name" {
   type        = string
   description = "The filter's display name."
 }
+
+# variable "domain_id" {
+#   type        = string
+#   description = "tbd"
+# }
+
+# variable "system_id" {
+#   type        = string
+#   description = "tbd"
+# }
+
+# variable "team_id" {
+#   type        = string
+#   description = "tbd"
+# }

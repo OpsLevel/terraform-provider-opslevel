@@ -30,8 +30,7 @@ run "from_filter_get_filter_id" {
   command = plan
 
   variables {
-    connective     = null
-    predicate_list = null
+    connective = null
   }
 
   module {
