@@ -1,9 +1,12 @@
 variables {
-  name                 = "TF Test Filter with system_id predicate"
-  system_id_predicates = setproduct(["system_id"], var.predicate_types_equals_and_exists)
+  name = "TF Test Filter with system_id predicate"
+  system_id_predicates = setproduct(
+    ["system_id"],
+    concat(var.predicate_types_equals, var.predicate_types_exists)
+  )
 }
 
-run "system_module" {
+run "get_system" {
   command = plan
 
   variables {
@@ -15,14 +18,18 @@ run "system_module" {
   }
 }
 
-run "resource_filter_with_system_id_predicate_create" {
+run "resource_filter_with_system_id_predicate_equals" {
 
   variables {
     connective = "and"
     predicates = tomap({
       for pair in var.system_id_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0], type = pair[1], key_data = null, value = contains(var.predicate_types_exists, pair[1]) ? null : run.system_module.first_system.id
+        key = pair[0],
+        type = pair[1],
+        key_data = null,
+        value = run.get_system.first_system.id
       }
+      if contains(var.predicate_types_equals, pair[1])
     })
   }
 
@@ -52,10 +59,10 @@ run "resource_filter_with_system_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["system_id_does_not_equal"].predicate[0].value == run.system_module.first_system.id
+    condition = opslevel_filter.all_predicates["system_id_does_not_equal"].predicate[0].value == run.get_system.first_system.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.system_module.first_system.id,
+      run.get_system.first_system.id,
       opslevel_filter.all_predicates["system_id_does_not_equal"].predicate[0].value
     )
   }
@@ -82,12 +89,33 @@ run "resource_filter_with_system_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["system_id_equals"].predicate[0].value == run.system_module.first_system.id
+    condition = opslevel_filter.all_predicates["system_id_equals"].predicate[0].value == run.get_system.first_system.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.system_module.first_system.id,
+      run.get_system.first_system.id,
       opslevel_filter.all_predicates["system_id_equals"].predicate[0].type
     )
+  }
+
+}
+
+run "resource_filter_with_system_id_predicate_exists" {
+
+  variables {
+    connective = "and"
+    predicates = tomap({
+      for pair in var.system_id_predicates : "${pair[0]}_${pair[1]}" => {
+        key = pair[0],
+        type = pair[1],
+        key_data = null,
+        value = null
+      }
+      if contains(var.predicate_types_exists, pair[1])
+    })
+  }
+
+  module {
+    source = "./filter"
   }
 
   assert {

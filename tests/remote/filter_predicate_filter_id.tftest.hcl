@@ -3,7 +3,7 @@ variables {
   filter_id_predicates = setproduct(["filter_id"], ["does_not_match", "matches"])
 }
 
-run "filter_module" {
+run "get_filter" {
   command = plan
 
   variables {
@@ -15,13 +15,16 @@ run "filter_module" {
   }
 }
 
-run "resource_filter_with_filter_id_predicate_create" {
+run "resource_filter_with_filter_id_predicate_matches" {
 
   variables {
     connective = "and"
     predicates = tomap({
       for pair in var.filter_id_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0], type = pair[1], key_data = null, value = run.filter_module.first_filter.id
+        key = pair[0],
+        type = pair[1],
+        key_data = null,
+        value = run.get_filter.first_filter.id
       }
     })
   }
@@ -52,10 +55,10 @@ run "resource_filter_with_filter_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["filter_id_does_not_match"].predicate[0].value == run.filter_module.first_filter.id
+    condition = opslevel_filter.all_predicates["filter_id_does_not_match"].predicate[0].value == run.get_filter.first_filter.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.filter_module.first_filter.id,
+      run.get_filter.first_filter.id,
       opslevel_filter.all_predicates["filter_id_does_not_match"].predicate[0].value
     )
   }
@@ -82,10 +85,10 @@ run "resource_filter_with_filter_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["filter_id_matches"].predicate[0].value == run.filter_module.first_filter.id
+    condition = opslevel_filter.all_predicates["filter_id_matches"].predicate[0].value == run.get_filter.first_filter.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.filter_module.first_filter.id,
+      run.get_filter.first_filter.id,
       opslevel_filter.all_predicates["filter_id_matches"].predicate[0].type
     )
   }

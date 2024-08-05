@@ -1,9 +1,12 @@
 variables {
-  name                = "TF Test Filter with owner_id predicate"
-  owner_id_predicates = setproduct(["owner_id"], var.predicate_types_equals_and_exists)
+  name = "TF Test Filter with owner_id predicate"
+  owner_id_predicates = setproduct(
+    ["owner_id"],
+    concat(var.predicate_types_equals, var.predicate_types_exists)
+  )
 }
 
-run "team_module" {
+run "get_team" {
   command = plan
 
   variables {
@@ -21,8 +24,12 @@ run "resource_filter_with_owner_id_predicate_create" {
     connective = "and"
     predicates = tomap({
       for pair in var.owner_id_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0], type = pair[1], key_data = null, value = contains(var.predicate_types_exists, pair[1]) ? null : run.team_module.first_team.id
+        key = pair[0],
+        type = pair[1],
+        key_data = null,
+        value = run.get_team.first_team.id
       }
+      if contains(var.predicate_types_equals, pair[1])
     })
   }
 
@@ -52,10 +59,10 @@ run "resource_filter_with_owner_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["owner_id_does_not_equal"].predicate[0].value == run.team_module.first_team.id
+    condition = opslevel_filter.all_predicates["owner_id_does_not_equal"].predicate[0].value == run.get_team.first_team.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.team_module.first_team.id,
+      run.get_team.first_team.id,
       opslevel_filter.all_predicates["owner_id_does_not_equal"].predicate[0].value
     )
   }
@@ -82,12 +89,33 @@ run "resource_filter_with_owner_id_predicate_create" {
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["owner_id_equals"].predicate[0].value == run.team_module.first_team.id
+    condition = opslevel_filter.all_predicates["owner_id_equals"].predicate[0].value == run.get_team.first_team.id
     error_message = format(
       "expected predicate value '%s' got '%s'",
-      run.team_module.first_team.id,
+      run.get_team.first_team.id,
       opslevel_filter.all_predicates["owner_id_equals"].predicate[0].type
     )
+  }
+
+}
+
+run "resource_filter_with_owner_id_predicate_exists" {
+
+  variables {
+    connective = "and"
+    predicates = tomap({
+      for pair in var.owner_id_predicates : "${pair[0]}_${pair[1]}" => {
+        key = pair[0],
+        type = pair[1],
+        key_data = null,
+        value = null
+      }
+      if contains(var.predicate_types_exists, pair[1])
+    })
+  }
+
+  module {
+    source = "./filter"
   }
 
   assert {
