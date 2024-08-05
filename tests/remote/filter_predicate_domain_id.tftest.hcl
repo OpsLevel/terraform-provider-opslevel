@@ -23,10 +23,10 @@ run "resource_filter_with_domain_id_predicate_exists" {
   variables {
     predicates = tomap({
       for pair in var.domain_id_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0],
-        type = pair[1],
+        key      = pair[0],
+        type     = pair[1],
         key_data = null,
-        value = null
+        value    = null
       }
       if contains(var.predicate_types_exists, pair[1])
     })
@@ -95,10 +95,10 @@ run "resource_filter_with_domain_id_predicate_equals" {
   variables {
     predicates = tomap({
       for pair in var.domain_id_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0],
-        type = pair[1],
+        key      = pair[0],
+        type     = pair[1],
         key_data = null,
-        value = run.get_domain.first_domain.id
+        value    = run.get_domain.first_domain.id
       }
       if contains(var.predicate_types_equals, pair[1])
     })

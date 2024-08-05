@@ -8,10 +8,10 @@ run "resource_filter_with_repository_ids_predicate_exists" {
   variables {
     predicates = tomap({
       for pair in var.repository_ids_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0],
-        type = pair[1],
+        key      = pair[0],
+        type     = pair[1],
         key_data = null,
-        value = null
+        value    = null
       }
     })
   }
