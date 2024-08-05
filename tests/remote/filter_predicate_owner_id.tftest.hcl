@@ -18,7 +18,7 @@ run "get_team" {
   }
 }
 
-run "resource_filter_with_owner_id_predicate_create" {
+run "resource_filter_with_owner_id_predicate_equals" {
 
   variables {
     predicates = tomap({
