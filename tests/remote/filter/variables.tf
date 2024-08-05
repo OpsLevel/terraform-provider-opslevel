@@ -26,18 +26,3 @@ variable "name" {
   type        = string
   description = "The filter's display name."
 }
-
-# variable "domain_id" {
-#   type        = string
-#   description = "tbd"
-# }
-
-# variable "system_id" {
-#   type        = string
-#   description = "tbd"
-# }
-
-# variable "team_id" {
-#   type        = string
-#   description = "tbd"
-# }
