@@ -18,7 +18,6 @@ run "get_filter" {
 run "resource_filter_with_filter_id_predicate_matches" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.filter_id_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],

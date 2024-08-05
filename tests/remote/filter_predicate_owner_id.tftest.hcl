@@ -21,7 +21,6 @@ run "get_team" {
 run "resource_filter_with_owner_id_predicate_create" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.owner_id_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],
@@ -102,7 +101,6 @@ run "resource_filter_with_owner_id_predicate_create" {
 run "resource_filter_with_owner_id_predicate_exists" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.owner_id_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],

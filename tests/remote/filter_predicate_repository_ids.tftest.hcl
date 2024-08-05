@@ -6,7 +6,6 @@ variables {
 run "resource_filter_with_repository_ids_predicate_exists" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.repository_ids_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],

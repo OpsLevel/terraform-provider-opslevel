@@ -21,7 +21,6 @@ run "get_domain" {
 run "resource_filter_with_domain_id_predicate_exists" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.domain_id_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],
@@ -94,7 +93,6 @@ run "resource_filter_with_domain_id_predicate_exists" {
 run "resource_filter_with_domain_id_predicate_equals" {
 
   variables {
-    connective = "and"
     predicates = tomap({
       for pair in var.domain_id_predicates : "${pair[0]}_${pair[1]}" => {
         key = pair[0],
