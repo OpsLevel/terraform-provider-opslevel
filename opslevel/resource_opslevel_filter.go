@@ -237,7 +237,7 @@ func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.Valida
 	var predicateModels []FilterPredicateModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || configModel.Predicate.IsNull() || configModel.Predicate.IsUnknown() {
 		return
 	}
 	resp.Diagnostics.Append(configModel.Predicate.ElementsAs(ctx, &predicateModels, false)...)

@@ -151,7 +151,7 @@ func (v tagFormatValidator) ValidateSet(ctx context.Context, req validator.SetRe
 
 	elems := req.ConfigValue.Elements()
 	for _, elem := range elems {
-		if hasTagFormat(unquote(elem.String())) {
+		if elem.IsNull() || elem.IsUnknown() || hasTagFormat(unquote(elem.String())) {
 			continue
 		}
 

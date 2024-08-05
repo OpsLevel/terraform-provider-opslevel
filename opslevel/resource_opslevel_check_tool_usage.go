@@ -229,11 +229,11 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 		"tool_url_predicate":    configModel.ToolUrlPredicate,
 	}
 	for predicateSchemaName, predicate := range checkToolUsagePredicates {
-		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
-		resp.Diagnostics.Append(diags...)
-		if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
+		if predicate.IsNull() || predicate.IsUnknown() {
 			continue
 		}
+		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
+		resp.Diagnostics.Append(diags...)
 		if err := predicateModel.Validate(); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root(predicateSchemaName), "Invalid Attribute Configuration", err.Error())
 		}

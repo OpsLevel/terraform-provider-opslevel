@@ -47,7 +47,7 @@ func NewIntegrationAwsResourceModel(awsIntegration opslevel.Integration) Integra
 		Name:                  OptionalStringValue(awsIntegration.Name),
 		OwnershipTagOverrides: types.BoolValue(awsIntegration.OwnershipTagOverride),
 	}
-	ownershipTagKeys := OptionalStringListValue(awsIntegration.OwnershipTagKeys)
+	ownershipTagKeys := OptionalStringListValue(awsIntegration.AWSIntegrationFragment.OwnershipTagKeys)
 	integrationAwsResourceModel.OwnershipTagKeys = ownershipTagKeys
 
 	return integrationAwsResourceModel

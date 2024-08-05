@@ -45,8 +45,9 @@ type CheckServicePropertyResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
-	Property  types.String `tfsdk:"property"`
-	Predicate types.Object `tfsdk:"predicate"`
+	Property           types.String `tfsdk:"property"`
+	PropertyDefinition types.String `tfsdk:"property_definition"`
+	Predicate          types.Object `tfsdk:"predicate"`
 }
 
 func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Check, planModel CheckServicePropertyResourceModel) CheckServicePropertyResourceModel {
@@ -73,6 +74,10 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.Property = RequiredStringValue(string(check.ServicePropertyCheckFragment.Property))
+
+	if check.ServicePropertyCheckFragment.PropertyDefinition != nil {
+		stateModel.PropertyDefinition = planModel.PropertyDefinition
+	}
 
 	if check.ServicePropertyCheckFragment.Predicate == nil {
 		stateModel.Predicate = types.ObjectNull(predicateType)
@@ -108,6 +113,10 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllServicePropertyTypeEnum...),
 				},
+			},
+			"property_definition": schema.StringAttribute{
+				Description: "The alias of the property that the check will verify (e.g. the specific custom property).",
+				Optional:    true,
 			},
 			"predicate": PredicateSchema(),
 		}),
@@ -170,16 +179,13 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 }
 
 func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckServicePropertyResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	predicate := types.ObjectNull(predicateType)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("predicate"), &predicate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	predicateModel, diags := PredicateObjectToModel(ctx, configModel.Predicate)
+	predicateModel, diags := PredicateObjectToModel(ctx, predicate)
 	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		return
-	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 	}
@@ -213,6 +219,9 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 	}
 
 	input.ServiceProperty = opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString())
+	if !planModel.PropertyDefinition.IsNull() {
+		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
@@ -263,9 +272,11 @@ func (r *CheckServicePropertyResource) Read(ctx context.Context, req resource.Re
 
 func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel CheckServicePropertyResourceModel
+	var stateModel CheckServicePropertyResourceModel
 
 	// Read Terraform plan data into the planModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -290,6 +301,11 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	}
 
 	input.ServiceProperty = opslevel.RefOf(opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString()))
+	if !planModel.PropertyDefinition.IsNull() {
+		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
+	} else if !stateModel.PropertyDefinition.IsNull() {
+		input.PropertyDefinition = &opslevel.IdentifierInput{}
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
@@ -311,10 +327,10 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	stateModel := NewCheckServicePropertyResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckServicePropertyResourceModel(ctx, *data, planModel)
 
 	tflog.Trace(ctx, "updated a check service property resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckServicePropertyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

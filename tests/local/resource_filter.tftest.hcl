@@ -81,7 +81,7 @@ run "resource_filter_big_predicate_two" {
   }
 
   assert {
-    condition     = opslevel_filter.big.predicate[1].type == "greater_than_or_equal_to"
+    condition     = opslevel_filter.big.predicate[1].type == "less_than_or_equal_to"
     error_message = "wrong predicate 'type' for opslevel_filter.big.predicate[1]"
   }
 
