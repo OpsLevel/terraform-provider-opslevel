@@ -1,4 +1,3 @@
-# TODO: test predicate_list
 variables {
   filter_one  = "opslevel_filter"
   filters_all = "opslevel_filters"
@@ -7,8 +6,7 @@ variables {
   name = "TF Test Filter"
 
   # optional fields
-  connective     = "and"
-  predicate_list = []
+  connective = "and"
 }
 
 run "resource_filter_create_with_all_fields" {
@@ -16,7 +14,6 @@ run "resource_filter_create_with_all_fields" {
   variables {
     connective = var.connective
     name       = var.name
-    # predicate_list = var.predicate_list
   }
 
   module {

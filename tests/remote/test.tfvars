@@ -67,3 +67,5 @@ error_wrong_id                     = "wrong id for 'TYPE'"
 error_wrong_name                   = "wrong name for 'TYPE'"
 error_wrong_owner                  = "wrong owner for 'TYPE'"
 id_prefix                          = "Z2lkOi8v"
+predicate_types_equals             = ["does_not_equal", "equals"]
+predicate_types_exists             = ["does_not_exist", "exists"]

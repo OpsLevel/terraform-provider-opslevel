@@ -1,6 +1,7 @@
 variable "description" {
   type        = string
   description = "The description for the system."
+  default     = null
 }
 
 variable "domain_id" {
@@ -11,6 +12,7 @@ variable "domain_id" {
     condition     = var.domain_id == null ? true : startswith(var.domain_id, "Z2lkOi8v")
     error_message = "expected domain_id to be a valid ID starting with 'Z2lkOi8v'"
   }
+  default = null
 }
 
 variable "name" {
@@ -21,11 +23,13 @@ variable "name" {
 variable "note" {
   type        = string
   description = "Additional information about the system."
+  default     = null
 }
 
 variable "owner_id" {
   type        = string
   description = "The id of the team that owns the system."
+  default     = null
 
   validation {
     condition     = var.owner_id == null ? true : startswith(var.owner_id, "Z2lkOi8v")

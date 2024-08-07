@@ -1,6 +1,7 @@
 variable "description" {
   type        = string
   description = "The description of the domain."
+  default     = null
 }
 
 variable "name" {
@@ -11,11 +12,13 @@ variable "name" {
 variable "note" {
   type        = string
   description = "Additional information about the domain."
+  default     = null
 }
 
 variable "owner_id" {
   type        = string
   description = "The id of the team that owns the domain."
+  default     = null
 
   validation {
     condition     = var.owner_id == null ? true : startswith(var.owner_id, "Z2lkOi8v")
