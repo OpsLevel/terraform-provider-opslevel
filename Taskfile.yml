@@ -197,7 +197,7 @@ tasks:
       - task: setup-terraform-from
         vars: { SETUP_DIR: "{{.TEST_DIR}}/remote" }
       - task: terraform-command
-        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
+        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
 
   run-unit-tests:
     internal: true
@@ -316,7 +316,7 @@ tasks:
 
   terraform-command:
     internal: true
-    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}} {{.CLI_ARGS}}"]
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}}"]
     requires:
       vars: [TF_COMMAND, TF_CMD_DIR]
     preconditions:

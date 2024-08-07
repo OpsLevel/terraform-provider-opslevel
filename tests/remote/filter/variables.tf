@@ -9,17 +9,18 @@ variable "connective" {
     ], var.connective)
     error_message = "expected connective_enum to be 'and' or 'or'"
   }
+  default = null
 }
 
-variable "predicate_list" {
-  type = list(object({
-    case_insensitive = optional(bool)
-    case_sensitive   = optional(bool)
-    key              = string
-    key_data         = optional(string)
-    type             = string
-    value            = optional(string)
+variable "predicates" {
+  type = map(object({
+    case_sensitive = optional(bool)
+    key            = string
+    key_data       = optional(string)
+    type           = string
+    value          = optional(string)
   }))
+  default = {}
 }
 
 variable "name" {
