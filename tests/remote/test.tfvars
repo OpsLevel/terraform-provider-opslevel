@@ -55,17 +55,20 @@ enum_tool_category = [
   "status_page",
   "wiki",
 ]
-error_empty_datasource             = "zero 'TYPE' found in 'TYPE' datasource"
-error_expected_empty_string        = "expected field to be an empty string"
-error_expected_null_field          = "expected field to be null"
-error_unexpected_datasource_fields = "cannot reference all expected 'TYPE' datasource fields"
-error_unexpected_resource_fields   = "cannot reference all expected 'TYPE' resource fields"
-error_wrong_alias                  = "wrong alias for 'TYPE'"
-error_wrong_description            = "wrong description for 'TYPE'"
-error_wrong_index                  = "wrong index for 'TYPE'"
-error_wrong_id                     = "wrong id for 'TYPE'"
-error_wrong_name                   = "wrong name for 'TYPE'"
-error_wrong_owner                  = "wrong owner for 'TYPE'"
-id_prefix                          = "Z2lkOi8v"
-predicate_types_equals             = ["does_not_equal", "equals"]
-predicate_types_exists             = ["does_not_exist", "exists"]
+error_empty_datasource              = "zero 'TYPE' found in 'TYPE' datasource"
+error_expected_empty_string         = "expected field to be an empty string"
+error_expected_null_field           = "expected field to be null"
+error_unexpected_datasource_fields  = "cannot reference all expected 'TYPE' datasource fields"
+error_unexpected_resource_fields    = "cannot reference all expected 'TYPE' resource fields"
+error_wrong_alias                   = "wrong alias for 'TYPE'"
+error_wrong_description             = "wrong description for 'TYPE'"
+error_wrong_index                   = "wrong index for 'TYPE'"
+error_wrong_id                      = "wrong id for 'TYPE'"
+error_wrong_name                    = "wrong name for 'TYPE'"
+error_wrong_owner                   = "wrong owner for 'TYPE'"
+id_prefix                           = "Z2lkOi8v"
+predicate_types_contains            = ["does_not_contain", "contains"]
+predicate_types_ends_or_starts_with = ["ends_with", "starts_with"]
+predicate_types_matches_regex       = ["does_not_match_regex", "matches_regex"]
+predicate_types_equals              = ["does_not_equal", "equals"]
+predicate_types_exists              = ["does_not_exist", "exists"]

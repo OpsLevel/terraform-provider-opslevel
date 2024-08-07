@@ -11,8 +11,12 @@ run "resource_filter_with_properties_predicate_exists" {
     connective = "and"
     predicates = tomap({
       for pair in var.properties_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0], type = pair[1], key_data = var.predicate_key_data, value = contains(var.predicate_types_exists, pair[1]) ? null : var.jq_expression
+        key = pair[0],
+        type = pair[1],
+        key_data = var.predicate_key_data,
+        value = null
       }
+      if contains(var.predicate_types_exists, pair[1])
     })
   }
 
@@ -88,7 +92,10 @@ run "resource_filter_with_properties_predicate_satisfies_jq_expression" {
     connective = "and"
     predicates = tomap({
       for pair in var.properties_predicates : "${pair[0]}_${pair[1]}" => {
-        key = pair[0], type = pair[1], key_data = var.predicate_key_data, value = var.jq_expression
+        key = pair[0],
+        type = pair[1],
+        key_data = var.predicate_key_data,
+        value = var.jq_expression
       }
       if "satisfies_jq_expression" == pair[1]
     })

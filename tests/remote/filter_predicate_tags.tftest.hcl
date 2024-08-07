@@ -4,15 +4,11 @@ variables {
   predicate_value    = "fancy"
   tags_predicates = setproduct(
     ["tags"],
-    concat([
-      "contains",
-      "does_not_contain",
-      "does_not_match_regex",
-      "ends_with",
-      "matches_regex",
-      "satisfies_version_constraint",
-      "starts_with",
-      ],
+    concat(
+      ["satisfies_version_constraint"],
+      var.predicate_types_contains,
+      var.predicate_types_ends_or_starts_with,
+      var.predicate_types_matches_regex,
       var.predicate_types_equals,
       var.predicate_types_exists
     ),
@@ -30,7 +26,7 @@ run "resource_filter_with_tags_predicate_contains" {
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(["does_not_contain", "contains"], pair[1])
+      if contains(var.predicate_types_contains, pair[1])
     })
   }
 
@@ -83,7 +79,7 @@ run "resource_filter_with_tags_predicate_contains" {
   assert {
     condition = opslevel_filter.all_predicates["tags_contains"].predicate[0].type == "contains"
     error_message = format(
-      "expected predicate type 'does_not_contain' got '%s'",
+      "expected predicate type 'contains' got '%s'",
       opslevel_filter.all_predicates["tags_contains"].predicate[0].type
     )
   }
@@ -119,7 +115,7 @@ run "resource_filter_with_tags_predicate_equals" {
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(["does_not_equal", "equals"], pair[1])
+      if contains(var.predicate_types_equals, pair[1])
     })
   }
 
@@ -172,7 +168,7 @@ run "resource_filter_with_tags_predicate_equals" {
   assert {
     condition = opslevel_filter.all_predicates["tags_equals"].predicate[0].type == "equals"
     error_message = format(
-      "expected predicate type 'does_not_equal' got '%s'",
+      "expected predicate type 'equals' got '%s'",
       opslevel_filter.all_predicates["tags_equals"].predicate[0].type
     )
   }
@@ -208,7 +204,7 @@ run "resource_filter_with_tags_predicate_exists" {
         key_data = var.predicate_key_data,
         value    = null
       }
-      if contains(["does_not_exist", "exists"], pair[1])
+      if contains(var.predicate_types_exists, pair[1])
     })
   }
 
@@ -257,7 +253,7 @@ run "resource_filter_with_tags_predicate_exists" {
   assert {
     condition = opslevel_filter.all_predicates["tags_exists"].predicate[0].type == "exists"
     error_message = format(
-      "expected predicate type 'does_not_exist' got '%s'",
+      "expected predicate type 'exists' got '%s'",
       opslevel_filter.all_predicates["tags_exists"].predicate[0].type
     )
   }
@@ -289,7 +285,7 @@ run "resource_filter_with_tags_predicate_matches_regex" {
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(["does_not_match_regex", "matches_regex"], pair[1])
+      if contains(var.predicate_types_matches_regex, pair[1])
     })
   }
 
@@ -342,7 +338,7 @@ run "resource_filter_with_tags_predicate_matches_regex" {
   assert {
     condition = opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].type == "matches_regex"
     error_message = format(
-      "expected predicate type 'does_not_match_regex' got '%s'",
+      "expected predicate type 'matches_regex' got '%s'",
       opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].type
     )
   }
@@ -378,7 +374,7 @@ run "resource_filter_with_tags_predicate_starts_or_ends_with" {
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(["ends_with", "starts_with"], pair[1])
+      if contains(var.predicate_types_ends_or_starts_with, pair[1])
     })
   }
 
@@ -431,7 +427,7 @@ run "resource_filter_with_tags_predicate_starts_or_ends_with" {
   assert {
     condition = opslevel_filter.all_predicates["tags_starts_with"].predicate[0].type == "starts_with"
     error_message = format(
-      "expected predicate type 'ends_with' got '%s'",
+      "expected predicate type 'starts_with' got '%s'",
       opslevel_filter.all_predicates["tags_starts_with"].predicate[0].type
     )
   }
@@ -486,7 +482,7 @@ run "resource_filter_with_tags_predicate_satisfies_version_constraint" {
   assert {
     condition = opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].type == "satisfies_version_constraint"
     error_message = format(
-      "expected predicate type 'ends_with' got '%s'",
+      "expected predicate type 'satisfies_version_constraint' got '%s'",
       opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].type
     )
   }

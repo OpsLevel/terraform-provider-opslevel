@@ -3,14 +3,10 @@ variables {
   predicate_value = "fancy"
   name_predicates = setproduct(
     ["name"],
-    concat([
-      "contains",
-      "does_not_contain",
-      "does_not_match_regex",
-      "ends_with",
-      "matches_regex",
-      "starts_with",
-      ],
+    concat(
+      var.predicate_types_contains,
+      var.predicate_types_ends_or_starts_with,
+      var.predicate_types_matches_regex,
       var.predicate_types_equals,
       var.predicate_types_exists
     ),
@@ -27,7 +23,7 @@ run "resource_filter_with_name_predicate_contains" {
         key_data = null,
         value    = var.predicate_value
       }
-      if contains(["does_not_contain", "contains"], pair[1])
+      if contains(var.predicate_types_contains, pair[1])
     })
   }
 
@@ -76,7 +72,7 @@ run "resource_filter_with_name_predicate_contains" {
   assert {
     condition = opslevel_filter.all_predicates["name_contains"].predicate[0].type == "contains"
     error_message = format(
-      "expected predicate type 'does_not_contain' got '%s'",
+      "expected predicate type 'contains' got '%s'",
       opslevel_filter.all_predicates["name_contains"].predicate[0].type
     )
   }
@@ -156,7 +152,7 @@ run "resource_filter_with_name_predicate_equals" {
   assert {
     condition = opslevel_filter.all_predicates["name_equals"].predicate[0].type == "equals"
     error_message = format(
-      "expected predicate type 'does_not_equal' got '%s'",
+      "expected predicate type 'equals' got '%s'",
       opslevel_filter.all_predicates["name_equals"].predicate[0].type
     )
   }
@@ -232,7 +228,7 @@ run "resource_filter_with_name_predicate_exists" {
   assert {
     condition = opslevel_filter.all_predicates["name_exists"].predicate[0].type == "exists"
     error_message = format(
-      "expected predicate type 'does_not_exist' got '%s'",
+      "expected predicate type 'exists' got '%s'",
       opslevel_filter.all_predicates["name_exists"].predicate[0].type
     )
   }
@@ -259,7 +255,7 @@ run "resource_filter_with_name_predicate_matches_regex" {
         key_data = null,
         value    = var.predicate_value
       }
-      if contains(["does_not_match_regex", "matches_regex"], pair[1])
+      if contains(var.predicate_types_matches_regex, pair[1])
     })
   }
 
@@ -339,7 +335,7 @@ run "resource_filter_with_name_predicate_starts_or_ends_with" {
         key_data = null,
         value    = var.predicate_value
       }
-      if contains(["ends_with", "starts_with"], pair[1])
+      if contains(var.predicate_types_ends_or_starts_with, pair[1])
     })
   }
 

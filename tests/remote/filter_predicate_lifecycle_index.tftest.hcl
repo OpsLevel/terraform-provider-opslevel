@@ -70,7 +70,7 @@ run "resource_filter_with_lifecycle_index_predicate_equals" {
   assert {
     condition = opslevel_filter.all_predicates["lifecycle_index_equals"].predicate[0].type == "equals"
     error_message = format(
-      "expected predicate type 'does_not_equal' got '%s'",
+      "expected predicate type 'equals' got '%s'",
       opslevel_filter.all_predicates["lifecycle_index_equals"].predicate[0].type
     )
   }
@@ -146,7 +146,7 @@ run "resource_filter_with_lifecycle_index_predicate_exists" {
   assert {
     condition = opslevel_filter.all_predicates["lifecycle_index_exists"].predicate[0].type == "exists"
     error_message = format(
-      "expected predicate type 'does_not_exist' got '%s'",
+      "expected predicate type 'exists' got '%s'",
       opslevel_filter.all_predicates["lifecycle_index_exists"].predicate[0].type
     )
   }
