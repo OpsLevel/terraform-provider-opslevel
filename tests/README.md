@@ -3,7 +3,7 @@ Testing the OpsLevel Terraform Provider
 
 # Integration Tests
 
-Tests in [./tests/remote/](./tests/remote/) create actual OpsLevel resources in
+Tests in [./tests/remote/](./remote/) create actual OpsLevel resources in
 the account corresponding to the set `OPSLEVEL_API_TOKEN`. These integration tests
 use Terraform's [test framework](https://developer.hashicorp.com/terraform/language/tests)
 which uses Terraform config files and tears down resources created by tests.
@@ -21,7 +21,7 @@ resources are not cleaned up.
 
 ### Resource test files
 
-Each resource_type in [./tests/remote/](./tests/remote/) has a `<resource_type>.tftest.hcl`
+Each resource_type in [./tests/remote/](./remote/) has a `<resource_type>.tftest.hcl`
 [test file](https://developer.hashicorp.com/terraform/language/tests#syntax). These test files
 have multiple [run blocks](https://developer.hashicorp.com/terraform/language/tests#run-blocks)
 where [assert blocks](https://developer.hashicorp.com/terraform/language/tests#assertions)
@@ -30,7 +30,7 @@ sourced into each test file.
 
 ### Resource modules
 
-Each resource_type in [./tests/remote/](./tests/remote/) has a `./tests/remote/<resource_type>/`
+Each resource_type in [./tests/remote/](./remote/) has a `./tests/remote/<resource_type>/`
 directory that is sourced into a test file. [Modules](https://developer.hashicorp.com/terraform/language/modules)
 are basically directories. Each module has the following:
 - `main.tf` - resources under test are defined here in a standard Terraform config file.
@@ -39,7 +39,7 @@ are basically directories. Each module has the following:
 
 # Local Tests (terraform validate)
 
-Tests in [./tests/local/](./tests/local/) use a mocked OpsLevel Terraform provider
+Tests in [./tests/local/](./local/) use a mocked OpsLevel Terraform provider
 so no authentication is required. These tests are meant to catch config validation
 errors.
 
