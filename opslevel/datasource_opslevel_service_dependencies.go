@@ -26,8 +26,15 @@ type ServiceDependenciesDataSource struct {
 
 // ServiceDependenciesModel describes the data source data model.
 type ServiceDependenciesModel struct {
+	Dependents   []dependentsModel   `tfsdk:"dependents"`
 	Dependencies []dependenciesModel `tfsdk:"dependencies"`
 	Service      types.String        `tfsdk:"service"`
+}
+
+type dependentsModel struct {
+	Id     types.String `tfsdk:"id"`
+	Locked types.Bool   `tfsdk:"locked"`
+	Notes  types.String `tfsdk:"notes"`
 }
 
 type dependenciesModel struct {
@@ -36,8 +43,9 @@ type dependenciesModel struct {
 	Notes  types.String `tfsdk:"notes"`
 }
 
-func NewServiceDependenciesModel(serviceIdentifier string, dependencies []dependenciesModel) ServiceDependenciesModel {
+func NewServiceDependenciesModel(serviceIdentifier string, dependents []dependentsModel, dependencies []dependenciesModel) ServiceDependenciesModel {
 	return ServiceDependenciesModel{
+		Dependents:   dependents,
 		Dependencies: dependencies,
 		Service:      types.StringValue(serviceIdentifier),
 	}
@@ -47,28 +55,37 @@ func (d *ServiceDependenciesDataSource) Metadata(ctx context.Context, req dataso
 	resp.TypeName = req.ProviderTypeName + "_service_dependencies"
 }
 
+var depsAttrs = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		Description: "The ID of the serviceDependency.",
+		Computed:    true,
+	},
+	"locked": schema.BoolAttribute{
+		Description: "Is the dependency locked by a service config?",
+		Computed:    true,
+	},
+	"notes": schema.StringAttribute{
+		Description: "Notes for service dependency.",
+		Optional:    true,
+	},
+}
+
 func (d *ServiceDependenciesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Service Dependencies data source",
 
 		Attributes: map[string]schema.Attribute{
+			"dependents": schema.ListNestedAttribute{
+				Description: "List of Service Dependents of a service",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: depsAttrs,
+				},
+				Computed: true,
+			},
 			"dependencies": schema.ListNestedAttribute{
 				Description: "List of Service Dependencies of a service",
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Description: "The ID of the serviceDependency.",
-							Computed:    true,
-						},
-						"locked": schema.BoolAttribute{
-							Description: "Is the dependency locked by a service config?",
-							Computed:    true,
-						},
-						"notes": schema.StringAttribute{
-							Description: "Notes for service dependency.",
-							Optional:    true,
-						},
-					},
+					Attributes: depsAttrs,
 				},
 				Computed: true,
 			},
@@ -83,6 +100,7 @@ func (d *ServiceDependenciesDataSource) Schema(ctx context.Context, req datasour
 func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var (
 		dependencies      []dependenciesModel
+		dependents        []dependentsModel
 		err               error
 		service           *opslevel.Service
 		serviceIdentifier string
@@ -106,12 +124,34 @@ func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
+	// List Service Dependents
+	svcDependents, err := service.GetDependents(d.client, nil)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get dependents for service, got error: %s", err))
+		return
+	}
+	if svcDependents == nil || len(svcDependents.Edges) == 0 {
+		dependents = []dependentsModel{}
+	} else {
+		for _, svcDependency := range svcDependents.Edges {
+			dependents = append(dependents, dependentsModel{
+				Locked: types.BoolValue(svcDependency.Locked),
+				Id:     ComputedStringValue(string(svcDependency.Id)),
+				Notes:  ComputedStringValue(svcDependency.Notes),
+			})
+		}
+	}
+
 	// List Service Dependencies
-	result, _ := service.GetDependencies(d.client, nil)
-	if result == nil || len(result.Edges) == 0 {
+	svcDependencies, err := service.GetDependencies(d.client, nil)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get dependencies for service, got error: %s", err))
+		return
+	}
+	if svcDependencies == nil || len(svcDependencies.Edges) == 0 {
 		dependencies = []dependenciesModel{}
 	} else {
-		for _, svcDependency := range result.Edges {
+		for _, svcDependency := range svcDependencies.Edges {
 			dependencies = append(dependencies, dependenciesModel{
 				Locked: types.BoolValue(svcDependency.Locked),
 				Id:     ComputedStringValue(string(svcDependency.Id)),
@@ -120,7 +160,7 @@ func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource
 		}
 	}
 
-	stateModel = NewServiceDependenciesModel(serviceIdentifier, dependencies)
+	stateModel = NewServiceDependenciesModel(serviceIdentifier, dependents, dependencies)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Service data source")
