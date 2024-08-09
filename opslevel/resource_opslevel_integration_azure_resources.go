@@ -50,7 +50,7 @@ type IntegrationAzureResourcesResourceModel struct {
 
 func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourcesIntegration opslevel.Integration, givenModel IntegrationAzureResourcesResourceModel) IntegrationAzureResourcesResourceModel {
 	resourceModel := IntegrationAzureResourcesResourceModel{
-		Aliases:        OptionalStringListValue(azureResourcesIntegration.Aliases),
+		Aliases:        OptionalStringListValue(azureResourcesIntegration.AzureResourcesIntegrationFragment.Aliases),
 		ClientId:       givenModel.ClientId,
 		ClientSecret:   givenModel.ClientSecret,
 		CreatedAt:      ComputedStringValue(azureResourcesIntegration.CreatedAt.Local().Format(time.RFC850)),
@@ -68,7 +68,7 @@ func NewIntegrationAzureResourcesResourceModel(ctx context.Context, azureResourc
 	if givenModel.TagsOverrideOwnership.IsNull() {
 		resourceModel.TagsOverrideOwnership = types.BoolNull()
 	} else {
-		resourceModel.TagsOverrideOwnership = types.BoolValue(azureResourcesIntegration.TagsOverrideOwnership)
+		resourceModel.TagsOverrideOwnership = types.BoolValue(azureResourcesIntegration.AzureResourcesIntegrationFragment.TagsOverrideOwnership)
 	}
 
 	return resourceModel

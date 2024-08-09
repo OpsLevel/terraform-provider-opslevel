@@ -99,12 +99,9 @@ func (d *ServiceDependenciesDataSource) Schema(ctx context.Context, req datasour
 
 func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var (
-		dependencies      []dependenciesModel
-		dependents        []dependentsModel
 		err               error
 		service           *opslevel.Service
 		serviceIdentifier string
-		stateModel        ServiceDependenciesModel
 	)
 
 	// Read Terraform configuration data into the model
@@ -124,45 +121,55 @@ func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	// List Service Dependents
-	svcDependents, err := service.GetDependents(d.client, nil)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get dependents for service, got error: %s", err))
-		return
-	}
-	if svcDependents == nil || len(svcDependents.Edges) == 0 {
-		dependents = []dependentsModel{}
-	} else {
-		for _, svcDependency := range svcDependents.Edges {
-			dependents = append(dependents, dependentsModel{
-				Locked: types.BoolValue(svcDependency.Locked),
-				Id:     ComputedStringValue(string(svcDependency.Id)),
-				Notes:  ComputedStringValue(svcDependency.Notes),
-			})
-		}
-	}
-
-	// List Service Dependencies
-	svcDependencies, err := service.GetDependencies(d.client, nil)
+	dependenciesModel, err := getDependenciesModelOfService(d.client, service)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get dependencies for service, got error: %s", err))
 		return
 	}
-	if svcDependencies == nil || len(svcDependencies.Edges) == 0 {
-		dependencies = []dependenciesModel{}
-	} else {
-		for _, svcDependency := range svcDependencies.Edges {
-			dependencies = append(dependencies, dependenciesModel{
-				Locked: types.BoolValue(svcDependency.Locked),
-				Id:     ComputedStringValue(string(svcDependency.Id)),
-				Notes:  ComputedStringValue(svcDependency.Notes),
-			})
-		}
+
+	dependentsModel, err := getDependentsModelOfService(d.client, service)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get dependents for service, got error: %s", err))
+		return
 	}
 
-	stateModel = NewServiceDependenciesModel(serviceIdentifier, dependents, dependencies)
+	stateModel := NewServiceDependenciesModel(serviceIdentifier, dependentsModel, dependenciesModel)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Service Dependencies data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+}
+
+func getDependenciesModelOfService(client *opslevel.Client, service *opslevel.Service) ([]dependenciesModel, error) {
+	dependencies := []dependenciesModel{}
+	svcDependencies, err := service.GetDependencies(client, nil)
+	if err != nil || svcDependencies == nil {
+		return dependencies, err
+	}
+
+	for _, svcDependency := range svcDependencies.Edges {
+		dependencies = append(dependencies, dependenciesModel{
+			Locked: types.BoolValue(svcDependency.Locked),
+			Id:     ComputedStringValue(string(svcDependency.Id)),
+			Notes:  ComputedStringValue(svcDependency.Notes),
+		})
+	}
+	return dependencies, nil
+}
+
+func getDependentsModelOfService(client *opslevel.Client, service *opslevel.Service) ([]dependentsModel, error) {
+	dependents := []dependentsModel{}
+	svcDependents, err := service.GetDependents(client, nil)
+	if err != nil || svcDependents == nil {
+		return dependents, err
+	}
+
+	for _, svcDependent := range svcDependents.Edges {
+		dependents = append(dependents, dependentsModel{
+			Locked: types.BoolValue(svcDependent.Locked),
+			Id:     ComputedStringValue(string(svcDependent.Id)),
+			Notes:  ComputedStringValue(svcDependent.Notes),
+		})
+	}
+	return dependents, nil
 }
