@@ -57,7 +57,7 @@ func (d *ServiceDependenciesDataSource) Metadata(ctx context.Context, req dataso
 
 var depsAttrs = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
-		Description: "The ID of the serviceDependency.",
+		Description: "The ID of the service dependency.",
 		Computed:    true,
 	},
 	"locked": schema.BoolAttribute{
@@ -163,6 +163,6 @@ func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource
 	stateModel = NewServiceDependenciesModel(serviceIdentifier, dependents, dependencies)
 
 	// Save data into Terraform state
-	tflog.Trace(ctx, "read an OpsLevel Service data source")
+	tflog.Trace(ctx, "read an OpsLevel Service Dependencies data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
