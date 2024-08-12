@@ -31,45 +31,39 @@ type integrationGoogleCloudResource struct {
 }
 
 type integrationGoogleCloudResourceModel struct {
-	Aliases               types.List                      `tfsdk:"aliases"`
-	ClientEmail           types.String                    `tfsdk:"client_email"`
-	CreatedAt             types.String                    `tfsdk:"created_at"`
-	Id                    types.String                    `tfsdk:"id"`
-	InstalledAt           types.String                    `tfsdk:"installed_at"`
-	Name                  types.String                    `tfsdk:"name"`
-	OwnershipTagKeys      types.Set                       `tfsdk:"ownership_tag_keys"`
-	PrivateKey            types.String                    `tfsdk:"private_key"`
-	Projects              googleCloudProjectResourceModel `tfsdk:"projects"`
-	TagsOverrideOwnership types.Bool                      `tfsdk:"ownership_tag_overrides"`
+	Aliases               types.List   `tfsdk:"aliases"`
+	ClientEmail           types.String `tfsdk:"client_email"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	Id                    types.String `tfsdk:"id"`
+	InstalledAt           types.String `tfsdk:"installed_at"`
+	Name                  types.String `tfsdk:"name"`
+	OwnershipTagKeys      types.Set    `tfsdk:"ownership_tag_keys"`
+	PrivateKey            types.String `tfsdk:"private_key"`
+	Projects              types.List   `tfsdk:"projects"`
+	TagsOverrideOwnership types.Bool   `tfsdk:"ownership_tag_overrides"`
 }
 
-type googleCloudProjectResourceModel struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	URL  types.String `tfsdk:"url"`
-}
-
-func newIntegrationGoogleCloudResourceModel(GoogleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel) integrationGoogleCloudResourceModel {
+func newIntegrationGoogleCloudResourceModel(googleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel) integrationGoogleCloudResourceModel {
 	resourceModel := integrationGoogleCloudResourceModel{
-		Aliases:     OptionalStringListValue(GoogleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
+		Aliases:     OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
 		ClientEmail: givenModel.ClientEmail,
-		CreatedAt:   ComputedStringValue(GoogleCloudIntegration.CreatedAt.Local().Format(time.RFC850)),
-		Id:          ComputedStringValue(string(GoogleCloudIntegration.Id)),
-		InstalledAt: ComputedStringValue(GoogleCloudIntegration.InstalledAt.Local().Format(time.RFC850)),
-		Name:        RequiredStringValue(GoogleCloudIntegration.Name),
+		CreatedAt:   ComputedStringValue(googleCloudIntegration.CreatedAt.Local().Format(time.RFC850)),
+		Id:          ComputedStringValue(string(googleCloudIntegration.Id)),
+		InstalledAt: ComputedStringValue(googleCloudIntegration.InstalledAt.Local().Format(time.RFC850)),
+		Name:        RequiredStringValue(googleCloudIntegration.Name),
 		PrivateKey:  givenModel.PrivateKey,
-		Projects:    givenModel.Projects,
 	}
 	if givenModel.OwnershipTagKeys.IsNull() {
 		resourceModel.OwnershipTagKeys = types.SetNull(types.StringType)
 	} else {
-		resourceModel.OwnershipTagKeys = StringSliceToSetValue(GoogleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys)
+		resourceModel.OwnershipTagKeys = StringSliceToSetValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys)
 	}
 	if givenModel.TagsOverrideOwnership.IsNull() {
 		resourceModel.TagsOverrideOwnership = types.BoolNull()
 	} else {
-		resourceModel.TagsOverrideOwnership = types.BoolValue(GoogleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership)
+		resourceModel.TagsOverrideOwnership = types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership)
 	}
+	resourceModel.Projects = OptionalStringListValue(flattenProjectsArray(googleCloudIntegration.GoogleCloudIntegrationFragment.Projects))
 
 	return resourceModel
 }
@@ -135,10 +129,9 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Optional:    true,
 			},
 			"projects": schema.ListAttribute{
-				ElementType: types.StringType,
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
-				Required:    true,
 				Computed:    true,
+				ElementType: types.StringType,
 			},
 		},
 	}
