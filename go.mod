@@ -76,4 +76,4 @@ require (
 	nhooyr.io/websocket v1.8.11 // indirect
 )
 
-// replace github.com/opslevel/opslevel-go/v2024 => ./submodules/opslevel-go
+replace github.com/opslevel/opslevel-go/v2024 => ./submodules/opslevel-go
