@@ -1,4 +1,0 @@
-kind: Bugfix
-body: 'Hotfix for bug where AlertSource and InfraResource queries failed because field
-  name should be `ownerLocked` instead of `locked`'
-time: 2024-08-13T12:33:53.272037-05:00
