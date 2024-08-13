@@ -167,11 +167,3 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	}
 	return output
 }
-
-func flattenProjectsArray(projects []opslevel.GoogleCloudProject) []string {
-	output := make([]string, len(projects))
-	for i, project := range projects {
-		output[i] = project.Name
-	}
-	return output
-}

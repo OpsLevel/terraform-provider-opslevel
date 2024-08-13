@@ -30,17 +30,38 @@ type integrationGoogleCloudResource struct {
 	CommonResourceClient
 }
 
+type googleCloudProjectResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	URL  types.String `tfsdk:"url"`
+}
+
+var googleCloudProjectAttributes = map[string]schema.Attribute{
+	"id": schema.StringAttribute{
+		Description: "The ID of the Google Cloud project.",
+		Computed:    true,
+	},
+	"name": schema.StringAttribute{
+		Description: "The name of the Google Cloud project.",
+		Computed:    true,
+	},
+	"url": schema.StringAttribute{
+		Description: "The URL to the Google Cloud project.",
+		Computed:    true,
+	},
+}
+
 type integrationGoogleCloudResourceModel struct {
-	Aliases               types.List   `tfsdk:"aliases"`
-	ClientEmail           types.String `tfsdk:"client_email"`
-	CreatedAt             types.String `tfsdk:"created_at"`
-	Id                    types.String `tfsdk:"id"`
-	InstalledAt           types.String `tfsdk:"installed_at"`
-	Name                  types.String `tfsdk:"name"`
-	OwnershipTagKeys      types.Set    `tfsdk:"ownership_tag_keys"`
-	PrivateKey            types.String `tfsdk:"private_key"`
-	Projects              types.List   `tfsdk:"projects"`
-	TagsOverrideOwnership types.Bool   `tfsdk:"ownership_tag_overrides"`
+	Aliases               types.List                        `tfsdk:"aliases"`
+	ClientEmail           types.String                      `tfsdk:"client_email"`
+	CreatedAt             types.String                      `tfsdk:"created_at"`
+	Id                    types.String                      `tfsdk:"id"`
+	InstalledAt           types.String                      `tfsdk:"installed_at"`
+	Name                  types.String                      `tfsdk:"name"`
+	OwnershipTagKeys      types.Set                         `tfsdk:"ownership_tag_keys"`
+	PrivateKey            types.String                      `tfsdk:"private_key"`
+	Projects              []googleCloudProjectResourceModel `tfsdk:"projects"`
+	TagsOverrideOwnership types.Bool                        `tfsdk:"ownership_tag_overrides"`
 }
 
 func newIntegrationGoogleCloudResourceModel(googleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel) integrationGoogleCloudResourceModel {
@@ -63,7 +84,16 @@ func newIntegrationGoogleCloudResourceModel(googleCloudIntegration opslevel.Inte
 	} else {
 		resourceModel.TagsOverrideOwnership = types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership)
 	}
-	resourceModel.Projects = OptionalStringListValue(flattenProjectsArray(googleCloudIntegration.GoogleCloudIntegrationFragment.Projects))
+
+	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
+	for i, project := range googleCloudIntegration.Projects {
+		projects[i] = googleCloudProjectResourceModel{
+			ID:   RequiredStringValue(project.ID),
+			Name: RequiredStringValue(project.Name),
+			URL:  RequiredStringValue(project.URL),
+		}
+	}
+	resourceModel.Projects = projects
 
 	return resourceModel
 }
@@ -128,10 +158,12 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "Allow tags imported from Google Cloud to override ownership set in OpsLevel directly.",
 				Optional:    true,
 			},
-			"projects": schema.ListAttribute{
+			"projects": schema.ListNestedAttribute{
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
 				Computed:    true,
-				ElementType: types.StringType,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: googleCloudProjectAttributes,
+				},
 			},
 		},
 	}
