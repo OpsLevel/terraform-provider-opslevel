@@ -11,7 +11,7 @@ variable "name" {
 }
 
 variable "ownership_tag_keys" {
-  type    = set(string)
+  type = set(string)
 }
 
 variable "ownership_tag_overrides" {
