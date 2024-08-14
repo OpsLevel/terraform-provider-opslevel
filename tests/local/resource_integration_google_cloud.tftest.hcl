@@ -34,7 +34,7 @@ run "resource_integration_google_cloud" {
   }
 
   assert {
-    condition     = opslevel_integration_google_cloud.example.ownership_tag_keys == toset(["opslevel_team", "team", "owner"])
+    condition     = opslevel_integration_google_cloud.example.ownership_tag_keys == tolist(["opslevel_team", "team", "owner"])
     error_message = "expected opslevel_integration_google_cloud to have the correct ownership_tag_keys"
   }
 

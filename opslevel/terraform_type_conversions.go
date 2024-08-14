@@ -117,6 +117,15 @@ func StringSliceToSetValue(values []string) basetypes.SetValue {
 	return types.SetValueMust(types.StringType, result)
 }
 
+// Converts a []string to a basetypes.SetValue
+func StringSliceToListValue(values []string) basetypes.ListValue {
+	result := []attr.Value{}
+	for _, value := range values {
+		result = append(result, types.StringValue(value))
+	}
+	return types.ListValueMust(types.StringType, result)
+}
+
 func TagSetValueToTagSlice(ctx context.Context, setValue basetypes.SetValue) ([]opslevel.Tag, diag.Diagnostics) {
 	tagSlice := []opslevel.Tag{}
 	if setValue.IsNull() {

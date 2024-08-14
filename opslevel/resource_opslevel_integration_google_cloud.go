@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -54,7 +55,7 @@ type integrationGoogleCloudResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	InstalledAt           types.String `tfsdk:"installed_at"`
 	Name                  types.String `tfsdk:"name"`
-	OwnershipTagKeys      types.Set    `tfsdk:"ownership_tag_keys"`
+	OwnershipTagKeys      types.List   `tfsdk:"ownership_tag_keys"`
 	PrivateKey            types.String `tfsdk:"private_key"`
 	Projects              types.List   `tfsdk:"projects"`
 	TagsOverrideOwnership types.Bool   `tfsdk:"ownership_tag_overrides"`
@@ -68,7 +69,7 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 		Id:                    ComputedStringValue(string(googleCloudIntegration.Id)),
 		InstalledAt:           ComputedStringValue(googleCloudIntegration.InstalledAt.UTC().Format(time.RFC3339)),
 		Name:                  RequiredStringValue(googleCloudIntegration.Name),
-		OwnershipTagKeys:      StringSliceToSetValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys),
+		OwnershipTagKeys:      StringSliceToListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys),
 		PrivateKey:            givenModel.PrivateKey,
 		TagsOverrideOwnership: types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership),
 	}
@@ -136,12 +137,12 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "The name of the integration.",
 				Required:    true,
 			},
-			"ownership_tag_keys": schema.SetAttribute{
+			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
 				Required:    true,
-				Validators: []validator.Set{
-					setvalidator.SizeAtMost(5),
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
@@ -167,7 +168,7 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	ownershipTagKeys, diags := SetValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -228,7 +229,7 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	ownershipTagKeys, diags := SetValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
