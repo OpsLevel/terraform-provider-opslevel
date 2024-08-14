@@ -63,9 +63,9 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 	resourceModel := integrationGoogleCloudResourceModel{
 		Aliases:               OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
 		ClientEmail:           givenModel.ClientEmail,
-		CreatedAt:             ComputedStringValue(googleCloudIntegration.CreatedAt.Local().Format(time.RFC850)),
+		CreatedAt:             ComputedStringValue(googleCloudIntegration.CreatedAt.UTC().Format(time.RFC3339)),
 		Id:                    ComputedStringValue(string(googleCloudIntegration.Id)),
-		InstalledAt:           ComputedStringValue(googleCloudIntegration.InstalledAt.Local().Format(time.RFC850)),
+		InstalledAt:           ComputedStringValue(googleCloudIntegration.InstalledAt.UTC().Format(time.RFC3339)),
 		Name:                  RequiredStringValue(googleCloudIntegration.Name),
 		OwnershipTagKeys:      StringSliceToSetValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys),
 		PrivateKey:            givenModel.PrivateKey,
