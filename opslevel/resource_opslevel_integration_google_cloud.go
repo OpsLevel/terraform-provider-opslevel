@@ -3,6 +3,8 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -36,35 +38,28 @@ type googleCloudProjectResourceModel struct {
 	URL  types.String `tfsdk:"url"`
 }
 
-var googleCloudProjectAttributes = map[string]schema.Attribute{
-	"id": schema.StringAttribute{
-		Description: "The ID of the Google Cloud project.",
-		Computed:    true,
-	},
-	"name": schema.StringAttribute{
-		Description: "The name of the Google Cloud project.",
-		Computed:    true,
-	},
-	"url": schema.StringAttribute{
-		Description: "The URL to the Google Cloud project.",
-		Computed:    true,
-	},
+func googleCloudProjectAttrs() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   types.StringType,
+		"name": types.StringType,
+		"url":  types.StringType,
+	}
 }
 
 type integrationGoogleCloudResourceModel struct {
-	Aliases               types.List                        `tfsdk:"aliases"`
-	ClientEmail           types.String                      `tfsdk:"client_email"`
-	CreatedAt             types.String                      `tfsdk:"created_at"`
-	Id                    types.String                      `tfsdk:"id"`
-	InstalledAt           types.String                      `tfsdk:"installed_at"`
-	Name                  types.String                      `tfsdk:"name"`
-	OwnershipTagKeys      types.Set                         `tfsdk:"ownership_tag_keys"`
-	PrivateKey            types.String                      `tfsdk:"private_key"`
-	Projects              []googleCloudProjectResourceModel `tfsdk:"projects"`
-	TagsOverrideOwnership types.Bool                        `tfsdk:"ownership_tag_overrides"`
+	Aliases               types.List   `tfsdk:"aliases"`
+	ClientEmail           types.String `tfsdk:"client_email"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	Id                    types.String `tfsdk:"id"`
+	InstalledAt           types.String `tfsdk:"installed_at"`
+	Name                  types.String `tfsdk:"name"`
+	OwnershipTagKeys      types.Set    `tfsdk:"ownership_tag_keys"`
+	PrivateKey            types.String `tfsdk:"private_key"`
+	Projects              types.List   `tfsdk:"projects"`
+	TagsOverrideOwnership types.Bool   `tfsdk:"ownership_tag_overrides"`
 }
 
-func newIntegrationGoogleCloudResourceModel(googleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel) integrationGoogleCloudResourceModel {
+func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel, diags *diag.Diagnostics) integrationGoogleCloudResourceModel {
 	resourceModel := integrationGoogleCloudResourceModel{
 		Aliases:     OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
 		ClientEmail: givenModel.ClientEmail,
@@ -93,7 +88,12 @@ func newIntegrationGoogleCloudResourceModel(googleCloudIntegration opslevel.Inte
 			URL:  RequiredStringValue(project.URL),
 		}
 	}
-	resourceModel.Projects = projects
+	projectsList, tmp := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: googleCloudProjectAttrs()}, projects)
+	diags.Append(tmp...)
+	if diags.HasError() {
+		return integrationGoogleCloudResourceModel{}
+	}
+	resourceModel.Projects = projectsList
 
 	return resourceModel
 }
@@ -158,11 +158,11 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "Allow tags imported from Google Cloud to override ownership set in OpsLevel directly.",
 				Optional:    true,
 			},
-			"projects": schema.ListNestedAttribute{
+			"projects": schema.ListAttribute{
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
 				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: googleCloudProjectAttributes,
+				ElementType: types.ObjectType{
+					AttrTypes: googleCloudProjectAttrs(),
 				},
 			},
 		},
@@ -199,7 +199,10 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	stateModel := newIntegrationGoogleCloudResourceModel(*createdIntegration, planModel)
+	stateModel := newIntegrationGoogleCloudResourceModel(ctx, *createdIntegration, planModel, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Trace(ctx, "created a Google Cloud integration")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -219,7 +222,10 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	verifiedStateModel := newIntegrationGoogleCloudResourceModel(*readIntegration, stateModel)
+	verifiedStateModel := newIntegrationGoogleCloudResourceModel(ctx, *readIntegration, stateModel, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a Google Cloud integration")
@@ -258,7 +264,10 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	stateModel := newIntegrationGoogleCloudResourceModel(*updatedIntegration, planModel)
+	stateModel := newIntegrationGoogleCloudResourceModel(ctx, *updatedIntegration, planModel, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Trace(ctx, "updated a Google Cloud integration")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
