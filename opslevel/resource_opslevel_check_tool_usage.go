@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -154,23 +153,49 @@ func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]res
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"environment_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
+					"environment_predicate": schema.SingleNestedBlock{
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description: "A condition that should be satisfied.",
+								Required:    true,
+								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+							},
+							"value": schema.StringAttribute{
+								Description: "The condition value used by the predicate.",
+								Optional:    true,
+							},
+						},
 					},
-					"tool_name_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
+					"tool_name_predicate": schema.SingleNestedBlock{
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description: "A condition that should be satisfied.",
+								Required:    true,
+								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+							},
+							"value": schema.StringAttribute{
+								Description: "The condition value used by the predicate.",
+								Optional:    true,
+							},
+						},
 					},
-					"tool_url_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
+					"tool_url_predicate": schema.SingleNestedBlock{
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description: "A condition that should be satisfied.",
+								Required:    true,
+								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+							},
+							"value": schema.StringAttribute{
+								Description: "The condition value used by the predicate.",
+								Optional:    true,
+							},
+						},
 					},
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckToolUsageResourceModel{}
-				environmentPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
-				toolNamePredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
-				toolUrlPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -185,30 +210,9 @@ func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]res
 
 				// tool usage specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_category"), &upgradedStateModel.ToolCategory)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("environment_predicate"), &environmentPredicateList)...)
-				if len(environmentPredicateList.Elements()) == 1 {
-					environmentPredicate := environmentPredicateList.Elements()[0]
-					upgradedStateModel.EnvironmentPredicate, diags = types.ObjectValueFrom(ctx, predicateType, environmentPredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.EnvironmentPredicate = types.ObjectNull(predicateType)
-				}
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_name_predicate"), &toolNamePredicateList)...)
-				if len(toolNamePredicateList.Elements()) == 1 {
-					toolNamePredicate := toolNamePredicateList.Elements()[0]
-					upgradedStateModel.ToolNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolNamePredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.ToolNamePredicate = types.ObjectNull(predicateType)
-				}
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_url_predicate"), &toolUrlPredicateList)...)
-				if len(toolUrlPredicateList.Elements()) == 1 {
-					toolUrlPredicate := toolUrlPredicateList.Elements()[0]
-					upgradedStateModel.ToolUrlPredicate, diags = types.ObjectValueFrom(ctx, predicateType, toolUrlPredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.ToolUrlPredicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("environment_predicate"), &upgradedStateModel.EnvironmentPredicate)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_name_predicate"), &upgradedStateModel.ToolNamePredicate)...)
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tool_url_predicate"), &upgradedStateModel.ToolUrlPredicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},
