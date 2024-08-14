@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -128,15 +127,11 @@ func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[in
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"alert_name_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"alert_name_predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckAlertSourceUsageResourceModel{}
-				alertNamePredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -151,14 +146,7 @@ func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[in
 
 				// alert source specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alert_type"), &upgradedStateModel.AlertType)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alert_name_predicate"), &alertNamePredicateList)...)
-				if len(alertNamePredicateList.Elements()) == 1 {
-					alertNamePredicate := alertNamePredicateList.Elements()[0]
-					upgradedStateModel.AlertNamePredicate, diags = types.ObjectValueFrom(ctx, predicateType, alertNamePredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.AlertNamePredicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alert_name_predicate"), &upgradedStateModel.AlertNamePredicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},

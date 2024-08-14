@@ -190,16 +190,18 @@ See example in opslevel_check_manual for proper configuration.
 	return output
 }
 
-var predicateSchemaV0 = schema.NestedBlockObject{
-	Attributes: map[string]schema.Attribute{
-		"type": schema.StringAttribute{
-			Description: "A condition that should be satisfied.",
-			Required:    true,
-			Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+func predicateSchemaV0() schema.Block {
+	return schema.SingleNestedBlock{
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Description: "A condition that should be satisfied.",
+				Required:    true,
+				Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
+			},
+			"value": schema.StringAttribute{
+				Description: "The condition value used by the predicate.",
+				Optional:    true,
+			},
 		},
-		"value": schema.StringAttribute{
-			Description: "The condition value used by the predicate.",
-			Optional:    true,
-		},
-	},
+	}
 }

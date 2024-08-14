@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -134,15 +133,11 @@ func (r *CheckRepositoryGrepResource) UpgradeState(ctx context.Context) map[int6
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"file_contents_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"file_contents_predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckRepositoryGrepResourceModel{}
-				fileContentsPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -158,14 +153,7 @@ func (r *CheckRepositoryGrepResource) UpgradeState(ctx context.Context) map[int6
 				// repository grep specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("directory_search"), &upgradedStateModel.DirectorySearch)...)
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("filepaths"), &upgradedStateModel.Filepaths)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicateList)...)
-				if len(fileContentsPredicateList.Elements()) == 1 {
-					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
-					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.FileContentsPredicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &upgradedStateModel.FileContentsPredicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},

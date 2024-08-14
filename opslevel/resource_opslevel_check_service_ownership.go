@@ -166,9 +166,7 @@ func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[in
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"tag_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"tag_predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {

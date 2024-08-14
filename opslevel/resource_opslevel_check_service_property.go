@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -140,15 +139,11 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckServicePropertyResourceModel{}
-				predicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -163,14 +158,7 @@ func (r *CheckServicePropertyResource) UpgradeState(ctx context.Context) map[int
 
 				// service property specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("property"), &upgradedStateModel.Property)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("predicate"), &predicateList)...)
-				if len(predicateList.Elements()) == 1 {
-					predicate := predicateList.Elements()[0]
-					upgradedStateModel.Predicate, diags = types.ObjectValueFrom(ctx, predicateType, predicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.Predicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("predicate"), &upgradedStateModel.Predicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},

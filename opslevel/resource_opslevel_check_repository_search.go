@@ -137,15 +137,11 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"file_contents_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"file_contents_predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckRepositorySearchResourceModel{}
-				fileContentsPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -160,14 +156,7 @@ func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[in
 
 				// repository file specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_extensions"), &upgradedStateModel.FileExtensions)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &fileContentsPredicateList)...)
-				if len(fileContentsPredicateList.Elements()) == 1 {
-					fileContentsPredicate := fileContentsPredicateList.Elements()[0]
-					upgradedStateModel.FileContentsPredicate, diags = types.ObjectValueFrom(ctx, predicateType, fileContentsPredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.FileContentsPredicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("file_contents_predicate"), &upgradedStateModel.FileContentsPredicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -122,15 +121,11 @@ func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]re
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"tag_predicate": schema.ListNestedBlock{
-						NestedObject: predicateSchemaV0,
-					},
+					"tag_predicate": predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var diags diag.Diagnostics
 				upgradedStateModel := CheckTagDefinedResourceModel{}
-				tagPredicateList := types.ListNull(types.ObjectType{AttrTypes: predicateType})
 
 				// base check attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("category"), &upgradedStateModel.Category)...)
@@ -145,14 +140,7 @@ func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]re
 
 				// check tag defined specific attributes
 				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_key"), &upgradedStateModel.TagKey)...)
-				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &tagPredicateList)...)
-				if len(tagPredicateList.Elements()) == 1 {
-					tagPredicate := tagPredicateList.Elements()[0]
-					upgradedStateModel.TagPredicate, diags = types.ObjectValueFrom(ctx, predicateType, tagPredicate)
-					resp.Diagnostics.Append(diags...)
-				} else {
-					upgradedStateModel.TagPredicate = types.ObjectNull(predicateType)
-				}
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("tag_predicate"), &upgradedStateModel.TagPredicate)...)
 
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
 			},

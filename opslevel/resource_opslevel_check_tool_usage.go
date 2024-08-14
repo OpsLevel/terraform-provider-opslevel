@@ -153,45 +153,9 @@ func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]res
 					},
 				}),
 				Blocks: map[string]schema.Block{
-					"environment_predicate": schema.SingleNestedBlock{
-						Attributes: map[string]schema.Attribute{
-							"type": schema.StringAttribute{
-								Description: "A condition that should be satisfied.",
-								Required:    true,
-								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
-							},
-							"value": schema.StringAttribute{
-								Description: "The condition value used by the predicate.",
-								Optional:    true,
-							},
-						},
-					},
-					"tool_name_predicate": schema.SingleNestedBlock{
-						Attributes: map[string]schema.Attribute{
-							"type": schema.StringAttribute{
-								Description: "A condition that should be satisfied.",
-								Required:    true,
-								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
-							},
-							"value": schema.StringAttribute{
-								Description: "The condition value used by the predicate.",
-								Optional:    true,
-							},
-						},
-					},
-					"tool_url_predicate": schema.SingleNestedBlock{
-						Attributes: map[string]schema.Attribute{
-							"type": schema.StringAttribute{
-								Description: "A condition that should be satisfied.",
-								Required:    true,
-								Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllPredicateTypeEnum...)},
-							},
-							"value": schema.StringAttribute{
-								Description: "The condition value used by the predicate.",
-								Optional:    true,
-							},
-						},
-					},
+					"environment_predicate": predicateSchemaV0(),
+					"tool_name_predicate":   predicateSchemaV0(),
+					"tool_url_predicate":    predicateSchemaV0(),
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
