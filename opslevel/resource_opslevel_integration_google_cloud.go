@@ -146,14 +146,14 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 			"ownership_tag_keys": schema.SetAttribute{
 				ElementType: types.StringType,
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
-				Optional:    true,
+				Required:    true,
 				Validators: []validator.Set{
 					setvalidator.SizeBetween(1, 5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
 				Description: "Allow tags imported from Google Cloud to override ownership set in OpsLevel directly.",
-				Optional:    true,
+				Required:    true,
 			},
 			"projects": schema.ListAttribute{
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
