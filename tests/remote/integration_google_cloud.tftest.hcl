@@ -1,9 +1,9 @@
 variables {
-  client_email = "hello-world-tf@powerful-surf-427415-v1.iam.gserviceaccount.com"
-  name = "TF Remote Integration GCP"
-  ownership_tag_keys = toset(["opslevel_team", "team", "owner"])
+  client_email            = "hello-world-tf@powerful-surf-427415-v1.iam.gserviceaccount.com"
+  name                    = "TF Remote Integration GCP"
+  ownership_tag_keys      = toset(["opslevel_team", "team", "owner"])
   ownership_tag_overrides = true
-  private_key = "abc123"
+  private_key             = "abc123"
 }
 
 run "resource_integration_google_cloud_with_ownership_tag_keys" {
@@ -49,10 +49,10 @@ run "resource_integration_google_cloud_with_ownership_tag_keys" {
 
 run "resource_integration_google_cloud_without_ownership_tag_keys" {
   variables {
-    name = "TF Remote Integration GCP Without Ownership Tag Keys"
-    ownership_tag_keys = toset([])
+    name                    = "TF Remote Integration GCP Without Ownership Tag Keys"
+    ownership_tag_keys      = toset([])
     ownership_tag_overrides = false
-    private_key = "abc123456"
+    private_key             = "abc123456"
   }
 
   module {

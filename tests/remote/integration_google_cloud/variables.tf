@@ -1,17 +1,17 @@
 variable "client_email" {
-  type        = string
+  type = string
 }
 
 variable "private_key" {
-  type        = string
+  type = string
 }
 
 variable "name" {
-  type        = string
+  type = string
 }
 
 variable "ownership_tag_keys" {
-  type = set(string)
+  type    = set(string)
   default = null
 }
 
