@@ -204,7 +204,7 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	readIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
+	readIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Google Cloud integration, got error: '%s'", err))
 		return
