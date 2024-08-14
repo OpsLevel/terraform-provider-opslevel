@@ -123,9 +123,6 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "The private key for the service account that OpsLevel uses to access the Google Cloud account.",
 				Required:    true,
 				Sensitive:   true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"created_at": schema.StringAttribute{
 				Description: "The time this integration was created.",
