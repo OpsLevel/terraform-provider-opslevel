@@ -61,23 +61,15 @@ type integrationGoogleCloudResourceModel struct {
 
 func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudIntegration opslevel.Integration, givenModel integrationGoogleCloudResourceModel, diags *diag.Diagnostics) integrationGoogleCloudResourceModel {
 	resourceModel := integrationGoogleCloudResourceModel{
-		Aliases:     OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
-		ClientEmail: givenModel.ClientEmail,
-		CreatedAt:   ComputedStringValue(googleCloudIntegration.CreatedAt.Local().Format(time.RFC850)),
-		Id:          ComputedStringValue(string(googleCloudIntegration.Id)),
-		InstalledAt: ComputedStringValue(googleCloudIntegration.InstalledAt.Local().Format(time.RFC850)),
-		Name:        RequiredStringValue(googleCloudIntegration.Name),
-		PrivateKey:  givenModel.PrivateKey,
-	}
-	if givenModel.OwnershipTagKeys.IsNull() {
-		resourceModel.OwnershipTagKeys = types.SetNull(types.StringType)
-	} else {
-		resourceModel.OwnershipTagKeys = StringSliceToSetValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys)
-	}
-	if givenModel.TagsOverrideOwnership.IsNull() {
-		resourceModel.TagsOverrideOwnership = types.BoolNull()
-	} else {
-		resourceModel.TagsOverrideOwnership = types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership)
+		Aliases:               OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.Aliases),
+		ClientEmail:           givenModel.ClientEmail,
+		CreatedAt:             ComputedStringValue(googleCloudIntegration.CreatedAt.Local().Format(time.RFC850)),
+		Id:                    ComputedStringValue(string(googleCloudIntegration.Id)),
+		InstalledAt:           ComputedStringValue(googleCloudIntegration.InstalledAt.Local().Format(time.RFC850)),
+		Name:                  RequiredStringValue(googleCloudIntegration.Name),
+		OwnershipTagKeys:      StringSliceToSetValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys),
+		PrivateKey:            givenModel.PrivateKey,
+		TagsOverrideOwnership: types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership),
 	}
 
 	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
@@ -148,7 +140,7 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
 				Required:    true,
 				Validators: []validator.Set{
-					setvalidator.SizeBetween(1, 5),
+					setvalidator.SizeAtMost(5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
@@ -183,11 +175,9 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 	input := opslevel.GoogleCloudIntegrationInput{
 		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
 		Name:                  planModel.Name.ValueStringPointer(),
+		OwnershipTagKeys:      &ownershipTagKeys,
 		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
 		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
-	}
-	if len(ownershipTagKeys) > 0 {
-		input.OwnershipTagKeys = &ownershipTagKeys
 	}
 
 	createdIntegration, err := r.client.CreateIntegrationGCP(input)
@@ -237,22 +227,18 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	input := opslevel.GoogleCloudIntegrationInput{
-		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
-		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
-	}
 	ownershipTagKeys, diags := SetValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	// schema requires at least one ownership tag,
-	if planModel.OwnershipTagKeys.IsNull() {
-		input.OwnershipTagKeys = new([]string)
-	} else if len(ownershipTagKeys) > 0 {
-		input.OwnershipTagKeys = &ownershipTagKeys
+
+	input := opslevel.GoogleCloudIntegrationInput{
+		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
+		Name:                  planModel.Name.ValueStringPointer(),
+		OwnershipTagKeys:      &ownershipTagKeys,
+		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
+		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
 	}
 
 	updatedIntegration, err := r.client.UpdateIntegrationGCP(planModel.Id.ValueString(), input)

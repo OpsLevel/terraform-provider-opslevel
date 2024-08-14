@@ -6,7 +6,7 @@ variables {
   private_key = "abc123"
 }
 
-run "resource_integration_google_cloud_create" {
+run "resource_integration_google_cloud_with_ownership_tag_keys" {
   module {
     source = "./integration_google_cloud"
   }
@@ -47,9 +47,9 @@ run "resource_integration_google_cloud_create" {
   }
 }
 
-run "resource_integration_google_cloud_update" {
+run "resource_integration_google_cloud_without_ownership_tag_keys" {
   variables {
-    name = "TF Remote Integration GCP Updated"
+    name = "TF Remote Integration GCP Without Ownership Tag Keys"
     ownership_tag_keys = toset([])
     ownership_tag_overrides = false
     private_key = "abc123456"
