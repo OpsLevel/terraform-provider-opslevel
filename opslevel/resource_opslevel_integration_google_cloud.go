@@ -73,9 +73,14 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 		Id:                    ComputedStringValue(string(googleCloudIntegration.Id)),
 		InstalledAt:           ComputedStringValue(googleCloudIntegration.InstalledAt.UTC().Format(time.RFC3339)),
 		Name:                  RequiredStringValue(googleCloudIntegration.Name),
-		OwnershipTagKeys:      StringSliceToListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys),
 		PrivateKey:            givenModel.PrivateKey,
 		TagsOverrideOwnership: types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership),
+	}
+
+	if len(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys) == 0 {
+		resourceModel.OwnershipTagKeys = types.ListValueMust(types.StringType, make([]attr.Value, 0))
+	} else {
+		resourceModel.OwnershipTagKeys = OptionalStringListValue(googleCloudIntegration.GoogleCloudIntegrationFragment.OwnershipTagKeys)
 	}
 
 	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
@@ -179,7 +184,7 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	ownershipTagKeys, diags := ListValueToStringSliceOrNil(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -239,7 +244,7 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	ownershipTagKeys, diags := ListValueToStringSliceOrNil(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

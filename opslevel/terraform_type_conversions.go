@@ -98,14 +98,6 @@ func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) 
 	return dataAsSlice, diags
 }
 
-// Converts a basetypes.ListValue to a []string (returns nil if input list value is null)
-func ListValueToStringSliceOrNil(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
-	if listValue.IsNull() {
-		return nil, nil
-	}
-	return ListValueToStringSlice(ctx, listValue)
-}
-
 // Converts a basetypes.SetValue to a []string
 func SetValueToStringSlice(ctx context.Context, setValue basetypes.SetValue) ([]string, diag.Diagnostics) {
 	dataAsSlice := []string{}
@@ -123,15 +115,6 @@ func StringSliceToSetValue(values []string) basetypes.SetValue {
 		result = append(result, types.StringValue(value))
 	}
 	return types.SetValueMust(types.StringType, result)
-}
-
-// Converts a []string to a basetypes.SetValue (returns empty values array if input string array is nil)
-func StringSliceToListValue(values []string) basetypes.ListValue {
-	result := []attr.Value{}
-	for _, value := range values {
-		result = append(result, types.StringValue(value))
-	}
-	return types.ListValueMust(types.StringType, result)
 }
 
 func TagSetValueToTagSlice(ctx context.Context, setValue basetypes.SetValue) ([]opslevel.Tag, diag.Diagnostics) {
