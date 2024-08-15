@@ -146,7 +146,8 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5 (default = [\"owner\"])",
 				Optional:    true,
 				Computed:    true,
-				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
+				// current API default below
+				Default: listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 					listvalidator.SizeAtMost(5),
@@ -226,7 +227,6 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a Google Cloud integration")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
@@ -239,7 +239,6 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	// ownership_tag_keys is optional - if null send an empty array to the API
 	ownershipTagKeys, diags := ListValueToStringSliceOrNil(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
