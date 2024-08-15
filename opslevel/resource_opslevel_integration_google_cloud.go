@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -76,11 +78,6 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 		TagsOverrideOwnership: types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership),
 	}
 
-	// ownership_tag_keys is optional - if empty set it to null in the model
-	if len(resourceModel.OwnershipTagKeys.Elements()) == 0 {
-		resourceModel.OwnershipTagKeys = types.ListNull(types.StringType)
-	}
-
 	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
 	for i, project := range googleCloudIntegration.Projects {
 		projects[i] = googleCloudProjectResourceModel{
@@ -146,10 +143,10 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 			},
 			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
-				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
+				Description: "An Array of tag keys used to associate ownership from an integration. Max 5 (default = [\"owner\"])",
 				Optional:    true,
 				Computed:    true,
-				// Current API default is ["owner"] - if this is not set (null) we will send an empty array to the API
+				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 					listvalidator.SizeAtMost(5),
@@ -181,14 +178,10 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	// ownership_tag_keys is optional - if null send an empty array to the API
-	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSliceOrNil(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-	if ownershipTagKeys == nil {
-		ownershipTagKeys = []string{}
 	}
 
 	input := opslevel.GoogleCloudIntegrationInput{
@@ -247,13 +240,10 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 	}
 
 	// ownership_tag_keys is optional - if null send an empty array to the API
-	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
+	ownershipTagKeys, diags := ListValueToStringSliceOrNil(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-	if ownershipTagKeys == nil {
-		ownershipTagKeys = []string{}
 	}
 
 	input := opslevel.GoogleCloudIntegrationInput{

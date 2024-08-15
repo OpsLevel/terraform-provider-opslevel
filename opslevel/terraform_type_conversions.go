@@ -88,7 +88,7 @@ func unquote(value string) string {
 	return value
 }
 
-// Converts a basetypes.ListValue to a []string
+// Converts a basetypes.ListValue to a []string (returns empty string array if input list value is null)
 func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
 	dataAsSlice := []string{}
 	if listValue.IsNull() {
@@ -96,6 +96,14 @@ func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) 
 	}
 	diags := listValue.ElementsAs(ctx, &dataAsSlice, true)
 	return dataAsSlice, diags
+}
+
+// Converts a basetypes.ListValue to a []string (returns nil if input list value is null)
+func ListValueToStringSliceOrNil(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
+	if listValue.IsNull() {
+		return nil, nil
+	}
+	return ListValueToStringSlice(ctx, listValue)
 }
 
 // Converts a basetypes.SetValue to a []string
@@ -117,7 +125,7 @@ func StringSliceToSetValue(values []string) basetypes.SetValue {
 	return types.SetValueMust(types.StringType, result)
 }
 
-// Converts a []string to a basetypes.SetValue
+// Converts a []string to a basetypes.SetValue (returns empty values array if input string array is nil)
 func StringSliceToListValue(values []string) basetypes.ListValue {
 	result := []attr.Value{}
 	for _, value := range values {
