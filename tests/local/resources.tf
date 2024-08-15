@@ -83,32 +83,6 @@ resource "opslevel_integration_azure_resources" "example" {
   tenant_id               = "98765432-9876-9876-9876-987654321098"
 }
 
-# Integration Azure Resources resources
-
-resource "opslevel_integration_google_cloud" "example" {
-  client_email            = "hello-world-tf@powerful-surf-427415-v1.iam.gserviceaccount.com"
-  name                    = "GCP Dev Integration"
-  ownership_tag_keys      = ["opslevel_team", "team", "owner"]
-  ownership_tag_overrides = true
-  private_key             = <<EOH
------BEGIN PRIVATE KEY-----
-<private key body here>
------END PRIVATE KEY-----
-EOH
-}
-
-resource "opslevel_integration_google_cloud" "small" {
-  client_email            = "hello-world-tf@powerful-surf-427415-v1.iam.gserviceaccount.com"
-  name                    = "GCP Dev Integration"
-  ownership_tag_keys      = []
-  ownership_tag_overrides = false
-  private_key             = <<EOH
------BEGIN PRIVATE KEY-----
-<private key body here>
------END PRIVATE KEY-----
-EOH
-}
-
 # Property Assignment
 
 resource "opslevel_property_assignment" "color_picker_using_aliases" {
