@@ -142,6 +142,7 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
 				Required:    true,
 				Validators: []validator.List{
+					listvalidator.UniqueValues(),
 					listvalidator.SizeAtMost(5),
 				},
 			},
