@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -74,6 +76,11 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 		TagsOverrideOwnership: types.BoolValue(googleCloudIntegration.GoogleCloudIntegrationFragment.TagsOverrideOwnership),
 	}
 
+	// ownership_tag_keys is optional - if empty set it to null in the model
+	if len(resourceModel.OwnershipTagKeys.Elements()) == 0 {
+		resourceModel.OwnershipTagKeys = types.ListNull(types.StringType)
+	}
+
 	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
 	for i, project := range googleCloudIntegration.Projects {
 		projects[i] = googleCloudProjectResourceModel{
@@ -140,15 +147,20 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				// Current API default is ["owner"] - if this is not set (null) we will send an empty array to the API
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 					listvalidator.SizeAtMost(5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
-				Description: "Allow tags imported from Google Cloud to override ownership set in OpsLevel directly.",
-				Required:    true,
+				Description: "Allow tags imported from Google Cloud to override ownership set in OpsLevel directly. (default = true)",
+				Optional:    true,
+				Computed:    true,
+				// current API default is true
+				Default: booldefault.StaticBool(true),
 			},
 			"projects": schema.ListAttribute{
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
@@ -169,17 +181,21 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 		return
 	}
 
+	// ownership_tag_keys is optional - if null send an empty array to the API
 	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	if ownershipTagKeys == nil {
+		ownershipTagKeys = []string{}
+	}
 
 	input := opslevel.GoogleCloudIntegrationInput{
 		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
 		Name:                  planModel.Name.ValueStringPointer(),
-		OwnershipTagKeys:      &ownershipTagKeys,
 		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
+		OwnershipTagKeys:      &ownershipTagKeys,
 		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
 	}
 
@@ -230,10 +246,14 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 		return
 	}
 
+	// ownership_tag_keys is optional - if null send an empty array to the API
 	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+	if ownershipTagKeys == nil {
+		ownershipTagKeys = []string{}
 	}
 
 	input := opslevel.GoogleCloudIntegrationInput{
