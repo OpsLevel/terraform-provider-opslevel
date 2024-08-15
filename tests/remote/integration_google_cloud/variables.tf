@@ -12,9 +12,11 @@ variable "name" {
 }
 
 variable "ownership_tag_keys" {
-  type = list(string)
+  type    = list(string)
+  default = null
 }
 
 variable "ownership_tag_overrides" {
-  type = bool
+  type    = bool
+  default = null
 }

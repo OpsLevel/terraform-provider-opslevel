@@ -1,3 +1,4 @@
 output "test" {
-  value = nonsensitive(opslevel_integration_google_cloud.test)
+  value     = opslevel_integration_google_cloud.test
+  sensitive = true
 }
