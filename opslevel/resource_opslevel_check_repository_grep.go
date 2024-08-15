@@ -94,6 +94,7 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 	predicateSchema.Required = true
 
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository Grep Resource",
 
