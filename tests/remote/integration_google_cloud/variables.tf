@@ -3,7 +3,8 @@ variable "client_email" {
 }
 
 variable "private_key" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "name" {
