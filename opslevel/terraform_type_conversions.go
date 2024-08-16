@@ -88,7 +88,7 @@ func unquote(value string) string {
 	return value
 }
 
-// Converts a basetypes.ListValue to a []string
+// Converts a basetypes.ListValue to a []string (returns empty string array if input list value is null)
 func ListValueToStringSlice(ctx context.Context, listValue basetypes.ListValue) ([]string, diag.Diagnostics) {
 	dataAsSlice := []string{}
 	if listValue.IsNull() {

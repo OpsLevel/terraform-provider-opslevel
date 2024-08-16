@@ -66,6 +66,7 @@ error_wrong_index                   = "wrong index for 'TYPE'"
 error_wrong_id                      = "wrong id for 'TYPE'"
 error_wrong_name                    = "wrong name for 'TYPE'"
 error_wrong_owner                   = "wrong owner for 'TYPE'"
+error_wrong_value                   = "wrong value for 'TYPE'"
 id_prefix                           = "Z2lkOi8v"
 predicate_types_contains            = ["does_not_contain", "contains"]
 predicate_types_ends_or_starts_with = ["ends_with", "starts_with"]
