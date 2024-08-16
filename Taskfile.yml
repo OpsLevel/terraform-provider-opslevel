@@ -90,7 +90,7 @@ tasks:
     cmds:
       - task: setup-terraform
       - task: terraform-command
-        vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'apply -auto-approve', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-build:
     desc: Build local opslevel terraform provider
@@ -133,7 +133,7 @@ tasks:
     cmds:
       - task: setup-terraform
       - task: terraform-command
-        vars: { TF_COMMAND: 'destroy -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'destroy -auto-approve', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-init:
     desc: Initialize terraform workspace
@@ -161,7 +161,7 @@ tasks:
     cmds:
       - task: setup-terraform
       - task: terraform-command
-        vars: { TF_COMMAND: 'plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'plan', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-validate:
     desc: Rebuild and run "terraform validate" in "{{.WORKSPACE_DIR}}"
