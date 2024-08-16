@@ -167,3 +167,11 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	}
 	return output
 }
+
+func CheckUpgradeFunc[T any]() func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+	return func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+		upgradedStateModel := *new(T)
+		resp.Diagnostics.Append(req.State.Get(ctx, &upgradedStateModel)...)
+		resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateModel)...)
+	}
+}

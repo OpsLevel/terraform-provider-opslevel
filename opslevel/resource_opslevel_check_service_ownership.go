@@ -107,6 +107,7 @@ func (r *CheckServiceOwnershipResource) Metadata(ctx context.Context, req resour
 func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	enumAllContactTypes := append(opslevel.AllContactType, "any")
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Service Ownership Resource",
 
@@ -133,6 +134,41 @@ func (r *CheckServiceOwnershipResource) Schema(ctx context.Context, req resource
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckServiceOwnershipResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	enumAllContactTypes := append(opslevel.AllContactType, "any")
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"require_contact_method": schema.BoolAttribute{
+						Description: "True if a service's owner must have a contact method, False otherwise.",
+						Computed:    true,
+						Optional:    true,
+						Default:     booldefault.StaticBool(false),
+					},
+					"contact_method": schema.StringAttribute{
+						Description: fmt.Sprintf(
+							"The type of contact method that is required. One of `%s`",
+							strings.Join(enumAllContactTypes, "`, `"),
+						),
+						Computed:   true,
+						Optional:   true,
+						Default:    stringdefault.StaticString("ANY"),
+						Validators: []validator.String{stringvalidator.OneOfCaseInsensitive(enumAllContactTypes...)},
+					},
+					"tag_key": schema.StringAttribute{
+						Description: "The tag key where the tag predicate should be applied.",
+						Optional:    true,
+					},
+					"tag_predicate": PredicateSchema(),
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckServiceOwnershipResourceModel](),
+		},
 	}
 }
 

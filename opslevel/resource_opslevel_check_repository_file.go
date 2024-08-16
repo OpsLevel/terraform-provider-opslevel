@@ -96,6 +96,7 @@ func (r *CheckRepositoryFileResource) Metadata(ctx context.Context, req resource
 
 func (r *CheckRepositoryFileResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository File Resource",
 
@@ -115,6 +116,33 @@ func (r *CheckRepositoryFileResource) Schema(ctx context.Context, req resource.S
 				Required:    true,
 			},
 		}),
+	}
+}
+
+func (r *CheckRepositoryFileResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"directory_search": schema.BoolAttribute{
+						Description: "Whether the check looks for the existence of a directory instead of a file.",
+						Required:    true,
+					},
+					"filepaths": schema.ListAttribute{
+						Description: "Restrict the search to certain file paths.",
+						Required:    true,
+						ElementType: types.StringType,
+					},
+					"file_contents_predicate": PredicateSchema(),
+					"use_absolute_root": schema.BoolAttribute{
+						Description: "Whether the checks looks at the absolute root of a repo or the relative root (the directory specified when attached a repo to a service).",
+						Required:    true,
+					},
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckRepositoryFileResourceModel](),
+		},
 	}
 }
 

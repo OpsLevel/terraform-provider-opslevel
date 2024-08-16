@@ -92,6 +92,7 @@ func (r *CheckAlertSourceUsageResource) Metadata(ctx context.Context, req resour
 
 func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Alert Source Usage Resource",
 
@@ -106,6 +107,28 @@ func (r *CheckAlertSourceUsageResource) Schema(ctx context.Context, req resource
 			},
 			"alert_name_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckAlertSourceUsageResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"alert_type": schema.StringAttribute{
+						Description: fmt.Sprintf(
+							"The type of the alert source. One of `%s`",
+							strings.Join(opslevel.AllAlertSourceTypeEnum, "`, `"),
+						),
+						Required:   true,
+						Validators: []validator.String{stringvalidator.OneOf(opslevel.AllAlertSourceTypeEnum...)},
+					},
+					"alert_name_predicate": PredicateSchema(),
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckAlertSourceUsageResourceModel](),
+		},
 	}
 }
 

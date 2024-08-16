@@ -95,6 +95,7 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 	predicateSchema.Required = true
 
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository Grep Resource",
 
@@ -110,6 +111,33 @@ func (r *CheckRepositoryGrepResource) Schema(ctx context.Context, req resource.S
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
+	}
+}
+
+func (r *CheckRepositoryGrepResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	predicateSchema := PredicateSchema()
+	predicateSchema.Optional = false
+	predicateSchema.Required = true
+
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"directory_search": schema.BoolAttribute{
+						Description: "Whether the check looks for the existence of a directory instead of a file.",
+						Required:    true,
+					},
+					"filepaths": schema.ListAttribute{
+						Description: "Restrict the search to certain file paths.",
+						Required:    true,
+						ElementType: types.StringType,
+					},
+					"file_contents_predicate": predicateSchema,
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckRepositoryGrepResourceModel](),
+		},
 	}
 }
 

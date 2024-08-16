@@ -90,6 +90,7 @@ func (r *CheckTagDefinedResource) Metadata(ctx context.Context, req resource.Met
 
 func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Tag Defined Resource",
 
@@ -100,6 +101,24 @@ func (r *CheckTagDefinedResource) Schema(ctx context.Context, req resource.Schem
 			},
 			"tag_predicate": PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckTagDefinedResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"tag_key": schema.StringAttribute{
+						Description: "The tag key where the tag predicate should be applied.",
+						Required:    true,
+					},
+					"tag_predicate": PredicateSchema(),
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckTagDefinedResourceModel](),
+		},
 	}
 }
 

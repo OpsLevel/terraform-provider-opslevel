@@ -101,6 +101,7 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 	predicateSchema.Required = true
 
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Repository Search Resource",
 
@@ -115,6 +116,32 @@ func (r *CheckRepositorySearchResource) Schema(ctx context.Context, req resource
 			},
 			"file_contents_predicate": predicateSchema,
 		}),
+	}
+}
+
+func (r *CheckRepositorySearchResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	predicateSchema := PredicateSchema()
+	predicateSchema.Optional = false
+	predicateSchema.Required = true
+
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"file_extensions": schema.SetAttribute{
+						Description: "Restrict the search to files of given extensions. Extensions should contain only letters and numbers. For example: [\"py\", \"rb\"].",
+						Optional:    true,
+						ElementType: types.StringType,
+						Validators: []validator.Set{
+							setvalidator.SizeAtLeast(1),
+						},
+					},
+					"file_contents_predicate": predicateSchema,
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckRepositorySearchResourceModel](),
+		},
 	}
 }
 

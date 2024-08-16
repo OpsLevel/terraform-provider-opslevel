@@ -116,6 +116,7 @@ func (r *CheckToolUsageResource) Metadata(ctx context.Context, req resource.Meta
 
 func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Version: 1,
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Check Tool Usage Resource",
 
@@ -132,6 +133,30 @@ func (r *CheckToolUsageResource) Schema(ctx context.Context, req resource.Schema
 			"tool_name_predicate":   PredicateSchema(),
 			"tool_url_predicate":    PredicateSchema(),
 		}),
+	}
+}
+
+func (r *CheckToolUsageResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		// State upgrade implementation from 0 (prior state version) to 1 (Schema.Version)
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+					"tool_category": schema.StringAttribute{
+						Description: fmt.Sprintf(
+							"The category that the tool belongs to. One of `%s`",
+							strings.Join(opslevel.AllToolCategory, "`, `"),
+						),
+						Required:   true,
+						Validators: []validator.String{stringvalidator.OneOf(opslevel.AllToolCategory...)},
+					},
+					"environment_predicate": PredicateSchema(),
+					"tool_name_predicate":   PredicateSchema(),
+					"tool_url_predicate":    PredicateSchema(),
+				}),
+			},
+			StateUpgrader: CheckUpgradeFunc[CheckToolUsageResourceModel](),
+		},
 	}
 }
 
