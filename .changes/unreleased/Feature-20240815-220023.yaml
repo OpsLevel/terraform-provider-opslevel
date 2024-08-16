@@ -1,0 +1,3 @@
+kind: Feature
+body: opslevel_users datasource can filter out deactivated users
+time: 2024-08-15T22:00:23.213997-05:00

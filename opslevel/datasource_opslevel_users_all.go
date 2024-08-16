@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -21,7 +22,8 @@ type UserDataSourcesAll struct {
 }
 
 type userDataSourcesAllModel struct {
-	Users []userDataSourceModel `tfsdk:"users"`
+	IgnoreDeactivated types.Bool            `tfsdk:"ignore_deactivated"`
+	Users             []userDataSourceModel `tfsdk:"users"`
 }
 
 func newUserDataSourcesAllModel(users []opslevel.User) userDataSourcesAllModel {
@@ -42,6 +44,10 @@ func (d *UserDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 		MarkdownDescription: "List of all User data sources",
 
 		Attributes: map[string]schema.Attribute{
+			"ignore_deactivated": schema.BoolAttribute{
+				Description: "Do not list deactivated users if set.",
+				Optional:    true,
+			},
 			"users": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: userDatasourceSchemaAttrs,
@@ -55,19 +61,26 @@ func (d *UserDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 
 func (d *UserDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var planModel, stateModel userDataSourcesAllModel
+	var users *opslevel.UserConnection
+	var err error
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	users, err := d.client.ListUsers(nil)
+	if planModel.IgnoreDeactivated.ValueBool() {
+		withoutDeactivedUsers := d.client.InitialPageVariablesPointer().WithoutDeactivedUsers()
+		users, err = d.client.ListUsers(withoutDeactivedUsers)
+	} else {
+		users, err = d.client.ListUsers(nil)
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list users, got error: %s", err))
 		return
 	}
 	stateModel = newUserDataSourcesAllModel(users.Nodes)
+	stateModel.IgnoreDeactivated = planModel.IgnoreDeactivated
 
 	tflog.Trace(ctx, "listed all OpsLevel User data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
