@@ -3,7 +3,9 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -14,7 +16,10 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &PropertyAssignmentResource{}
+var (
+	_ resource.ResourceWithConfigure   = &PropertyAssignmentResource{}
+	_ resource.ResourceWithImportState = &PropertyAssignmentResource{}
+)
 
 type PropertyAssignmentResource struct {
 	CommonResourceClient
@@ -167,4 +172,24 @@ func (resource *PropertyAssignmentResource) Delete(ctx context.Context, req reso
 		return
 	}
 	tflog.Trace(ctx, fmt.Sprintf("unassigned property (%s) on service (%s)", definition, owner))
+}
+
+func (r *PropertyAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	ids := strings.Split(req.ID, ":")
+	if len(ids) != 2 {
+		resp.Diagnostics.AddError(
+			"Invalid format given for Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<service-id-or-alias>:<property-id-or-alias>'. Given '%s'", req.ID),
+		)
+		return
+	}
+
+	serviceId := ids[0]
+	propertyId := ids[1]
+
+	definitionPath := path.Root("definition")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, definitionPath, propertyId)...)
+
+	ownerPath := path.Root("owner")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, ownerPath, serviceId)...)
 }
