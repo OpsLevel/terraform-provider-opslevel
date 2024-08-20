@@ -65,24 +65,16 @@ type domainDataSourceModel struct {
 
 // domainDataSourceModelWithIdentifier needed for a single Domain
 type domainDataSourceModelWithIdentifier struct {
-	Aliases     types.List   `tfsdk:"aliases"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
-	Identifier  types.String `tfsdk:"identifier"`
-	Name        types.String `tfsdk:"name"`
-	Owner       types.String `tfsdk:"owner"`
+	Identifier types.String `tfsdk:"identifier"`
+	domainDataSourceModel
 }
 
 // newDomainDataSourceModelWithIdentifier used for a single Domain
 func newDomainDataSourceModelWithIdentifier(domain opslevel.Domain, identifier types.String) domainDataSourceModelWithIdentifier {
-	domainAliases := OptionalStringListValue(domain.Aliases)
+	domainDataSourceModel := newDomainDataSourceModel(domain)
 	domainDataSourceModelWithIdentifier := domainDataSourceModelWithIdentifier{
-		Aliases:     domainAliases,
-		Description: ComputedStringValue(domain.Description),
-		Id:          ComputedStringValue(string(domain.Id)),
-		Identifier:  identifier,
-		Name:        ComputedStringValue(domain.Name),
-		Owner:       ComputedStringValue(string(domain.Owner.Id())),
+		domainDataSourceModel: domainDataSourceModel,
+		Identifier:            identifier,
 	}
 	return domainDataSourceModelWithIdentifier
 }
