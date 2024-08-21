@@ -105,17 +105,48 @@ tasks:
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
   debug-start:
-    desc: Start headless debug
-    aliases: ["debug"]
+    desc: First, start headless debug
+    aliases: ["dbg-start", "dbg1", "debug1"]
     vars:
-      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
+      BINARY: terraform-provider-opslevel-debug_{{.VERSION_DYNAMIC}}
+    interactive: true
     cmds:
-      - >-
-        dlv debug .
-        --build-flags="-gcflags='all=-N -l' -ldflags='-X main.version={{.VERSION_DYNAMIC}}'"
-        --api-version=2
-        --
-        --debug
+      - defer: rm {{.BINARY}}
+      - go build -gcflags="all=-N -l" -ldflags="-X main.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
+      - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
+
+  debug-attach:
+    desc: Second, attach to headless debug sessions
+    aliases: ["dbg-attach", "dbg2", "debug2"]
+    vars:
+      LOCAL_PORT:
+        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
+    interactive: true
+    cmds:
+      - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
+      - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
+
+  debug-apply:
+    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
+    aliases: ["dbg-apply"]
+    vars:
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    cmds:
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.WORKSPACE_DIR}}" apply -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
+
+  debug-plan:
+    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
+    aliases: ["dbg-plan"]
+    vars:
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    cmds:
+      - echo "After 'terraform plan' is started, return to shell with interactive delve session"
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.WORKSPACE_DIR}}" plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
 
   terraform-clean:
     desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
