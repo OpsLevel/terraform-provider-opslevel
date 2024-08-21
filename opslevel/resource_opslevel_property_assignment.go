@@ -138,8 +138,11 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	definition := planModel.Definition.ValueString()
 	owner := planModel.Owner.ValueString()
 	assignment, err := resource.client.GetProperty(owner, definition)
-	if err != nil || assignment == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment (%s) on service (%s), got error: %s", definition, owner, err))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
+		return
+	} else if assignment == nil || string(assignment.Definition.Id) == "" {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("property assignment '%s' not found on service '%s'", definition, owner))
 		return
 	}
 	value := *assignment.Value
