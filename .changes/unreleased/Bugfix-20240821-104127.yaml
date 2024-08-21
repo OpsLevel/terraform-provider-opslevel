@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Fix state upgrader for checks created by 1.0.x and 1.1.x so that you can properly
+  upgrade to 1.2.x
+time: 2024-08-21T10:41:27.506151-05:00
