@@ -49,42 +49,40 @@ type teamContactModel struct {
 	Type        types.String `tfsdk:"type"`
 }
 
-func (tcm teamContactModel) schemaAttributes() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"address": schema.StringAttribute{
-			Description: "The contact address. Examples: 'support@company.com' for type email, 'https://opslevel.com' for type web.",
-			Computed:    true,
+var teamContactsNestedSchemaAttrs = map[string]schema.Attribute{
+	"address": schema.StringAttribute{
+		Description: "The contact address. Examples: 'support@company.com' for type email, 'https://opslevel.com' for type web.",
+		Computed:    true,
+	},
+	"display_name": schema.StringAttribute{
+		Description: "The name shown in the UI for the contact.",
+		Computed:    true,
+	},
+	"display_type": schema.StringAttribute{
+		Description: "The type shown in the UI for the contact.",
+		Computed:    true,
+	},
+	"external_id": schema.StringAttribute{
+		Description: "The remote identifier of the contact method.",
+		Computed:    true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The unique identifier for the contact.",
+		Computed:    true,
+	},
+	"is_default": schema.BoolAttribute{
+		Description: "Indicates if this address is a team's default for the given type.",
+		Computed:    true,
+	},
+	"type": schema.StringAttribute{
+		Description: fmt.Sprintf("The method of contact. One of [`%s`].",
+			strings.Join(opslevel.AllContactType, "`, `"),
+		),
+		Computed: true,
+		Validators: []validator.String{
+			stringvalidator.OneOf(opslevel.AllContactType...),
 		},
-		"display_name": schema.StringAttribute{
-			Description: "The name shown in the UI for the contact.",
-			Computed:    true,
-		},
-		"display_type": schema.StringAttribute{
-			Description: "The type shown in the UI for the contact.",
-			Computed:    true,
-		},
-		"external_id": schema.StringAttribute{
-			Description: "The remote identifier of the contact method.",
-			Computed:    true,
-		},
-		"id": schema.StringAttribute{
-			Description: "The unique identifier for the contact.",
-			Computed:    true,
-		},
-		"is_default": schema.BoolAttribute{
-			Description: "Indicates if this address is a team's default for the given type.",
-			Computed:    true,
-		},
-		"type": schema.StringAttribute{
-			Description: fmt.Sprintf("The method of contact. One of [`%s`].",
-				strings.Join(opslevel.AllContactType, "`, `"),
-			),
-			Computed: true,
-			Validators: []validator.String{
-				stringvalidator.OneOf(opslevel.AllContactType...),
-			},
-		},
-	}
+	},
 }
 
 func newTeamContactModel(contact opslevel.Contact) teamContactModel {
@@ -127,7 +125,7 @@ func teamContactAttrs() map[string]attr.Type {
 var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
 	"contacts": schema.ListNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
-			Attributes: teamContactModel{}.schemaAttributes(),
+			Attributes: teamContactsNestedSchemaAttrs,
 		},
 		Description: "The contacts for the team.",
 		Computed:    true,
