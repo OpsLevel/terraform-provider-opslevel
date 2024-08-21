@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -102,6 +104,7 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				),
 				Computed: true,
 				Optional: true,
+				Default:  stringdefault.StaticString("SERVICE"),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -153,6 +156,7 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 
 func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var planModel TriggerDefinitionResourceModel
+	var extendedTeamsAccess basetypes.ListValue
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
@@ -191,12 +195,17 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	extendedTeams, err := triggerDefinition.ExtendedTeamAccess(r.client, nil)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
-		return
+	if planModel.ExtendedTeamAccess.IsNull() || planModel.ExtendedTeamAccess.IsUnknown() {
+		extendedTeamsAccess = types.ListNull(types.StringType)
+	} else if len(planModel.ExtendedTeamAccess.Elements()) == 0 {
+		extendedTeamsAccess = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		extendedTeamsAccess, err = getExtendedTeamAccessListValue(r.client, triggerDefinition)
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
+			return
+		}
 	}
-	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*triggerDefinition, extendedTeamsAccess)
 
 	tflog.Trace(ctx, "created a trigger definition resource")
@@ -205,6 +214,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 
 func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var planModel TriggerDefinitionResourceModel
+	var extendedTeamsAccess basetypes.ListValue
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
@@ -218,12 +228,18 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read trigger definition, got error: %s", err))
 		return
 	}
-	extendedTeams, err := triggerDefinition.ExtendedTeamAccess(r.client, nil)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
-		return
+
+	if planModel.ExtendedTeamAccess.IsNull() || planModel.ExtendedTeamAccess.IsUnknown() {
+		extendedTeamsAccess = types.ListNull(types.StringType)
+	} else if len(planModel.ExtendedTeamAccess.Elements()) == 0 {
+		extendedTeamsAccess = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		extendedTeamsAccess, err = getExtendedTeamAccessListValue(r.client, triggerDefinition)
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
+			return
+		}
 	}
-	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*triggerDefinition, extendedTeamsAccess)
 
 	// Save updated data into Terraform state
@@ -232,6 +248,7 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 
 func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var planModel TriggerDefinitionResourceModel
+	var extendedTeamsAccess basetypes.ListValue
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
@@ -268,12 +285,17 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	extendedTeams, err := updatedTriggerDefinition.ExtendedTeamAccess(r.client, nil)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
-		return
+	if planModel.ExtendedTeamAccess.IsNull() || planModel.ExtendedTeamAccess.IsUnknown() {
+		extendedTeamsAccess = types.ListNull(types.StringType)
+	} else if len(planModel.ExtendedTeamAccess.Elements()) == 0 {
+		extendedTeamsAccess = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		extendedTeamsAccess, err = getExtendedTeamAccessListValue(r.client, updatedTriggerDefinition)
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get teams for 'extended_team_access', got error: %s", err))
+			return
+		}
 	}
-	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
 	stateModel := NewTriggerDefinitionResourceModel(*updatedTriggerDefinition, extendedTeamsAccess)
 
 	tflog.Trace(ctx, "updated a trigger definition resource")
@@ -299,4 +321,13 @@ func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.Del
 
 func (r *TriggerDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func getExtendedTeamAccessListValue(client *opslevel.Client, triggerDefinition *opslevel.CustomActionsTriggerDefinition) (basetypes.ListValue, error) {
+	extendedTeams, err := triggerDefinition.ExtendedTeamAccess(client, nil)
+	if err != nil {
+		return types.ListNull(types.StringType), err
+	}
+	extendedTeamsAccess := OptionalStringListValue(flattenTeamsArray(extendedTeams))
+	return extendedTeamsAccess, nil
 }

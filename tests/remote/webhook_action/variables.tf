@@ -1,11 +1,13 @@
 variable "description" {
   type        = string
   description = "The description of the Webhook Action."
+  default     = null
 }
 
 variable "headers" {
   type        = map(string)
   description = "HTTP headers to be passed along with your webhook when triggered."
+  default     = null
 }
 
 variable "method" {
