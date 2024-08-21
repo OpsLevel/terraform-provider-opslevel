@@ -109,6 +109,7 @@ tasks:
     aliases: ["dbg-start", "dbg1", "debug1"]
     vars:
       BINARY: terraform-provider-opslevel-debug_{{.VERSION_DYNAMIC}}
+    interactive: true
     cmds:
       - defer: rm {{.BINARY}}
       - go build -gcflags="all=-N -l" -ldflags="-X main.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
@@ -123,6 +124,7 @@ tasks:
     vars:
       LOCAL_PORT:
         sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
+    interactive: true
     cmds:
       - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
       - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
