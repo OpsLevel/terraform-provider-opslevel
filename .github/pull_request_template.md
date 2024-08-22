@@ -33,4 +33,4 @@ Resolves #
 - [ ] I have run this code, and it appears to resolve the stated issue.
 - [ ] This PR does not reduce total test coverage
 - [ ] This PR has no user interface changes or has already received approval from product management to change the interface.
-- [ ] Make a [changie](https://github.com/OpsLevel/opslevel-go/blob/main/CONTRIBUTING.md#changie-change-log-generation) entry that explains the customer facing outcome of this change
+- [ ] Make a [changie](https://github.com/OpsLevel/terraform-provider-opslevel/blob/main/CONTRIBUTING.md#changie-change-log-generation) entry that explains the customer facing outcome of this change
