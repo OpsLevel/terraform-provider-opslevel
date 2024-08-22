@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -40,17 +42,14 @@ type IntegrationAwsResourceModel struct {
 }
 
 func NewIntegrationAwsResourceModel(awsIntegration opslevel.Integration) IntegrationAwsResourceModel {
-	integrationAwsResourceModel := IntegrationAwsResourceModel{
+	return IntegrationAwsResourceModel{
 		ExternalID:            RequiredStringValue(awsIntegration.ExternalID),
 		IamRole:               RequiredStringValue(awsIntegration.IAMRole),
 		Id:                    ComputedStringValue(string(awsIntegration.Id)),
-		Name:                  OptionalStringValue(awsIntegration.Name),
+		Name:                  RequiredStringValue(awsIntegration.Name),
+		OwnershipTagKeys:      OptionalStringListValue(awsIntegration.AWSIntegrationFragment.OwnershipTagKeys),
 		OwnershipTagOverrides: types.BoolValue(awsIntegration.OwnershipTagOverride),
 	}
-	ownershipTagKeys := OptionalStringListValue(awsIntegration.AWSIntegrationFragment.OwnershipTagKeys)
-	integrationAwsResourceModel.OwnershipTagKeys = ownershipTagKeys
-
-	return integrationAwsResourceModel
 }
 
 func (r *IntegrationAwsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -82,8 +81,11 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 				ElementType: types.StringType,
 				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
 				Optional:    true,
+				Computed:    true,
+				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
 				Validators: []validator.List{
-					listvalidator.SizeAtMost(5),
+					listvalidator.UniqueValues(),
+					listvalidator.SizeBetween(1, 5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
