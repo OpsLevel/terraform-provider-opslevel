@@ -124,6 +124,10 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 					setvalidator.SizeBetween(1, 5),
 				},
 			},
+			"ownership_tag_overrides": schema.BoolAttribute{
+				Description: "Allow tags imported from Azure to override ownership set in OpsLevel directly.",
+				Optional:    true,
+			},
 			"subscription_id": schema.StringAttribute{
 				MarkdownDescription: "The subscription OpsLevel uses to access the Azure account. [Microsoft's docs on regex pattern for ID](https://learn.microsoft.com/en-us/rest/api/defenderforcloud/tasks/get-subscription-level-task?view=rest-defenderforcloud-2015-06-01-preview&tabs=HTTP#uri-parameters)",
 				Required:            true,
@@ -136,10 +140,6 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 						fmt.Sprintf("expected ID matching regex pattern: ' %s '", AzureIdRegexPattern),
 					),
 				},
-			},
-			"ownership_tag_overrides": schema.BoolAttribute{
-				Description: "Allow tags imported from Azure to override ownership set in OpsLevel directly.",
-				Optional:    true,
 			},
 			"tenant_id": schema.StringAttribute{
 				MarkdownDescription: "The tenant OpsLevel uses to access the Azure account. [Microsoft's docs on regex pattern for ID](https://learn.microsoft.com/en-us/rest/api/defenderforcloud/tasks/get-subscription-level-task?view=rest-defenderforcloud-2015-06-01-preview&tabs=HTTP#uri-parameters)",
