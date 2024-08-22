@@ -170,6 +170,7 @@ run "datasource_team_first" {
   assert {
     condition = alltrue([
       can(data.opslevel_team.first_team_by_id.alias),
+      can(data.opslevel_team.first_team_by_id.contacts),
       can(data.opslevel_team.first_team_by_id.id),
       can(data.opslevel_team.first_team_by_id.members),
       can(data.opslevel_team.first_team_by_id.name),

@@ -3,10 +3,15 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 )
@@ -26,6 +31,7 @@ type TeamDataSource struct {
 // teamDataSourceModel describes the data source data model.
 type teamDataSourceModel struct {
 	Alias       types.String      `tfsdk:"alias"`
+	Contacts    types.List        `tfsdk:"contacts"`
 	Id          types.String      `tfsdk:"id"`
 	Members     []teamMemberModel `tfsdk:"members"`
 	Name        types.String      `tfsdk:"name"`
@@ -33,7 +39,97 @@ type teamDataSourceModel struct {
 	ParentId    types.String      `tfsdk:"parent_id"`
 }
 
+type teamContactModel struct {
+	Address     types.String `tfsdk:"address"`
+	DisplayName types.String `tfsdk:"display_name"`
+	DisplayType types.String `tfsdk:"display_yype"`
+	ExternalId  types.String `tfsdk:"external_id"`
+	Id          types.String `tfsdk:"id"`
+	IsDefault   types.Bool   `tfsdk:"is_default"`
+	Type        types.String `tfsdk:"type"`
+}
+
+var teamContactsNestedSchemaAttrs = map[string]schema.Attribute{
+	"address": schema.StringAttribute{
+		Description: "The contact address. Examples: 'support@company.com' for type email, 'https://opslevel.com' for type web.",
+		Computed:    true,
+	},
+	"display_name": schema.StringAttribute{
+		Description: "The name shown in the UI for the contact.",
+		Computed:    true,
+	},
+	"display_type": schema.StringAttribute{
+		Description: "The type shown in the UI for the contact.",
+		Computed:    true,
+	},
+	"external_id": schema.StringAttribute{
+		Description: "The remote identifier of the contact method.",
+		Computed:    true,
+	},
+	"id": schema.StringAttribute{
+		Description: "The unique identifier for the contact.",
+		Computed:    true,
+	},
+	"is_default": schema.BoolAttribute{
+		Description: "Indicates if this address is a team's default for the given type.",
+		Computed:    true,
+	},
+	"type": schema.StringAttribute{
+		Description: fmt.Sprintf("The method of contact. One of [`%s`].",
+			strings.Join(opslevel.AllContactType, "`, `"),
+		),
+		Computed: true,
+		Validators: []validator.String{
+			stringvalidator.OneOf(opslevel.AllContactType...),
+		},
+	},
+}
+
+func newTeamContactModel(contact opslevel.Contact) teamContactModel {
+	return teamContactModel{
+		Address:     ComputedStringValue(contact.Address),
+		DisplayName: ComputedStringValue(contact.DisplayName),
+		DisplayType: ComputedStringValue(contact.DisplayType),
+		ExternalId:  ComputedStringValue(contact.ExternalId),
+		Id:          ComputedStringValue(string(contact.Id)),
+		IsDefault:   types.BoolValue(contact.IsDefault),
+		Type:        ComputedStringValue(string(contact.Type)),
+	}
+}
+
+func (tcm teamContactModel) asObjectValue() basetypes.ObjectValue {
+	attrValues := map[string]attr.Value{
+		"address":      tcm.Address,
+		"display_name": tcm.DisplayName,
+		"display_type": tcm.DisplayType,
+		"external_id":  tcm.ExternalId,
+		"id":           tcm.Id,
+		"is_default":   tcm.IsDefault,
+		"type":         tcm.Type,
+	}
+	return types.ObjectValueMust(teamContactAttrs(), attrValues)
+}
+
+func teamContactAttrs() map[string]attr.Type {
+	return map[string]attr.Type{
+		"address":      types.StringType,
+		"display_name": types.StringType,
+		"display_type": types.StringType,
+		"external_id":  types.StringType,
+		"id":           types.StringType,
+		"is_default":   types.BoolType,
+		"type":         types.StringType,
+	}
+}
+
 var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
+	"contacts": schema.ListNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: teamContactsNestedSchemaAttrs,
+		},
+		Description: "The contacts for the team.",
+		Computed:    true,
+	},
 	"name": schema.StringAttribute{
 		Description: "The name of the Team.",
 		Computed:    true,
@@ -100,6 +196,16 @@ func newTeamDataSourceModel(team opslevel.Team) teamDataSourceModel {
 		Name:        ComputedStringValue(team.Name),
 		ParentAlias: ComputedStringValue(team.ParentTeam.Alias),
 		ParentId:    ComputedStringValue(string(team.ParentTeam.Id)),
+	}
+	teamContactAttrTypes := teamContactAttrs()
+	if len(team.Contacts) == 0 {
+		teamDataSourceModel.Contacts = types.ListNull(types.ObjectType{AttrTypes: teamContactAttrTypes})
+	} else {
+		teamContactModels := []attr.Value{}
+		for _, contact := range team.Contacts {
+			teamContactModels = append(teamContactModels, newTeamContactModel(contact).asObjectValue())
+		}
+		teamDataSourceModel.Contacts = types.ListValueMust(types.ObjectType{AttrTypes: teamContactAttrTypes}, teamContactModels)
 	}
 	if team.Memberships != nil {
 		teamDataSourceModel.Members = newTeamMembersAllModel(team.Memberships.Nodes)
