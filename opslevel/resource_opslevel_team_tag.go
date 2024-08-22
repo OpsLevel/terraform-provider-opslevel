@@ -86,7 +86,7 @@ func (teamTagResource *TeamTagResource) Schema(ctx context.Context, req resource
 				Optional:    true,
 				Validators: []validator.String{
 					IdStringValidator(),
-					stringvalidator.AtLeastOneOf(path.MatchRoot("team"),
+					stringvalidator.ExactlyOneOf(path.MatchRoot("team"),
 						path.MatchRoot("team_alias")),
 				},
 				PlanModifiers: []planmodifier.String{

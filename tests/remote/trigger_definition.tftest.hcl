@@ -123,7 +123,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.access_control == var.access_control
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.access_control,
       opslevel_trigger_definition.test.access_control,
     )
@@ -132,7 +132,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.action == run.from_webhook_action_get_webhook_action_id.first_webhook_action.id
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       run.from_webhook_action_get_webhook_action_id.first_webhook_action.id,
       opslevel_trigger_definition.test.action,
     )
@@ -141,7 +141,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.description == var.description
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.description,
       opslevel_trigger_definition.test.description,
     )
@@ -150,7 +150,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.entity_type == var.entity_type
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.entity_type,
       opslevel_trigger_definition.test.entity_type,
     )
@@ -168,7 +168,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.filter == var.filter
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.filter,
       opslevel_trigger_definition.test.filter,
     )
@@ -177,7 +177,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.manual_inputs_definition == var.manual_inputs_definition
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.manual_inputs_definition,
       opslevel_trigger_definition.test.manual_inputs_definition,
     )
@@ -186,7 +186,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.name == var.name
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.name,
       opslevel_trigger_definition.test.name,
     )
@@ -195,7 +195,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.owner == var.owner
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.owner,
       opslevel_trigger_definition.test.owner,
     )
@@ -204,7 +204,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.published == var.published
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.published,
       opslevel_trigger_definition.test.published,
     )
@@ -213,7 +213,7 @@ run "resource_trigger_definition_create_with_all_fields" {
   assert {
     condition = opslevel_trigger_definition.test.response_template == var.response_template
     error_message = format(
-      "expected '%s' but got '%s'",
+      "expected '%v' but got '%v'",
       var.response_template,
       opslevel_trigger_definition.test.response_template,
     )
