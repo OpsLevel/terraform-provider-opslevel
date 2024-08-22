@@ -1,0 +1,3 @@
+kind: Bugfix
+body: opslevel_trigger_definition field extended_team_access works with empty list
+time: 2024-08-21T17:13:26.420424-05:00
