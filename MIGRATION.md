@@ -2,6 +2,9 @@
 
 For everyone upgrading from a version before v1.0.0, we recommend upgrading straight to v1.2 or higher.
 
+> [!IMPORTANT]  
+> If you have created checks in 1.0.x or 1.1.x you will first need to upgrade to 1.1.4 before jumping to >= 1.2.5
+
 We at OpsLevel have been working on upgrading [our Terraform provider](https://github.com/OpsLevel/terraform-provider-opslevel) to version 1.0.0.
 
 While the majority of these improvements are under the hood, there are a few Terraform configuration changes to be aware of.
