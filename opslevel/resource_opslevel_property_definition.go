@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -17,7 +18,10 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
-var _ resource.ResourceWithConfigure = &PropertyDefinitionResource{}
+var (
+	_ resource.ResourceWithConfigure   = &PropertyDefinitionResource{}
+	_ resource.ResourceWithImportState = &PropertyDefinitionResource{}
+)
 
 type PropertyDefinitionResource struct {
 	CommonResourceClient
@@ -202,4 +206,8 @@ func (resource *PropertyDefinitionResource) Delete(ctx context.Context, req reso
 		return
 	}
 	tflog.Trace(ctx, fmt.Sprintf("deleted a definition resource with id '%s'", id))
+}
+
+func (r *PropertyDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
