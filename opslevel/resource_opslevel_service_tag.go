@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/opslevel/opslevel-go/v2024"
 )
 
 var _ resource.ResourceWithConfigure = &ServiceTagResource{}
@@ -171,8 +170,11 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		}
 	}
 	if serviceTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
-		return
+		// some changes to the opslevel_service resource wipe out it's tags managed by the opslevel_service_tag standalone resource
+		// this behavior has been observed countless times, with no visible traces of tag changes on state, plans, or actions.
+		// simply re-creating a service tag if it's found to be nil/lost instead of throwing out errors and breaking runs would be preferred for service tags specifically
+		// resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
+		// return
 	}
 
 	readServiceResourceModel := NewServiceTagResourceModel(*serviceTag)
