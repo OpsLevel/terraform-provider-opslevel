@@ -4,6 +4,10 @@ data "opslevel_service" "first_service_by_id" {
   id = data.opslevel_services.all.services[0].id
 }
 
+data "opslevel_service" "last_service" {
+  id = element(data.opslevel_services.all.services, length(data.opslevel_services.all.services) - 1).id
+}
+
 resource "opslevel_service" "test" {
   aliases                       = var.aliases
   api_document_path             = var.api_document_path
