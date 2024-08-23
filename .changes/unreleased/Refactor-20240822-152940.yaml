@@ -1,0 +1,3 @@
+kind: Refactor
+body: ownership_tag_keys field on opslevel_integration_aws resource can be null, but not empty
+time: 2024-08-22T15:29:40.77516-05:00

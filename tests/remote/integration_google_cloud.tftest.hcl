@@ -141,3 +141,25 @@ run "resource_integration_google_cloud_with_empty_optional_fields" {
     error_message = replace(var.error_wrong_value, "TYPE", "opslevel_integration_google_cloud")
   }
 }
+
+run "resource_integration_google_cloud_ownership_tag_keys_default_value" {
+
+  variables {
+    name               = "GCP Integration Default Ownership Tag Keys"
+    ownership_tag_keys = null
+  }
+
+  module {
+    source = "./integration_google_cloud"
+  }
+
+  assert {
+    condition = opslevel_integration_google_cloud.test.ownership_tag_keys == tolist(["owner"])
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.ownership_tag_keys,
+      opslevel_integration_google_cloud.test.ownership_tag_keys,
+    )
+  }
+
+}
