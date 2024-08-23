@@ -79,7 +79,7 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 			},
 			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
-				Description: "An Array of tag keys used to associate ownership from an integration. Max 5",
+				Description: "Allow tags imported from AWS to override ownership set in OpsLevel directly",
 				Optional:    true,
 				Computed:    true,
 				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
