@@ -3,6 +3,17 @@ variables {
   integrations_all = "opslevel_integrations"
 }
 
+run "resource_integration_create_with_all_fields" {
+
+  variables {
+    external_id             = var.external_id
+  }
+
+  module {
+    source = "./integration"
+  }
+}
+
 run "datasource_integrations_all" {
 
   module {

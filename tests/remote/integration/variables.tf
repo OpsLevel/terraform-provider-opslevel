@@ -1,1 +1,5 @@
-# Placeholder for integration_aws?
+variable "name" {
+  type        = string
+  description = "The name of the integration"
+  default     = null
+}
