@@ -6,4 +6,5 @@ variable "identifier" {
 variable "owner_id" {
   type        = string
   description = "The id of the owner of the repository."
+  default     = null
 }

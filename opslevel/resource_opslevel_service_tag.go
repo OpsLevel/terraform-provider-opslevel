@@ -79,7 +79,7 @@ func (serviceTagResource *ServiceTagResource) Schema(ctx context.Context, req re
 				Optional:    true,
 				Validators: []validator.String{
 					IdStringValidator(),
-					stringvalidator.AtLeastOneOf(path.MatchRoot("service"),
+					stringvalidator.ExactlyOneOf(path.MatchRoot("service"),
 						path.MatchRoot("service_alias")),
 				},
 				PlanModifiers: []planmodifier.String{
