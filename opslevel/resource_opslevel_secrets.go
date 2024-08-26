@@ -45,6 +45,7 @@ func NewSecretResourceModel(secret opslevel.Secret, ownerIdentifier, sensitiveVa
 		CreatedAt: ComputedStringValue(secret.Timestamps.CreatedAt.Local().Format(time.RFC850)),
 		Id:        ComputedStringValue(string(secret.ID)),
 		Owner:     RequiredStringValue(ownerIdentifier),
+		UpdatedAt: ComputedStringValue(secret.Timestamps.UpdatedAt.Local().Format(time.RFC850)),
 		Value:     RequiredStringValue(sensitiveValue),
 	}
 }
