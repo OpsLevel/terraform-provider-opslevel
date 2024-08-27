@@ -1,0 +1,3 @@
+kind: Bugfix
+body: predicate block validation no longer fails when value needs computing
+time: 2024-08-27T15:22:08.243516-05:00
