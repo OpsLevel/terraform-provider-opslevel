@@ -406,7 +406,11 @@ tasks:
     cmds:
       - cmd: echo "Listing all terraform files that need formatting..."
       - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/examples" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/local" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/remote" }
 
   terraform-format-fix:
     internal: true
