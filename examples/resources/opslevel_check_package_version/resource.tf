@@ -56,7 +56,9 @@ resource "opslevel_check_package_version" "example3" {
   name     = "foo"
   enabled  = true
   category = data.opslevel_rubric_category.security.id
+  filter   = data.opslevel_filter.tier1.id
   level    = data.opslevel_rubric_level.bronze.id
+  owner    = data.opslevel_team.devs.id
   notes    = "Optional additional info on why this check is run or how to fix it"
 
   package_constraint     = "matches_version"

@@ -170,10 +170,10 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 			}
 		}
 	} else {
-		if !configModel.MissingPackageResult.IsNull() {
+		if !configModel.MissingPackageResult.IsUnknown() && !configModel.MissingPackageResult.IsNull() {
 			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is only valid when package_constraint is 'matches_version'")
 		}
-		if !configModel.VersionConstraintPredicate.IsNull() {
+		if !configModel.VersionConstraintPredicate.IsUnknown() && !configModel.VersionConstraintPredicate.IsNull() {
 			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is only valid when package_constraint is 'matches_version'")
 		}
 	}
