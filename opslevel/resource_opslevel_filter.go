@@ -83,7 +83,7 @@ func NewFilterPredicateModel(filterPredicate *opslevel.FilterPredicate) FilterPr
 func (fp FilterPredicateModel) Validate() error {
 	// Key and Value are required fields, but may be unknown at validation time
 	// Creating multiple predicates with a 'for_each' is one example
-	if fp.Key.IsUnknown() || fp.Value.IsUnknown() {
+	if fp.Key.IsUnknown() || fp.KeyData.IsUnknown() || fp.Type.IsUnknown() || fp.Value.IsUnknown() {
 		return nil
 	}
 	opslevelFilterPredicate := opslevel.FilterPredicate{
