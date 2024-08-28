@@ -78,8 +78,8 @@ tasks:
     internal: true
     cmds:
       - task: terraform-build
-      - task: terraform-rm-local-provider-no-prompt
-        vars: { CLEAN_DIR: "{{.SETUP_DIR}}" }
+      - cmd: rm -rf {{.SETUP_DIR}}/.terraform.lock.hcl {{.SETUP_DIR}}/.terraform/ {{.SETUP_DIR}}/*.tfstate*
+        ignore_error: true
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.SETUP_DIR}}" }
     requires:
@@ -155,24 +155,14 @@ tasks:
     prompt: Remove all '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' and OpsLevel binaries from plugins directory?
     cmds:
       - rm -rf {{.PLUGIN_DIR}}
-      - task: terraform-clean-from
-        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
-      - task: terraform-clean-from
-        vars: { CLEAN_DIR: "{{.TEST_DIR}}" }
-      - task: terraform-clean-from
-        vars: { CLEAN_DIR: "{{.TEST_DIR}}/local" }
-      - task: terraform-clean-from
-        vars: { CLEAN_DIR: "{{.TEST_DIR}}/remote" }
-
-  terraform-clean-from:
-    internal: true
-    cmds:
-      - task: terraform-rm-local-provider-no-prompt
-        vars: { CLEAN_DIR: "{{.CLEAN_DIR}}" }
-      - cmd: rm -rf {{.CLEAN_DIR}}/*.tfstate*
+      - cmd: rm -rf {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.WORKSPACE_DIR}}/.terraform/ {{.WORKSPACE_DIR}}/*.tfstate*
         ignore_error: true
-    requires:
-      vars: [CLEAN_DIR]
+      - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
+        ignore_error: true
+      - cmd: rm -rf {{.TEST_DIR}}/local/.terraform.lock.hcl {{.TEST_DIR}}/local/.terraform/ {{.TEST_DIR}}/local/*.tfstate*
+        ignore_error: true
+      - cmd: rm -rf {{.TEST_DIR}}/remote/.terraform.lock.hcl {{.TEST_DIR}}/remote/.terraform/ {{.TEST_DIR}}/remote/*.tfstate*
+        ignore_error: true
 
   terraform-destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -186,8 +176,8 @@ tasks:
     desc: Initialize terraform workspace
     aliases: ["init"]
     cmds:
-      - task: terraform-rm-local-provider-no-prompt
-        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
+      - cmd: rm -rf {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.WORKSPACE_DIR}}/.terraform/ {{.WORKSPACE_DIR}}/*.tfstate*
+        ignore_error: true
       - task: terraform-init-from
         vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
 
@@ -218,14 +208,6 @@ tasks:
       - task: terraform-command
         vars: { TF_COMMAND: 'validate', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
-  terraform-rm-local-provider-no-prompt:
-    internal: true
-    cmds:
-      - cmd: rm -rf {{.CLEAN_DIR}}/.terraform.lock.hcl {{.CLEAN_DIR}}/.terraform/
-        ignore_error: true
-    requires:
-      vars: [CLEAN_DIR]
-
   test:
     desc: Run tests
     cmds:
@@ -242,8 +224,8 @@ tasks:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:
       - rm -rf {{.PLUGIN_DIR}}
-      - task: terraform-clean-from
-        vars: { CLEAN_DIR: "{{.TEST_DIR}}" }
+      - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
+        ignore_error: true
       - echo "Testing with latest OpsLevel Terraform provider release..."
       - task: run-tests-against-submodule
 
