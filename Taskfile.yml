@@ -3,13 +3,14 @@
 version: '3'
 
 vars:
+  DEBUG_LOG: debug.log
   OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
+  PLUGIN_DIR: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
   # 'VERSION_DYNAMIC' needs to run in this scope before 'task terraform-build' begins
   VERSION_DYNAMIC:
     sh: echo "$(date +%s).0.0"
-  WORKSPACE_DIR: "workspace"
-  DEBUG_LOG: debug.log
   TEST_DIR: "tests"
+  WORKSPACE_DIR: "workspace"
 
 tasks:
   ci:
@@ -97,9 +98,9 @@ tasks:
     aliases: ["build"]
     vars:
       BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      LOCATION: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
+      LOCATION: "{{.PLUGIN_DIR}}/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
     cmds:
-      - go build -ldflags="-s -w -X github.com/opslevel/terraform-provider-opslevel/opslevel.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
+      - go build -ldflags="-s -w -X main.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
       - chmod +x {{.BINARY}}
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
@@ -149,14 +150,29 @@ tasks:
       - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.WORKSPACE_DIR}}" plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
 
   terraform-clean:
-    desc: Completely wipe terraform state and all terraform generated files from "{{.WORKSPACE_DIR}}"
+    desc: Completely wipe terraform state, terraform generated files, and local OpsLevel provider binaries
     aliases: ["clean"]
-    prompt: Remove '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' from '{{.WORKSPACE_DIR}}' directory?
+    prompt: Remove all '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' and OpsLevel binaries from plugins directory?
+    cmds:
+      - rm -rf {{.PLUGIN_DIR}}
+      - task: terraform-clean-from
+        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform-clean-from
+        vars: { CLEAN_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-clean-from
+        vars: { CLEAN_DIR: "{{.TEST_DIR}}/local" }
+      - task: terraform-clean-from
+        vars: { CLEAN_DIR: "{{.TEST_DIR}}/remote" }
+
+  terraform-clean-from:
+    internal: true
     cmds:
       - task: terraform-rm-local-provider-no-prompt
-        vars: { CLEAN_DIR: "{{.WORKSPACE_DIR}}" }
-      - cmd: rm -rf {{.WORKSPACE_DIR}}/*.tfstate*
+        vars: { CLEAN_DIR: "{{.CLEAN_DIR}}" }
+      - cmd: rm -rf {{.CLEAN_DIR}}/*.tfstate*
         ignore_error: true
+    requires:
+      vars: [CLEAN_DIR]
 
   terraform-destroy:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
@@ -220,8 +236,38 @@ tasks:
       - task: run-unit-tests
       # - task: run-acceptance-tests
 
+  test-release:
+    desc: Run integration tests using latest release of OpsLevel Terraform provider
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
+    cmds:
+      - rm -rf {{.PLUGIN_DIR}}
+      - task: terraform-clean-from
+        vars: { CLEAN_DIR: "{{.TEST_DIR}}" }
+      - echo "Testing with latest OpsLevel Terraform provider release..."
+      - task: run-tests-against-submodule
+
+  test-unreleased:
+    desc: Run integration tests with local changes to OpsLevel Terraform provider
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
+    cmds:
+      - echo "Testing with local changes to OpsLevel Terraform provider..."
+      - task: terraform-build
+      - task: run-tests-against-submodule
+
+  run-tests-against-submodule:
+    internal: true
+    cmds:
+      - git submodule init {{.TEST_DIR}}/opslevel_modules
+      - git submodule update {{.TEST_DIR}}/opslevel_modules
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}" }
+
   test-integration:
-    desc: Run integration tests
+    desc: Run integration tests - placeholder until submodule complete
     requires:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:

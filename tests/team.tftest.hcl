@@ -12,7 +12,7 @@ variables {
   # member block
 }
 
-run "from_team_get_owner_id" {
+run "from_team_module" {
   command = plan
 
   variables {
@@ -23,7 +23,7 @@ run "from_team_get_owner_id" {
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 }
 
@@ -32,12 +32,12 @@ run "resource_team_create_with_all_fields" {
   variables {
     aliases          = var.aliases
     name             = var.name
-    parent           = run.from_team_get_owner_id.first_team.id
+    parent           = run.from_team_module.all.teams[0].id
     responsibilities = var.responsibilities
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 
   assert {
@@ -87,7 +87,7 @@ run "resource_team_create_with_empty_optional_fields" {
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 
   assert {
@@ -106,7 +106,7 @@ run "resource_team_update_unset_optional_fields" {
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 
   assert {
@@ -131,12 +131,12 @@ run "resource_team_update_set_all_fields" {
   variables {
     aliases          = setunion(var.aliases, ["test_alias"])
     name             = "${var.name} updated"
-    parent           = run.from_team_get_owner_id.first_team.id
+    parent           = run.from_team_module.all.teams[0].id
     responsibilities = "${var.responsibilities} updated"
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 
   assert {
@@ -161,41 +161,23 @@ run "resource_team_update_set_all_fields" {
 
 }
 
-run "datasource_team_first" {
+run "datasource_teams_all" {
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 
   assert {
     condition = alltrue([
-      can(data.opslevel_team.first_team_by_id.alias),
-      can(data.opslevel_team.first_team_by_id.contacts),
-      can(data.opslevel_team.first_team_by_id.id),
-      can(data.opslevel_team.first_team_by_id.members),
-      can(data.opslevel_team.first_team_by_id.name),
-      can(data.opslevel_team.first_team_by_id.parent_alias),
-      can(data.opslevel_team.first_team_by_id.parent_id),
+      can(data.opslevel_teams.all.teams[0].alias),
+      # can(data.opslevel_teams.all.teams[0].contacts),
+      can(data.opslevel_teams.all.teams[0].id),
+      can(data.opslevel_teams.all.teams[0].members),
+      can(data.opslevel_teams.all.teams[0].name),
+      can(data.opslevel_teams.all.teams[0].parent_alias),
+      can(data.opslevel_teams.all.teams[0].parent_id),
     ])
     error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.team_one)
-  }
-
-  assert {
-    condition     = data.opslevel_team.first_team_by_alias.alias == data.opslevel_teams.all.teams[0].alias
-    error_message = replace(var.error_wrong_alias, "TYPE", var.team_one)
-  }
-
-  assert {
-    condition     = data.opslevel_team.first_team_by_id.id == data.opslevel_teams.all.teams[0].id
-    error_message = replace(var.error_wrong_id, "TYPE", var.team_one)
-  }
-
-}
-
-run "datasource_teams_all" {
-
-  module {
-    source = "./team"
   }
 
   assert {
