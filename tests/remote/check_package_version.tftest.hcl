@@ -155,10 +155,10 @@ run "resource_check_package_version_create_with_all_fields" {
   }
 
   assert {
-    condition = opslevel_check_package_version.test.filter == run.from_filter_get_filter_id.first_filter.id
+    condition = opslevel_check_package_version.test.filter == var.filter
     error_message = format(
       "expected '%v' but got '%v'",
-      run.from_filter_get_filter_id.first_filter.id,
+      var.filter,
       opslevel_check_package_version.test.filter,
     )
   }
@@ -205,10 +205,10 @@ run "resource_check_package_version_create_with_all_fields" {
   }
 
   assert {
-    condition = opslevel_check_package_version.test.owner == run.from_team_get_owner_id.first_team.id
+    condition = opslevel_check_package_version.test.owner == var.owner
     error_message = format(
       "expected '%v' but got '%v'",
-      run.from_team_get_owner_id.first_team.id,
+      var.owner,
       opslevel_check_package_version.test.owner,
     )
   }
