@@ -3,7 +3,7 @@ variables {
 
   # required fields
   key   = "test-service-tag-key"
-  value = "test-service-tag-key"
+  value = "test-service-tag-value"
 
   # optional fields
   service       = null
