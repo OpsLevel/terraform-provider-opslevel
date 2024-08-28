@@ -93,7 +93,7 @@ run "resource_property_assignment_create_with_all_fields" {
 
 }
 
-# BUG: unable to unset 'value' field
+# BUG: unable to unset 'value' field - see [issue](https://github.com/OpsLevel/team-platform/issues/452)
 # run "resource_property_assignment_update_unset_optional_fields" {
 
 #   variables {
