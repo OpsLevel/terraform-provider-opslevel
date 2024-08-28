@@ -8,7 +8,7 @@ vars:
   PLUGIN_DIR: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
   # 'VERSION_DYNAMIC' needs to run in this scope before 'task terraform-build' begins
   VERSION_DYNAMIC:
-    sh: echo "$(date +%s).0.0"
+    sh: echo $(git describe --abbrev=0 | tr -d v)5
   TEST_DIR: "tests"
   WORKSPACE_DIR: "workspace"
 
@@ -235,6 +235,8 @@ tasks:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:
       - echo "Testing with local changes to OpsLevel Terraform provider..."
+      - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
+        ignore_error: true
       - task: terraform-build
       - task: run-tests-against-submodule
 
