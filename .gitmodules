@@ -2,3 +2,6 @@
 	path = submodules/opslevel-go
 	url = git@github.com:OpsLevel/opslevel-go.git
 	branch = main
+[submodule "tests/opslevel_modules"]
+	path = tests/opslevel_modules
+	url = git@github.com:OpsLevel/terraform-opslevel-modules.git

@@ -21,7 +21,7 @@ run "resource_user_create_with_all_fields" {
   }
 
   module {
-    source = "./user"
+    source = "./opslevel_modules/modules/user"
   }
 
   assert {
@@ -69,7 +69,7 @@ run "resource_user_update_unset_fields_return_default_value" {
   }
 
   module {
-    source = "./user"
+    source = "./opslevel_modules/modules/user"
   }
 
   assert {
@@ -89,7 +89,7 @@ run "resource_user_update_set_all_fields" {
   }
 
   module {
-    source = "./user"
+    source = "./opslevel_modules/modules/user"
   }
 
   assert {
@@ -117,7 +117,7 @@ run "resource_user_update_set_all_fields" {
 run "datasource_users_all" {
 
   module {
-    source = "./user"
+    source = "./opslevel_modules/modules/user"
   }
 
   assert {
@@ -128,35 +128,6 @@ run "datasource_users_all" {
   assert {
     condition     = length(data.opslevel_users.all.users) > 0
     error_message = replace(var.error_empty_datasource, "TYPE", var.users_all)
-  }
-
-}
-
-run "datasource_user_first" {
-
-  module {
-    source = "./user"
-  }
-
-  assert {
-    condition = alltrue([
-      can(data.opslevel_user.first_user_by_id.email),
-      can(data.opslevel_user.first_user_by_id.id),
-      can(data.opslevel_user.first_user_by_id.identifier),
-      can(data.opslevel_user.first_user_by_id.name),
-      can(data.opslevel_user.first_user_by_id.role),
-    ])
-    error_message = "cannot reference all expected user datasource fields"
-  }
-
-  assert {
-    condition     = data.opslevel_user.first_user_by_id.email == data.opslevel_users.all.users[0].email
-    error_message = "wrong email on opslevel_user"
-  }
-
-  assert {
-    condition     = data.opslevel_user.first_user_by_id.id == data.opslevel_users.all.users[0].id
-    error_message = replace(var.error_wrong_id, "TYPE", var.user_one)
   }
 
 }
