@@ -78,8 +78,8 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^[^\/].*`),
-						"path must not start with '/'",
+						regexp.MustCompile(`^[^\/].*[^\/]$`),
+						"path must not start or end with '/'",
 					),
 				},
 			},

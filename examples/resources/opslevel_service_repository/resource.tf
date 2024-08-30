@@ -11,7 +11,7 @@ resource "opslevel_service_repository" "foo" {
   repository = data.opslevel_repository.foo.id
 
   name           = "Foo"
-  base_directory = "example/"
+  base_directory = "example"
 }
 
 resource "opslevel_service_repository" "bar" {
@@ -19,5 +19,5 @@ resource "opslevel_service_repository" "bar" {
   repository_alias = "github.com:example/bar"
 
   name           = "Bar"
-  base_directory = "example/subdir/"
+  base_directory = "example/subdir"
 }
