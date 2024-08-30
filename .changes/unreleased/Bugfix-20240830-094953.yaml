@@ -1,0 +1,3 @@
+kind: Bugfix
+body: correctly reject ending slash on base_directory field in opslevel_service_repository
+time: 2024-08-30T09:49:53.207297-05:00
