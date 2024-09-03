@@ -32,10 +32,25 @@ data "opslevel_team" "devs" {
 
 ### Read-Only
 
+- `contacts` (Attributes List) The contacts for the team. (see [below for nested schema](#nestedatt--contacts))
 - `members` (Attributes List) List of team members on the team with email address and role. (see [below for nested schema](#nestedatt--members))
 - `name` (String) The name of the Team.
 - `parent_alias` (String) The alias of the parent team.
 - `parent_id` (String) The id of the parent team.
+
+<a id="nestedatt--contacts"></a>
+### Nested Schema for `contacts`
+
+Read-Only:
+
+- `address` (String) The contact address. Examples: 'support@company.com' for type email, 'https://opslevel.com' for type web.
+- `display_name` (String) The name shown in the UI for the contact.
+- `display_type` (String) The type shown in the UI for the contact.
+- `external_id` (String) The remote identifier of the contact method.
+- `id` (String) The unique identifier for the contact.
+- `is_default` (Boolean) Indicates if this address is a team's default for the given type.
+- `type` (String) The method of contact. One of [`slack`, `slack_handle`, `email`, `web`, `github`].
+
 
 <a id="nestedatt--members"></a>
 ### Nested Schema for `members`

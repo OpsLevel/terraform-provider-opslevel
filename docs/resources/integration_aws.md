@@ -127,7 +127,7 @@ resource "opslevel_integration_aws" "dev" {
 
 ### Optional
 
-- `ownership_tag_keys` (List of String) An Array of tag keys used to associate ownership from an integration. Max 5
+- `ownership_tag_keys` (List of String) Allow tags imported from AWS to override ownership set in OpsLevel directly
 
 ### Read-Only
 
