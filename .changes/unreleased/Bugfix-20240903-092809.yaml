@@ -1,0 +1,3 @@
+kind: Bugfix
+body: allow updating key and value of opslevel_tag resources
+time: 2024-09-03T09:28:09.253798-05:00
