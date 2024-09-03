@@ -92,36 +92,35 @@ run "resource_tag_create_with_all_fields" {
 
 }
 
-# BUG: https://github.com/OpsLevel/team-platform/issues/460
-# run "resource_tag_update_key_and_value" {
+run "resource_tag_update_key_and_value" {
 
-#   variables {
-#     key                 = "${var.key}-updated"
-#     resource_identifier = run.from_team_module.first_team.id
-#     resource_type       = var.resource_type
-#     value               = "${var.value}-updated"
-#   }
+  variables {
+    key                 = "${var.key}-updated"
+    resource_identifier = run.from_team_module.first_team.id
+    resource_type       = var.resource_type
+    value               = "${var.value}-updated"
+  }
 
-#   module {
-#     source = "./tag"
-#   }
+  module {
+    source = "./tag"
+  }
 
-#   assert {
-#     condition = opslevel_tag.test.key == var.key
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.key,
-#       opslevel_tag.test.key,
-#     )
-#   }
+  assert {
+    condition = opslevel_tag.test.key == var.key
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.key,
+      opslevel_tag.test.key,
+    )
+  }
 
-#   assert {
-#     condition = opslevel_tag.test.value == var.value
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.value,
-#       opslevel_tag.test.value,
-#     )
-#   }
+  assert {
+    condition = opslevel_tag.test.value == var.value
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.value,
+      opslevel_tag.test.value,
+    )
+  }
 
-# }
+}

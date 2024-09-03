@@ -177,7 +177,27 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	resp.Diagnostics.AddError("terraform plugin error", "tag assignments should never be updated, only replaced.\nplease file a bug report including your .tf file at: github.com/OpsLevel/terraform-provider-opslevel")
+	var planModel TagResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	tagUpdateInput := opslevel.TagUpdateInput{
+		Id:    asID(planModel.Id),
+		Key:   planModel.Key.ValueStringPointer(),
+		Value: planModel.Value.ValueStringPointer(),
+	}
+	updatedTag, err := r.client.UpdateTag(tagUpdateInput)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update tag with id '%s', got error: %s", planModel.Id.ValueString(), err))
+		return
+	}
+
+	stateModel := NewTagResourceModel(ctx, *updatedTag, planModel)
+
+	tflog.Trace(ctx, "updated a tag resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
