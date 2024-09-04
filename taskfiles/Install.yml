@@ -48,7 +48,6 @@ tasks:
 
   go-install-tool:
     desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
-    silent: true
     status:
       - test -n "command -v {{.GO_TOOL}}"
     cmds:
