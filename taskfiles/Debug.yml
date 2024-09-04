@@ -61,5 +61,5 @@ tasks:
       - cmd: rm -rf {{.ROOT_DIR}}/{{.WORKSPACE_DIR}}/.terraform/
         ignore_error: true
       - task: tf:terraform-init-from
-        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }  # NOTE exclude {{.ROOT_DIR}} from passed in var
       - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.ROOT_DIR}}/{{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
