@@ -6,8 +6,6 @@ vars:
 tasks:
   has-latest-opslevel-go:
     desc: Check if latest release of opslevel-go in go.mod
-    internal: true
-    silent: true
     vars:
       GO_WORK: "go.work"
       TMP_GO_WORK: "tmp_go.work"

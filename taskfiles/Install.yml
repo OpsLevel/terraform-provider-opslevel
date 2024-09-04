@@ -2,7 +2,6 @@ version: '3'
 
 tasks:
   brew-install-jq:
-    internal: true
     platforms: [darwin]
     cmds: ["which jq > /dev/null || brew install jq"]
     status:
@@ -12,7 +11,6 @@ tasks:
         msg: '"brew" needed to install "jq"- see https://brew.sh'
 
   brew-install-terraform:
-    internal: true
     platforms: [darwin]
     status:
       - test -n "command -v terraform"
@@ -26,7 +24,6 @@ tasks:
 
   go-install-changie:
     desc: go install "changie"
-    internal: true
     status:
       - test -n "command -v changie"
     cmds:
@@ -35,7 +32,6 @@ tasks:
 
   go-install-gofumpt:
     desc: go install "gofumpt"
-    internal: true
     status:
       - test -n "command -v gofumpt"
     cmds:
@@ -44,7 +40,6 @@ tasks:
 
   go-install-golangci-lint:
     desc: go install "golangci-lint"
-    internal: true
     status:
       - test -n "command -v golangci-lint"
     cmds:
@@ -53,18 +48,13 @@ tasks:
 
   go-install-tool:
     desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
-    internal: true
     silent: true
-    vars:
-      IS_TOOL_INSTALLED:
-        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
+    status:
+      - test -n "command -v {{.GO_TOOL}}"
     cmds:
-      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
-      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
-      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
-      - echo "  '{{.GO_TOOL}}' is installed."
+      - go install {{.GO_TOOL_PATH}}
     requires:
       vars: [GO_TOOL, GO_TOOL_PATH]
     preconditions:
       - sh: 'which go'
-        msg: '"go" needed to install "changie" - run brew install go'
+        msg: '"go" needed to install "{{.GO_TOOL}}" - run "brew install go"'

@@ -13,7 +13,6 @@ includes:
     internal: true
   go:
     taskfile: ./taskfiles/Golang.yml
-    internal: true
   install:
     taskfile: ./taskfiles/Install.yml
     internal: true
@@ -30,7 +29,6 @@ tasks:
       - install:go-install-golangci-lint
     cmds:
       - task: go:workspace
-      - task: go:has-latest-opslevel-go
       - task: lint
       - task: test
 
@@ -82,11 +80,13 @@ tasks:
   terraform-apply:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
     aliases: ["apply"]
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
     cmds:
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform:terraform-command
-        vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'apply -auto-approve', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   debug-start:
     desc: First, start headless debug
@@ -134,16 +134,18 @@ tasks:
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform:terraform-command
-        vars: { TF_COMMAND: 'destroy -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'destroy -auto-approve', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-plan:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
     aliases: ["plan"]
+    requires:
+      vars: [OPSLEVEL_API_TOKEN]
     cmds:
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
       - task: terraform:terraform-command
-        vars: { TF_COMMAND: 'plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
+        vars: { TF_COMMAND: 'plan', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-validate:
     desc: Rebuild and run "terraform validate" in "{{.WORKSPACE_DIR}}"
@@ -192,5 +194,7 @@ tasks:
     cmds:
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.TEST_DIR}}/remote" }
+      - task: terraform:setup-test-modules
+        vars: { SETUP_DIR: '{{.TEST_DIR}}/remote' }
       - task: terraform:terraform-command
         vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }

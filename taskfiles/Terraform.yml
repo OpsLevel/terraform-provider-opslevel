@@ -6,33 +6,41 @@ vars:
   TF_BUILD_VERSION:
     sh: echo $(git describe --abbrev=0 | tr -d v)5
   TEST_DIR: "tests"
+  VERSIONS_TF: "{{.ROOT_DIR}}/workspace/versions.tf"
 
 tasks:
   run-tests-against-submodule:
-    internal: true
     cmds:
       - git submodule init {{.ROOT_DIR}}/{{.TEST_DIR}}/opslevel_modules
       - git submodule update {{.ROOT_DIR}}/{{.TEST_DIR}}/opslevel_modules
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}" }
+      - task: setup-test-modules
+        vars: { SETUP_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}" }
       - task: terraform-command
-        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}" }
+        vars: { TF_COMMAND: 'test -var-file=test.tfvars {{.CLI_ARGS}}', TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}" }
+
+  setup-test-modules:
+    silent: true
+    cmds:
+      - task: terraform-build
+      - for TEST_MODULE_DIR in {{.SETUP_DIR}}/*/; do ln -s {{.VERSIONS_TF}} $TEST_MODULE_DIR/versions.tf &> /dev/null || true ; done
+    requires:
+      vars: [SETUP_DIR]
 
   setup-terraform-from:
     desc: Setup Terraform, but do not touch any existing Terraform state
-    internal: true
     cmds:
       - task: terraform-build
-      - cmd: rm -rf {{.SETUP_DIR}}/.terraform/
+      - cmd: rm -rf {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform/
         ignore_error: true
-      - task: terraform-init-from
-        vars: { INIT_DIR: "{{.SETUP_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.SETUP_DIR}}" }
     requires:
       vars: [SETUP_DIR]
 
   terraform-build:
     desc: Build local opslevel terraform provider
-    internal: true
     aliases: ["build"]
     vars:
       BINARY: terraform-provider-opslevel_{{.TF_BUILD_VERSION}}
@@ -44,7 +52,6 @@ tasks:
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
   terraform-command:
-    internal: true
     cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}}"]
     requires:
       vars: [TF_COMMAND, TF_CMD_DIR]
@@ -53,7 +60,6 @@ tasks:
         msg: '"terraform" needed - run "brew install terraform"'
 
   terraform-format-check:
-    internal: true
     desc: Run terraform format
     cmds:
       - cmd: echo "Listing all terraform files that need formatting..."
@@ -65,19 +71,7 @@ tasks:
         vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/remote" }
 
   terraform-format-fix:
-    internal: true
     desc: Run terraform format
     cmds:
       - task: terraform-command
         vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-
-  terraform-init-from:
-    internal: true
-    cmds:
-      - "{{.ROOT_DIR}}/{{.INIT_DIR}}/make_backend_tf.sh"
-      - mv {{.ROOT_DIR}}/backend.tf {{.ROOT_DIR}}/{{.INIT_DIR}}/backend.tf
-      - touch {{.ROOT_DIR}}/{{.INIT_DIR}}/main.tf
-      - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.INIT_DIR}}" }
-    requires:
-      vars: [INIT_DIR]
