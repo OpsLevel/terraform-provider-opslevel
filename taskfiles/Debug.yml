@@ -1,0 +1,65 @@
+version: '3'
+
+vars:
+  DEBUG_LOG: debug.log
+  # 'TF_DEBUG_VERSION' needs to run in this scope before 'do-debug-start' begins
+  TF_DEBUG_VERSION:
+    sh: echo $(git describe --abbrev=0 | tr -d v)5
+  WORKSPACE_DIR: "workspace"
+
+includes:
+  tf:
+    taskfile: ./Terraform.yml
+    internal: true
+
+tasks:
+  do-debug-attach:
+    desc: Second, attach to headless debug sessions
+    internal: true
+    aliases: ["dbg-attach", "dbg2", "debug2"]
+    vars:
+      LOCAL_PORT:
+        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
+    interactive: true
+    cmds:
+      - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
+      - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
+
+  do-debug-apply:
+    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
+    internal: true
+    aliases: ["dbg-apply"]
+    vars:
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    cmds:
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" apply -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
+
+  do-debug-plan:
+    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
+    internal: true
+    aliases: ["dbg-plan"]
+    vars:
+      TF_REATTACH_PROVIDERS:
+        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    cmds:
+      - echo "After 'terraform plan' is started, return to shell with interactive delve session"
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
+
+  do-debug-start:
+    desc: First, start headless debug
+    dir: "{{.ROOT_DIR}}"
+    internal: true
+    aliases: ["dbg-start", "dbg1", "debug1"]
+    vars:
+      BINARY: terraform-provider-opslevel-debug_{{.TF_DEBUG_VERSION}}
+    interactive: true
+    cmds:
+      - defer: rm {{.BINARY}}
+      - go build -gcflags="all=-N -l" -ldflags="-X main.version={{.TF_DEBUG_VERSION}}" -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - cmd: rm -rf {{.ROOT_DIR}}/{{.WORKSPACE_DIR}}/.terraform/
+        ignore_error: true
+      - task: tf:terraform-init-from
+        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
+      - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.ROOT_DIR}}/{{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}

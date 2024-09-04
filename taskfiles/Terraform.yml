@@ -1,0 +1,83 @@
+version: '3'
+
+vars:
+  PLUGIN_DIR: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
+  # 'TF_BUILD_VERSION' needs to run in this scope before 'terraform-build' begins
+  TF_BUILD_VERSION:
+    sh: echo $(git describe --abbrev=0 | tr -d v)5
+  TEST_DIR: "tests"
+
+tasks:
+  run-tests-against-submodule:
+    internal: true
+    cmds:
+      - git submodule init {{.TEST_DIR}}/opslevel_modules
+      - git submodule update {{.TEST_DIR}}/opslevel_modules
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TEST_DIR}}" }
+      - task: terraform-command
+        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}" }
+
+  setup-terraform-from:
+    desc: Setup Terraform, but do not touch any existing Terraform state
+    internal: true
+    cmds:
+      - task: terraform-build
+      - cmd: rm -rf {{.SETUP_DIR}}/.terraform/
+        ignore_error: true
+      - task: terraform-init-from
+        vars: { INIT_DIR: "{{.SETUP_DIR}}" }
+    requires:
+      vars: [SETUP_DIR]
+
+  terraform-build:
+    desc: Build local opslevel terraform provider
+    internal: true
+    aliases: ["build"]
+    vars:
+      BINARY: terraform-provider-opslevel_{{.TF_BUILD_VERSION}}
+      LOCATION: "{{.PLUGIN_DIR}}/{{.TF_BUILD_VERSION}}/{{OS}}_{{ARCH}}"
+    cmds:
+      - go build -ldflags="-s -w -X main.version={{.TF_BUILD_VERSION}}" -o {{.BINARY}} || exit 1
+      - chmod +x {{.BINARY}}
+      - mkdir -p {{.LOCATION}}
+      - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
+
+  terraform-command:
+    internal: true
+    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}}"]
+    requires:
+      vars: [TF_COMMAND, TF_CMD_DIR]
+    preconditions:
+      - sh: 'which terraform'
+        msg: '"terraform" needed - run "brew install terraform"'
+
+  terraform-format-check:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - cmd: echo "Listing all terraform files that need formatting..."
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/examples" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/local" }
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/remote" }
+
+  terraform-format-fix:
+    internal: true
+    desc: Run terraform format
+    cmds:
+      - task: terraform-command
+        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
+
+  terraform-init-from:
+    internal: true
+    cmds:
+      - "{{.ROOT_DIR}}/{{.INIT_DIR}}/make_backend_tf.sh"
+      - mv {{.ROOT_DIR}}/backend.tf {{.ROOT_DIR}}/{{.INIT_DIR}}/backend.tf
+      - touch {{.ROOT_DIR}}/{{.INIT_DIR}}/main.tf
+      - task: terraform-command
+        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.INIT_DIR}}" }
+    requires:
+      vars: [INIT_DIR]

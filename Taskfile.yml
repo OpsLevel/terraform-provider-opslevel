@@ -3,26 +3,34 @@
 version: '3'
 
 vars:
-  DEBUG_LOG: debug.log
-  OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
   PLUGIN_DIR: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
-  # 'VERSION_DYNAMIC' needs to run in this scope before 'task terraform-build' begins
-  VERSION_DYNAMIC:
-    sh: echo $(git describe --abbrev=0 | tr -d v)5
   TEST_DIR: "tests"
   WORKSPACE_DIR: "workspace"
+
+includes:
+  debug:
+    taskfile: ./taskfiles/Debug.yml
+    internal: true
+  go:
+    taskfile: ./taskfiles/Golang.yml
+    internal: true
+  install:
+    taskfile: ./taskfiles/Install.yml
+    internal: true
+  terraform:
+    taskfile: ./taskfiles/Terraform.yml
+    internal: true
 
 tasks:
   ci:
     desc: Workflow to run in CI
     deps:
-      - brew-install-jq
-      - install-gofumpt
-      - install-golangci-lint
-      # - install-nilaway
+      - install:brew-install-jq
+      - install:go-install-gofumpt
+      - install:go-install-golangci-lint
     cmds:
-      - task: workspace
-      - task: has-latest-opslevel-go
+      - task: go:workspace
+      - task: go:has-latest-opslevel-go
       - task: lint
       - task: test
 
@@ -36,118 +44,73 @@ tasks:
 
   fix:
     desc: Fix formatting, linting, go.mod, and update submodule
+    deps:
+      - install:brew-install-terraform
+      - install:go-install-golangci-lint
     cmds:
-      - task: update-opslevel-go
+      - task: go:update-opslevel-go
       - gofumpt -w .
       - go get -u
       - go mod tidy
       - golangci-lint run --fix
-      - task: terraform-format-fix
+      - task: terraform:terraform-format-fix
 
   lint:
     desc: Formatting and linting
+    deps:
+      - install:brew-install-terraform
+      - install:go-install-golangci-lint
     cmds:
       - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
       - golangci-lint run
-      # - nilaway -test=false -include-pkgs='github.com/opslevel/terraform-provider-opslevel' ./...
-      - task: terraform-command
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-      - task: terraform-format-check
+      - task: terraform:terraform-format-check
 
   setup:
-    desc: Setup linter, formatter, etc. for local testing
+    desc: Setup linter, formatter, Terraform, and Terraform workspace
     deps:
-      - task: brew-install-jq
-      - task: install-changie
-      - task: install-gofumpt
-      - task: install-golangci-lint
-      # - task: install-nilaway
-      - task: install-terraform
+      - install:brew-install-terraform
+      - install:go-install-changie
+      - install:go-install-gofumpt
+      - install:go-install-golangci-lint
     cmds:
-      - task: workspace
-      - task: setup-terraform
-
-  setup-terraform:
-    desc: Build OpsLevel terraform provider and run terraform init in {{.WORKSPACE_DIR}}
-    aliases: ["setup-tf", "tf-setup", "terraform-setup"]
-    cmds:
-      - task: setup-terraform-from
+      - task: go:workspace
+      - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
-
-  setup-terraform-from:
-    internal: true
-    cmds:
-      - task: terraform-build
-      - cmd: rm -rf {{.SETUP_DIR}}/.terraform.lock.hcl {{.SETUP_DIR}}/.terraform/ {{.SETUP_DIR}}/*.tfstate*
-        ignore_error: true
-      - task: terraform-init-from
-        vars: { INIT_DIR: "{{.SETUP_DIR}}" }
-    requires:
-      vars: [SETUP_DIR]
 
   terraform-apply:
     desc: Rebuild and run "terraform apply -auto-approve" in "{{.WORKSPACE_DIR}}"
     aliases: ["apply"]
     cmds:
-      - task: setup-terraform
-      - task: terraform-command
+      - task: terraform:setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: 'apply -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  terraform-build:
-    desc: Build local opslevel terraform provider
-    aliases: ["build"]
-    vars:
-      BINARY: terraform-provider-opslevel_{{.VERSION_DYNAMIC}}
-      LOCATION: "{{.PLUGIN_DIR}}/{{.VERSION_DYNAMIC}}/{{OS}}_{{ARCH}}"
-    cmds:
-      - go build -ldflags="-s -w -X main.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
-      - chmod +x {{.BINARY}}
-      - mkdir -p {{.LOCATION}}
-      - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}
 
   debug-start:
     desc: First, start headless debug
     aliases: ["dbg-start", "dbg1", "debug1"]
-    vars:
-      BINARY: terraform-provider-opslevel-debug_{{.VERSION_DYNAMIC}}
-    interactive: true
     cmds:
-      - defer: rm {{.BINARY}}
-      - go build -gcflags="all=-N -l" -ldflags="-X main.version={{.VERSION_DYNAMIC}}" -o {{.BINARY}} || exit 1
-      - chmod +x {{.BINARY}}
-      - task: terraform-init-from
-        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
-      - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
+      - task: debug:do-debug-start
 
   debug-attach:
     desc: Second, attach to headless debug sessions
     aliases: ["dbg-attach", "dbg2", "debug2"]
-    vars:
-      LOCAL_PORT:
-        sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
-    interactive: true
     cmds:
-      - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
-      - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
+      - task: debug:do-debug-attach
 
   debug-apply:
     desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
     aliases: ["dbg-apply"]
-    vars:
-      TF_REATTACH_PROVIDERS:
-        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
     cmds:
-      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.WORKSPACE_DIR}}" apply -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
+      - task: debug:do-debug-apply
 
   debug-plan:
     desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
     aliases: ["dbg-plan"]
-    vars:
-      TF_REATTACH_PROVIDERS:
-        sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
     cmds:
-      - echo "After 'terraform plan' is started, return to shell with interactive delve session"
-      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.WORKSPACE_DIR}}" plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"
+      - task: debug:do-debug-plan
 
   terraform-clean:
     desc: Completely wipe terraform state, terraform generated files, and local OpsLevel provider binaries
@@ -168,55 +131,37 @@ tasks:
     desc: Rebuild and run "terraform destroy -auto-approve" in "{{.WORKSPACE_DIR}}"
     aliases: ["destroy"]
     cmds:
-      - task: setup-terraform
-      - task: terraform-command
+      - task: terraform:setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: 'destroy -auto-approve -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
-
-  terraform-init:
-    desc: Initialize terraform workspace
-    aliases: ["init"]
-    cmds:
-      - cmd: rm -rf {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.WORKSPACE_DIR}}/.terraform/ {{.WORKSPACE_DIR}}/*.tfstate*
-        ignore_error: true
-      - task: terraform-init-from
-        vars: { INIT_DIR: "{{.WORKSPACE_DIR}}" }
-
-  terraform-init-from:
-    dir: "{{.INIT_DIR}}"
-    internal: true
-    cmds:
-      - './make_backend_tf.sh'
-      - touch main.tf
-      - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.INIT_DIR}}" }
-    requires:
-      vars: [INIT_DIR]
 
   terraform-plan:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
     aliases: ["plan"]
     cmds:
-      - task: setup-terraform
-      - task: terraform-command
+      - task: terraform:setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: 'plan -var="OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN"', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   terraform-validate:
     desc: Rebuild and run "terraform validate" in "{{.WORKSPACE_DIR}}"
     aliases: ["validate"]
     cmds:
-      - task: setup-terraform
-      - task: terraform-command
+      - task: terraform:setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: 'validate', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
   test:
     desc: Run tests
     cmds:
-      - task: setup-terraform-from
+      - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.TEST_DIR}}/local" }
-      - task: terraform-command
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: "test", TF_CMD_DIR: "{{.TEST_DIR}}/local" }
-      - task: run-unit-tests
-      # - task: run-acceptance-tests
+      - task: go:run-unit-tests
 
   test-release:
     desc: Run integration tests using latest release of OpsLevel Terraform provider
@@ -227,7 +172,7 @@ tasks:
       - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
         ignore_error: true
       - echo "Testing with latest OpsLevel Terraform provider release..."
-      - task: run-tests-against-submodule
+      - task: terraform:run-tests-against-submodule
 
   test-unreleased:
     desc: Run integration tests with local changes to OpsLevel Terraform provider
@@ -237,174 +182,15 @@ tasks:
       - echo "Testing with local changes to OpsLevel Terraform provider..."
       - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
         ignore_error: true
-      - task: terraform-build
-      - task: run-tests-against-submodule
-
-  run-tests-against-submodule:
-    internal: true
-    cmds:
-      - git submodule init {{.TEST_DIR}}/opslevel_modules
-      - git submodule update {{.TEST_DIR}}/opslevel_modules
-      - task: terraform-command
-        vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.TEST_DIR}}" }
-      - task: terraform-command
-        vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}" }
+      - task: terraform:terraform-build
+      - task: terraform:run-tests-against-submodule
 
   test-integration:
     desc: Run integration tests - placeholder until submodule complete
     requires:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:
-      - task: setup-terraform-from
+      - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.TEST_DIR}}/remote" }
-      - task: terraform-command
+      - task: terraform:terraform-command
         vars: { TF_COMMAND: 'test -var-file=test.tfvars -var="api_token=$OPSLEVEL_API_TOKEN" {{.CLI_ARGS}}', TF_CMD_DIR: "{{.TEST_DIR}}/remote" }
-
-  run-unit-tests:
-    internal: true
-    cmds:
-      - echo "Running unit tests..."
-      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
-
-  run-acceptance-tests:
-    internal: true
-    env:
-      TF_ACC: true
-    cmds:
-      - echo "Running acceptance tests..."
-      - TF_VAR_OPSLEVEL_API_TOKEN=$OPSLEVEL_API_TOKEN go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
-    requires:
-      vars: [OPSLEVEL_API_TOKEN]
-
-  workspace:
-    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
-    cmds:
-      - cmd: echo "Setting up opslevel-go workspace..."
-        silent: true
-      - git submodule update --init --remote
-      - rm go.work go.work.sum || true
-      - go work init
-      - go work use . submodules/opslevel-go
-      - cmd: echo "opslevel-go workspace ready!"
-        silent: true
-
-  ########################################
-  # internal (not directly called) tasks #
-  ########################################
-
-  brew-install-jq:
-    internal: true
-    platforms: [darwin]
-    cmds: ["which jq > /dev/null || brew install jq"]
-    preconditions:
-      - sh: 'which brew'
-        msg: '"brew" needed to install "jq"- see https://brew.sh'
-
-  go-install-tool:
-    desc: go install '{{.GO_TOOL}}' and set GOBIN if not set
-    internal: true
-    silent: true
-    vars:
-      IS_TOOL_INSTALLED:
-        sh: which {{.GO_TOOL}} > /dev/null || echo "1"
-    cmds:
-      - test -z "{{.IS_TOOL_INSTALLED}}" || echo "Installing {{.GO_TOOL}}..."
-      - test -z "{{.IS_TOOL_INSTALLED}}" || go install {{.GO_TOOL_PATH}}
-      - test -n $(go env GOBIN) || go env -w GOBIN=$(go env GOPATH)/bin
-      - echo "  '{{.GO_TOOL}}' is installed."
-    requires:
-      vars: [GO_TOOL, GO_TOOL_PATH]
-
-  has-latest-opslevel-go:
-    desc: Check if latest release of opslevel-go in go.mod
-    internal: true
-    silent: true
-    vars:
-      GO_WORK: "go.work"
-      TMP_GO_WORK: "tmp_go.work"
-      LATEST_OPSLEVEL_GO_VERSION:
-        sh: go list -u -m -versions {{.OPSLEVEL_GO_PKG}} | awk '{print $NF}'
-    cmds:
-      - if [[ -f {{.GO_WORK}} ]]; then mv {{.GO_WORK}} {{.TMP_GO_WORK}}; fi
-      - defer: if [[ -f {{.TMP_GO_WORK}} ]]; then mv {{.TMP_GO_WORK}} {{.GO_WORK}}; fi
-      - |-
-        if [[ {{.LATEST_OPSLEVEL_GO_VERSION}} == $(go list -m --json '{{.OPSLEVEL_GO_PKG}}' | jq -r '.Version') ]]; then
-          echo "Using latest version of opslevel-go - {{.LATEST_OPSLEVEL_GO_VERSION}}";
-        else
-          echo "WARNING: current version of opslevel-go is behind '{{.LATEST_OPSLEVEL_GO_VERSION}}'"
-          echo "Run 'task fix' to get latest version"
-          exit 1
-        fi
-
-  install-changie:
-    desc: go install "changie"
-    internal: true
-    cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "changie", GO_TOOL_PATH: "github.com/miniscruff/changie@latest" }
-
-  install-gofumpt:
-    desc: go install "gofumpt"
-    internal: true
-    cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
-
-  install-golangci-lint:
-    desc: go install "golangci-lint"
-    internal: true
-    cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "golangci-lint", GO_TOOL_PATH: "github.com/golangci/golangci-lint/cmd/golangci-lint@latest" }
-
-  install-nilaway:
-    desc: go install "nilaway"
-    internal: true
-    cmds:
-      - task: go-install-tool
-        vars: { GO_TOOL: "nilaway", GO_TOOL_PATH: "go.uber.org/nilaway/cmd/nilaway@latest" }
-
-  install-terraform:
-    internal: true
-    platforms: [darwin]
-    cmds:
-      - echo "Installing terraform..."
-      - which terraform > /dev/null || brew tap hashicorp/tap && brew install hashicorp/tap/terraform
-      - echo -e "\nSuccess! 'terraform' installed."
-    preconditions:
-      - sh: 'which brew'
-        msg: '"brew" needed to install terraform - see https://brew.sh'
-
-  terraform-command:
-    internal: true
-    cmds: ["terraform -chdir={{.TF_CMD_DIR}} {{.TF_COMMAND}}"]
-    requires:
-      vars: [TF_COMMAND, TF_CMD_DIR]
-    preconditions:
-      - sh: 'which terraform'
-        msg: '"terraform" needed - run "brew install terraform"'
-
-  terraform-format-check:
-    internal: true
-    desc: Run terraform format
-    cmds:
-      - cmd: echo "Listing all terraform files that need formatting..."
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/examples" }
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/local" }
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -check", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}/remote" }
-
-  terraform-format-fix:
-    internal: true
-    desc: Run terraform format
-    cmds:
-      - task: terraform-command
-        vars: { TF_COMMAND: "fmt -recursive -write=true", TF_CMD_DIR: "{{.ROOT_DIR}}" }
-
-  update-opslevel-go:
-    internal: true
-    desc: Update opslevel-go version to latest release
-    cmds:
-      - go get -u "{{.OPSLEVEL_GO_PKG}}"
