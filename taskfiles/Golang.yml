@@ -1,0 +1,49 @@
+version: '3'
+
+vars:
+  OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
+
+tasks:
+  has-latest-opslevel-go:
+    desc: Check if latest release of opslevel-go in go.mod
+    vars:
+      GO_WORK: "go.work"
+      TMP_GO_WORK: "tmp_go.work"
+      LATEST_OPSLEVEL_GO_VERSION:
+        sh: go list -u -m -versions {{.OPSLEVEL_GO_PKG}} | awk '{print $NF}'
+    cmds:
+      - if [[ -f {{.GO_WORK}} ]]; then mv {{.GO_WORK}} {{.TMP_GO_WORK}}; fi
+      - defer: if [[ -f {{.TMP_GO_WORK}} ]]; then mv {{.TMP_GO_WORK}} {{.GO_WORK}}; fi
+      - |-
+        if [[ {{.LATEST_OPSLEVEL_GO_VERSION}} == $(go list -m --json '{{.OPSLEVEL_GO_PKG}}' | jq -r '.Version') ]]; then
+          echo "Using latest version of opslevel-go - {{.LATEST_OPSLEVEL_GO_VERSION}}";
+        else
+          echo "WARNING: current version of opslevel-go is behind '{{.LATEST_OPSLEVEL_GO_VERSION}}'"
+          echo "Run 'task fix' to get latest version"
+          exit 1
+        fi
+
+  run-unit-tests:
+    internal: true
+    cmds:
+      - echo "Running unit tests..."
+      - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./... {{ .CLI_ARGS }}
+
+  update-opslevel-go:
+    internal: true
+    desc: Update opslevel-go version to latest release
+    cmds:
+      - go get -u "{{.OPSLEVEL_GO_PKG}}"
+
+  workspace:
+    desc: Setup workspace for terraform-provider-opslevel & opslevel-go development
+    internal: true
+    cmds:
+      - cmd: echo "Setting up opslevel-go workspace..."
+        silent: true
+      - git submodule update --init --remote
+      - rm go.work go.work.sum || true
+      - go work init
+      - go work use . submodules/opslevel-go
+      - cmd: echo "opslevel-go workspace ready!"
+        silent: true
