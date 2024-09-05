@@ -79,7 +79,7 @@ resource "aws_iam_role" "opslevel" {
         Sid    = ""
         Principal = {
           Service = "ec2.amazonaws.com",
-          AWS     = "arn:aws:iam::746108190720:user/opslevel-integration",
+          AWS     = "arn:aws:iam::746108190720:role/opslevel-integration",
         }
         Condition = {
           StringEquals = {
