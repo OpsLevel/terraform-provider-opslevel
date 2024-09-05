@@ -39,7 +39,8 @@ tasks:
       - task: clean-terraform-plugin-directory
       - cmd: rm -rf {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform/ {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform.lock.hcl
         ignore_error: true
-      - task: terraform-build
+      - task: setup-test-modules
+        vars: { SETUP_DIR: '{{.SETUP_DIR}}' }
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.SETUP_DIR}}" }
     requires:

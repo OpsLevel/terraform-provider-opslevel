@@ -16,6 +16,7 @@ resource "opslevel_service" "test" {
   language                      = var.language
   lifecycle_alias               = var.lifecycle_alias
   name                          = var.name
+  note                          = var.note
   owner                         = var.owner
   preferred_api_document_source = var.preferred_api_document_source
   product                       = var.product

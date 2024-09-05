@@ -12,6 +12,7 @@ variables {
   framework                     = "Ruby on Rails"
   language                      = "ruby"
   lifecycle_alias               = null
+  note                          = "TF Test Service Note"
   owner                         = null
   preferred_api_document_source = "PUSH"
   product                       = "widgets"
@@ -60,6 +61,7 @@ run "resource_service_create_with_all_fields" {
     language                      = var.language
     lifecycle_alias               = run.from_lifecycle_get_lifecycle_alias.first_lifecycle.alias
     name                          = var.name
+    note                          = var.note
     owner                         = run.from_team_get_owner_id.first_team.id
     preferred_api_document_source = var.preferred_api_document_source
     product                       = var.product
@@ -81,6 +83,8 @@ run "resource_service_create_with_all_fields" {
       can(opslevel_service.test.id),
       can(opslevel_service.test.language),
       can(opslevel_service.test.lifecycle_alias),
+      can(opslevel_service.test.name),
+      can(opslevel_service.test.note),
       can(opslevel_service.test.owner),
       can(opslevel_service.test.preferred_api_document_source),
       can(opslevel_service.test.product),
@@ -123,6 +127,16 @@ run "resource_service_create_with_all_fields" {
   assert {
     condition     = opslevel_service.test.lifecycle_alias == var.lifecycle_alias
     error_message = "wrong lifecycle_alias of opslevel_service resource"
+  }
+
+  assert {
+    condition     = opslevel_service.test.name == var.name
+    error_message = "wrong name of opslevel_service resource"
+  }
+
+  assert {
+    condition     = opslevel_service.test.note == var.note
+    error_message = "wrong note of opslevel_service resource"
   }
 
   assert {
@@ -197,6 +211,7 @@ run "resource_service_update_unset_optional_fields" {
     framework                     = null
     language                      = null
     lifecycle_alias               = null
+    note                          = null
     owner                         = null
     preferred_api_document_source = null
     product                       = null
@@ -239,6 +254,11 @@ run "resource_service_update_unset_optional_fields" {
   }
 
   assert {
+    condition     = opslevel_service.test.note == null
+    error_message = var.error_expected_null_field
+  }
+
+  assert {
     condition     = opslevel_service.test.owner == null
     error_message = var.error_expected_null_field
   }
@@ -275,6 +295,7 @@ run "resource_service_update_set_all_fields" {
     language                      = upper(var.language)
     lifecycle_alias               = run.from_lifecycle_get_lifecycle_alias.first_lifecycle.alias
     name                          = "${var.name} updated"
+    note                          = "${var.note} updated"
     owner                         = run.from_team_get_owner_id.first_team.id
     preferred_api_document_source = var.preferred_api_document_source
     product                       = var.product
@@ -314,6 +335,16 @@ run "resource_service_update_set_all_fields" {
   assert {
     condition     = opslevel_service.test.lifecycle_alias == var.lifecycle_alias
     error_message = "wrong lifecycle_alias of opslevel_service resource"
+  }
+
+  assert {
+    condition     = opslevel_service.test.name == var.name
+    error_message = "wrong name of opslevel_service resource"
+  }
+
+  assert {
+    condition     = opslevel_service.test.note == var.note
+    error_message = "wrong note of opslevel_service resource"
   }
 
   assert {
