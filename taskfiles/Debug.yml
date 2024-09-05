@@ -30,6 +30,7 @@ tasks:
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    interactive: true
     cmds:
       - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" apply
 
@@ -39,16 +40,16 @@ tasks:
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    interactive: true
     cmds:
       - echo "After 'terraform plan' is started, return to shell with interactive delve session"
       - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" plan
 
   do-debug-start:
     desc: First, start headless debug
-    dir: "{{.ROOT_DIR}}"
     aliases: ["dbg-start", "dbg1", "debug1"]
     vars:
-      BINARY: terraform-provider-opslevel_{{.TF_DEBUG_VERSION}}
+      BINARY: terraform-provider-opslevel_debug_{{.TF_DEBUG_VERSION}}
     interactive: true
     cmds:
       - defer: rm {{.BINARY}}
