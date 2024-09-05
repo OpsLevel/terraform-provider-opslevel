@@ -3,7 +3,6 @@
 version: '3'
 
 vars:
-  PLUGIN_DIR: "${HOME}/.terraform.d/plugins/registry.terraform.io/opslevel/opslevel"
   TEST_DIR: "tests"
   WORKSPACE_DIR: "workspace"
 
@@ -101,7 +100,7 @@ tasks:
       - task: debug:do-debug-attach
 
   debug-apply:
-    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
+    desc: After debug-start and debug-attach, run "terraform apply" with 'TF_REATTACH_PROVIDERS'
     aliases: ["dbg-apply"]
     cmds:
       - task: debug:do-debug-apply
@@ -117,7 +116,7 @@ tasks:
     aliases: ["clean"]
     prompt: Remove all '*.tfstate .terraform.lock.hcl ./terraform.* .terraform/**' and OpsLevel binaries from plugins directory?
     cmds:
-      - rm -rf {{.PLUGIN_DIR}}
+      - task: terraform:clean-terraform-plugin-directory
       - cmd: rm -rf {{.WORKSPACE_DIR}}/.terraform.lock.hcl {{.WORKSPACE_DIR}}/.terraform/ {{.WORKSPACE_DIR}}/*.tfstate*
         ignore_error: true
       - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
@@ -170,7 +169,7 @@ tasks:
     requires:
       vars: [OPSLEVEL_API_TOKEN]
     cmds:
-      - rm -rf {{.PLUGIN_DIR}}
+      - task: terraform:clean-terraform-plugin-directory
       - cmd: rm -rf {{.TEST_DIR}}/.terraform.lock.hcl {{.TEST_DIR}}/.terraform/ {{.TEST_DIR}}/*.tfstate*
         ignore_error: true
       - echo "Testing with latest OpsLevel Terraform provider release..."

@@ -262,9 +262,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
-	if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
-		return
+	if !planModel.Note.IsNull() {
+		if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
+			return
+		}
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
@@ -339,13 +341,14 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ServiceResourceModel
+	var planModel, stateModel ServiceResourceModel
 	var ownerFromState, parentFromState types.String
 
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &ownerFromState)...)
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("parent"), &parentFromState)...)
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -405,9 +408,12 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
 	}
 
-	if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
-		return
+	// update service note only if known to plan and/or state
+	if !planModel.Note.IsNull() || !stateModel.Note.IsNull() {
+		if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
+			return
+		}
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
