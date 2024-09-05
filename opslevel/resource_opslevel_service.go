@@ -262,11 +262,9 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
-	if !planModel.Note.IsNull() {
-		if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
-			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
-			return
-		}
+	if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
+		return
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
