@@ -43,6 +43,7 @@ type ServiceResourceModel struct {
 	Language                   types.String `tfsdk:"language"`
 	LifecycleAlias             types.String `tfsdk:"lifecycle_alias"`
 	Name                       types.String `tfsdk:"name"`
+	Note                       types.String `tfsdk:"note"`
 	Owner                      types.String `tfsdk:"owner"`
 	Parent                     types.String `tfsdk:"parent"`
 	PreferredApiDocumentSource types.String `tfsdk:"preferred_api_document_source"`
@@ -61,6 +62,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
+		Note:            givenModel.Note,
 		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
 		Parent:          OptionalStringValue(givenModel.Parent.ValueString()),
 		Product:         OptionalStringValue(service.Product),
@@ -159,6 +161,10 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "The display name of the service.",
 				Required:    true,
 			},
+			"note": schema.StringAttribute{
+				Description: "Additional information about the service.",
+				Optional:    true,
+			},
 			"owner": schema.StringAttribute{
 				Description: "The team that owns the service. ID or Alias may be used.",
 				Optional:    true,
@@ -256,6 +262,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
+	if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
+		return
+	}
+
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
@@ -328,13 +339,14 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ServiceResourceModel
+	var planModel, stateModel ServiceResourceModel
 	var ownerFromState, parentFromState types.String
 
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &ownerFromState)...)
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("parent"), &parentFromState)...)
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -392,6 +404,14 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	aliases = append(aliases, uniqueIdentifiers...)
 	if err = service.ReconcileAliases(r.client, aliases); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service aliases: '%s'\n%s", aliases, err))
+	}
+
+	// update service note only if known to plan and/or state
+	if !planModel.Note.IsNull() || !stateModel.Note.IsNull() {
+		if _, err := updateServiceNote(*r.client, *service, planModel); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service note, got error: %s", err))
+			return
+		}
 	}
 
 	givenTags, diags := TagSetValueToTagSlice(ctx, planModel.Tags)
@@ -470,4 +490,23 @@ func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 func (r *ServiceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func updateServiceNote(client opslevel.Client, service opslevel.Service, planModel ServiceResourceModel) (*opslevel.Service, error) {
+	if planModel.Note.ValueString() == service.Note {
+		return nil, nil
+	}
+
+	serviceNoteUpdateInput := opslevel.ServiceNoteUpdateInput{
+		Service: opslevel.IdentifierInput{Id: opslevel.RefOf(service.Id)},
+	}
+
+	if service.Note != "" && planModel.Note.IsNull() {
+		// unset the previously set note
+		serviceNoteUpdateInput.Note = opslevel.RefOf("")
+	} else {
+		serviceNoteUpdateInput.Note = planModel.Note.ValueStringPointer()
+	}
+
+	return client.UpdateServiceNote(serviceNoteUpdateInput)
 }

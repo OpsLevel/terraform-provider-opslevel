@@ -9,6 +9,11 @@ vars:
   VERSIONS_TF: "{{.ROOT_DIR}}/workspace/versions.tf"
 
 tasks:
+  clean-terraform-plugin-directory:
+    internal: true
+    cmds:
+      - rm -rf {{.PLUGIN_DIR}}
+
   run-tests-against-submodule:
     cmds:
       - git submodule init {{.ROOT_DIR}}/{{.TEST_DIR}}/opslevel_modules
@@ -31,9 +36,11 @@ tasks:
   setup-terraform-from:
     desc: Setup Terraform, but do not touch any existing Terraform state
     cmds:
-      - task: terraform-build
-      - cmd: rm -rf {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform/
+      - task: clean-terraform-plugin-directory
+      - cmd: rm -rf {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform/ {{.ROOT_DIR}}/{{.SETUP_DIR}}/.terraform.lock.hcl
         ignore_error: true
+      - task: setup-test-modules
+        vars: { SETUP_DIR: '{{.SETUP_DIR}}' }
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.SETUP_DIR}}" }
     requires:

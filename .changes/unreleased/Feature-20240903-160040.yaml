@@ -1,0 +1,3 @@
+kind: Feature
+body: "Adds support for setting the 'note' field on an 'opslevel_service' resource"
+time: 2024-09-03T16:00:40.761404-05:00

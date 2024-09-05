@@ -39,6 +39,12 @@ variable "name" {
   description = "The display name of the service."
 }
 
+variable "note" {
+  type        = string
+  description = "Additional information about the service."
+  default     = null
+}
+
 variable "owner" {
   type        = string
   description = "The team that owns the service. ID or Alias may be used."

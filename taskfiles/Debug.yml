@@ -4,7 +4,7 @@ vars:
   DEBUG_LOG: debug.log
   # 'TF_DEBUG_VERSION' needs to run in this scope before 'do-debug-start' begins
   TF_DEBUG_VERSION:
-    sh: echo $(git describe --abbrev=0 | tr -d v)5
+    sh: echo $(git describe --abbrev=0 | tr -d v)7
   WORKSPACE_DIR: "workspace"
 
 includes:
@@ -30,6 +30,7 @@ tasks:
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    interactive: true
     cmds:
       - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" apply
 
@@ -39,22 +40,22 @@ tasks:
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
+    interactive: true
     cmds:
       - echo "After 'terraform plan' is started, return to shell with interactive delve session"
       - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" plan
 
   do-debug-start:
     desc: First, start headless debug
-    dir: "{{.ROOT_DIR}}"
     aliases: ["dbg-start", "dbg1", "debug1"]
     vars:
-      BINARY: terraform-provider-opslevel-debug_{{.TF_DEBUG_VERSION}}
+      BINARY: terraform-provider-opslevel_debug_{{.TF_DEBUG_VERSION}}
     interactive: true
     cmds:
       - defer: rm {{.BINARY}}
       - go build -gcflags="all=-N -l" -ldflags="-X main.version={{.TF_DEBUG_VERSION}}" -o {{.BINARY}} || exit 1
       - chmod +x {{.BINARY}}
-      - cmd: rm -rf {{.ROOT_DIR}}/{{.WORKSPACE_DIR}}/.terraform/
+      - cmd: rm -rf {{.ROOT_DIR}}/{{.WORKSPACE_DIR}}/.terraform/ {{.ROOT_DIR}}/{{.WORKSPACE_DIR}}/.terraform.lock.hcl
         ignore_error: true
       - task: tf:terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" }
