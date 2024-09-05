@@ -26,37 +26,37 @@ run "resource_user_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_user.test.email),
-      can(opslevel_user.test.id),
-      can(opslevel_user.test.name),
-      can(opslevel_user.test.role),
-      can(opslevel_user.test.skip_welcome_email),
+      can(opslevel_user.this.email),
+      can(opslevel_user.this.id),
+      can(opslevel_user.this.name),
+      can(opslevel_user.this.role),
+      can(opslevel_user.this.skip_welcome_email),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.user_one)
   }
 
   assert {
-    condition     = opslevel_user.test.email == var.email
+    condition     = opslevel_user.this.email == var.email
     error_message = "wrong email for opslevel_user resource"
   }
 
   assert {
-    condition     = startswith(opslevel_user.test.id, var.id_prefix)
+    condition     = startswith(opslevel_user.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.user_one)
   }
 
   assert {
-    condition     = opslevel_user.test.name == var.name
+    condition     = opslevel_user.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.user_one)
   }
 
   assert {
-    condition     = opslevel_user.test.role == var.role
+    condition     = opslevel_user.this.role == var.role
     error_message = "wrong role for opslevel_user resource"
   }
 
   assert {
-    condition     = opslevel_user.test.skip_welcome_email == var.skip_welcome_email
+    condition     = opslevel_user.this.skip_welcome_email == var.skip_welcome_email
     error_message = "wrong email for opslevel_user resource"
   }
 
@@ -73,7 +73,7 @@ run "resource_user_update_unset_fields_return_default_value" {
   }
 
   assert {
-    condition     = opslevel_user.test.skip_welcome_email == true
+    condition     = opslevel_user.this.skip_welcome_email == true
     error_message = "expected 'true' default for skip_welcome_email in opslevel_user resource"
   }
 
@@ -93,22 +93,22 @@ run "resource_user_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_user.test.email == var.email
+    condition     = opslevel_user.this.email == var.email
     error_message = "wrong email for opslevel_user resource"
   }
 
   assert {
-    condition     = opslevel_user.test.name == var.name
+    condition     = opslevel_user.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.user_one)
   }
 
   assert {
-    condition     = opslevel_user.test.role == var.role
+    condition     = opslevel_user.this.role == var.role
     error_message = "wrong role for opslevel_user resource"
   }
 
   assert {
-    condition     = opslevel_user.test.skip_welcome_email == var.skip_welcome_email
+    condition     = opslevel_user.this.skip_welcome_email == var.skip_welcome_email
     error_message = "wrong skip_welcome_email for opslevel_user resource"
   }
 
