@@ -43,6 +43,7 @@ tasks:
         vars: { SETUP_DIR: '{{.SETUP_DIR}}' }
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.SETUP_DIR}}" }
+      - touch {{.ROOT_DIR}}/{{.SETUP_DIR}}/main.tf
     requires:
       vars: [SETUP_DIR]
 

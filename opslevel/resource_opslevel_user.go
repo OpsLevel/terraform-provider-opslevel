@@ -34,6 +34,7 @@ type UserResource struct {
 // UserResourceModel describes the User managed resource.
 type UserResourceModel struct {
 	Email            types.String `tfsdk:"email"`
+	ForceSendInvite  types.Bool   `tfsdk:"force_send_invite"`
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
@@ -43,6 +44,7 @@ type UserResourceModel struct {
 func NewUserResourceModel(user opslevel.User, model UserResourceModel) UserResourceModel {
 	return UserResourceModel{
 		Email:            RequiredStringValue(user.Email),
+		ForceSendInvite:  model.ForceSendInvite,
 		Id:               ComputedStringValue(string(user.Id)),
 		Name:             RequiredStringValue(user.Name),
 		Role:             OptionalStringValue(string(user.Role)),
@@ -66,6 +68,10 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.RequiresReplace(),
 				},
 				Required: true,
+			},
+			"force_send_invite": schema.BoolAttribute{
+				Description: "Send an invite email even if notifications are disabled for the account.",
+				Optional:    true,
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the user.",
@@ -108,11 +114,12 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	user, err := r.client.InviteUser(planModel.Email.ValueString(), opslevel.UserInput{
+	userInput := opslevel.UserInput{
 		Name:             planModel.Name.ValueStringPointer(),
 		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
 		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
-	})
+	}
+	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.ForceSendInvite.ValueBoolPointer())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return

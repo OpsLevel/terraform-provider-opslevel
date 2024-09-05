@@ -1,0 +1,4 @@
+kind: Feature
+body: '"force_send_invite" field on "opslevel_user" sends invite email when notifications
+  on account are disabled'
+time: 2024-09-05T15:53:44.864569-05:00
