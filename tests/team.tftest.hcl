@@ -42,38 +42,38 @@ run "resource_team_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_team.test.aliases),
-      can(opslevel_team.test.id),
-      can(opslevel_team.test.member),
-      can(opslevel_team.test.name),
-      can(opslevel_team.test.parent),
-      can(opslevel_team.test.responsibilities),
+      can(opslevel_team.this.aliases),
+      can(opslevel_team.this.id),
+      can(opslevel_team.this.member),
+      can(opslevel_team.this.name),
+      can(opslevel_team.this.parent),
+      can(opslevel_team.this.responsibilities),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.team_one)
   }
 
   assert {
-    condition     = opslevel_team.test.aliases == toset(var.aliases)
+    condition     = opslevel_team.this.aliases == toset(var.aliases)
     error_message = "wrong aliases for opslevel_team resource"
   }
 
   assert {
-    condition     = startswith(opslevel_team.test.id, var.id_prefix)
+    condition     = startswith(opslevel_team.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.team_one)
   }
 
   assert {
-    condition     = opslevel_team.test.name == var.name
+    condition     = opslevel_team.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.team_one)
   }
 
   assert {
-    condition     = opslevel_team.test.parent == var.parent
+    condition     = opslevel_team.this.parent == var.parent
     error_message = "wrong parent for opslevel_team resource"
   }
 
   assert {
-    condition     = opslevel_team.test.responsibilities == var.responsibilities
+    condition     = opslevel_team.this.responsibilities == var.responsibilities
     error_message = "wrong responsibilities for opslevel_team resource"
   }
 
@@ -91,7 +91,7 @@ run "resource_team_create_with_empty_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_team.test.responsibilities == ""
+    condition     = opslevel_team.this.responsibilities == ""
     error_message = var.error_expected_empty_string
   }
 
@@ -110,17 +110,17 @@ run "resource_team_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_team.test.aliases == null
+    condition     = opslevel_team.this.aliases == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_team.test.parent == null
+    condition     = opslevel_team.this.parent == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_team.test.responsibilities == null
+    condition     = opslevel_team.this.responsibilities == null
     error_message = var.error_expected_null_field
   }
 
@@ -140,22 +140,22 @@ run "resource_team_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_team.test.aliases == toset(var.aliases)
+    condition     = opslevel_team.this.aliases == toset(var.aliases)
     error_message = "wrong aliases for opslevel_team resource"
   }
 
   assert {
-    condition     = opslevel_team.test.name == var.name
+    condition     = opslevel_team.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.team_one)
   }
 
   assert {
-    condition     = opslevel_team.test.parent == var.parent
+    condition     = opslevel_team.this.parent == var.parent
     error_message = "wrong parent for opslevel_team resource"
   }
 
   assert {
-    condition     = opslevel_team.test.responsibilities == var.responsibilities
+    condition     = opslevel_team.this.responsibilities == var.responsibilities
     error_message = "wrong responsibilities for opslevel_team resource"
   }
 
