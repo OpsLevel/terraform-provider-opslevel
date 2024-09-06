@@ -114,6 +114,11 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
+    condition     = opslevel_check_alert_source_usage.test.alert_type == var.alert_type
+    error_message = "wrong alert_type of opslevel_check_alert_source_usage resource"
+  }
+
+  assert {
     condition     = opslevel_check_alert_source_usage.test.category == var.category
     error_message = "wrong category of opslevel_check_alert_source_usage resource"
   }
