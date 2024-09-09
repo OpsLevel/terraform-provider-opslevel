@@ -122,11 +122,6 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"private_key": schema.StringAttribute{
-				Description: "The private key for the service account that OpsLevel uses to access the Google Cloud account.",
-				Required:    true,
-				Sensitive:   true,
-			},
 			"created_at": schema.StringAttribute{
 				Description: "The time this integration was created.",
 				Computed:    true,
@@ -155,7 +150,7 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Default: listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
-					listvalidator.SizeAtMost(5),
+					listvalidator.SizeBetween(1, 5),
 				},
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
@@ -164,6 +159,11 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 				Computed:    true,
 				// current API default is true
 				Default: booldefault.StaticBool(true),
+			},
+			"private_key": schema.StringAttribute{
+				Description: "The private key for the service account that OpsLevel uses to access the Google Cloud account.",
+				Required:    true,
+				Sensitive:   true,
 			},
 			"projects": schema.ListAttribute{
 				Description: "A list of the Google Cloud projects that were imported by the integration.",
