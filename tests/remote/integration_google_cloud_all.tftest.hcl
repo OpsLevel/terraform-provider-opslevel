@@ -79,7 +79,7 @@ run "resource_integration_google_cloud_create_with_all_fields" {
   }
 
   assert {
-    condition = opslevel_integration_google_cloud.this.private_key == var.private_key
+    condition     = opslevel_integration_google_cloud.this.private_key == var.private_key
     error_message = "expected different private_key value, not printing sensitive value"
   }
 
