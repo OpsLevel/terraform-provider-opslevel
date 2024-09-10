@@ -420,10 +420,14 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddAttributeError(path.Root("tags"), "Config error", "unable to handle given service tags")
 		return
 	}
-	if err = r.client.ReconcileTags(service, givenTags); err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
-		return
+
+	if !stateModel.Tags.IsNull() || !planModel.Tags.IsNull() {
+		if err = r.client.ReconcileTags(service, givenTags); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile service tags '%s', got error: %s", givenTags, err))
+			return
+		}
 	}
+
 	if planModel.ApiDocumentPath.IsNull() {
 		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), "", nil); err != nil {
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to unset 'api_document_path' for service %s. error: %s", service.Name, err))
