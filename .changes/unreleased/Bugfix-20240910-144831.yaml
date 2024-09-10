@@ -1,0 +1,3 @@
+kind: Bugfix
+body: 'BREAKING CHANGE - default value added to ownership_tag_keys field in azure integration, matches the same field in other integrations resources'
+time: 2024-09-10T14:48:31.38061-05:00
