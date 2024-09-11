@@ -69,11 +69,14 @@ run "from_team_module" {
 run "resource_check_manual_create_with_all_fields" {
 
   variables {
-    category                = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on               = var.enable_on
-    enabled                 = var.enabled
-    filter                  = run.from_filter_module.all.filters[0].id
-    level                   = run.from_rubric_level_module.greatest_level.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
+    enable_on = var.enable_on
+    enabled   = var.enabled
+    filter    = run.from_filter_module.all.filters[0].id
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
     name                    = var.name
     notes                   = var.notes
     owner                   = run.from_team_module.all.teams[0].id
@@ -163,11 +166,14 @@ run "resource_check_manual_create_with_all_fields" {
 run "resource_check_manual_update_unset_optional_fields" {
 
   variables {
-    category         = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on        = null
-    enabled          = null
-    filter           = null
-    level            = run.from_rubric_level_module.greatest_level.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
+    enable_on = null
+    enabled   = null
+    filter    = null
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
     notes            = null
     owner            = null
     update_frequency = null
@@ -212,11 +218,14 @@ run "resource_check_manual_update_unset_optional_fields" {
 run "resource_check_manual_update_all_fields" {
 
   variables {
-    category                = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on               = var.enable_on
-    enabled                 = !var.enabled
-    filter                  = run.from_filter_module.all.filters[0].id
-    level                   = run.from_rubric_level_module.greatest_level.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
+    enable_on = var.enable_on
+    enabled   = !var.enabled
+    filter    = run.from_filter_module.all.filters[0].id
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
     name                    = "${var.name} updated"
     notes                   = "${var.notes} updated"
     owner                   = run.from_team_module.all.teams[0].id
