@@ -40,12 +40,8 @@ run "from_filter_module" {
 run "from_rubric_category_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./rubric_category"
+    source = "./opslevel_modules/modules/rubric_category"
   }
 }
 

@@ -33,12 +33,8 @@ run "from_filter_module" {
 run "from_rubric_category_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./rubric_category"
+    source = "./opslevel_modules/modules/rubric_category"
   }
 }
 
@@ -161,7 +157,7 @@ run "resource_check_git_branch_protection_update_unset_optional_fields" {
   }
 
   module {
-    source = "./check_git_branch_protection"
+    source = "./opslevel_modules/modules/check/git_branch_protection"
   }
 
   assert {
@@ -209,7 +205,7 @@ run "resource_check_git_branch_protection_update_all_fields" {
   }
 
   module {
-    source = "./check_git_branch_protection"
+    source = "./opslevel_modules/modules/check/git_branch_protection"
   }
 
   assert {
