@@ -19,19 +19,19 @@ variables {
   owner     = null
 }
 
-run "from_filter_get_filter_id" {
+run "from_filter_module" {
   command = plan
 
   variables {
-    connective = null
+    name = ""
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 }
 
-run "from_rubric_category_get_category_id" {
+run "from_rubric_category_module" {
   command = plan
 
   variables {
@@ -43,50 +43,44 @@ run "from_rubric_category_get_category_id" {
   }
 }
 
-run "from_rubric_level_get_level_id" {
+run "from_rubric_level_module" {
   command = plan
 
-  variables {
-    description = null
-    index       = null
-    name        = ""
-  }
-
   module {
-    source = "./rubric_level"
+    source = "./opslevel_modules/modules/rubric_level"
   }
 }
 
-run "from_team_get_owner_id" {
+run "from_team_module" {
   command = plan
 
   variables {
-    aliases          = null
-    name             = ""
-    parent           = null
-    responsibilities = null
+    name = ""
   }
 
   module {
-    source = "./team"
+    source = "./opslevel_modules/modules/team"
   }
 }
 
 run "resource_check_has_recent_deploy_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = var.enable_on
     enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    filter    = run.from_filter_module.all.filters[0].id
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
+    name  = var.name
+    notes = var.notes
+    owner = run.from_team_module.all.teams[0].id
   }
 
   module {
-    source = "./check_has_recent_deploy"
+    source = "./opslevel_modules/modules/check/has_recent_deploy"
   }
 
   assert {
@@ -155,17 +149,17 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
 run "resource_check_has_recent_deploy_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = null
     enabled   = null
     filter    = null
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
+    level     = run.from_rubric_level_module.greatest_level.id
     notes     = null
     owner     = null
   }
 
   module {
-    source = "./check_has_recent_deploy"
+    source = "./opslevel_modules/modules/check/has_recent_deploy"
   }
 
   assert {
@@ -199,18 +193,18 @@ run "resource_check_has_recent_deploy_update_unset_optional_fields" {
 run "resource_check_has_recent_deploy_update_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_get_category_id.first_category.id
+    category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = var.enable_on
     enabled   = var.enabled
-    filter    = run.from_filter_get_filter_id.first_filter.id
-    level     = run.from_rubric_level_get_level_id.greatest_level.id
+    filter    = run.from_filter_module.all.filters[0].id
+    level     = run.from_rubric_level_module.greatest_level.id
     name      = var.name
     notes     = var.notes
-    owner     = run.from_team_get_owner_id.first_team.id
+    owner     = run.from_team_module.all.teams[0].id
   }
 
   module {
-    source = "./check_has_recent_deploy"
+    source = "./opslevel_modules/modules/check/has_recent_deploy"
   }
 
   assert {
