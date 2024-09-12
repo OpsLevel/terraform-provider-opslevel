@@ -17,6 +17,7 @@ variable "ownership_tag_keys" {
 variable "ownership_tag_overrides" {
   type        = bool
   description = "Allow tags imported from AWS to override ownership set in OpsLevel directly."
+  default     = null
 }
 
 variable "name" {

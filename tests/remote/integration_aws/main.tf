@@ -1,4 +1,4 @@
-resource "opslevel_integration_aws" "test" {
+resource "opslevel_integration_aws" "this" {
   name                    = var.name
   iam_role                = var.iam_role
   external_id             = var.external_id

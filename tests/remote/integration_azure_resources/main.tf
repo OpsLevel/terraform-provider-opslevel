@@ -1,4 +1,4 @@
-resource "opslevel_integration_azure_resources" "test" {
+resource "opslevel_integration_azure_resources" "this" {
   client_id               = var.client_id
   client_secret           = var.client_secret
   name                    = var.name

@@ -1,4 +1,4 @@
-resource "opslevel_integration_google_cloud" "test" {
+resource "opslevel_integration_google_cloud" "this" {
   client_email            = var.client_email
   name                    = var.name
   ownership_tag_keys      = var.ownership_tag_keys

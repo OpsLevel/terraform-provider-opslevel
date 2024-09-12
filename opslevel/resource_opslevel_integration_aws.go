@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -79,10 +80,11 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 			},
 			"ownership_tag_keys": schema.ListAttribute{
 				ElementType: types.StringType,
-				Description: "Allow tags imported from AWS to override ownership set in OpsLevel directly",
+				Description: "Allow tags imported from AWS to override ownership set in OpsLevel directly. Max 5 (default = [\"owner\"])",
 				Optional:    true,
 				Computed:    true,
-				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
+				// current API default below
+				Default: listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("owner")})),
 				Validators: []validator.List{
 					listvalidator.UniqueValues(),
 					listvalidator.SizeBetween(1, 5),
@@ -90,7 +92,10 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 			},
 			"ownership_tag_overrides": schema.BoolAttribute{
 				Description: "Allow tags imported from AWS to override ownership set in OpsLevel directly.",
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				// current API default is true
+				Default: booldefault.StaticBool(true),
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the integration.",
