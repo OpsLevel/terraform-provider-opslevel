@@ -81,62 +81,62 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_has_recent_deploy.test.category),
-      can(opslevel_check_has_recent_deploy.test.description),
-      can(opslevel_check_has_recent_deploy.test.enable_on),
-      can(opslevel_check_has_recent_deploy.test.enabled),
-      can(opslevel_check_has_recent_deploy.test.filter),
-      can(opslevel_check_has_recent_deploy.test.id),
-      can(opslevel_check_has_recent_deploy.test.level),
-      can(opslevel_check_has_recent_deploy.test.name),
-      can(opslevel_check_has_recent_deploy.test.notes),
-      can(opslevel_check_has_recent_deploy.test.owner),
+      can(opslevel_check_has_recent_deploy.this.category),
+      can(opslevel_check_has_recent_deploy.this.description),
+      can(opslevel_check_has_recent_deploy.this.enable_on),
+      can(opslevel_check_has_recent_deploy.this.enabled),
+      can(opslevel_check_has_recent_deploy.this.filter),
+      can(opslevel_check_has_recent_deploy.this.id),
+      can(opslevel_check_has_recent_deploy.this.level),
+      can(opslevel_check_has_recent_deploy.this.name),
+      can(opslevel_check_has_recent_deploy.this.notes),
+      can(opslevel_check_has_recent_deploy.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_has_recent_deploy)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.category == var.category
+    condition     = opslevel_check_has_recent_deploy.this.category == var.category
     error_message = "wrong category of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enabled == var.enabled
+    condition     = opslevel_check_has_recent_deploy.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enable_on == var.enable_on
+    condition     = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_has_recent_deploy.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_has_recent_deploy.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_has_recent_deploy)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.filter == var.filter
+    condition     = opslevel_check_has_recent_deploy.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.level == var.level
+    condition     = opslevel_check_has_recent_deploy.this.level == var.level
     error_message = "wrong level ID of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.name == var.name
+    condition     = opslevel_check_has_recent_deploy.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_has_recent_deploy)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.notes == var.notes
+    condition     = opslevel_check_has_recent_deploy.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.owner == var.owner
+    condition     = opslevel_check_has_recent_deploy.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_has_recent_deploy resource"
   }
 
@@ -149,7 +149,10 @@ run "resource_check_has_recent_deploy_update_unset_optional_fields" {
     enable_on = null
     enabled   = null
     filter    = null
-    level     = run.from_rubric_level_module.greatest_level.id
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
     notes     = null
     owner     = null
   }
@@ -159,27 +162,27 @@ run "resource_check_has_recent_deploy_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enable_on == null
+    condition     = opslevel_check_has_recent_deploy.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enabled == false
+    condition     = opslevel_check_has_recent_deploy.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.filter == null
+    condition     = opslevel_check_has_recent_deploy.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.notes == null
+    condition     = opslevel_check_has_recent_deploy.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.owner == null
+    condition     = opslevel_check_has_recent_deploy.this.owner == null
     error_message = var.error_expected_null_field
   }
 
@@ -193,7 +196,10 @@ run "resource_check_has_recent_deploy_update_all_fields" {
     enable_on = var.enable_on
     enabled   = var.enabled
     filter    = run.from_filter_module.all.filters[0].id
-    level     = run.from_rubric_level_module.greatest_level.id
+    level = element([
+      for lvl in run.from_rubric_level_module.all.rubric_levels :
+      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
+    ], 0)
     name      = var.name
     notes     = var.notes
     owner     = run.from_team_module.all.teams[0].id
@@ -204,42 +210,42 @@ run "resource_check_has_recent_deploy_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.category == var.category
+    condition     = opslevel_check_has_recent_deploy.this.category == var.category
     error_message = "wrong category of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enable_on == var.enable_on
+    condition     = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.enabled == var.enabled
+    condition     = opslevel_check_has_recent_deploy.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.filter == var.filter
+    condition     = opslevel_check_has_recent_deploy.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.level == var.level
+    condition     = opslevel_check_has_recent_deploy.this.level == var.level
     error_message = "wrong level ID of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.name == var.name
+    condition     = opslevel_check_has_recent_deploy.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_has_recent_deploy)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.notes == var.notes
+    condition     = opslevel_check_has_recent_deploy.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.test.owner == var.owner
+    condition     = opslevel_check_has_recent_deploy.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_has_recent_deploy resource"
   }
 

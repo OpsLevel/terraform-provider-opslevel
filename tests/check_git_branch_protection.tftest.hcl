@@ -80,62 +80,62 @@ run "resource_check_git_branch_protection_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_git_branch_protection.test.category),
-      can(opslevel_check_git_branch_protection.test.description),
-      can(opslevel_check_git_branch_protection.test.enable_on),
-      can(opslevel_check_git_branch_protection.test.enabled),
-      can(opslevel_check_git_branch_protection.test.filter),
-      can(opslevel_check_git_branch_protection.test.id),
-      can(opslevel_check_git_branch_protection.test.level),
-      can(opslevel_check_git_branch_protection.test.name),
-      can(opslevel_check_git_branch_protection.test.notes),
-      can(opslevel_check_git_branch_protection.test.owner),
+      can(opslevel_check_git_branch_protection.this.category),
+      can(opslevel_check_git_branch_protection.this.description),
+      can(opslevel_check_git_branch_protection.this.enable_on),
+      can(opslevel_check_git_branch_protection.this.enabled),
+      can(opslevel_check_git_branch_protection.this.filter),
+      can(opslevel_check_git_branch_protection.this.id),
+      can(opslevel_check_git_branch_protection.this.level),
+      can(opslevel_check_git_branch_protection.this.name),
+      can(opslevel_check_git_branch_protection.this.notes),
+      can(opslevel_check_git_branch_protection.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_git_branch_protection)
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.category == var.category
+    condition     = opslevel_check_git_branch_protection.this.category == var.category
     error_message = "wrong category of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enable_on == var.enable_on
+    condition     = opslevel_check_git_branch_protection.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enabled == var.enabled
+    condition     = opslevel_check_git_branch_protection.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_git_branch_protection.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_git_branch_protection.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_git_branch_protection)
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.filter == var.filter
+    condition     = opslevel_check_git_branch_protection.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.level == var.level
+    condition     = opslevel_check_git_branch_protection.this.level == var.level
     error_message = "wrong level ID of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.name == var.name
+    condition     = opslevel_check_git_branch_protection.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_git_branch_protection)
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.notes == var.notes
+    condition     = opslevel_check_git_branch_protection.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.owner == var.owner
+    condition     = opslevel_check_git_branch_protection.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_git_branch_protection resource"
   }
 
@@ -161,27 +161,27 @@ run "resource_check_git_branch_protection_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enable_on == null
+    condition     = opslevel_check_git_branch_protection.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enabled == false
+    condition     = opslevel_check_git_branch_protection.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.filter == null
+    condition     = opslevel_check_git_branch_protection.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.notes == null
+    condition     = opslevel_check_git_branch_protection.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.owner == null
+    condition     = opslevel_check_git_branch_protection.this.owner == null
     error_message = var.error_expected_null_field
   }
 
@@ -209,42 +209,42 @@ run "resource_check_git_branch_protection_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.category == var.category
+    condition     = opslevel_check_git_branch_protection.this.category == var.category
     error_message = "wrong category of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enable_on == var.enable_on
+    condition     = opslevel_check_git_branch_protection.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.enabled == var.enabled
+    condition     = opslevel_check_git_branch_protection.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.filter == var.filter
+    condition     = opslevel_check_git_branch_protection.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.level == var.level
+    condition     = opslevel_check_git_branch_protection.this.level == var.level
     error_message = "wrong level ID of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.name == var.name
+    condition     = opslevel_check_git_branch_protection.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_git_branch_protection)
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.notes == var.notes
+    condition     = opslevel_check_git_branch_protection.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_git_branch_protection resource"
   }
 
   assert {
-    condition     = opslevel_check_git_branch_protection.test.owner == var.owner
+    condition     = opslevel_check_git_branch_protection.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_git_branch_protection resource"
   }
 

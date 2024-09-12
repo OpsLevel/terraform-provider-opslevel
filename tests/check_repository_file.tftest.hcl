@@ -90,68 +90,68 @@ run "resource_check_repository_file_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_repository_file.test.category),
-      can(opslevel_check_repository_file.test.description),
-      can(opslevel_check_repository_file.test.enable_on),
-      can(opslevel_check_repository_file.test.enabled),
-      can(opslevel_check_repository_file.test.file_contents_predicate),
-      can(opslevel_check_repository_file.test.filter),
-      can(opslevel_check_repository_file.test.id),
-      can(opslevel_check_repository_file.test.level),
-      can(opslevel_check_repository_file.test.name),
-      can(opslevel_check_repository_file.test.notes),
-      can(opslevel_check_repository_file.test.owner),
+      can(opslevel_check_repository_file.this.category),
+      can(opslevel_check_repository_file.this.description),
+      can(opslevel_check_repository_file.this.enable_on),
+      can(opslevel_check_repository_file.this.enabled),
+      can(opslevel_check_repository_file.this.file_contents_predicate),
+      can(opslevel_check_repository_file.this.filter),
+      can(opslevel_check_repository_file.this.id),
+      can(opslevel_check_repository_file.this.level),
+      can(opslevel_check_repository_file.this.name),
+      can(opslevel_check_repository_file.this.notes),
+      can(opslevel_check_repository_file.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_repository_file)
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.category == var.category
+    condition     = opslevel_check_repository_file.this.category == var.category
     error_message = "wrong category of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enable_on == var.enable_on
+    condition     = opslevel_check_repository_file.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enabled == var.enabled
+    condition     = opslevel_check_repository_file.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_repository_file.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_repository_file.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_repository_file)
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.file_contents_predicate == var.file_contents_predicate
+    condition     = opslevel_check_repository_file.this.file_contents_predicate == var.file_contents_predicate
     error_message = "wrong file_contents_predicate of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.filter == var.filter
+    condition     = opslevel_check_repository_file.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.level == var.level
+    condition     = opslevel_check_repository_file.this.level == var.level
     error_message = "wrong level ID of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.name == var.name
+    condition     = opslevel_check_repository_file.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_repository_file)
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.notes == var.notes
+    condition     = opslevel_check_repository_file.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.owner == var.owner
+    condition     = opslevel_check_repository_file.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_repository_file resource"
   }
 
@@ -178,32 +178,32 @@ run "resource_check_repository_file_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enable_on == null
+    condition     = opslevel_check_repository_file.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enabled == false
+    condition     = opslevel_check_repository_file.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.file_contents_predicate == null
+    condition     = opslevel_check_repository_file.this.file_contents_predicate == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.filter == null
+    condition     = opslevel_check_repository_file.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.notes == null
+    condition     = opslevel_check_repository_file.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.owner == null
+    condition     = opslevel_check_repository_file.this.owner == null
     error_message = var.error_expected_null_field
   }
 
@@ -232,47 +232,47 @@ run "resource_check_repository_file_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.category == var.category
+    condition     = opslevel_check_repository_file.this.category == var.category
     error_message = "wrong category of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enable_on == var.enable_on
+    condition     = opslevel_check_repository_file.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.enabled == var.enabled
+    condition     = opslevel_check_repository_file.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.file_contents_predicate == var.file_contents_predicate
+    condition     = opslevel_check_repository_file.this.file_contents_predicate == var.file_contents_predicate
     error_message = "wrong file_contents_predicate of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.filter == var.filter
+    condition     = opslevel_check_repository_file.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.level == var.level
+    condition     = opslevel_check_repository_file.this.level == var.level
     error_message = "wrong level ID of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.name == var.name
+    condition     = opslevel_check_repository_file.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_repository_file)
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.notes == var.notes
+    condition     = opslevel_check_repository_file.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_repository_file resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_file.test.owner == var.owner
+    condition     = opslevel_check_repository_file.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_repository_file resource"
   }
 

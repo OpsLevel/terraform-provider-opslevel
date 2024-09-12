@@ -88,63 +88,63 @@ run "resource_check_repository_grep_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_repository_grep.test.category),
-      can(opslevel_check_repository_grep.test.description),
-      can(opslevel_check_repository_grep.test.enable_on),
-      can(opslevel_check_repository_grep.test.enabled),
-      can(opslevel_check_repository_grep.test.file_contents_predicate),
-      can(opslevel_check_repository_grep.test.filter),
-      can(opslevel_check_repository_grep.test.id),
-      can(opslevel_check_repository_grep.test.level),
-      can(opslevel_check_repository_grep.test.name),
-      can(opslevel_check_repository_grep.test.notes),
-      can(opslevel_check_repository_grep.test.owner),
+      can(opslevel_check_repository_grep.this.category),
+      can(opslevel_check_repository_grep.this.description),
+      can(opslevel_check_repository_grep.this.enable_on),
+      can(opslevel_check_repository_grep.this.enabled),
+      can(opslevel_check_repository_grep.this.file_contents_predicate),
+      can(opslevel_check_repository_grep.this.filter),
+      can(opslevel_check_repository_grep.this.id),
+      can(opslevel_check_repository_grep.this.level),
+      can(opslevel_check_repository_grep.this.name),
+      can(opslevel_check_repository_grep.this.notes),
+      can(opslevel_check_repository_grep.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_repository_grep)
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.category == var.category
+    condition     = opslevel_check_repository_grep.this.category == var.category
     error_message = "wrong category of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enable_on == var.enable_on
+    condition     = opslevel_check_repository_grep.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enabled == var.enabled
+    condition     = opslevel_check_repository_grep.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_repository_grep.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_repository_grep.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_repository_grep)
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.filter == var.filter
+    condition     = opslevel_check_repository_grep.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.level == var.level
+    condition     = opslevel_check_repository_grep.this.level == var.level
     error_message = "wrong level ID of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.name == var.name
+    condition     = opslevel_check_repository_grep.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_repository_grep)
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.notes == var.notes
+    condition     = opslevel_check_repository_grep.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.owner == var.owner
+    condition     = opslevel_check_repository_grep.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_repository_grep resource"
   }
 
@@ -170,27 +170,27 @@ run "resource_check_repository_grep_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enable_on == null
+    condition     = opslevel_check_repository_grep.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enabled == false
+    condition     = opslevel_check_repository_grep.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.filter == null
+    condition     = opslevel_check_repository_grep.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.notes == null
+    condition     = opslevel_check_repository_grep.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.owner == null
+    condition     = opslevel_check_repository_grep.this.owner == null
     error_message = var.error_expected_null_field
   }
 
@@ -219,42 +219,42 @@ run "resource_check_repository_grep_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.category == var.category
+    condition     = opslevel_check_repository_grep.this.category == var.category
     error_message = "wrong category of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enable_on == var.enable_on
+    condition     = opslevel_check_repository_grep.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.enabled == var.enabled
+    condition     = opslevel_check_repository_grep.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.filter == var.filter
+    condition     = opslevel_check_repository_grep.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.level == var.level
+    condition     = opslevel_check_repository_grep.this.level == var.level
     error_message = "wrong level ID of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.name == var.name
+    condition     = opslevel_check_repository_grep.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_repository_grep)
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.notes == var.notes
+    condition     = opslevel_check_repository_grep.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_repository_grep resource"
   }
 
   assert {
-    condition     = opslevel_check_repository_grep.test.owner == var.owner
+    condition     = opslevel_check_repository_grep.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_repository_grep resource"
   }
 

@@ -89,62 +89,62 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_alert_source_usage.test.category),
-      can(opslevel_check_alert_source_usage.test.description),
-      can(opslevel_check_alert_source_usage.test.enable_on),
-      can(opslevel_check_alert_source_usage.test.enabled),
-      can(opslevel_check_alert_source_usage.test.filter),
-      can(opslevel_check_alert_source_usage.test.id),
-      can(opslevel_check_alert_source_usage.test.level),
-      can(opslevel_check_alert_source_usage.test.name),
-      can(opslevel_check_alert_source_usage.test.notes),
-      can(opslevel_check_alert_source_usage.test.owner),
+      can(opslevel_check_alert_source_usage.this.category),
+      can(opslevel_check_alert_source_usage.this.description),
+      can(opslevel_check_alert_source_usage.this.enable_on),
+      can(opslevel_check_alert_source_usage.this.enabled),
+      can(opslevel_check_alert_source_usage.this.filter),
+      can(opslevel_check_alert_source_usage.this.id),
+      can(opslevel_check_alert_source_usage.this.level),
+      can(opslevel_check_alert_source_usage.this.name),
+      can(opslevel_check_alert_source_usage.this.notes),
+      can(opslevel_check_alert_source_usage.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_alert_source_usage)
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.category == var.category
+    condition     = opslevel_check_alert_source_usage.this.category == var.category
     error_message = "wrong category of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enable_on == var.enable_on
+    condition     = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enabled == var.enabled
+    condition     = opslevel_check_alert_source_usage.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_alert_source_usage.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_alert_source_usage.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_alert_source_usage)
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.filter == var.filter
+    condition     = opslevel_check_alert_source_usage.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.level == var.level
+    condition     = opslevel_check_alert_source_usage.this.level == var.level
     error_message = "wrong level ID of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.name == var.name
+    condition     = opslevel_check_alert_source_usage.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_alert_source_usage)
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.notes == var.notes
+    condition     = opslevel_check_alert_source_usage.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.owner == var.owner
+    condition     = opslevel_check_alert_source_usage.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_alert_source_usage resource"
   }
 
@@ -171,32 +171,32 @@ run "resource_check_alert_source_usage_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.alert_name_predicate == null
+    condition     = opslevel_check_alert_source_usage.this.alert_name_predicate == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enable_on == null
+    condition     = opslevel_check_alert_source_usage.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enabled == false
+    condition     = opslevel_check_alert_source_usage.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.filter == null
+    condition     = opslevel_check_alert_source_usage.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.notes == null
+    condition     = opslevel_check_alert_source_usage.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.owner == null
+    condition     = opslevel_check_alert_source_usage.this.owner == null
     error_message = var.error_expected_null_field
   }
 
@@ -226,42 +226,42 @@ run "resource_check_alert_source_usage_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.category == var.category
+    condition     = opslevel_check_alert_source_usage.this.category == var.category
     error_message = "wrong category of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enable_on == var.enable_on
+    condition     = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.enabled == var.enabled
+    condition     = opslevel_check_alert_source_usage.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.filter == var.filter
+    condition     = opslevel_check_alert_source_usage.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.level == var.level
+    condition     = opslevel_check_alert_source_usage.this.level == var.level
     error_message = "wrong level ID of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.name == var.name
+    condition     = opslevel_check_alert_source_usage.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_alert_source_usage)
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.notes == var.notes
+    condition     = opslevel_check_alert_source_usage.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_alert_source_usage resource"
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.test.owner == var.owner
+    condition     = opslevel_check_alert_source_usage.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_alert_source_usage resource"
   }
 

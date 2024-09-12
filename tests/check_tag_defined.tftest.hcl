@@ -88,62 +88,62 @@ run "resource_check_tag_defined_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_check_tag_defined.test.category),
-      can(opslevel_check_tag_defined.test.description),
-      can(opslevel_check_tag_defined.test.enable_on),
-      can(opslevel_check_tag_defined.test.enabled),
-      can(opslevel_check_tag_defined.test.filter),
-      can(opslevel_check_tag_defined.test.id),
-      can(opslevel_check_tag_defined.test.level),
-      can(opslevel_check_tag_defined.test.name),
-      can(opslevel_check_tag_defined.test.notes),
-      can(opslevel_check_tag_defined.test.owner),
+      can(opslevel_check_tag_defined.this.category),
+      can(opslevel_check_tag_defined.this.description),
+      can(opslevel_check_tag_defined.this.enable_on),
+      can(opslevel_check_tag_defined.this.enabled),
+      can(opslevel_check_tag_defined.this.filter),
+      can(opslevel_check_tag_defined.this.id),
+      can(opslevel_check_tag_defined.this.level),
+      can(opslevel_check_tag_defined.this.name),
+      can(opslevel_check_tag_defined.this.notes),
+      can(opslevel_check_tag_defined.this.owner),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_tag_defined)
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.category == var.category
+    condition     = opslevel_check_tag_defined.this.category == var.category
     error_message = "wrong category of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enable_on == var.enable_on
+    condition     = opslevel_check_tag_defined.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enabled == var.enabled
+    condition     = opslevel_check_tag_defined.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = startswith(opslevel_check_tag_defined.test.id, var.id_prefix)
+    condition     = startswith(opslevel_check_tag_defined.this.id, var.id_prefix)
     error_message = replace(var.error_wrong_id, "TYPE", var.check_tag_defined)
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.filter == var.filter
+    condition     = opslevel_check_tag_defined.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.level == var.level
+    condition     = opslevel_check_tag_defined.this.level == var.level
     error_message = "wrong level ID of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.name == var.name
+    condition     = opslevel_check_tag_defined.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_tag_defined)
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.notes == var.notes
+    condition     = opslevel_check_tag_defined.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.owner == var.owner
+    condition     = opslevel_check_tag_defined.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_tag_defined resource"
   }
 
@@ -170,32 +170,32 @@ run "resource_check_tag_defined_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enable_on == null
+    condition     = opslevel_check_tag_defined.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enabled == false
+    condition     = opslevel_check_tag_defined.this.enabled == false
     error_message = "expected 'false' default for 'enabled' in opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.filter == null
+    condition     = opslevel_check_tag_defined.this.filter == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.notes == null
+    condition     = opslevel_check_tag_defined.this.notes == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.owner == null
+    condition     = opslevel_check_tag_defined.this.owner == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.tag_predicate == null
+    condition     = opslevel_check_tag_defined.this.tag_predicate == null
     error_message = var.error_expected_null_field
   }
 
@@ -223,42 +223,42 @@ run "resource_check_tag_defined_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.category == var.category
+    condition     = opslevel_check_tag_defined.this.category == var.category
     error_message = "wrong category of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enable_on == var.enable_on
+    condition     = opslevel_check_tag_defined.this.enable_on == var.enable_on
     error_message = "wrong enable_on of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.enabled == var.enabled
+    condition     = opslevel_check_tag_defined.this.enabled == var.enabled
     error_message = "wrong enabled of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.filter == var.filter
+    condition     = opslevel_check_tag_defined.this.filter == var.filter
     error_message = "wrong filter ID of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.level == var.level
+    condition     = opslevel_check_tag_defined.this.level == var.level
     error_message = "wrong level ID of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.name == var.name
+    condition     = opslevel_check_tag_defined.this.name == var.name
     error_message = replace(var.error_wrong_name, "TYPE", var.check_tag_defined)
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.notes == var.notes
+    condition     = opslevel_check_tag_defined.this.notes == var.notes
     error_message = "wrong notes of opslevel_check_tag_defined resource"
   }
 
   assert {
-    condition     = opslevel_check_tag_defined.test.owner == var.owner
+    condition     = opslevel_check_tag_defined.this.owner == var.owner
     error_message = "wrong owner ID of opslevel_check_tag_defined resource"
   }
 
