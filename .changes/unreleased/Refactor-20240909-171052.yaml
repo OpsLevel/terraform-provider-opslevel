@@ -1,0 +1,3 @@
+kind: Refactor
+body: ownership_tag_keys in opslevel_integration_azure_resources was a set type, now a list type
+time: 2024-09-09T17:10:52.128045-05:00

@@ -1,0 +1,3 @@
+kind: Bugfix
+body: 'BREAKING CHANGE - Changed the default value of field `ownership_tag_keys` in `opslevel_integration_azure_resources` to match the default of the GraphQL API (and the other infrastructure integration resource). This may cause the existing integration to revert any manual changes to `ownership_tag_keys` on the next plan/apply.'
+time: 2024-09-10T14:48:31.38061-05:00
