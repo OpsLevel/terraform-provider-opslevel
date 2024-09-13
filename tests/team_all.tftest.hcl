@@ -11,19 +11,17 @@ variables {
   members          = [] # sourced from module
 }
 
-run "from_team_module" {
+run "from_data_module" {
   command = plan
-
-  module {
-    source = "./data/team"
+  plan_options {
+    target = [
+      data.opslevel_teams.all,
+      data.opslevel_users.all
+    ]
   }
-}
-
-run "from_user_module" {
-  command = plan
 
   module {
-    source = "./data/user"
+    source = "./data"
   }
 }
 
@@ -32,15 +30,15 @@ run "resource_team_create_with_all_fields" {
   variables {
     members = [
       {
-        email = run.from_user_module.all.users[0].email
+        email = run.from_data_module.all_users.users[0].email
         role  = "manager"
       },
       {
-        email = run.from_user_module.all.users[1].email
+        email = run.from_data_module.all_users.users[1].email
         role  = "contributor"
       },
     ]
-    parent = run.from_team_module.first.id
+    parent = run.from_data_module.first_team.id
   }
 
   module {
