@@ -1,1 +1,0 @@
-../check_base/base_variables.tf
