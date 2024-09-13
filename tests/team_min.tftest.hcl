@@ -80,12 +80,8 @@ run "resource_team_set_aliases" {
 run "from_user_module" {
   command = plan
 
-  variables {
-    email = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/user"
+    source = "./data/user"
   }
 }
 
@@ -122,19 +118,15 @@ run "resource_team_set_members" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
 run "resource_team_set_parent" {
 
   variables {
-    parent = run.from_team_module.all.teams[0].id
+    parent = run.from_team_module.first.id
   }
 
   module {

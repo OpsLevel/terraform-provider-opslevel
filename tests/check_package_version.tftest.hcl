@@ -32,12 +32,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -60,12 +56,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -75,7 +67,7 @@ run "resource_check_package_version_create_with_all_fields" {
     category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = var.enable_on
     enabled   = var.enabled
-    filter    = run.from_filter_module.all.filters[0].id
+    filter    = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
@@ -83,7 +75,7 @@ run "resource_check_package_version_create_with_all_fields" {
     missing_package_result       = var.missing_package_result
     name                         = var.name
     notes                        = var.notes
-    owner                        = run.from_team_module.all.teams[0].id
+    owner                        = run.from_team_module.first.id
     package_constraint           = var.package_constraint
     package_manager              = var.package_manager
     package_name                 = var.package_name

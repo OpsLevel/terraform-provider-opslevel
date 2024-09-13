@@ -21,12 +21,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -49,12 +45,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name             = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -69,9 +61,9 @@ run "resource_check_service_dependency_create_with_all_fields" {
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
-    name      = var.name
-    notes     = var.notes
-    owner = run.from_team_module.all.teams[0].id
+    name  = var.name
+    notes = var.notes
+    owner = run.from_team_module.first.id
   }
 
   module {
@@ -152,8 +144,8 @@ run "resource_check_service_dependency_update_unset_optional_fields" {
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
-    notes     = null
-    owner     = null
+    notes = null
+    owner = null
   }
 
   module {
@@ -199,9 +191,9 @@ run "resource_check_service_dependency_update_all_fields" {
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
-    name      = var.name
-    notes     = var.notes
-    owner = run.from_team_module.all.teams[0].id
+    name  = var.name
+    notes = var.notes
+    owner = run.from_team_module.first.id
   }
 
   module {
