@@ -87,21 +87,3 @@ run "resource_filter_update_set_all_fields" {
   #}
 
 }
-
-run "datasource_filters_list_all" {
-
-  module {
-    source = "./opslevel_modules/modules/filter"
-  }
-
-  assert {
-    condition     = can(data.opslevel_filters.all.filters)
-    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.filters_all)
-  }
-
-  assert {
-    condition     = length(data.opslevel_filters.all.filters) > 0
-    error_message = replace(var.error_empty_datasource, "TYPE", var.filters_all)
-  }
-
-}

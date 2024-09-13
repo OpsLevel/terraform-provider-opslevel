@@ -36,12 +36,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -64,12 +60,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -80,14 +72,14 @@ run "resource_check_tool_usage_create_with_all_fields" {
     enable_on             = var.enable_on
     enabled               = var.enabled
     environment_predicate = var.environment_predicate
-    filter                = run.from_filter_module.all.filters[0].id
+    filter                = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name                = var.name
     notes               = var.notes
-    owner               = run.from_team_module.all.teams[0].id
+    owner               = run.from_team_module.first.id
     tool_category       = var.tool_category
     tool_name_predicate = var.tool_name_predicate
     tool_url_predicate  = var.tool_url_predicate
@@ -214,14 +206,14 @@ run "resource_check_tool_usage_update_all_fields" {
     enable_on             = var.enable_on
     enabled               = var.enabled
     environment_predicate = var.environment_predicate
-    filter                = run.from_filter_module.all.filters[0].id
+    filter                = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name                = var.name
     notes               = var.notes
-    owner               = run.from_team_module.all.teams[0].id
+    owner               = run.from_team_module.first.id
     tool_category       = var.tool_category
     tool_name_predicate = var.tool_name_predicate
     tool_url_predicate  = var.tool_url_predicate
