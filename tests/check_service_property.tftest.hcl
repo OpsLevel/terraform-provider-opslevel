@@ -28,12 +28,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -56,12 +52,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -78,7 +70,7 @@ run "resource_check_service_property_create_with_all_fields" {
     ], 0)
     name      = var.name
     notes     = var.notes
-    owner     = run.from_team_module.all.teams[0].id
+    owner     = run.from_team_module.first.id
     predicate = var.predicate
   }
 
@@ -210,7 +202,7 @@ run "resource_check_service_property_update_all_fields" {
     ], 0)
     name      = var.name
     notes     = var.notes
-    owner     = run.from_team_module.all.teams[0].id
+    owner     = run.from_team_module.first.id
     predicate = var.predicate
   }
 

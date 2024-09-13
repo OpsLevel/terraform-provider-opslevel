@@ -86,24 +86,3 @@ run "resource_user_unset_skip_welcome_email_defaults_to_true" {
   }
 
 }
-
-run "datasource_users_all" {
-
-  command = plan
-
-  module {
-    source = "./opslevel_modules/modules/user"
-  }
-
-  assert {
-    condition = alltrue([
-      can(data.opslevel_users.all.ignore_deactivated),
-      can(data.opslevel_users.all.users[0].email),
-      can(data.opslevel_users.all.users[0].id),
-      can(data.opslevel_users.all.users[0].name),
-      can(data.opslevel_users.all.users[0].role),
-    ])
-    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.resource_name)
-  }
-
-}

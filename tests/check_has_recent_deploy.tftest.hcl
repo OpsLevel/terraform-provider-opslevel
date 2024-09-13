@@ -22,12 +22,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -50,12 +46,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -65,14 +57,14 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
     category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = var.enable_on
     enabled   = var.enabled
-    filter    = run.from_filter_module.all.filters[0].id
+    filter    = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name  = var.name
     notes = var.notes
-    owner = run.from_team_module.all.teams[0].id
+    owner = run.from_team_module.first.id
   }
 
   module {
@@ -195,14 +187,14 @@ run "resource_check_has_recent_deploy_update_all_fields" {
     category  = run.from_rubric_category_module.all.rubric_categories[0].id
     enable_on = var.enable_on
     enabled   = var.enabled
-    filter    = run.from_filter_module.all.filters[0].id
+    filter    = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name      = var.name
     notes     = var.notes
-    owner     = run.from_team_module.all.teams[0].id
+    owner     = run.from_team_module.first.id
   }
 
   module {

@@ -28,12 +28,8 @@ variables {
 run "from_filter_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/filter"
+    source = "./data/filter"
   }
 }
 
@@ -56,12 +52,8 @@ run "from_rubric_level_module" {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
@@ -73,14 +65,14 @@ run "resource_check_repository_search_create_with_all_fields" {
     enabled                 = var.enabled
     file_contents_predicate = var.file_contents_predicate
     file_extensions         = var.file_extensions
-    filter                  = run.from_filter_module.all.filters[0].id
+    filter                  = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name  = var.name
     notes = var.notes
-    owner = run.from_team_module.all.teams[0].id
+    owner = run.from_team_module.first.id
   }
 
   module {
@@ -218,14 +210,14 @@ run "resource_check_repository_search_update_all_fields" {
     enabled                 = var.enabled
     file_contents_predicate = var.file_contents_predicate
     file_extensions         = setunion(var.file_extensions, ["yaml"])
-    filter                  = run.from_filter_module.all.filters[0].id
+    filter                  = run.from_filter_module.first.id
     level = element([
       for lvl in run.from_rubric_level_module.all.rubric_levels :
       lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
     ], 0)
     name  = var.name
     notes = var.notes
-    owner = run.from_team_module.all.teams[0].id
+    owner = run.from_team_module.first.id
   }
 
   module {

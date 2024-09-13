@@ -14,24 +14,16 @@ variables {
 run "from_team_module" {
   command = plan
 
-  variables {
-    name = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/team"
+    source = "./data/team"
   }
 }
 
 run "from_user_module" {
   command = plan
 
-  variables {
-    email = ""
-  }
-
   module {
-    source = "./opslevel_modules/modules/user"
+    source = "./data/user"
   }
 }
 
@@ -48,7 +40,7 @@ run "resource_team_create_with_all_fields" {
         role  = "contributor"
       },
     ]
-    parent = run.from_team_module.all.teams[0].id
+    parent = run.from_team_module.first.id
   }
 
   module {
@@ -186,29 +178,6 @@ run "resource_team_unset_responsibilities" {
   assert {
     condition     = opslevel_team.this.responsibilities == null
     error_message = var.error_expected_null_field
-  }
-
-}
-
-run "datasource_teams_all" {
-
-  command = plan
-
-  module {
-    source = "./opslevel_modules/modules/team"
-  }
-
-  assert {
-    condition = alltrue([
-      can(data.opslevel_teams.all.teams[0].alias),
-      can(data.opslevel_teams.all.teams[0].contacts),
-      can(data.opslevel_teams.all.teams[0].id),
-      can(data.opslevel_teams.all.teams[0].members),
-      can(data.opslevel_teams.all.teams[0].name),
-      can(data.opslevel_teams.all.teams[0].parent_alias),
-      can(data.opslevel_teams.all.teams[0].parent_id),
-    ])
-    error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.resource_name)
   }
 
 }
