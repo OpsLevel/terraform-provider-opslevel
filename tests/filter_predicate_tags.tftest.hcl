@@ -1,104 +1,73 @@
 variables {
-  name               = "TF Test Filter with tags predicate"
-  predicate_key_data = "test_tag"
-  predicate_value    = "fancy"
-  tags_predicates = setproduct(
-    ["tags"],
-    concat(
-      ["satisfies_version_constraint"],
-      var.predicate_types_contains,
-      var.predicate_types_ends_or_starts_with,
-      var.predicate_types_matches_regex,
-      var.predicate_types_equals,
-      var.predicate_types_exists
-    ),
-  )
+  name                                         = "TF Test Filter with tags predicate"
+  predicate_key                                = "tags"
+  predicate_key_data                           = "test_tag"
+  predicate_types_satisfies_version_constraint = "satisfies_version_constraint"
+  predicate_value                              = "fancy"
 }
 
 run "resource_filter_with_tags_predicate_contains" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      for predicate_type in var.predicate_types_contains : {
+        key      = var.predicate_key
+        type     = predicate_type,
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(var.predicate_types_contains, pair[1])
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].key == "tags"
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key == var.predicate_key,
+      opslevel_filter.this.predicate[1].key == var.predicate_key
+    ])
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].key
+      "expected predicate keys to all be '%v' got keys '%v'",
+      var.predicate_key,
+      [opslevel_filter.this.predicate[0].key, opslevel_filter.this.predicate[1].key]
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].type == "does_not_contain"
+    condition = alltrue([
+      contains(var.predicate_types_contains, opslevel_filter.this.predicate[0].type),
+      contains(var.predicate_types_contains, opslevel_filter.this.predicate[1].type)
+    ])
     error_message = format(
-      "expected predicate type 'does_not_contain' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].type
+      "expected predicate types to be one of '%v' got '%v'",
+      var.predicate_types_contains,
+      tolist([opslevel_filter.this.predicate[0].type, opslevel_filter.this.predicate[1].type])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].key_data == var.predicate_key_data
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key_data == var.predicate_key_data,
+      opslevel_filter.this.predicate[1].key_data == var.predicate_key_data
+    ])
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].key_data
+      tolist([opslevel_filter.this.predicate[0].key_data, opslevel_filter.this.predicate[1].key_data])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].value == var.predicate_value
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].value == var.predicate_value,
+      opslevel_filter.this.predicate[1].value == var.predicate_value
+    ])
     error_message = format(
-      "expected predicate value '%s' got '%s'",
+      "expected predicate value to be '%v' got '%v'",
       var.predicate_value,
-      opslevel_filter.all_predicates["tags_does_not_contain"].predicate[0].value
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_contains"].predicate[0].key == "tags"
-    error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_contains"].predicate[0].key
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_contains"].predicate[0].type == "contains"
-    error_message = format(
-      "expected predicate type 'contains' got '%s'",
-      opslevel_filter.all_predicates["tags_contains"].predicate[0].type
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_contains"].predicate[0].key_data == var.predicate_key_data
-    error_message = format(
-      "expected predicate key_data '%s' got '%s'",
-      var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_contains"].predicate[0].key_data
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_contains"].predicate[0].value == var.predicate_value
-    error_message = format(
-      "expected predicate value '%s' got '%s'",
-      var.predicate_value,
-      opslevel_filter.all_predicates["tags_contains"].predicate[0].value
+      tolist([opslevel_filter.this.predicate[0].value, opslevel_filter.this.predicate[1].value])
     )
   }
 
@@ -107,87 +76,65 @@ run "resource_filter_with_tags_predicate_contains" {
 run "resource_filter_with_tags_predicate_equals" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      for predicate_type in var.predicate_types_equals : {
+        key      = var.predicate_key
+        type     = predicate_type,
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(var.predicate_types_equals, pair[1])
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].key == "tags"
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key == var.predicate_key,
+      opslevel_filter.this.predicate[1].key == var.predicate_key
+    ])
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].key
+      "expected predicate keys to all be '%v' got keys '%v'",
+      var.predicate_key,
+      [opslevel_filter.this.predicate[0].key, opslevel_filter.this.predicate[1].key]
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].type == "does_not_equal"
+    condition = alltrue([
+      contains(var.predicate_types_equals, opslevel_filter.this.predicate[0].type),
+      contains(var.predicate_types_equals, opslevel_filter.this.predicate[1].type)
+    ])
     error_message = format(
-      "expected predicate type 'does_not_equal' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].type
+      "expected predicate types to be one of '%v' got '%v'",
+      var.predicate_types_equals,
+      tolist([opslevel_filter.this.predicate[0].type, opslevel_filter.this.predicate[1].type])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].key_data == var.predicate_key_data
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key_data == var.predicate_key_data,
+      opslevel_filter.this.predicate[1].key_data == var.predicate_key_data
+    ])
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].key_data
+      tolist([opslevel_filter.this.predicate[0].key_data, opslevel_filter.this.predicate[1].key_data])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].value == var.predicate_value
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].value == var.predicate_value,
+      opslevel_filter.this.predicate[1].value == var.predicate_value
+    ])
     error_message = format(
-      "expected predicate value '%s' got '%s'",
+      "expected predicate value to be '%v' got '%v'",
       var.predicate_value,
-      opslevel_filter.all_predicates["tags_does_not_equal"].predicate[0].value
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_equals"].predicate[0].key == "tags"
-    error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_equals"].predicate[0].key
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_equals"].predicate[0].type == "equals"
-    error_message = format(
-      "expected predicate type 'equals' got '%s'",
-      opslevel_filter.all_predicates["tags_equals"].predicate[0].type
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_equals"].predicate[0].key_data == var.predicate_key_data
-    error_message = format(
-      "expected predicate key_data '%s' got '%s'",
-      var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_equals"].predicate[0].key_data
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_equals"].predicate[0].value == var.predicate_value
-    error_message = format(
-      "expected predicate value '%s' got '%s'",
-      var.predicate_value,
-      opslevel_filter.all_predicates["tags_equals"].predicate[0].value
+      tolist([opslevel_filter.this.predicate[0].value, opslevel_filter.this.predicate[1].value])
     )
   }
 
@@ -196,79 +143,61 @@ run "resource_filter_with_tags_predicate_equals" {
 run "resource_filter_with_tags_predicate_exists" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      for predicate_type in var.predicate_types_exists : {
+        key      = var.predicate_key
+        type     = predicate_type,
         key_data = var.predicate_key_data,
         value    = null
       }
-      if contains(var.predicate_types_exists, pair[1])
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].key == "tags"
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key == var.predicate_key,
+      opslevel_filter.this.predicate[1].key == var.predicate_key
+    ])
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].key
+      "expected predicate keys to all be '%v' got keys '%v'",
+      var.predicate_key,
+      [opslevel_filter.this.predicate[0].key, opslevel_filter.this.predicate[1].key]
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].type == "does_not_exist"
+    condition = alltrue([
+      contains(var.predicate_types_exists, opslevel_filter.this.predicate[0].type),
+      contains(var.predicate_types_exists, opslevel_filter.this.predicate[1].type)
+    ])
     error_message = format(
-      "expected predicate type 'does_not_exist' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].type
+      "expected predicate types to be one of '%v' got '%v'",
+      var.predicate_types_exists,
+      tolist([opslevel_filter.this.predicate[0].type, opslevel_filter.this.predicate[1].type])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].key_data == var.predicate_key_data
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key_data == var.predicate_key_data,
+      opslevel_filter.this.predicate[1].key_data == var.predicate_key_data
+    ])
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].key_data
+      tolist([opslevel_filter.this.predicate[0].key_data, opslevel_filter.this.predicate[1].key_data])
     )
   }
 
   assert {
-    condition     = opslevel_filter.all_predicates["tags_does_not_exist"].predicate[0].value == null
-    error_message = var.error_expected_null_field
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_exists"].predicate[0].key == "tags"
-    error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_exists"].predicate[0].key
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_exists"].predicate[0].type == "exists"
-    error_message = format(
-      "expected predicate type 'exists' got '%s'",
-      opslevel_filter.all_predicates["tags_exists"].predicate[0].type
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_exists"].predicate[0].key_data == var.predicate_key_data
-    error_message = format(
-      "expected predicate key_data '%s' got '%s'",
-      var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_exists"].predicate[0].key_data
-    )
-  }
-
-  assert {
-    condition     = opslevel_filter.all_predicates["tags_exists"].predicate[0].value == null
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].value == null,
+      opslevel_filter.this.predicate[1].value == null
+    ])
     error_message = var.error_expected_null_field
   }
 
@@ -277,87 +206,65 @@ run "resource_filter_with_tags_predicate_exists" {
 run "resource_filter_with_tags_predicate_matches_regex" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      for predicate_type in var.predicate_types_matches_regex : {
+        key      = var.predicate_key
+        type     = predicate_type,
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(var.predicate_types_matches_regex, pair[1])
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].key == "tags"
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key == var.predicate_key,
+      opslevel_filter.this.predicate[1].key == var.predicate_key
+    ])
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].key
+      "expected predicate keys to all be '%v' got keys '%v'",
+      var.predicate_key,
+      [opslevel_filter.this.predicate[0].key, opslevel_filter.this.predicate[1].key]
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].type == "does_not_match_regex"
+    condition = alltrue([
+      contains(var.predicate_types_matches_regex, opslevel_filter.this.predicate[0].type),
+      contains(var.predicate_types_matches_regex, opslevel_filter.this.predicate[1].type)
+    ])
     error_message = format(
-      "expected predicate type 'does_not_match_regex' got '%s'",
-      opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].type
+      "expected predicate types to be one of '%v' got '%v'",
+      var.predicate_types_matches_regex,
+      tolist([opslevel_filter.this.predicate[0].type, opslevel_filter.this.predicate[1].type])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].key_data == var.predicate_key_data
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key_data == var.predicate_key_data,
+      opslevel_filter.this.predicate[1].key_data == var.predicate_key_data
+    ])
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].key_data
+      tolist([opslevel_filter.this.predicate[0].key_data, opslevel_filter.this.predicate[1].key_data])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].value == var.predicate_value
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].value == var.predicate_value,
+      opslevel_filter.this.predicate[1].value == var.predicate_value
+    ])
     error_message = format(
-      "expected predicate value '%s' got '%s'",
+      "expected predicate value to be '%v' got '%v'",
       var.predicate_value,
-      opslevel_filter.all_predicates["tags_does_not_match_regex"].predicate[0].value
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].key == "tags"
-    error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].key
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].type == "matches_regex"
-    error_message = format(
-      "expected predicate type 'matches_regex' got '%s'",
-      opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].type
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].key_data == var.predicate_key_data
-    error_message = format(
-      "expected predicate key_data '%s' got '%s'",
-      var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].key_data
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].value == var.predicate_value
-    error_message = format(
-      "expected predicate value '%s' got '%s'",
-      var.predicate_value,
-      opslevel_filter.all_predicates["tags_matches_regex"].predicate[0].value
+      tolist([opslevel_filter.this.predicate[0].value, opslevel_filter.this.predicate[1].value])
     )
   }
 
@@ -366,87 +273,65 @@ run "resource_filter_with_tags_predicate_matches_regex" {
 run "resource_filter_with_tags_predicate_starts_or_ends_with" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      for predicate_type in var.predicate_types_ends_or_starts_with : {
+        key      = var.predicate_key
+        type     = predicate_type,
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if contains(var.predicate_types_ends_or_starts_with, pair[1])
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_ends_with"].predicate[0].key == "tags"
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key == var.predicate_key,
+      opslevel_filter.this.predicate[1].key == var.predicate_key
+    ])
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_ends_with"].predicate[0].key
+      "expected predicate keys to all be '%v' got keys '%v'",
+      var.predicate_key,
+      [opslevel_filter.this.predicate[0].key, opslevel_filter.this.predicate[1].key]
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_ends_with"].predicate[0].type == "ends_with"
+    condition = alltrue([
+      contains(var.predicate_types_ends_or_starts_with, opslevel_filter.this.predicate[0].type),
+      contains(var.predicate_types_ends_or_starts_with, opslevel_filter.this.predicate[1].type)
+    ])
     error_message = format(
-      "expected predicate type 'ends_with' got '%s'",
-      opslevel_filter.all_predicates["tags_ends_with"].predicate[0].type
+      "expected predicate types to be one of '%v' got '%v'",
+      var.predicate_types_ends_or_starts_with,
+      tolist([opslevel_filter.this.predicate[0].type, opslevel_filter.this.predicate[1].type])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_ends_with"].predicate[0].key_data == var.predicate_key_data
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].key_data == var.predicate_key_data,
+      opslevel_filter.this.predicate[1].key_data == var.predicate_key_data
+    ])
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_ends_with"].predicate[0].key_data
+      tolist([opslevel_filter.this.predicate[0].key_data, opslevel_filter.this.predicate[1].key_data])
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_ends_with"].predicate[0].value == var.predicate_value
+    condition = alltrue([
+      opslevel_filter.this.predicate[0].value == var.predicate_value,
+      opslevel_filter.this.predicate[1].value == var.predicate_value
+    ])
     error_message = format(
-      "expected predicate value '%s' got '%s'",
+      "expected predicate value to be '%v' got '%v'",
       var.predicate_value,
-      opslevel_filter.all_predicates["tags_ends_with"].predicate[0].value
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_starts_with"].predicate[0].key == "tags"
-    error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_starts_with"].predicate[0].key
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_starts_with"].predicate[0].type == "starts_with"
-    error_message = format(
-      "expected predicate type 'starts_with' got '%s'",
-      opslevel_filter.all_predicates["tags_starts_with"].predicate[0].type
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_starts_with"].predicate[0].key_data == var.predicate_key_data
-    error_message = format(
-      "expected predicate key_data '%s' got '%s'",
-      var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_starts_with"].predicate[0].key_data
-    )
-  }
-
-  assert {
-    condition = opslevel_filter.all_predicates["tags_starts_with"].predicate[0].value == var.predicate_value
-    error_message = format(
-      "expected predicate value '%s' got '%s'",
-      var.predicate_value,
-      opslevel_filter.all_predicates["tags_starts_with"].predicate[0].value
+      tolist([opslevel_filter.this.predicate[0].value, opslevel_filter.this.predicate[1].value])
     )
   }
 
@@ -455,53 +340,53 @@ run "resource_filter_with_tags_predicate_starts_or_ends_with" {
 run "resource_filter_with_tags_predicate_satisfies_version_constraint" {
 
   variables {
-    connective = "and"
-    predicates = tomap({
-      for pair in var.tags_predicates : "${pair[0]}_${pair[1]}" => {
-        key      = pair[0],
-        type     = pair[1],
+    predicates = [
+      {
+        key      = var.predicate_key
+        type     = var.predicate_types_satisfies_version_constraint,
         key_data = var.predicate_key_data,
         value    = var.predicate_value
       }
-      if "satisfies_version_constraint" == pair[1]
-    })
+    ]
   }
 
   module {
-    source = "./filter"
+    source = "./opslevel_modules/modules/filter"
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].key == "tags"
+    condition = opslevel_filter.this.predicate[0].key == var.predicate_key
     error_message = format(
-      "expected predicate key 'tags' got '%s'",
-      opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].key
+      "expected predicate key to be '%v' got key '%v'",
+      var.predicate_key,
+      opslevel_filter.this.predicate[0].key
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].type == "satisfies_version_constraint"
+    condition = opslevel_filter.this.predicate[0].type == var.predicate_types_satisfies_version_constraint
     error_message = format(
-      "expected predicate type 'satisfies_version_constraint' got '%s'",
-      opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].type
+      "expected predicate type to be '%v' got '%v'",
+      var.predicate_types_satisfies_version_constraint,
+      opslevel_filter.this.predicate[0].type
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].key_data == var.predicate_key_data
+    condition = opslevel_filter.this.predicate[0].key_data == var.predicate_key_data
     error_message = format(
-      "expected predicate key_data '%s' got '%s'",
+      "expected predicate key_data to be '%v' got '%v'",
       var.predicate_key_data,
-      opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].key_data
+      opslevel_filter.this.predicate[0].key_data
     )
   }
 
   assert {
-    condition = opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].value == var.predicate_value
+    condition = opslevel_filter.this.predicate[0].value == var.predicate_value
     error_message = format(
-      "expected predicate value '%s' got '%s'",
+      "expected predicate value to be '%v' got '%v'",
       var.predicate_value,
-      opslevel_filter.all_predicates["tags_satisfies_version_constraint"].predicate[0].value
+      opslevel_filter.this.predicate[0].value
     )
   }
 
