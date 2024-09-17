@@ -70,6 +70,7 @@ error_wrong_value                   = "wrong value for 'TYPE'"
 id_prefix                           = "Z2lkOi8v"
 predicate_types_contains            = ["does_not_contain", "contains"]
 predicate_types_ends_or_starts_with = ["ends_with", "starts_with"]
+predicate_types_lt_eq_or_gt_eq      = ["less_than_or_equal_to", "greater_than_or_equal_to"]
 predicate_types_matches_regex       = ["does_not_match_regex", "matches_regex"]
 predicate_types_equals              = ["does_not_equal", "equals"]
 predicate_types_exists              = ["does_not_exist", "exists"]

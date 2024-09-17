@@ -14,6 +14,10 @@ output "all_services" {
   value = data.opslevel_services.all
 }
 
+output "all_systems" {
+  value = data.opslevel_systems.all
+}
+
 output "all_teams" {
   value = data.opslevel_teams.all
 }
@@ -36,6 +40,10 @@ output "first_repository" {
 
 output "first_service" {
   value = data.opslevel_services.all.services[0]
+}
+
+output "first_system" {
+  value = data.opslevel_systems.all.systems[0]
 }
 
 output "first_team" {
