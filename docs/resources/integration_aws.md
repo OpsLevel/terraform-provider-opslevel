@@ -123,11 +123,11 @@ resource "opslevel_integration_aws" "dev" {
 - `external_id` (String) The External ID defined in the trust relationship to ensure OpsLevel is the only third party assuming this role (See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html for more details).
 - `iam_role` (String) The IAM role OpsLevel uses in order to access the AWS account.
 - `name` (String) The name of the integration.
-- `ownership_tag_overrides` (Boolean) Allow tags imported from AWS to override ownership set in OpsLevel directly.
 
 ### Optional
 
-- `ownership_tag_keys` (List of String) Allow tags imported from AWS to override ownership set in OpsLevel directly
+- `ownership_tag_keys` (List of String) Allow tags imported from AWS to override ownership set in OpsLevel directly. Max 5 (default = ["owner"])
+- `ownership_tag_overrides` (Boolean) Allow tags imported from AWS to override ownership set in OpsLevel directly.
 
 ### Read-Only
 

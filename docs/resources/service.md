@@ -81,6 +81,7 @@ output "foo_aliases" {
 - `framework` (String) The primary software development framework that the service uses.
 - `language` (String) The primary programming language that the service is written in.
 - `lifecycle_alias` (String) The lifecycle stage of the service.
+- `note` (String) Additional information about the service.
 - `owner` (String) The team that owns the service. ID or Alias may be used.
 - `parent` (String) The id or alias of the parent system of this service
 - `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, defaults to PUSH.
