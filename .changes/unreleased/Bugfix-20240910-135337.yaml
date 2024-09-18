@@ -1,3 +1,0 @@
-kind: Bugfix
-body: no longer delete service tags during updates when other fields are changed
-time: 2024-09-10T13:53:37.768825-05:00

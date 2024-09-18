@@ -38,7 +38,7 @@ resource "opslevel_integration_azure_resources" "dev" {
 
 ### Optional
 
-- `ownership_tag_keys` (Set of String) An Array of tag keys used to associate ownership from an integration. Max 5
+- `ownership_tag_keys` (List of String) An Array of tag keys used to associate ownership from an integration. Max 5 (default = ["owner"])
 - `ownership_tag_overrides` (Boolean) Allow tags imported from Azure to override ownership set in OpsLevel directly.
 
 ### Read-Only

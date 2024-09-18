@@ -1,3 +1,0 @@
-kind: Refactor
-body: ownership_tag_overrides field now optional in opslevel_integration_aws resource
-time: 2024-09-09T17:09:41.830808-05:00
