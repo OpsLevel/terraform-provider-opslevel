@@ -92,7 +92,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"send_invite": schema.BoolAttribute{
 				Description: "Send an invite email even if notifications are disabled for the account.",
-				Default:     booldefault.StaticBool(false),
+				Default:     booldefault.StaticBool(true),
 				Computed:    true,
 				Optional:    true,
 			},

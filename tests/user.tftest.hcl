@@ -103,7 +103,7 @@ run "resource_user_update_unset_fields_return_default_value" {
 
   assert {
     condition     = opslevel_user.this.send_invite == true
-    error_message = "expected 'false' default for send_invite in opslevel_user resource"
+    error_message = "expected 'true' default for send_invite in opslevel_user resource"
   }
 
   assert {
