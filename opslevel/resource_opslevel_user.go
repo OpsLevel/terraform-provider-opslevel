@@ -91,16 +91,16 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 			},
 			"send_invite": schema.BoolAttribute{
-				Description: "Send an invite email even if notifications are disabled for the account.",
-				Default:     booldefault.StaticBool(false),
-				Computed:    true,
-				Optional:    true,
+				MarkdownDescription: "Send an invite email even if notifications are disabled for the account. **(default: false)**",
+				Default:             booldefault.StaticBool(false),
+				Computed:            true,
+				Optional:            true,
 			},
 			"skip_welcome_email": schema.BoolAttribute{
-				Description: "Don't send an email welcoming the user to OpsLevel. (default: true)",
-				Default:     booldefault.StaticBool(true),
-				Computed:    true,
-				Optional:    true,
+				MarkdownDescription: "Don't send an email welcoming the user to OpsLevel. **(default: true)**",
+				Default:             booldefault.StaticBool(true),
+				Computed:            true,
+				Optional:            true,
 			},
 		},
 	}
@@ -160,6 +160,10 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if planModel.SendInvite != stateModel.SendInvite {
+		resp.Diagnostics.AddWarning("opslevel_user update no-op", "Modifying the send_invite attribute has no effect on an existing user.")
 	}
 
 	resource, err := r.client.UpdateUser(planModel.Id.ValueString(), opslevel.UserInput{
