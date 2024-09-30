@@ -34,20 +34,20 @@ type UserResource struct {
 // UserResourceModel describes the User managed resource.
 type UserResourceModel struct {
 	Email            types.String `tfsdk:"email"`
-	ForceSendInvite  types.Bool   `tfsdk:"force_send_invite"`
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
+	SkipSendInvite   types.Bool   `tfsdk:"skip_send_invite"`
 	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"`
 }
 
 func NewUserResourceModel(user opslevel.User, model UserResourceModel) UserResourceModel {
 	return UserResourceModel{
 		Email:            RequiredStringValue(user.Email),
-		ForceSendInvite:  model.ForceSendInvite,
 		Id:               ComputedStringValue(string(user.Id)),
 		Name:             RequiredStringValue(user.Name),
 		Role:             OptionalStringValue(string(user.Role)),
+		SkipSendInvite:   model.SkipSendInvite,
 		SkipWelcomeEmail: model.SkipWelcomeEmail,
 	}
 }
@@ -69,10 +69,6 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				},
 				Required: true,
 			},
-			"force_send_invite": schema.BoolAttribute{
-				Description: "Send an invite email even if notifications are disabled for the account.",
-				Optional:    true,
-			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the user.",
 				Computed:    true,
@@ -93,6 +89,12 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Validators: []validator.String{
 					stringvalidator.OneOf(opslevel.AllUserRole...),
 				},
+			},
+			"skip_send_invite": schema.BoolAttribute{
+				Description: "Send an invite email even if notifications are disabled for the account.",
+				Default:     booldefault.StaticBool(false),
+				Computed:    true,
+				Optional:    true,
 			},
 			"skip_welcome_email": schema.BoolAttribute{
 				Description: "Don't send an email welcoming the user to OpsLevel. (default: true)",
@@ -119,7 +121,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
 		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
 	}
-	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.ForceSendInvite.ValueBoolPointer())
+	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SkipSendInvite.ValueBool())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return

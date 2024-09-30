@@ -17,7 +17,6 @@ tasks:
   run-tests-against-submodule:
     cmds:
       - git submodule init {{.ROOT_DIR}}/{{.TEST_DIR}}/opslevel_modules
-      - git submodule update {{.ROOT_DIR}}/{{.TEST_DIR}}/opslevel_modules
       - task: terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.TEST_DIR}}" }
       - task: setup-test-modules
