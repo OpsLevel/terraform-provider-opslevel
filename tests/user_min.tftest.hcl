@@ -7,6 +7,7 @@ variables {
 
   # optional fields
   role               = "user" # make required??
+  send_invite        = null
   skip_welcome_email = null
 }
 
@@ -41,6 +42,11 @@ run "resource_user_create_with_required_fields" {
       var.name,
       opslevel_user.this.name,
     )
+  }
+
+  assert {
+    condition = opslevel_user.this.send_invite == false
+    error_message = "expected 'false' default for send_invite in opslevel_user resource"
   }
 
   assert {

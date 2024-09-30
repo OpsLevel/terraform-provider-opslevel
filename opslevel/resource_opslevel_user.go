@@ -37,6 +37,7 @@ type UserResourceModel struct {
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
+	SendInvite       types.Bool   `tfsdk:"send_invite"`
 	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"`
 }
 
@@ -46,6 +47,7 @@ func NewUserResourceModel(user opslevel.User, model UserResourceModel) UserResou
 		Id:               ComputedStringValue(string(user.Id)),
 		Name:             RequiredStringValue(user.Name),
 		Role:             OptionalStringValue(string(user.Role)),
+		SendInvite:       model.SendInvite,
 		SkipWelcomeEmail: model.SkipWelcomeEmail,
 	}
 }
@@ -88,11 +90,17 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringvalidator.OneOf(opslevel.AllUserRole...),
 				},
 			},
+			"send_invite": schema.BoolAttribute{
+				MarkdownDescription: "Send an invite email even if notifications are disabled for the account. **(default: false)**",
+				Default:             booldefault.StaticBool(false),
+				Computed:            true,
+				Optional:            true,
+			},
 			"skip_welcome_email": schema.BoolAttribute{
-				Description: "Don't send an email welcoming the user to OpsLevel. (default: true)",
-				Default:     booldefault.StaticBool(true),
-				Computed:    true,
-				Optional:    true,
+				MarkdownDescription: "Don't send an email welcoming the user to OpsLevel. **(default: true)**",
+				Default:             booldefault.StaticBool(true),
+				Computed:            true,
+				Optional:            true,
 			},
 		},
 	}
@@ -108,11 +116,12 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	user, err := r.client.InviteUser(planModel.Email.ValueString(), opslevel.UserInput{
+	userInput := opslevel.UserInput{
 		Name:             planModel.Name.ValueStringPointer(),
 		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
 		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
-	})
+	}
+	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SendInvite.ValueBool())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return
@@ -151,6 +160,10 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if planModel.SendInvite != stateModel.SendInvite {
+		resp.Diagnostics.AddWarning("opslevel_user update no-op", "Modifying the send_invite attribute has no effect on an existing user.")
 	}
 
 	resource, err := r.client.UpdateUser(planModel.Id.ValueString(), opslevel.UserInput{

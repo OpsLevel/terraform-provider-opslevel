@@ -7,6 +7,7 @@ variables {
 
   # optional fields
   role               = "user" # make required??
+  send_invite        = true
   skip_welcome_email = false
 }
 
@@ -22,6 +23,7 @@ run "resource_user_create_with_all_fields" {
       can(opslevel_user.this.id),
       can(opslevel_user.this.name),
       can(opslevel_user.this.role),
+      can(opslevel_user.this.send_invite),
       can(opslevel_user.this.skip_welcome_email),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
@@ -56,6 +58,15 @@ run "resource_user_create_with_all_fields" {
       "expected '%v' but got '%v'",
       var.role,
       opslevel_user.this.role,
+    )
+  }
+
+  assert {
+    condition = opslevel_user.this.send_invite == var.send_invite
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.send_invite,
+      opslevel_user.this.send_invite,
     )
   }
 
