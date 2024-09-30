@@ -37,7 +37,7 @@ type UserResourceModel struct {
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Role             types.String `tfsdk:"role"`
-	SkipSendInvite   types.Bool   `tfsdk:"skip_send_invite"`
+	SendInvite       types.Bool   `tfsdk:"send_invite"`
 	SkipWelcomeEmail types.Bool   `tfsdk:"skip_welcome_email"`
 }
 
@@ -47,7 +47,7 @@ func NewUserResourceModel(user opslevel.User, model UserResourceModel) UserResou
 		Id:               ComputedStringValue(string(user.Id)),
 		Name:             RequiredStringValue(user.Name),
 		Role:             OptionalStringValue(string(user.Role)),
-		SkipSendInvite:   model.SkipSendInvite,
+		SendInvite:       model.SendInvite,
 		SkipWelcomeEmail: model.SkipWelcomeEmail,
 	}
 }
@@ -90,7 +90,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringvalidator.OneOf(opslevel.AllUserRole...),
 				},
 			},
-			"skip_send_invite": schema.BoolAttribute{
+			"send_invite": schema.BoolAttribute{
 				Description: "Send an invite email even if notifications are disabled for the account.",
 				Default:     booldefault.StaticBool(false),
 				Computed:    true,
@@ -121,7 +121,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
 		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
 	}
-	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SkipSendInvite.ValueBool())
+	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SendInvite.ValueBool())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return
