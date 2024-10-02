@@ -93,7 +93,7 @@ var predicateType = map[string]attr.Type{
 
 func (p PredicateModel) Validate() error {
 	// Skip validation for now, when input variables or for loops are used
-	if p.Type.IsUnknown() || p.Type.IsNull() {
+	if p.Type.IsNull() || p.Type.IsUnknown() || p.Value.IsUnknown() {
 		return nil
 	}
 	predicate := opslevel.Predicate{
