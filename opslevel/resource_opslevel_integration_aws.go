@@ -32,7 +32,7 @@ type IntegrationAwsResource struct {
 	CommonResourceClient
 }
 
-// IntegrationAwsResourceModel describes the AWS Integraion managed resource.
+// IntegrationAwsResourceModel describes the AWS Integration managed resource.
 type IntegrationAwsResourceModel struct {
 	ExternalID            types.String `tfsdk:"external_id"`
 	IamRole               types.String `tfsdk:"iam_role"`
