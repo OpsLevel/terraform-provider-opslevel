@@ -97,4 +97,5 @@ resource "opslevel_integration_aws" "dev" {
   external_id             = random_string.external_id.result
   ownership_tag_overrides = true
   ownership_tag_keys      = ["owner", "team", "group"]
+  region_override         = ["eu-west-1", "us-east-1"]
 }

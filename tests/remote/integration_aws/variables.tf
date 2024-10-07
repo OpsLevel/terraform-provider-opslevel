@@ -24,3 +24,9 @@ variable "name" {
   type        = string
   description = "The name of the integration."
 }
+
+variable "region_override" {
+  type        = list(string)
+  description = "Overrides the AWS region(s) that will be synchronized by this integration."
+  default     = null
+}

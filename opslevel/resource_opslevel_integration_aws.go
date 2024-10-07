@@ -40,6 +40,7 @@ type IntegrationAwsResourceModel struct {
 	Name                  types.String `tfsdk:"name"`
 	OwnershipTagOverrides types.Bool   `tfsdk:"ownership_tag_overrides"`
 	OwnershipTagKeys      types.List   `tfsdk:"ownership_tag_keys"`
+	RegionOverride        types.List   `tfsdk:"region_override"`
 }
 
 func NewIntegrationAwsResourceModel(awsIntegration opslevel.Integration) IntegrationAwsResourceModel {
@@ -50,6 +51,7 @@ func NewIntegrationAwsResourceModel(awsIntegration opslevel.Integration) Integra
 		Name:                  RequiredStringValue(awsIntegration.Name),
 		OwnershipTagKeys:      OptionalStringListValue(awsIntegration.AWSIntegrationFragment.OwnershipTagKeys),
 		OwnershipTagOverrides: types.BoolValue(awsIntegration.OwnershipTagOverride),
+		RegionOverride:        OptionalStringListValue(awsIntegration.AWSIntegrationFragment.RegionOverride),
 	}
 }
 
@@ -101,6 +103,11 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 				Description: "The name of the integration.",
 				Required:    true,
 			},
+			"region_override": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "Overrides the AWS region(s) that will be synchronized by this integration.",
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -119,12 +126,18 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.Append(diags...)
 		return
 	}
+	regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 	input := opslevel.AWSIntegrationInput{
 		Name:                 planModel.Name.ValueStringPointer(),
 		IAMRole:              planModel.IamRole.ValueStringPointer(),
 		ExternalID:           planModel.ExternalID.ValueStringPointer(),
 		OwnershipTagOverride: planModel.OwnershipTagOverrides.ValueBoolPointer(),
 		OwnershipTagKeys:     ownershipTagKeys,
+		RegionOverride:       &regionOverride,
 	}
 
 	awsIntegration, err := r.client.CreateIntegrationAWS(input)
@@ -175,12 +188,18 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		resp.Diagnostics.Append(diags...)
 		return
 	}
+	regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
+	if diags != nil && diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 	input := opslevel.AWSIntegrationInput{
 		Name:                 opslevel.RefOf(planModel.Name.ValueString()),
 		IAMRole:              opslevel.RefOf(planModel.IamRole.ValueString()),
 		ExternalID:           opslevel.RefOf(planModel.ExternalID.ValueString()),
 		OwnershipTagOverride: opslevel.RefOf(planModel.OwnershipTagOverrides.ValueBool()),
 		OwnershipTagKeys:     ownershipTagKeys,
+		RegionOverride:       &regionOverride,
 	}
 
 	awsIntegration, err := r.client.UpdateIntegrationAWS(planModel.Id.ValueString(), input)
