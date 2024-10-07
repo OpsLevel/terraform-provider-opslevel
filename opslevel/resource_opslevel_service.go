@@ -62,11 +62,25 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		Language:        OptionalStringValue(service.Language),
 		LifecycleAlias:  OptionalStringValue(service.Lifecycle.Alias),
 		Name:            RequiredStringValue(service.Name),
-		Note:            givenModel.Note,
-		Owner:           OptionalStringValue(givenModel.Owner.ValueString()),
-		Parent:          OptionalStringValue(givenModel.Parent.ValueString()),
+		Note:            OptionalStringValue(service.Note),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
+	}
+
+	if string(service.Owner.Id) == "" {
+		serviceResourceModel.Owner = types.StringNull()
+	} else if string(service.Owner.Id) == givenModel.Owner.ValueString() || service.Owner.Alias == givenModel.Owner.ValueString() {
+		serviceResourceModel.Owner = givenModel.Owner
+	} else {
+		serviceResourceModel.Owner = OptionalStringValue(service.Owner.Alias)
+	}
+
+	if service.Parent == nil {
+		serviceResourceModel.Parent = types.StringNull()
+	} else if string(service.Parent.Id) == givenModel.Parent.ValueString() || slices.Contains(service.Parent.Aliases, givenModel.Parent.ValueString()) {
+		serviceResourceModel.Parent = givenModel.Parent
+	} else {
+		serviceResourceModel.Parent = OptionalStringValue(service.Parent.Aliases[0])
 	}
 
 	if givenModel.Aliases.IsNull() {
