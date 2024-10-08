@@ -338,7 +338,8 @@ func (r *CheckToolUsageResource) Read(ctx context.Context, req resource.ReadRequ
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tool usage, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_tool_usage"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
@@ -450,7 +451,7 @@ func (r *CheckToolUsageResource) Delete(ctx context.Context, req resource.Delete
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check tool usage, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_tool_usage"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check tool usage resource")

@@ -149,7 +149,8 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resourceType := opslevel.TaggableResource(planModel.TargetType.ValueString())
 	data, err := r.client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read tag, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	tags, err := data.GetTags(r.client, nil)
@@ -160,13 +161,8 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	id := planModel.Id.ValueString()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil || tag == nil {
-		resp.Diagnostics.AddError("opslevel client error",
-			fmt.Sprintf("Tag '%s' for type %s with id '%s' not found. %s",
-				id,
-				data.ResourceType(),
-				data.ResourceId(),
-				err,
-			))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -212,7 +208,7 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	err := r.client.DeleteTag(asID(data.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete tag, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_tag"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a tag resource")

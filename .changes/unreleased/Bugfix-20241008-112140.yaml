@@ -1,0 +1,3 @@
+kind: Bugfix
+body: gracefully handle Terraform state drift when resources deleted in UI
+time: 2024-10-08T11:21:40.580864-05:00

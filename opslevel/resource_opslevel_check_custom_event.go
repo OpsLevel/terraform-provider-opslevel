@@ -169,7 +169,8 @@ func (r *CheckCustomEventResource) Read(ctx context.Context, req resource.ReadRe
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check custom event, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_custom_event"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckCustomEventResourceModel(ctx, *data, planModel)
@@ -236,7 +237,7 @@ func (r *CheckCustomEventResource) Delete(ctx context.Context, req resource.Dele
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check custom event, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_custom_event"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check custom event resource")

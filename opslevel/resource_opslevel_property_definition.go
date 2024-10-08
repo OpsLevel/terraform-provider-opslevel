@@ -147,7 +147,8 @@ func (resource *PropertyDefinitionResource) Read(ctx context.Context, req resour
 	id := stateModel.Id.ValueString()
 	definition, err := resource.client.GetPropertyDefinition(id)
 	if err != nil || definition == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read definition with id '%s', got error: %s", id, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_property_definition"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -202,7 +203,7 @@ func (resource *PropertyDefinitionResource) Delete(ctx context.Context, req reso
 	id := planModel.Id.ValueString()
 	err := resource.client.DeletePropertyDefinition(id)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete definition (%s), got error: %s", id, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_property_definition"))
 		return
 	}
 	tflog.Trace(ctx, fmt.Sprintf("deleted a definition resource with id '%s'", id))

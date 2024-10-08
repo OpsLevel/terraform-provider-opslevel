@@ -156,12 +156,14 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		service, err = serviceTagResource.client.GetServiceWithAlias(serviceIdentifier)
 	}
 	if err != nil || service == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read service (%s), got error: %s", serviceIdentifier, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	_, err = service.GetTags(serviceTagResource.client, nil)
 	if err != nil || service.Tags == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on service (%s), got error: %s", serviceIdentifier, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tag"))
+		resp.State.RemoveResource(ctx)
 	}
 	var serviceTag *opslevel.Tag
 	for _, readTag := range service.Tags.Nodes {
@@ -171,7 +173,8 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		}
 	}
 	if serviceTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -232,7 +235,7 @@ func (serviceTagResource *ServiceTagResource) Delete(ctx context.Context, req re
 
 	err := serviceTagResource.client.DeleteTag(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete service tag (with id '%s'), got error: %s", data.Id.ValueString(), err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tag"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a service tag resource")

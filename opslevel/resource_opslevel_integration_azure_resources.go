@@ -210,7 +210,8 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 
 	azureResourcesIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Azure Resources integration, got error: '%s'", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_azure_resources"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -265,7 +266,7 @@ func (r *IntegrationAzureResourcesResource) Delete(ctx context.Context, req reso
 	}
 
 	if err := r.client.DeleteIntegration(data.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete Azure Resources integration, got error: '%s'", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_azure_resources"))
 		return
 	}
 	tflog.Trace(ctx, "deleted an Azure Resources integration")

@@ -152,7 +152,8 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 
 	webhookAction, err := r.client.GetCustomAction(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read webhookAction, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_webhook_action"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction, stateModel)
@@ -208,7 +209,7 @@ func (r *WebhookActionResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 
 	if err := r.client.DeleteWebhookAction(data.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete webhookAction, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_webhook_action"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a webhook action resource")

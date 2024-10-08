@@ -145,18 +145,21 @@ func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadR
 		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
 	}
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_dependency"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
 	dependencies, err := service.GetDependencies(r.client, nil)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service dependencies, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_dependency"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	extractedServiceDependency := extractServiceDependency(planModel.Id.ValueString(), *dependencies)
 	if extractedServiceDependency == nil {
-		resp.Diagnostics.AddError("opslevel client error", "Unable to extract service dependency")
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_dependency"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -194,7 +197,7 @@ func (r *ServiceDependencyResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	if err := r.client.DeleteServiceDependency(opslevel.ID(planModel.Id.ValueString())); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service dependency, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_dependency"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a serviceDependency resource")

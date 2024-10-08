@@ -135,7 +135,8 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 		team, err = teamContactResource.client.GetTeamWithAlias(teamIdentifier)
 	}
 	if err != nil || team == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_contact"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	err = team.Hydrate(teamContactResource.client)
@@ -151,7 +152,8 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 		}
 	}
 	if teamContact == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team contact (with ID '%s') not found on team (%s)", contactID, teamIdentifier))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_contact"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -199,7 +201,7 @@ func (teamContactResource *TeamContactResource) Delete(ctx context.Context, req 
 
 	err := teamContactResource.client.RemoveContact(contactID)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to remove team contact (with id '%s'), got error: %s", contactID, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_contact"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a team contact resource")

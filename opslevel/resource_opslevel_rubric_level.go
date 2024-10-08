@@ -125,7 +125,8 @@ func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest
 
 	rubricLevel, err := r.client.GetLevel(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read rubric level, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_rubric_level"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readRubricLevelResourceModel := NewRubricLevelResourceModel(*rubricLevel, stateModel)
@@ -169,7 +170,7 @@ func (r *RubricLevelResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err := r.client.DeleteLevel(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete rubric level, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_rubric_level"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a rubric level resource")

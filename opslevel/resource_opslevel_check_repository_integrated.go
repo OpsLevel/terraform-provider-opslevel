@@ -130,7 +130,8 @@ func (r *CheckRepositoryIntegratedResource) Read(ctx context.Context, req resour
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository integrated, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_integrated"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckRepositoryIntegratedResourceModel(ctx, *data, planModel)
@@ -191,7 +192,7 @@ func (r *CheckRepositoryIntegratedResource) Delete(ctx context.Context, req reso
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository integrated, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_integrated"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check repository integrated resource")

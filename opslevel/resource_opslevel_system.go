@@ -143,7 +143,8 @@ func (r *SystemResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	readSystem, err := r.client.GetSystem(stateModel.Id.ValueString())
 	if err != nil || readSystem == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read system, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_system"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	verifiedStateModel := NewSystemResourceModel(*readSystem, stateModel)
@@ -194,7 +195,7 @@ func (r *SystemResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 
 	if err := r.client.DeleteSystem(planModel.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete system, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_system"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a system resource")

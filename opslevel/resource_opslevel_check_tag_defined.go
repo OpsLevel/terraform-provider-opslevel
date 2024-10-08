@@ -240,7 +240,8 @@ func (r *CheckTagDefinedResource) Read(ctx context.Context, req resource.ReadReq
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tag defined, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_tag_defined"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckTagDefinedResourceModel(ctx, *data, planModel)
@@ -317,7 +318,7 @@ func (r *CheckTagDefinedResource) Delete(ctx context.Context, req resource.Delet
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check tag defined, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_tag_defined"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check tag defined resource")

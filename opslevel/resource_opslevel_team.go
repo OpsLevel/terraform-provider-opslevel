@@ -196,7 +196,8 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 
 	team, err := teamResource.client.GetTeam(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil || team == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	err = team.Hydrate(teamResource.client)
@@ -311,7 +312,7 @@ func (teamResource *TeamResource) Delete(ctx context.Context, req resource.Delet
 
 	err := teamResource.client.DeleteTeam(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete team, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a team resource")

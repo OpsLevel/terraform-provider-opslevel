@@ -268,7 +268,8 @@ func (r *CheckManualResource) Read(ctx context.Context, req resource.ReadRequest
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check manual, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_manual"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckManualResourceModel(ctx, *data, planModel)
@@ -337,7 +338,7 @@ func (r *CheckManualResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check manual, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_manual"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check manual resource")

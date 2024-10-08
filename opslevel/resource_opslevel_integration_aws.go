@@ -150,7 +150,8 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 
 	awsIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read AWS integration, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_aws"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -205,7 +206,7 @@ func (r *IntegrationAwsResource) Delete(ctx context.Context, req resource.Delete
 	}
 
 	if err := r.client.DeleteIntegration(data.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete AWS integration, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_aws"))
 		return
 	}
 	tflog.Trace(ctx, "deleted an AWS integration resource")

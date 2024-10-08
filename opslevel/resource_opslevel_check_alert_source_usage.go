@@ -245,7 +245,8 @@ func (r *CheckAlertSourceUsageResource) Read(ctx context.Context, req resource.R
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check alert source usage, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_alert_source_usage"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckAlertSourceUsageResourceModel(ctx, *data, planModel)
@@ -321,7 +322,7 @@ func (r *CheckAlertSourceUsageResource) Delete(ctx context.Context, req resource
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check alert source usage, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_alert_source_usage"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check alert source usage resource")

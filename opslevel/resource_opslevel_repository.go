@@ -139,7 +139,8 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	readRepository, err := r.client.GetRepository(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil || readRepository == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read repository, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_repository"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewRepositoryResourceModel(ctx, *readRepository)
@@ -149,14 +150,8 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 	case string(readRepository.Id), readRepository.DefaultAlias:
 		stateModel.Identifier = planModel.Identifier
 	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("given repository identifier '%s' did not match found repository's id '%s' or alias '%s'",
-				planModel.Identifier.ValueString(),
-				string(readRepository.Id),
-				readRepository.DefaultAlias,
-			),
-		)
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_repository"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

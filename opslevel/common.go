@@ -140,6 +140,10 @@ func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
 	}
 }
 
+func stateResourceMissingMessage(resourceType string) string {
+	return fmt.Sprintf("'%s' from Terraform state not found in OpsLevel!\n\nPlease try 'terraform plan -refresh-only' to detected changes outside of Terraform", resourceType)
+}
+
 func flattenTag(tag opslevel.Tag) string {
 	return fmt.Sprintf("%s:%s", tag.Key, tag.Value)
 }

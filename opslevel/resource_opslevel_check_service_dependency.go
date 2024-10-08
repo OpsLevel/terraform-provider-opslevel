@@ -130,7 +130,8 @@ func (r *CheckServiceDependencyResource) Read(ctx context.Context, req resource.
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check service dependency, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_service_dependency"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckServiceDependencyResourceModel(ctx, *data, planModel)
@@ -191,7 +192,7 @@ func (r *CheckServiceDependencyResource) Delete(ctx context.Context, req resourc
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check service dependency, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_service_dependency"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check service dependency resource")

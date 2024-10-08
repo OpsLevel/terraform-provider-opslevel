@@ -324,7 +324,8 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	service, err := r.client.GetService(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -486,7 +487,7 @@ func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	err := r.client.DeleteService(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a service resource")
