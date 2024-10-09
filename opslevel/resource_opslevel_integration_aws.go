@@ -175,20 +175,16 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 }
 
 func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel IntegrationAwsResourceModel
+	var planModel, stateModel IntegrationAwsResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	ownershipTagKeys, diags := ListValueToStringSlice(ctx, planModel.OwnershipTagKeys)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-	regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
 	if diags != nil && diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -199,7 +195,15 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		ExternalID:           opslevel.RefOf(planModel.ExternalID.ValueString()),
 		OwnershipTagOverride: opslevel.RefOf(planModel.OwnershipTagOverrides.ValueBool()),
 		OwnershipTagKeys:     ownershipTagKeys,
-		RegionOverride:       &regionOverride,
+	}
+
+	if !planModel.RegionOverride.IsNull() || !stateModel.RegionOverride.IsNull() {
+		regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
+		if diags != nil && diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		input.RegionOverride = &regionOverride
 	}
 
 	awsIntegration, err := r.client.UpdateIntegrationAWS(planModel.Id.ValueString(), input)
@@ -208,7 +212,7 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	stateModel := NewIntegrationAwsResourceModel(*awsIntegration)
+	stateModel = NewIntegrationAwsResourceModel(*awsIntegration)
 
 	tflog.Trace(ctx, "updated an AWS integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
