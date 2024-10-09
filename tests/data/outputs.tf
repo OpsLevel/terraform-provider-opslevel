@@ -6,6 +6,10 @@ output "all_filters" {
   value = data.opslevel_filters.all
 }
 
+output "all_lifecycles" {
+  value = data.opslevel_lifecycles.all
+}
+
 output "all_repositories" {
   value = data.opslevel_repositories.all
 }
@@ -22,6 +26,10 @@ output "all_teams" {
   value = data.opslevel_teams.all
 }
 
+output "all_tiers" {
+  value = data.opslevel_tiers.all
+}
+
 output "all_users" {
   value = data.opslevel_users.all
 }
@@ -32,6 +40,10 @@ output "first_domain" {
 
 output "first_filter" {
   value = data.opslevel_filters.all.filters[0]
+}
+
+output "first_lifecycle" {
+  value = data.opslevel_lifecycles.all.lifecycles[0]
 }
 
 output "first_repository" {
@@ -48,6 +60,10 @@ output "first_system" {
 
 output "first_team" {
   value = data.opslevel_teams.all.teams[0]
+}
+
+output "first_tier" {
+  value = data.opslevel_tiers.all.tiers[0]
 }
 
 output "first_user" {
