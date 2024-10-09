@@ -72,7 +72,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 	} else if string(service.Owner.Id) == givenModel.Owner.ValueString() || service.Owner.Alias == givenModel.Owner.ValueString() {
 		serviceResourceModel.Owner = givenModel.Owner
 	} else {
-		serviceResourceModel.Owner = OptionalStringValue(service.Owner.Alias)
+		serviceResourceModel.Owner = OptionalStringValue(string(service.Owner.Id))
 	}
 
 	if service.Parent == nil {
@@ -80,7 +80,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 	} else if string(service.Parent.Id) == givenModel.Parent.ValueString() || slices.Contains(service.Parent.Aliases, givenModel.Parent.ValueString()) {
 		serviceResourceModel.Parent = givenModel.Parent
 	} else {
-		serviceResourceModel.Parent = OptionalStringValue(service.Parent.Aliases[0])
+		serviceResourceModel.Parent = OptionalStringValue(string(service.Parent.Id))
 	}
 
 	if givenModel.Aliases.IsNull() {
