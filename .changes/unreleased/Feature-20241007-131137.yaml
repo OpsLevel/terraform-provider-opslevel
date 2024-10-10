@@ -1,0 +1,3 @@
+kind: Feature
+body: can override aws regions with "region_override" field on opslevel_aws_integration resource
+time: 2024-10-07T13:11:37.315799-05:00

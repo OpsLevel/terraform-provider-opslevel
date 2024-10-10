@@ -9,6 +9,7 @@ variables {
   # optional fields
   ownership_tag_overrides = null
   ownership_tag_keys      = null
+  region_override         = null
 
   # default values - computed from API
   default_ownership_tag_keys      = tolist(["owner"])
@@ -71,6 +72,11 @@ run "resource_integration_aws_create_with_required_fields" {
     )
   }
 
+  assert {
+    condition     = opslevel_integration_aws.this.region_override == null
+    error_message = var.error_expected_null_field
+  }
+
 }
 
 run "resource_integration_aws_set_ownership_tag_keys" {
@@ -115,3 +121,24 @@ run "resource_integration_aws_set_ownership_tag_overrides" {
 
 }
 
+
+run "resource_integration_aws_set_region_override" {
+
+  variables {
+    region_override = ["eu-west-1", "us-east-1"]
+  }
+
+  module {
+    source = "./integration_aws"
+  }
+
+  assert {
+    condition = opslevel_integration_aws.this.region_override == var.region_override
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.region_override,
+      opslevel_integration_aws.this.region_override,
+    )
+  }
+
+}
