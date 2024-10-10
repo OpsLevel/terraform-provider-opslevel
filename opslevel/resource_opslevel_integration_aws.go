@@ -126,18 +126,20 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-	regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
-	if diags != nil && diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
 	input := opslevel.AWSIntegrationInput{
 		Name:                 planModel.Name.ValueStringPointer(),
 		IAMRole:              planModel.IamRole.ValueStringPointer(),
 		ExternalID:           planModel.ExternalID.ValueStringPointer(),
 		OwnershipTagOverride: planModel.OwnershipTagOverrides.ValueBoolPointer(),
 		OwnershipTagKeys:     ownershipTagKeys,
-		RegionOverride:       &regionOverride,
+	}
+	if !planModel.RegionOverride.IsNull() && !planModel.RegionOverride.IsUnknown() {
+		regionOverride, diags := ListValueToStringSlice(ctx, planModel.RegionOverride)
+		if diags != nil && diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		input.RegionOverride = &regionOverride
 	}
 
 	awsIntegration, err := r.client.CreateIntegrationAWS(input)
