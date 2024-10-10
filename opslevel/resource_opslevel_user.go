@@ -143,7 +143,8 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	user, err := r.client.GetUser(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read user, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_user"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -192,7 +193,7 @@ func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	err := r.client.DeleteUser(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete user, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_user"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a user resource")

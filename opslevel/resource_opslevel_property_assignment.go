@@ -138,11 +138,9 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	definition := planModel.Definition.ValueString()
 	owner := planModel.Owner.ValueString()
 	assignment, err := resource.client.GetProperty(owner, definition)
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
-		return
-	} else if assignment == nil || string(assignment.Definition.Id) == "" {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("property assignment '%s' not found on service '%s'", definition, owner))
+	if err != nil || assignment == nil || string(assignment.Definition.Id) == "" {
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_property_assignment"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	value := *assignment.Value
@@ -171,7 +169,7 @@ func (resource *PropertyAssignmentResource) Delete(ctx context.Context, req reso
 	owner := planModel.Owner.ValueString()
 	err := resource.client.PropertyUnassign(owner, definition)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to unassign property (%s) on service (%s), got error: %s", definition, owner, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_property_assignment"))
 		return
 	}
 	tflog.Trace(ctx, fmt.Sprintf("unassigned property (%s) on service (%s)", definition, owner))

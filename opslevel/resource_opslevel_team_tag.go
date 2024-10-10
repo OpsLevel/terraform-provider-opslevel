@@ -163,7 +163,8 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		team, err = teamTagResource.client.GetTeamWithAlias(teamIdentifier)
 	}
 	if err != nil || team == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	_, err = team.GetTags(teamTagResource.client, nil)
@@ -178,7 +179,8 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		}
 	}
 	if teamTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team tag (with key '%s') not found on team (%s)", data.Key.ValueString(), teamIdentifier))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_tag"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -239,7 +241,7 @@ func (teamTagResource *TeamTagResource) Delete(ctx context.Context, req resource
 
 	err := teamTagResource.client.DeleteTag(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete team tag (with id '%s'), got error: %s", data.Id.ValueString(), err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team_tag"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a team tag resource")

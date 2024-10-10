@@ -290,7 +290,8 @@ func (r *CheckServiceOwnershipResource) Read(ctx context.Context, req resource.R
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check service ownership, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_service_ownership"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckServiceOwnershipResourceModel(ctx, *data, planModel)
@@ -369,7 +370,7 @@ func (r *CheckServiceOwnershipResource) Delete(ctx context.Context, req resource
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check service ownership, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_service_ownership"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check service ownership resource")

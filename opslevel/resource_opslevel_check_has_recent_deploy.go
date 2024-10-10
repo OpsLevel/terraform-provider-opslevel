@@ -140,7 +140,8 @@ func (r *CheckHasRecentDeployResource) Read(ctx context.Context, req resource.Re
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check has recent deploy, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_has_recent_deploy"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
@@ -203,7 +204,7 @@ func (r *CheckHasRecentDeployResource) Delete(ctx context.Context, req resource.
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check has recent deploy, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_has_recent_deploy"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check has recent deploy resource")

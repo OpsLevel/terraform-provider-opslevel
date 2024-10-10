@@ -250,7 +250,8 @@ func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.Rea
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository grep, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_grep"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
@@ -318,7 +319,7 @@ func (r *CheckRepositoryGrepResource) Delete(ctx context.Context, req resource.D
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository grep, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_grep"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check repository grep resource")

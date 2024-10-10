@@ -132,7 +132,8 @@ func (r *CheckGitBranchProtectionResource) Read(ctx context.Context, req resourc
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check git branch protection, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_git_branch_protection"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
@@ -193,7 +194,7 @@ func (r *CheckGitBranchProtectionResource) Delete(ctx context.Context, req resou
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check git branch protection, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_git_branch_protection"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check git branch protection resource")

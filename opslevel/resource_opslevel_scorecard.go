@@ -184,7 +184,8 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	readScorecard, err := r.client.GetScorecard(stateModel.Id.ValueString())
 	if err != nil || readScorecard == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_scorecard"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	categoryIds, err := getScorecardCategoyIds(r.client, *readScorecard)
@@ -238,7 +239,7 @@ func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 
 	_, err := r.client.DeleteScorecard(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete scorecard, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_scorecard"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a scorecard resource")

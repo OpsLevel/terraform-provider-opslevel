@@ -299,7 +299,8 @@ func (r *InfrastructureResource) Read(ctx context.Context, req resource.ReadRequ
 
 	infrastructure, err := r.client.GetInfrastructure(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read infrastructure, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_infrastructure"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readInfrastructureResourceModel := NewInfrastructureResourceModel(ctx, *infrastructure, stateModel)
@@ -361,7 +362,7 @@ func (r *InfrastructureResource) Delete(ctx context.Context, req resource.Delete
 
 	err := r.client.DeleteInfrastructure(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete infrastructure, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_infrastructure"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a infrastructure resource")

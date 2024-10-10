@@ -223,7 +223,8 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 
 	readIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Google Cloud integration, got error: '%s'", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_google_cloud"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -282,7 +283,7 @@ func (r *integrationGoogleCloudResource) Delete(ctx context.Context, req resourc
 	}
 
 	if err := r.client.DeleteIntegration(data.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete Google Cloud integration, got error: '%s'", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_integration_google_cloud"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a Google Cloud integration")

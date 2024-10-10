@@ -301,7 +301,8 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	filter, err := r.client.GetFilter(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read filter, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_filter"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	verifiedStateModel, diags := NewFilterResourceModel(ctx, *filter, stateModel)
@@ -370,7 +371,7 @@ func (r *FilterResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	err := r.client.DeleteFilter(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete filter, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_filter"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a filter resource")

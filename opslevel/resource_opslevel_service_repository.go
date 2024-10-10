@@ -203,7 +203,8 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_repository"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -285,7 +286,7 @@ func (r *ServiceRepositoryResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	if err := r.client.DeleteServiceRepository(opslevel.ID(planModel.Id.ValueString())); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service repository, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_repository"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a ServiceRepository resource")

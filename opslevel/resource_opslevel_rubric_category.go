@@ -102,7 +102,8 @@ func (r *RubricCategoryResource) Read(ctx context.Context, req resource.ReadRequ
 
 	rubricCategory, err := r.client.GetCategory(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read rubric category, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_rubric_category"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readRubricCategoryResourceModel := NewRubricCategoryResourceModel(*rubricCategory)
@@ -145,7 +146,7 @@ func (r *RubricCategoryResource) Delete(ctx context.Context, req resource.Delete
 
 	err := r.client.DeleteCategory(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete rubric category, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_rubric_category"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a rubric category resource")

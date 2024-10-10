@@ -228,7 +228,8 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 
 	triggerDefinition, err := r.client.GetTriggerDefinition(planModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read trigger definition, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_trigger_definition"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -295,7 +296,7 @@ func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.Del
 
 	err := r.client.DeleteTriggerDefinition(planModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete trigger definition, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_trigger_definition"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a trigger definition resource")

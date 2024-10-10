@@ -132,7 +132,8 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	resource, err := r.client.GetDomain(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read domain, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_domain"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readDomainResourceModel := NewDomainResourceModel(ctx, *resource, stateModel)
@@ -179,7 +180,7 @@ func (r *DomainResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	err := r.client.DeleteDomain(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete domain, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_domain"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a domain resource")

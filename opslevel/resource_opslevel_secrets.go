@@ -131,7 +131,8 @@ func (r *SecretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	secret, err := r.client.GetSecret(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read secret, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_secret"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	readSecretResourceModel := NewSecretResourceModel(*secret, data.Owner.ValueString(), data.Value.ValueString())
@@ -174,7 +175,7 @@ func (r *SecretResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	err := r.client.DeleteSecret(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete secret, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_secret"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a secret resource")

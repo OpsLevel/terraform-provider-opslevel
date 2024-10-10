@@ -251,7 +251,8 @@ func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.R
 
 	data, err := r.client.GetCheck(asID(currentStateModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository search, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_search"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	verifiedStateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, currentStateModel)
@@ -322,7 +323,7 @@ func (r *CheckRepositorySearchResource) Delete(ctx context.Context, req resource
 
 	err := r.client.DeleteCheck(asID(planModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository search, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_check_repository_search"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a check repository search resource")

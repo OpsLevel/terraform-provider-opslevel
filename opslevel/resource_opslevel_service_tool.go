@@ -178,7 +178,8 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
 	if err != nil || service == nil || string(service.Id) == "" {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tool"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -196,7 +197,8 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 		}
 	}
 	if serviceTool == nil || string(serviceTool.Id) == "" {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to find tool with id '%s' on service with id '%s'", id, service.Id))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tool"))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -243,7 +245,7 @@ func (r *ServiceToolResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	if err := r.client.DeleteTool(opslevel.ID(planModel.Id.ValueString())); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service tool, got error: %s", err))
+		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_service_tool"))
 		return
 	}
 	tflog.Trace(ctx, "deleted a serviceTool resource")
