@@ -195,7 +195,11 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	team, err := teamResource.client.GetTeam(opslevel.ID(stateModel.Id.ValueString()))
-	if err != nil || team == nil {
+	if team == nil && opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("unable to read team, got error: %s", err))
+		return
+	}
+	if err != nil {
 		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team"))
 		resp.State.RemoveResource(ctx)
 		return
