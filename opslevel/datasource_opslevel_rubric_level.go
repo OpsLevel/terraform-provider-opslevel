@@ -89,6 +89,10 @@ func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	levels, err := d.client.ListLevels()
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read rubric_level datasource, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read rubric_level datasource, got error: %s", err))
 		return

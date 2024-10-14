@@ -67,6 +67,10 @@ func (d *FilterDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	filters, err := d.client.ListFilters(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read filter, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return

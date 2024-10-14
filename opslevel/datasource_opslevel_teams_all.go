@@ -72,6 +72,10 @@ func (d *TeamDataSourcesAll) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	teams, err := d.client.ListTeams(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to list teams, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list teams, got error: %s", err))
 		return

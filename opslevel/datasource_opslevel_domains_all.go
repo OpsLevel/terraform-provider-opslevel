@@ -69,6 +69,10 @@ func (d *DomainDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	domains, err := d.client.ListDomains(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read domain, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return

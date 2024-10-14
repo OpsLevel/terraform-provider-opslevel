@@ -103,6 +103,10 @@ func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	tiers, err := d.client.ListTiers()
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read tier datasource, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read tier datasource, got error: %s", err))
 		return

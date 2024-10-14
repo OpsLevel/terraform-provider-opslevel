@@ -266,6 +266,10 @@ func (r *CheckRepositoryFileResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read check repository file, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository file, got error: %s", err))
 		return

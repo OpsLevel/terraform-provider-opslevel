@@ -84,6 +84,10 @@ func (d *RepositoriesDataSourcesAll) Read(ctx context.Context, req datasource.Re
 	} else {
 		repos, err = d.client.ListRepositories(nil)
 	}
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read OpsLevel Repositories data source, got error: %s", err))
+		return
+	}
 	if err != nil || repos == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read OpsLevel Repositories data source, got error: %s", err))
 		return

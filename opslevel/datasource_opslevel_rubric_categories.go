@@ -76,6 +76,10 @@ func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	categories, err := d.client.ListCategories(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to list rubric_categories datasource, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list rubric_categories datasource, got error: %s", err))
 		return

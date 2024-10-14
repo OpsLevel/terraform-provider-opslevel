@@ -75,6 +75,10 @@ func (d *UserDataSourcesAll) Read(ctx context.Context, req datasource.ReadReques
 	} else {
 		users, err = d.client.ListUsers(nil)
 	}
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to list users, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list users, got error: %s", err))
 		return

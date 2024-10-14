@@ -104,6 +104,10 @@ func (d *ScorecardDataSourcesAll) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	scorecards, err := d.client.ListScorecards(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to list scorecards datasource, got error: %s", err))
+		return
+	}
 	if err != nil || scorecards == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list scorecards datasource, got error: %s", err))
 		return

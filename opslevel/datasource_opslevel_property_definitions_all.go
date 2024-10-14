@@ -106,6 +106,10 @@ func (d *PropertyDefinitionDataSourcesAll) Read(ctx context.Context, req datasou
 	}
 
 	propertyDefinitions, err := d.client.ListPropertyDefinitions(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read property definition datasource, got error: %s", err))
+		return
+	}
 	if err != nil || propertyDefinitions == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read property definition datasource, got error: %s", err))
 		return

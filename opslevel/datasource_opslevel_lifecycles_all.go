@@ -81,6 +81,10 @@ func (d *LifecycleDataSourcesAll) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	lifecycles, err := d.client.ListLifecycles()
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("unable to list lifecycles, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list lifecycles, got error: %s", err))
 		return

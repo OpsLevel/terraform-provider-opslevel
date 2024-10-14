@@ -76,12 +76,20 @@ func (d *CategoryDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	categories, err := d.client.ListCategories(nil)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read rubric_category datasource, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read rubric_category datasource, got error: %s", err))
 		return
 	}
 
 	category, err := filterRubricCategories(categories.Nodes, planModel.Filter)
+	if opslevel.HasBadHttpStatus(err) {
+		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("Unable to read rubric_category datasource, got error: %s", err))
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_category datasource, got error: %s", err))
 		return
