@@ -195,13 +195,12 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	team, err := teamResource.client.GetTeam(opslevel.ID(stateModel.Id.ValueString()))
-	if team == nil && opslevel.HasBadHttpStatus(err) {
-		resp.Diagnostics.AddError("HTTP status error", fmt.Sprintf("unable to read team, got error: %s", err))
+	if (team == nil || team.Id == "") && opslevel.HasNotFoundError(err) {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 	if err != nil {
-		resp.Diagnostics.AddWarning("State drift", stateResourceMissingMessage("opslevel_team"))
-		resp.State.RemoveResource(ctx)
+		resp.Diagnostics.AddError("Error", fmt.Sprintf("unable to read team, got error: %s", err))
 		return
 	}
 	err = team.Hydrate(teamResource.client)
