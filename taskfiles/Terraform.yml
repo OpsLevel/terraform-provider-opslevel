@@ -54,7 +54,7 @@ tasks:
       BINARY: terraform-provider-opslevel_{{.TF_BUILD_VERSION}}
       LOCATION: "{{.PLUGIN_DIR}}/{{.TF_BUILD_VERSION}}/{{OS}}_{{ARCH}}"
     cmds:
-      - go build -ldflags="-s -w -X main.version={{.TF_BUILD_VERSION}}" -o {{.BINARY}} || exit 1
+      - go build -tags debug -ldflags="-s -w -X main.version={{.TF_BUILD_VERSION}}" -o {{.BINARY}} || exit 1
       - chmod +x {{.BINARY}}
       - mkdir -p {{.LOCATION}}
       - mv {{.BINARY}} {{.LOCATION}}/{{.BINARY}}

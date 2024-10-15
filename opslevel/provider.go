@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"os"
 	"strconv"
 	"time"
@@ -171,87 +172,127 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 	resp.ResourceData = client
 }
 
+func AsResource[T resource.Resource](v T) func() resource.Resource {
+	if _, ok := any(v).(resource.ResourceWithConfigure); !ok {
+		msg := fmt.Sprintf("'%T' does not implement resource.ResourceWithConfigure", v)
+		if IS_DEBUG {
+			panic(msg)
+		}
+		log.Warn().Msg(msg)
+	}
+	if _, ok := any(v).(resource.ResourceWithImportState); !ok {
+		msg := fmt.Sprintf("'%T' does not implement resource.ResourceWithImportState", v)
+		if IS_DEBUG {
+			panic(msg)
+		}
+		log.Warn().Msg(msg)
+	}
+	if _, ok := any(v).(resource.ResourceWithValidateConfig); !ok {
+		msg := fmt.Sprintf("'%T' does not implement resource.ResourceWithValidateConfig", v)
+		if IS_DEBUG {
+			panic(msg)
+		}
+		log.Warn().Msg(msg)
+	}
+	return func() resource.Resource {
+		return v
+	}
+}
+
+func AsDatasource[T datasource.DataSource](v T) func() datasource.DataSource {
+	if _, ok := any(v).(datasource.DataSourceWithConfigure); !ok {
+		msg := fmt.Sprintf("'%T' does not implement datasource.DataSourceWithConfigure", v)
+		if IS_DEBUG {
+			panic(msg)
+		}
+		log.Warn().Msg(msg)
+	}
+	return func() datasource.DataSource {
+		return v
+	}
+}
+
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewCheckAlertSourceUsageResource,
-		NewCheckCustomEventResource,
-		NewCheckGitBranchProtectionResource,
-		NewCheckHasDocumentationResource,
-		NewCheckHasRecentDeployResource,
-		NewCheckManualResource,
-		NewCheckPackageVersionResource,
-		NewCheckRepositoryFileResource,
-		NewCheckRepositoryGrepResource,
-		NewCheckRepositoryIntegratedResource,
-		NewCheckRepositorySearchResource,
-		NewCheckServiceConfigurationResource,
-		NewCheckServiceDependencyResource,
-		NewCheckServiceOwnershipResource,
-		NewCheckServicePropertyResource,
-		NewCheckTagDefinedResource,
-		NewCheckToolUsageResource,
-		NewDomainResource,
-		NewFilterResource,
-		NewInfrastructureResource,
-		NewIntegrationAwsResource,
-		NewIntegrationAzureResourcesResource,
-		NewIntegrationGoogleCloudResource,
-		NewPropertyAssignmentResource,
-		NewPropertyDefinitionResource,
-		NewRepositoryResource,
-		NewRubricCategoryResource,
-		NewRubricLevelResource,
-		NewScorecardResource,
-		NewSecretResource,
-		NewServiceDependencyResource,
-		NewServiceRepositoryResource,
-		NewServiceResource,
-		NewServiceTagResource,
-		NewServiceToolResource,
-		NewSystemResource,
-		NewTagResource,
-		NewTeamContactResource,
-		NewTeamResource,
-		NewTeamTagResource,
-		NewTriggerDefinitionResource,
-		NewUserResource,
-		NewWebhookActionResource,
+		AsResource(&CheckAlertSourceUsageResource{}),
+		AsResource(&CheckCustomEventResource{}),
+		AsResource(&CheckGitBranchProtectionResource{}),
+		AsResource(&CheckHasDocumentationResource{}),
+		AsResource(&CheckHasRecentDeployResource{}),
+		AsResource(&CheckManualResource{}),
+		AsResource(&CheckPackageVersionResource{}),
+		AsResource(&CheckRepositoryFileResource{}),
+		AsResource(&CheckRepositoryGrepResource{}),
+		AsResource(&CheckRepositoryIntegratedResource{}),
+		AsResource(&CheckRepositorySearchResource{}),
+		AsResource(&CheckServiceConfigurationResource{}),
+		AsResource(&CheckServiceDependencyResource{}),
+		AsResource(&CheckServiceOwnershipResource{}),
+		AsResource(&CheckServicePropertyResource{}),
+		AsResource(&CheckTagDefinedResource{}),
+		AsResource(&CheckToolUsageResource{}),
+		AsResource(&DomainResource{}),
+		AsResource(&FilterResource{}),
+		AsResource(&InfrastructureResource{}),
+		AsResource(&IntegrationAwsResource{}),
+		AsResource(&IntegrationAzureResourcesResource{}),
+		AsResource(&integrationGoogleCloudResource{}), // TODO: why does this start with a lowercase i ?
+		AsResource(&PropertyAssignmentResource{}),
+		AsResource(&PropertyDefinitionResource{}),
+		AsResource(&RepositoryResource{}),
+		AsResource(&RubricCategoryResource{}),
+		AsResource(&RubricLevelResource{}),
+		AsResource(&ScorecardResource{}),
+		AsResource(&SecretResource{}),
+		AsResource(&ServiceDependencyResource{}),
+		AsResource(&ServiceRepositoryResource{}),
+		AsResource(&ServiceResource{}),
+		AsResource(&ServiceTagResource{}),
+		AsResource(&ServiceToolResource{}),
+		AsResource(&SystemResource{}),
+		AsResource(&TagResource{}),
+		AsResource(&TeamContactResource{}),
+		AsResource(&TeamResource{}),
+		AsResource(&TeamTagResource{}),
+		AsResource(&TriggerDefinitionResource{}),
+		AsResource(&UserResource{}),
+		AsResource(&WebhookActionResource{}),
 	}
 }
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewCategoryDataSource,
-		NewCategoryDataSourcesAll,
-		NewDomainDataSource,
-		NewDomainDataSourcesAll,
-		NewFilterDataSource,
-		NewFilterDataSourcesAll,
-		NewIntegrationDataSource,
-		NewIntegrationDataSourcesAll,
-		NewLevelDataSource,
-		NewLevelDataSourcesAll,
-		NewLifecycleDataSource,
-		NewLifecycleDataSourcesAll,
-		NewPropertyDefinitionDataSource,
-		NewPropertyDefinitionDataSourcesAll,
-		NewRepositoriesDataSourceAll,
-		NewRepositoryDataSource,
-		NewScorecardDataSource,
-		NewScorecardDataSourcesAll,
-		NewServiceDataSource,
-		NewServiceDependenciesDataSource,
-		NewServiceDataSourcesAll,
-		NewSystemDataSource,
-		NewSystemDataSourcesAll,
-		NewTeamDataSource,
-		NewTeamDataSourcesAll,
-		NewTierDataSource,
-		NewTierDataSourcesAll,
-		NewUserDataSource,
-		NewUserDataSourcesAll,
-		NewWebhookActionDataSource,
-		NewWebhookActionDataSourcesAll,
+		AsDatasource(&CategoryDataSource{}),
+		AsDatasource(&CategoryDataSourcesAll{}),
+		AsDatasource(&DomainDataSource{}),
+		AsDatasource(&DomainDataSourcesAll{}),
+		AsDatasource(&FilterDataSource{}),
+		AsDatasource(&FilterDataSourcesAll{}),
+		AsDatasource(&IntegrationDataSource{}),
+		AsDatasource(&IntegrationDataSourcesAll{}),
+		AsDatasource(&LevelDataSource{}),
+		AsDatasource(&LevelDataSourcesAll{}),
+		AsDatasource(&LifecycleDataSource{}),
+		AsDatasource(&LifecycleDataSourcesAll{}),
+		AsDatasource(&PropertyDefinitionDataSource{}),
+		AsDatasource(&PropertyDefinitionDataSourcesAll{}),
+		AsDatasource(&RepositoriesDataSourcesAll{}),
+		AsDatasource(&RepositoryDataSource{}),
+		AsDatasource(&ScorecardDataSource{}),
+		AsDatasource(&ScorecardDataSourcesAll{}),
+		AsDatasource(&ServiceDataSource{}),
+		AsDatasource(&ServiceDependenciesDataSource{}),
+		AsDatasource(&ServiceDataSourcesAll{}),
+		AsDatasource(&SystemDataSource{}),
+		AsDatasource(&SystemDataSourcesAll{}),
+		AsDatasource(&TeamDataSource{}),
+		AsDatasource(&TeamDataSourcesAll{}),
+		AsDatasource(&TierDataSource{}),
+		AsDatasource(&TierDataSourcesAll{}),
+		AsDatasource(&UserDataSource{}),
+		AsDatasource(&UserDataSourcesAll{}),
+		AsDatasource(&WebhookActionDataSource{}),
+		AsDatasource(&WebhookActionDataSourcesAll{}),
 	}
 }
 
