@@ -140,6 +140,10 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 		service, err = r.client.GetServiceWithAlias(planModel.ServiceAlias.ValueString())
 	}
 	if err != nil {
+		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service during create, got error: %s", err))
 		return
 	}

@@ -94,6 +94,10 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		repository, err = r.client.GetRepositoryWithAlias(identifier)
 	}
 	if err != nil {
+		if (repository == nil || repository.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get repository, got error: %s", err))
 		return
 	}

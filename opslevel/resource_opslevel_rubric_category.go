@@ -102,6 +102,10 @@ func (r *RubricCategoryResource) Read(ctx context.Context, req resource.ReadRequ
 
 	rubricCategory, err := r.client.GetCategory(opslevel.ID(data.Id.ValueString()))
 	if err != nil {
+		if (rubricCategory == nil || rubricCategory.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read rubric category, got error: %s", err))
 		return
 	}

@@ -131,6 +131,10 @@ func (r *SecretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	secret, err := r.client.GetSecret(data.Id.ValueString())
 	if err != nil {
+		if (secret == nil || secret.ID == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read secret, got error: %s", err))
 		return
 	}

@@ -132,6 +132,10 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	resource, err := r.client.GetDomain(stateModel.Id.ValueString())
 	if err != nil {
+		if (resource == nil || resource.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read domain, got error: %s", err))
 		return
 	}

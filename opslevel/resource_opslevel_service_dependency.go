@@ -145,6 +145,10 @@ func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadR
 		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
 	}
 	if err != nil {
+		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}

@@ -338,6 +338,10 @@ func (r *CheckToolUsageResource) Read(ctx context.Context, req resource.ReadRequ
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tool usage, got error: %s", err))
 		return
 	}

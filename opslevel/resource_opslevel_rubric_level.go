@@ -125,6 +125,10 @@ func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest
 
 	rubricLevel, err := r.client.GetLevel(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
+		if (rubricLevel == nil || rubricLevel.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read rubric level, got error: %s", err))
 		return
 	}

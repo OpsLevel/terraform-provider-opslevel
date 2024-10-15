@@ -184,6 +184,10 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	readScorecard, err := r.client.GetScorecard(stateModel.Id.ValueString())
 	if err != nil || readScorecard == nil {
+		if (readScorecard == nil || readScorecard.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
 		return
 	}

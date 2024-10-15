@@ -134,7 +134,11 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 	} else {
 		team, err = teamContactResource.client.GetTeamWithAlias(teamIdentifier)
 	}
-	if err != nil || team == nil {
+	if err != nil {
+		if (team == nil || team.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
 		return
 	}

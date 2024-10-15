@@ -146,7 +146,11 @@ func (resource *PropertyDefinitionResource) Read(ctx context.Context, req resour
 
 	id := stateModel.Id.ValueString()
 	definition, err := resource.client.GetPropertyDefinition(id)
-	if err != nil || definition == nil {
+	if err != nil {
+		if (definition == nil || definition.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read definition with id '%s', got error: %s", id, err))
 		return
 	}

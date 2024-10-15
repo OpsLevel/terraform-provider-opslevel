@@ -130,6 +130,10 @@ func (r *CheckRepositoryIntegratedResource) Read(ctx context.Context, req resour
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository integrated, got error: %s", err))
 		return
 	}
