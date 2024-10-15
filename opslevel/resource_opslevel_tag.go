@@ -149,10 +149,6 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resourceType := opslevel.TaggableResource(planModel.TargetType.ValueString())
 	data, err := r.client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
-		if (data == nil || data.ResourceId() == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read tag, got error: %s", err))
 		return
 	}

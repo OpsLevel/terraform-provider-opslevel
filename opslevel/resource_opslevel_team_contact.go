@@ -134,11 +134,7 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 	} else {
 		team, err = teamContactResource.client.GetTeamWithAlias(teamIdentifier)
 	}
-	if err != nil {
-		if (team == nil || team.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
 		return
 	}
@@ -154,8 +150,8 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 			break
 		}
 	}
-	if teamContact == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team contact (with ID '%s') not found on team (%s)", contactID, teamIdentifier))
+	if teamContact == nil || teamContact.Id == "" {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

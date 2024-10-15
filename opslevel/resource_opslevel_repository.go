@@ -94,10 +94,6 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		repository, err = r.client.GetRepositoryWithAlias(identifier)
 	}
 	if err != nil {
-		if (repository == nil || repository.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get repository, got error: %s", err))
 		return
 	}
@@ -143,6 +139,10 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	readRepository, err := r.client.GetRepository(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil || readRepository == nil {
+		if (readRepository == nil || readRepository.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read repository, got error: %s", err))
 		return
 	}

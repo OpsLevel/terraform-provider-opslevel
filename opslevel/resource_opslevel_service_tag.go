@@ -164,11 +164,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		return
 	}
 	_, err = service.GetTags(serviceTagResource.client, nil)
-	if err != nil {
-		if service.Tags == nil && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || service.Tags == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on service (%s), got error: %s", serviceIdentifier, err))
 	}
 	var serviceTag *opslevel.Tag
@@ -179,7 +175,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		}
 	}
 	if serviceTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

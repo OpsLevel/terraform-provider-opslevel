@@ -171,11 +171,7 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		return
 	}
 	_, err = team.GetTags(teamTagResource.client, nil)
-	if err != nil {
-		if team.Tags == nil && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || team.Tags == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read tags on team (%s), got error: %s", teamIdentifier, err))
 	}
 	var teamTag *opslevel.Tag
@@ -186,7 +182,7 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		}
 	}
 	if teamTag == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team tag (with key '%s') not found on team (%s)", data.Key.ValueString(), teamIdentifier))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

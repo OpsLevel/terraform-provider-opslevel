@@ -203,10 +203,6 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
 	if err != nil {
-		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
@@ -224,10 +220,10 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 		}
 	}
 	if serviceRepository == nil {
-		verifiedStateModel = ServiceRepositoryResourceModel{}
-	} else {
-		verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
+		resp.State.RemoveResource(ctx)
+		return
 	}
+	verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
