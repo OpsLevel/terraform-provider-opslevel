@@ -219,7 +219,7 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
-	if serviceRepository == nil {
+	if serviceRepository == nil || serviceRepository.Id == "" {
 		resp.State.RemoveResource(ctx)
 		return
 	}
