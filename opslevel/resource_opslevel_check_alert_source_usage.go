@@ -18,16 +18,6 @@ import (
 	"github.com/relvacode/iso8601"
 )
 
-var (
-	_ resource.ResourceWithConfigure      = &CheckAlertSourceUsageResource{}
-	_ resource.ResourceWithImportState    = &CheckAlertSourceUsageResource{}
-	_ resource.ResourceWithValidateConfig = &CheckAlertSourceUsageResource{}
-)
-
-func NewCheckAlertSourceUsageResource() resource.Resource {
-	return &CheckAlertSourceUsageResource{}
-}
-
 // CheckAlertSourceUsageResource defines the resource implementation.
 type CheckAlertSourceUsageResource struct {
 	CommonResourceClient

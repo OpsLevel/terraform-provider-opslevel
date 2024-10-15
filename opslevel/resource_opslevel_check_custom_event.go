@@ -13,15 +13,6 @@ import (
 	"github.com/relvacode/iso8601"
 )
 
-var (
-	_ resource.ResourceWithConfigure   = &CheckCustomEventResource{}
-	_ resource.ResourceWithImportState = &CheckCustomEventResource{}
-)
-
-func NewCheckCustomEventResource() resource.Resource {
-	return &CheckCustomEventResource{}
-}
-
 // CheckCustomEventResource defines the resource implementation.
 type CheckCustomEventResource struct {
 	CommonResourceClient
