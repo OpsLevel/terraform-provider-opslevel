@@ -219,11 +219,11 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
-	if serviceRepository == nil || serviceRepository.Id == "" {
-		resp.State.RemoveResource(ctx)
-		return
+	if serviceRepository == nil {
+		verifiedStateModel = ServiceRepositoryResourceModel{}
+	} else {
+		verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 	}
-	verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)

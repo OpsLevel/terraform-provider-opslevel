@@ -170,8 +170,8 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 			break
 		}
 	}
-	if serviceTag == nil || serviceTag.Id == "" {
-		resp.State.RemoveResource(ctx)
+	if serviceTag == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("service tag (with key '%s') not found on service (%s)", data.Key.ValueString(), serviceIdentifier))
 		return
 	}
 

@@ -150,8 +150,8 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 			break
 		}
 	}
-	if teamContact == nil || teamContact.Id == "" {
-		resp.State.RemoveResource(ctx)
+	if teamContact == nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team contact (with ID '%s') not found on team (%s)", contactID, teamIdentifier))
 		return
 	}
 

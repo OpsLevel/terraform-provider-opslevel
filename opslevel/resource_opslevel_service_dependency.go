@@ -155,8 +155,8 @@ func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 	extractedServiceDependency := extractServiceDependency(planModel.Id.ValueString(), *dependencies)
-	if extractedServiceDependency == nil || extractedServiceDependency.Id == "" {
-		resp.State.RemoveResource(ctx)
+	if extractedServiceDependency == nil {
+		resp.Diagnostics.AddError("opslevel client error", "Unable to extract service dependency")
 		return
 	}
 

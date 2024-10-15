@@ -139,10 +139,6 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	readRepository, err := r.client.GetRepository(opslevel.ID(planModel.Id.ValueString()))
 	if err != nil || readRepository == nil {
-		if (readRepository == nil || readRepository.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read repository, got error: %s", err))
 		return
 	}

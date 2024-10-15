@@ -178,7 +178,7 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		}
 	}
 	if teamTag == nil {
-		resp.State.RemoveResource(ctx)
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("team tag (with key '%s') not found on team (%s)", data.Key.ValueString(), teamIdentifier))
 		return
 	}
 

@@ -151,11 +151,7 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 		ServiceId:   &service.Id,
 		Url:         planModel.Url.ValueString(),
 	})
-	if err != nil {
-		if (serviceTool == nil || serviceTool.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || serviceTool == nil || string(serviceTool.Id) == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service tool, got error: %s", err))
 		return
 	}
