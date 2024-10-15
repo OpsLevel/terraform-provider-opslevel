@@ -195,7 +195,11 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	team, err := teamResource.client.GetTeam(opslevel.ID(stateModel.Id.ValueString()))
-	if err != nil || team == nil {
+	if err != nil {
+		if (team == nil || team.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team, got error: %s", err))
 		return
 	}

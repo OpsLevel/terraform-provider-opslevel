@@ -169,6 +169,10 @@ func (r *CheckCustomEventResource) Read(ctx context.Context, req resource.ReadRe
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check custom event, got error: %s", err))
 		return
 	}

@@ -228,6 +228,10 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 
 	triggerDefinition, err := r.client.GetTriggerDefinition(planModel.Id.ValueString())
 	if err != nil {
+		if (triggerDefinition == nil || triggerDefinition.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read trigger definition, got error: %s", err))
 		return
 	}

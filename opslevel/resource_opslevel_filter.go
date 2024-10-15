@@ -301,6 +301,10 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	filter, err := r.client.GetFilter(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
+		if (filter == nil || filter.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return
 	}

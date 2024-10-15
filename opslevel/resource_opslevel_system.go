@@ -142,7 +142,11 @@ func (r *SystemResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	readSystem, err := r.client.GetSystem(stateModel.Id.ValueString())
-	if err != nil || readSystem == nil {
+	if err != nil {
+		if (readSystem == nil || readSystem.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read system, got error: %s", err))
 		return
 	}

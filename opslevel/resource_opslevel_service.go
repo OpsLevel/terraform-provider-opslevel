@@ -311,6 +311,10 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	// fetch the service again, since other mutations are performed after the create/update step
 	service, err = r.client.GetService(service.Id)
 	if err != nil {
+		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after creation, got error: %s", err))
 		return
 	}

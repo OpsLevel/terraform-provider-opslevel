@@ -159,7 +159,11 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 
 	id := planModel.Id.ValueString()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
-	if err != nil || tag == nil {
+	if err != nil {
+		if (tag == nil || tag.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error",
 			fmt.Sprintf("Tag '%s' for type %s with id '%s' not found. %s",
 				id,
