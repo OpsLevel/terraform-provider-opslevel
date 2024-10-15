@@ -155,11 +155,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 		serviceIdentifier = data.ServiceAlias.ValueString()
 		service, err = serviceTagResource.client.GetServiceWithAlias(serviceIdentifier)
 	}
-	if err != nil {
-		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || service == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read service (%s), got error: %s", serviceIdentifier, err))
 		return
 	}
@@ -174,7 +170,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 			break
 		}
 	}
-	if serviceTag == nil {
+	if serviceTag == nil || serviceTag.Id == "" {
 		resp.State.RemoveResource(ctx)
 		return
 	}

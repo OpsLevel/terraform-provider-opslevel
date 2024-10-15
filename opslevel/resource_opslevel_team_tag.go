@@ -162,11 +162,7 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 		teamIdentifier = data.TeamAlias.ValueString()
 		team, err = teamTagResource.client.GetTeamWithAlias(teamIdentifier)
 	}
-	if err != nil {
-		if (team == nil || team.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if err != nil || team == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team (%s), got error: %s", teamIdentifier, err))
 		return
 	}
