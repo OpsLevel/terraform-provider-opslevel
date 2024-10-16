@@ -61,6 +61,7 @@ jobs:
           go get github.com/hashicorp/terraform-plugin-docs@v0.13.0
           go get github.com/hashicorp/terraform-plugin-docs/internal/provider@v0.13.0
           go generate
+          go mod tidy
       - name: Commit & Tag Release
         run: |
           git config user.name "OpsLevel Bots"
