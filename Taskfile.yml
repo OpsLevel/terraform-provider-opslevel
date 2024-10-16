@@ -2,6 +2,8 @@
 
 version: '3'
 
+env:
+  TF_CLI_ARGS_test: -compact-warnings
 vars:
   TEST_DIR: "tests"
   WORKSPACE_DIR: "workspace"
