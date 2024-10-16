@@ -39,6 +39,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -57,11 +62,7 @@ jobs:
             changie merge
           fi
       - name: Generate Terraform Docs
-        run: |
-          go get github.com/hashicorp/terraform-plugin-docs@v0.13.0
-          go get github.com/hashicorp/terraform-plugin-docs/internal/provider@v0.13.0
-          go generate
-          go mod tidy
+        run: task docs
       - name: Commit & Tag Release
         run: |
           git config user.name "OpsLevel Bots"
