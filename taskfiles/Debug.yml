@@ -24,26 +24,24 @@ tasks:
       - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
       - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
 
-  do-debug-apply:
-    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
-    aliases: ["dbg-apply"]
+  do-debug-*:
+    desc: After debug-start and debug-attach, run "terraform {{index .MATCH 0}}" with 'TF_REATTACH_PROVIDERS'
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
     interactive: true
     cmds:
-      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" apply
+      - echo "After 'terraform {{index .MATCH 0}}' is started, return to shell with interactive delve session"
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" {{index .MATCH 0}}
 
-  do-debug-plan:
-    desc: After debug-start and debug-attach, run "terraform plan" with 'TF_REATTACH_PROVIDERS'
-    aliases: ["dbg-plan"]
+  do-debug-test:
+    desc: After debug-start and debug-attach, run "terraform test" with 'TF_REATTACH_PROVIDERS'
     vars:
       TF_REATTACH_PROVIDERS:
         sh: grep 'TF_REATTACH_PROVIDERS=' {{.DEBUG_LOG}} | cut -d'=' -f2-
     interactive: true
     cmds:
-      - echo "After 'terraform plan' is started, return to shell with interactive delve session"
-      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" plan
+      - TF_REATTACH_PROVIDERS={{.TF_REATTACH_PROVIDERS}} terraform -chdir="{{.ROOT_DIR}}/{{.TEST_DIR}}" test -var-file=test.tfvars {{.CLI_ARGS}}
 
   do-debug-start:
     desc: First, start headless debug

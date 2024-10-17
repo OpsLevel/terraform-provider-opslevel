@@ -208,7 +208,7 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 		return
 	}
 
-	azureResourcesIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
+	azureResourcesIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
 	if err != nil {
 		if (azureResourcesIntegration == nil || azureResourcesIntegration.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
