@@ -15,7 +15,6 @@ run "from_data_module" {
   command = plan
   plan_options {
     target = [
-      data.opslevel_lifecycles.all,
       data.opslevel_teams.all,
       data.opslevel_users.all
     ]
