@@ -100,7 +100,7 @@ func (r *RubricCategoryResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	rubricCategory, err := r.client.GetCategory(opslevel.ID(data.Id.ValueString()))
+	rubricCategory, err := r.client.GetCategory(asID(data.Id))
 	if err != nil {
 		if (rubricCategory == nil || rubricCategory.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
