@@ -164,7 +164,7 @@ run "delete_team_outside_of_terraform" {
 run "resource_team_create_with_required_fields" {
 
   variables {
-    # required fields from file scoped variables block
+    # other fields from file scoped variables block
     aliases          = null
     parent           = null
     responsibilities = null
