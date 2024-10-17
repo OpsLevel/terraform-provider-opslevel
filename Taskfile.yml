@@ -114,6 +114,12 @@ tasks:
     cmds:
       - task: debug:do-debug-plan
 
+  debug-test:
+    desc: After debug-start and debug-attach, run "terraform test" with 'TF_REATTACH_PROVIDERS'
+    aliases: ["dbg-test"]
+    cmds:
+      - task: debug:do-debug-test
+
   terraform-clean:
     desc: Completely wipe terraform state, terraform generated files, and local OpsLevel provider binaries
     aliases: ["clean"]

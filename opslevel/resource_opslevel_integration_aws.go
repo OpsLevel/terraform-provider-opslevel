@@ -164,11 +164,10 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	awsIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
-	if err != nil {
-		if (awsIntegration == nil || awsIntegration.Id == "") && opslevel.IsOpsLevelApiError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	if awsIntegration.Id == "" || opslevel.IsOpsLevelApiError(err) {
+		resp.State.RemoveResource(ctx)
+		return
+	} else if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read AWS integration, got error: %s", err))
 		return
 	}
