@@ -163,7 +163,7 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	awsIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
+	awsIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
 	if awsIntegration.Id == "" || opslevel.IsOpsLevelApiError(err) {
 		resp.State.RemoveResource(ctx)
 		return

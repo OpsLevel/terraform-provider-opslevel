@@ -18,7 +18,7 @@ variables {
 run "resource_integration_google_cloud_create_with_all_fields" {
 
   module {
-    source = "./integration_google_cloud"
+    source = "./opslevel_modules/modules/integration/google_cloud"
   }
 
   assert {
@@ -85,14 +85,15 @@ run "resource_integration_google_cloud_create_with_all_fields" {
 
 }
 
-run "resource_integration_google_cloud_unset_ownership_tag_keys" {
+run "resource_integration_google_cloud_unset_optional_fields" {
 
   variables {
     ownership_tag_keys = null
+    ownership_tag_overrides = null
   }
 
   module {
-    source = "./integration_google_cloud"
+    source = "./opslevel_modules/modules/integration/google_cloud"
   }
 
   assert {
@@ -104,16 +105,56 @@ run "resource_integration_google_cloud_unset_ownership_tag_keys" {
     )
   }
 
+  assert {
+    condition = opslevel_integration_google_cloud.this.ownership_tag_overrides == var.default_ownership_tag_overrides
+    error_message = format(
+      "expected default '%v' but got '%v'",
+      var.default_ownership_tag_overrides,
+      opslevel_integration_google_cloud.this.ownership_tag_overrides,
+    )
+  }
+
 }
 
-run "resource_integration_google_cloud_unset_ownership_tag_overrides" {
+run "delete_google_cloud_integration_outside_of_terraform" {
 
   variables {
+    resource_id   = run.resource_integration_google_cloud_create_with_all_fields.this.id
+    resource_type = "integration"
+  }
+
+  module {
+    source = "./provisioner"
+  }
+}
+
+run "resource_integration_google_cloud_create_with_required_fields" {
+
+  variables {
+    ownership_tag_keys = null
     ownership_tag_overrides = null
   }
 
   module {
-    source = "./integration_google_cloud"
+    source = "./opslevel_modules/modules/integration/google_cloud"
+  }
+
+  assert {
+    condition = run.resource_integration_google_cloud_create_with_all_fields.this.id != opslevel_integration_google_cloud.this.id
+    error_message = format(
+      "expected old id '%v' to be different from new id '%v'",
+      run.resource_integration_google_cloud_create_with_all_fields.this.id,
+      opslevel_integration_google_cloud.this.id,
+    )
+  }
+
+  assert {
+    condition = opslevel_integration_google_cloud.this.ownership_tag_keys == var.default_ownership_tag_keys
+    error_message = format(
+      "expected default '%v' but got '%v'",
+      var.default_ownership_tag_keys,
+      opslevel_integration_google_cloud.this.ownership_tag_keys,
+    )
   }
 
   assert {
@@ -121,6 +162,32 @@ run "resource_integration_google_cloud_unset_ownership_tag_overrides" {
     error_message = format(
       "expected default '%v' but got '%v'",
       var.default_ownership_tag_overrides,
+      opslevel_integration_google_cloud.this.ownership_tag_overrides,
+    )
+  }
+
+}
+
+run "resource_integration_google_cloud_set_all_fields" {
+
+  module {
+    source = "./opslevel_modules/modules/integration/google_cloud"
+  }
+
+  assert {
+    condition = opslevel_integration_google_cloud.this.ownership_tag_keys == var.ownership_tag_keys
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.ownership_tag_keys,
+      opslevel_integration_google_cloud.this.ownership_tag_keys,
+    )
+  }
+
+  assert {
+    condition = opslevel_integration_google_cloud.this.ownership_tag_overrides == var.ownership_tag_overrides
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.ownership_tag_overrides,
       opslevel_integration_google_cloud.this.ownership_tag_overrides,
     )
   }
