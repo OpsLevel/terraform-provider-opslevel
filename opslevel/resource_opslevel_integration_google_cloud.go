@@ -222,10 +222,11 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 	}
 
 	readIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
-	if readIntegration.Id == "" || opslevel.IsOpsLevelApiError(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	} else if err != nil {
+	if err != nil {
+		if (readIntegration == nil || readIntegration.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Google Cloud integration, got error: '%s'", err))
 		return
 	}

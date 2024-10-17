@@ -106,7 +106,7 @@ run "resource_integration_azure_create_with_all_fields" {
 
 }
 
-run "resource_integration_azure_unset_ownership_tag_keys" {
+run "resource_integration_azure_unset_optional_fields" {
 
   variables {
     ownership_tag_keys = null
@@ -230,30 +230,10 @@ run "resource_integration_azure_create_with_required_fields" {
 
 }
 
-run "resource_integration_azure_set_ownership_tag_keys" {
+run "resource_integration_azure_set_all_fields" {
 
   variables {
     ownership_tag_keys = ["one", "two", "three", "four", "five"]
-  }
-
-  module {
-    source = "./opslevel_modules/modules/integration/azure_resources"
-  }
-
-  assert {
-    condition = opslevel_integration_azure_resources.this.ownership_tag_keys == var.default_ownership_tag_keys
-    error_message = format(
-      "expected default '%v' but got '%v'",
-      var.default_ownership_tag_keys,
-      opslevel_integration_azure_resources.this.ownership_tag_keys,
-    )
-  }
-
-}
-
-run "resource_integration_azure_set_ownership_tag_overrides" {
-
-  variables {
     ownership_tag_overrides = false
   }
 
@@ -262,10 +242,19 @@ run "resource_integration_azure_set_ownership_tag_overrides" {
   }
 
   assert {
-    condition = opslevel_integration_azure_resources.this.ownership_tag_overrides == var.default_ownership_tag_overrides
+    condition = opslevel_integration_azure_resources.this.ownership_tag_keys == var.ownership_tag_keys
     error_message = format(
       "expected default '%v' but got '%v'",
-      var.default_ownership_tag_overrides,
+      var.ownership_tag_keys,
+      opslevel_integration_azure_resources.this.ownership_tag_keys,
+    )
+  }
+
+  assert {
+    condition = opslevel_integration_azure_resources.this.ownership_tag_overrides == var.ownership_tag_overrides
+    error_message = format(
+      "expected default '%v' but got '%v'",
+      var.ownership_tag_overrides,
       opslevel_integration_azure_resources.this.ownership_tag_overrides,
     )
   }

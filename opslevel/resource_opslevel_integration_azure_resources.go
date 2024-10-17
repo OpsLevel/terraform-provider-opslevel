@@ -209,10 +209,11 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 	}
 
 	azureResourcesIntegration, err := r.client.GetIntegration(asID(stateModel.Id))
-	if azureResourcesIntegration.Id == "" || opslevel.IsOpsLevelApiError(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	} else if err != nil {
+	if err != nil {
+		if (azureResourcesIntegration == nil || azureResourcesIntegration.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Azure Resources integration, got error: '%s'", err))
 		return
 	}
