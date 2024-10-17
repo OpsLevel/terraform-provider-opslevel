@@ -15,7 +15,6 @@ run "from_data_module" {
   command = plan
   plan_options {
     target = [
-      data.opslevel_lifecycles.all,
       data.opslevel_teams.all,
       data.opslevel_users.all
     ]
@@ -29,6 +28,7 @@ run "from_data_module" {
 run "resource_team_create_with_all_fields" {
 
   variables {
+    # other fields from file scoped variables block
     members = [
       {
         email = run.from_data_module.all_users.users[0].email
@@ -113,6 +113,7 @@ run "resource_team_create_with_all_fields" {
 run "resource_team_unset_optional_fields" {
 
   variables {
+    # required fields from file scoped variables block
     aliases          = null
     parent           = null
     responsibilities = null
@@ -163,6 +164,7 @@ run "delete_team_outside_of_terraform" {
 run "resource_team_create_with_required_fields" {
 
   variables {
+    # required fields from file scoped variables block
     aliases          = null
     parent           = null
     responsibilities = null
@@ -224,6 +226,7 @@ run "resource_team_create_with_required_fields" {
 run "resource_team_set_all_fields" {
 
   variables {
+    # other fields from file scoped variables block
     members = [
       {
         email = run.from_data_module.all_users.users[0].email
