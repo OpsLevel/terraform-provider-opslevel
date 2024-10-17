@@ -123,7 +123,7 @@ func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	rubricLevel, err := r.client.GetLevel(opslevel.ID(stateModel.Id.ValueString()))
+	rubricLevel, err := r.client.GetLevel(asID(stateModel.Id))
 	if err != nil {
 		if (rubricLevel == nil || rubricLevel.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
