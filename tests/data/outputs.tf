@@ -14,6 +14,14 @@ output "all_repositories" {
   value = data.opslevel_repositories.all
 }
 
+output "all_rubric_categories" {
+  value = data.opslevel_rubric_categories.all
+}
+
+output "all_rubric_levels" {
+  value = data.opslevel_rubric_levels.all
+}
+
 output "all_services" {
   value = data.opslevel_services.all
 }
@@ -50,6 +58,14 @@ output "first_repository" {
   value = data.opslevel_repositories.all.repositories[0]
 }
 
+output "first_rubric_category" {
+  value = data.opslevel_rubric_categories.all.rubric_categories[0]
+}
+
+output "first_rubric_level" {
+  value = data.opslevel_rubric_levels.all.rubric_levels[0]
+}
+
 output "first_service" {
   value = data.opslevel_services.all.services[0]
 }
@@ -68,4 +84,11 @@ output "first_tier" {
 
 output "first_user" {
   value = data.opslevel_users.all.users[0]
+}
+
+output "max_index_rubric_level" {
+  value = element([
+    for lvl in data.opslevel_rubric_levels.all.rubric_levels :
+    lvl if lvl.index == max(data.opslevel_rubric_levels.all.rubric_levels[*].index...)
+  ], 0)
 }
