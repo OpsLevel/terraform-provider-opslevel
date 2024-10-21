@@ -6,6 +6,10 @@ data "opslevel_lifecycles" "all" {}
 
 data "opslevel_repositories" "all" {}
 
+data "opslevel_rubric_categories" "all" {}
+
+data "opslevel_rubric_levels" "all" {}
+
 data "opslevel_services" "all" {}
 
 data "opslevel_systems" "all" {}

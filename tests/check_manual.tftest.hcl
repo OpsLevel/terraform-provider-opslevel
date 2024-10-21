@@ -14,66 +14,42 @@ variables {
 
   # -- check base fields --
   # required fields
-  category = null
-  level    = null
+  category = null # sourced from module
+  level    = null # sourced from module
   name     = "TF Test Check Manual"
 
   # optional fields
   enable_on = null
   enabled   = true
-  filter    = null
+  filter    = null # sourced from module
   notes     = "Notes on manual check"
-  owner     = null
+  owner     = null # sourced from module
 }
 
-run "from_filter_module" {
+run "from_data_module" {
   command = plan
-
-  module {
-    source = "./data/filter"
+  plan_options {
+    target = [
+      data.opslevel_filters.all,
+      data.opslevel_rubric_categories.all,
+      data.opslevel_rubric_levels.all,
+      data.opslevel_teams.all
+    ]
   }
-}
-
-run "from_rubric_category_module" {
-  command = plan
 
   module {
-    source = "./opslevel_modules/modules/rubric_category"
-  }
-}
-
-run "from_rubric_level_module" {
-  command = plan
-
-  module {
-    source = "./opslevel_modules/modules/rubric_level"
-  }
-}
-
-run "from_team_module" {
-  command = plan
-
-  module {
-    source = "./data/team"
+    source = "./data"
   }
 }
 
 run "resource_check_manual_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_module.first.id
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
-    name                    = var.name
-    notes                   = var.notes
-    owner                   = run.from_team_module.first.id
-    update_requires_comment = var.update_requires_comment
-    update_frequency        = var.update_frequency
+    # other fields from file scoped variables block
+    category = run.from_data_module.first_rubric_category.id
+    filter   = run.from_data_module.first_filter.id
+    level    = run.from_data_module.max_index_rubric_level.id
+    owner    = run.from_data_module.first_team.id
   }
 
   module {
@@ -99,18 +75,30 @@ run "resource_check_manual_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.this.category == var.category
-    error_message = "wrong category of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_manual.this.category,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.enable_on == var.enable_on
-    error_message = "wrong enable_on of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.enable_on == var.enable_on
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enable_on,
+      opslevel_check_manual.this.enable_on,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.enabled == var.enabled
-    error_message = "wrong enabled of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.enabled == var.enabled
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enabled,
+      opslevel_check_manual.this.enabled,
+    )
   }
 
   assert {
@@ -119,38 +107,66 @@ run "resource_check_manual_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.this.filter == var.filter
-    error_message = "wrong filter ID of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.filter == var.filter
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.filter,
+      opslevel_check_manual.this.filter,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.level == var.level
-    error_message = "wrong level ID of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_manual.this.level,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.name == var.name
-    error_message = replace(var.error_wrong_name, "TYPE", var.check_manual)
+    condition = opslevel_check_manual.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_manual.this.name,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.notes == var.notes
-    error_message = "wrong notes of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.notes == var.notes
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.notes,
+      opslevel_check_manual.this.notes,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.owner == var.owner
-    error_message = "wrong owner ID of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.owner == var.owner
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.owner,
+      opslevel_check_manual.this.owner,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.update_frequency == var.update_frequency
-    error_message = "wrong update_frequency of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.update_frequency == var.update_frequency
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_frequency,
+      opslevel_check_manual.this.update_frequency,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
-    error_message = "wrong update_requires_comment of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_requires_comment,
+      opslevel_check_manual.this.update_requires_comment,
+    )
   }
 
 }
@@ -158,14 +174,12 @@ run "resource_check_manual_create_with_all_fields" {
 run "resource_check_manual_update_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on = null
-    enabled   = null
-    filter    = null
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
+    # other fields from file scoped variables block
+    category         = run.from_data_module.first_rubric_category.id
+    enable_on        = null
+    enabled          = null
+    filter           = null
+    level            = run.from_data_module.max_index_rubric_level.id
     notes            = null
     owner            = null
     update_frequency = null
@@ -176,18 +190,45 @@ run "resource_check_manual_update_unset_optional_fields" {
   }
 
   assert {
+    condition = opslevel_check_manual.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_manual.this.category,
+    )
+  }
+
+  assert {
     condition     = opslevel_check_manual.this.enable_on == null
     error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_manual.this.enabled == true
-    error_message = "expected 'enabled' to be unchanged from create, field included in 'ignore_changes' lifecycle"
+    condition     = opslevel_check_manual.this.enabled == false
+    error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
   }
 
   assert {
     condition     = opslevel_check_manual.this.filter == null
     error_message = var.error_expected_null_field
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_manual.this.level,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_manual.this.name,
+    )
   }
 
   assert {
@@ -205,24 +246,41 @@ run "resource_check_manual_update_unset_optional_fields" {
     error_message = var.error_expected_null_field
   }
 
+  assert {
+    condition = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_requires_comment,
+      opslevel_check_manual.this.update_requires_comment,
+    )
+  }
+
 }
 
-run "resource_check_manual_update_all_fields" {
+run "delete_check_manual_outside_of_terraform" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on = var.enable_on
-    enabled   = !var.enabled
-    filter    = run.from_filter_module.first.id
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
-    name                    = "${var.name} updated"
-    notes                   = "${var.notes} updated"
-    owner                   = run.from_team_module.first.id
-    update_requires_comment = !var.update_requires_comment
-    update_frequency        = var.update_frequency
+    resource_id   = run.resource_check_manual_create_with_all_fields.this.id
+    resource_type = "check"
+  }
+
+  module {
+    source = "./provisioner"
+  }
+}
+
+run "resource_check_manual_create_with_required_fields" {
+
+  variables {
+    # other fields from file scoped variables block
+    category         = run.from_data_module.first_rubric_category.id
+    enable_on        = null
+    enabled          = null
+    filter           = null
+    level            = run.from_data_module.max_index_rubric_level.id
+    notes            = null
+    owner            = null
+    update_frequency = null
   }
 
   module {
@@ -230,53 +288,189 @@ run "resource_check_manual_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_manual.this.category == var.category
-    error_message = "wrong category of opslevel_check_manual resource"
+    condition = run.resource_check_manual_create_with_all_fields.this.id != opslevel_check_manual.this.id
+    error_message = format(
+      "expected old id '%v' to be different from new id '%v'",
+      run.resource_check_manual_create_with_all_fields.this.id,
+      opslevel_check_manual.this.id,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.enable_on == var.enable_on
-    error_message = "wrong enable_on of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_manual.this.category,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.enabled == !var.enabled
-    error_message = "wrong enabled of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.enable_on == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_manual.this.filter == var.filter
-    error_message = "wrong filter ID of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.enabled == false
+    error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_manual.this.level == var.level
-    error_message = "wrong level ID of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.filter == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_manual.this.name == var.name
-    error_message = replace(var.error_wrong_name, "TYPE", var.check_manual)
+    condition = opslevel_check_manual.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_manual.this.level,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.notes == var.notes
-    error_message = "wrong notes of opslevel_check_manual resource"
+    condition = opslevel_check_manual.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_manual.this.name,
+    )
   }
 
   assert {
-    condition     = opslevel_check_manual.this.owner == var.owner
-    error_message = "wrong owner ID of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.notes == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_manual.this.update_frequency == var.update_frequency
-    error_message = "wrong update_frequency of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.owner == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
-    error_message = "wrong update_requires_comment of opslevel_check_manual resource"
+    condition     = opslevel_check_manual.this.update_frequency == null
+    error_message = var.error_expected_null_field
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_requires_comment,
+      opslevel_check_manual.this.update_requires_comment,
+    )
+  }
+
+}
+
+run "resource_check_manual_set_all_fields" {
+
+  variables {
+    # other fields from file scoped variables block
+    category = run.from_data_module.first_rubric_category.id
+    filter   = run.from_data_module.first_filter.id
+    level    = run.from_data_module.max_index_rubric_level.id
+    owner    = run.from_data_module.first_team.id
+  }
+
+  module {
+    source = "./opslevel_modules/modules/check/manual"
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_manual.this.category,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.enable_on == var.enable_on
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enable_on,
+      opslevel_check_manual.this.enable_on,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.enabled == var.enabled
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enabled,
+      opslevel_check_manual.this.enabled,
+    )
+  }
+
+  assert {
+    condition     = startswith(opslevel_check_manual.this.id, var.id_prefix)
+    error_message = replace(var.error_wrong_id, "TYPE", var.check_manual)
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.filter == var.filter
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.filter,
+      opslevel_check_manual.this.filter,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_manual.this.level,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_manual.this.name,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.notes == var.notes
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.notes,
+      opslevel_check_manual.this.notes,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.owner == var.owner
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.owner,
+      opslevel_check_manual.this.owner,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.update_frequency == var.update_frequency
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_frequency,
+      opslevel_check_manual.this.update_frequency,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_manual.this.update_requires_comment == var.update_requires_comment
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.update_requires_comment,
+      opslevel_check_manual.this.update_requires_comment,
+    )
   }
 
 }
