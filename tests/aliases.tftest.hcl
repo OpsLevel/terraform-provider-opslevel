@@ -69,3 +69,35 @@ run "resource_modify_managed_aliases" {
     )
   }
 }
+
+run "delete_delete_alias_outside_of_terraform" {
+
+  variables {
+    command = "delete alias -t domain four"
+  }
+
+  module {
+    source = "./cli"
+  }
+}
+
+run "resource_ensure_managed_aliases" {
+  variables {
+    resource_type       = "domain"
+    resource_identifier = run.from_data_module.first_domain.id
+    aliases = ["one", "four", "three"]
+  }
+
+  module {
+    source = "./opslevel_modules/modules/aliases"
+  }
+
+  assert {
+    condition = opslevel_alias.this.aliases == toset(["one", "four", "three"])
+    error_message = format(
+      "expected '%v' but got '%v'",
+      toset(["one", "four", "three"]),
+      opslevel_alias.this.aliases,
+    )
+  }
+}
