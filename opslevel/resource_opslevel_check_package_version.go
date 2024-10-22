@@ -301,7 +301,7 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 	}
 
 	if planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = opslevel.NewNull[opslevel.CheckResultStatusEnum]()
+		input.MissingPackageResult = opslevel.NewNullOf[opslevel.CheckResultStatusEnum]()
 	} else {
 		input.MissingPackageResult = opslevel.NewNullableFrom(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
 	}
