@@ -144,7 +144,11 @@ func (r *CheckPackageVersionResource) Schema(ctx context.Context, req resource.S
 
 func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var configModel CheckPackageVersionResourceModel
-	packageVersionPossiblePredicateTypes := []opslevel.PredicateTypeEnum{opslevel.PredicateTypeEnumSatisfiesVersionConstraint, opslevel.PredicateTypeEnumMatchesRegex, opslevel.PredicateTypeEnumDoesNotMatchRegex}
+	packageVersionPossiblePredicateTypes := []opslevel.PredicateTypeEnum{
+		opslevel.PredicateTypeEnumDoesNotMatchRegex,
+		opslevel.PredicateTypeEnumMatchesRegex,
+		opslevel.PredicateTypeEnumSatisfiesVersionConstraint,
+	}
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
 	if resp.Diagnostics.HasError() {
@@ -152,10 +156,10 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 	}
 
 	if configModel.PackageConstraint.ValueString() == string(opslevel.PackageConstraintEnumMatchesVersion) {
-		if configModel.MissingPackageResult.IsNull() {
+		if configModel.MissingPackageResult.IsNull() && !configModel.MissingPackageResult.IsUnknown() {
 			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is required when package_constraint is 'matches_version'")
 		}
-		if configModel.VersionConstraintPredicate.IsNull() {
+		if configModel.VersionConstraintPredicate.IsNull() && !configModel.VersionConstraintPredicate.IsUnknown() {
 			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is required when package_constraint is 'matches_version'")
 		}
 		if !configModel.VersionConstraintPredicate.IsNull() {
@@ -296,10 +300,10 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
 
-	if !planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
-	} else if !stateModel.MissingPackageResult.IsNull() { // Then Unset
-		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(""))
+	if planModel.MissingPackageResult.IsNull() {
+		input.MissingPackageResult = opslevel.NewNullOf[opslevel.CheckResultStatusEnum]()
+	} else {
+		input.MissingPackageResult = opslevel.NewNullableFrom(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
 	}
 
 	if !planModel.PackageNameIsRegex.IsNull() {
