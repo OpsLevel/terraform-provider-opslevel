@@ -17,6 +17,19 @@ import (
 	"github.com/opslevel/opslevel-go/v2024"
 )
 
+type CheckCodeBaseResourceModel struct {
+	Category    types.String `tfsdk:"category"`
+	Description types.String `tfsdk:"description"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	EnableOn    types.String `tfsdk:"enable_on"`
+	Filter      types.String `tfsdk:"filter"`
+	Id          types.String `tfsdk:"id"`
+	Level       types.String `tfsdk:"level"`
+	Name        types.String `tfsdk:"name"`
+	Notes       types.String `tfsdk:"notes"`
+	Owner       types.String `tfsdk:"owner"`
+}
+
 var checkBaseAttributes = map[string]schema.Attribute{
 	"category": schema.StringAttribute{
 		Description: "The id of the category the check belongs to.",
