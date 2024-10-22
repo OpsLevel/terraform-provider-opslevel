@@ -1,7 +1,5 @@
 package opslevel
 
-// TODO: write tests
-
 import (
 	"context"
 	"fmt"
@@ -9,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
 	"github.com/relvacode/iso8601"
@@ -27,32 +24,6 @@ func NewCheckGitBranchProtectionResource() resource.Resource {
 // CheckGitBranchProtectionResource defines the resource implementation.
 type CheckGitBranchProtectionResource struct {
 	CommonResourceClient
-}
-
-func NewCheckGitBranchProtectionResourceModel(ctx context.Context, check opslevel.Check, planModel CheckCodeBaseResourceModel) CheckCodeBaseResourceModel {
-	var stateModel CheckCodeBaseResourceModel
-
-	stateModel.Category = RequiredStringValue(string(check.Category.Id))
-	stateModel.Description = ComputedStringValue(check.Description)
-	if planModel.Enabled.IsNull() {
-		stateModel.Enabled = types.BoolValue(false)
-	} else {
-		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
-	}
-	if planModel.EnableOn.IsNull() {
-		stateModel.EnableOn = types.StringNull()
-	} else {
-		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
-		stateModel.EnableOn = planModel.EnableOn
-	}
-	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
-	stateModel.Id = ComputedStringValue(string(check.Id))
-	stateModel.Level = RequiredStringValue(string(check.Level.Id))
-	stateModel.Name = RequiredStringValue(check.Name)
-	stateModel.Notes = OptionalStringValue(check.Notes)
-	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
-
-	return stateModel
 }
 
 func (r *CheckGitBranchProtectionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -101,7 +72,7 @@ func (r *CheckGitBranchProtectionResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
+	stateModel := NewCheckCodeBaseResourceModel(*data, planModel)
 
 	tflog.Trace(ctx, "created a check git branch protection resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -126,7 +97,7 @@ func (r *CheckGitBranchProtectionResource) Read(ctx context.Context, req resourc
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check git branch protection, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
+	stateModel := NewCheckCodeBaseResourceModel(*data, planModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -166,7 +137,7 @@ func (r *CheckGitBranchProtectionResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	stateModel := NewCheckGitBranchProtectionResourceModel(ctx, *data, planModel)
+	stateModel := NewCheckCodeBaseResourceModel(*data, planModel)
 
 	tflog.Trace(ctx, "updated a check git branch protection resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
