@@ -24,7 +24,7 @@ run "resource_create_aliases" {
   variables {
     resource_type       = "domain"
     resource_identifier = run.from_data_module.first_domain.id
-    aliases             = ["one", "two", "three"]
+    aliases             = toset(["one", "two", "three"])
   }
 
   module {
@@ -40,10 +40,10 @@ run "resource_create_aliases" {
   }
 
   assert {
-    condition = opslevel_alias.this.aliases == toset(["one", "two", "three"])
+    condition = opslevel_alias.this.aliases == var.aliases
     error_message = format(
       "expected '%v' but got '%v'",
-      toset(["one", "two", "three"]),
+      var.aliases,
       opslevel_alias.this.aliases,
     )
   }
@@ -53,7 +53,7 @@ run "resource_modify_managed_aliases" {
   variables {
     resource_type       = "domain"
     resource_identifier = run.from_data_module.first_domain.id
-    aliases = ["one", "four", "three"]
+    aliases = toset(["one", "four", "three"])
   }
 
   module {
@@ -61,10 +61,10 @@ run "resource_modify_managed_aliases" {
   }
 
   assert {
-    condition = opslevel_alias.this.aliases == toset(["one", "four", "three"])
+    condition = opslevel_alias.this.aliases == var.aliases
     error_message = format(
       "expected '%v' but got '%v'",
-      toset(["one", "four", "three"]),
+      var.aliases,
       opslevel_alias.this.aliases,
     )
   }
@@ -85,7 +85,7 @@ run "resource_ensure_managed_aliases" {
   variables {
     resource_type       = "domain"
     resource_identifier = run.from_data_module.first_domain.id
-    aliases = ["one", "four", "three"]
+    aliases = toset(["one", "four", "three"])
   }
 
   module {
@@ -93,10 +93,10 @@ run "resource_ensure_managed_aliases" {
   }
 
   assert {
-    condition = opslevel_alias.this.aliases == toset(["one", "four", "three"])
+    condition = opslevel_alias.this.aliases == var.aliases
     error_message = format(
       "expected '%v' but got '%v'",
-      toset(["one", "four", "three"]),
+      var.aliases,
       opslevel_alias.this.aliases,
     )
   }
