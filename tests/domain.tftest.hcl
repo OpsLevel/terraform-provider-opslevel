@@ -124,12 +124,11 @@ run "resource_domain_unset_optional_fields" {
 run "delete_domain_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_domain_create_with_all_fields.this.id
-    resource_type = "domain"
+    command = "delete domain ${run.resource_domain_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

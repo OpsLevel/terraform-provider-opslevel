@@ -132,12 +132,11 @@ run "resource_scorecard_unset_optional_fields" {
 run "delete_scorecard_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_scorecard_create_with_all_fields.this.id
-    resource_type = "scorecard"
+    command = "delete scorecard ${run.resource_scorecard_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

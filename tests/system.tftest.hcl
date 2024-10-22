@@ -141,12 +141,11 @@ run "resource_sytem_unset_optional_fields" {
 run "delete_system_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_system_create_with_all_fields.this.id
-    resource_type = "system"
+    command = "delete system ${run.resource_system_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

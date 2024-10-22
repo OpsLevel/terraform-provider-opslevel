@@ -91,12 +91,11 @@ run "resource_team_contact_create_slack_channel" {
 run "delete_team_contact_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_team_contact_create_slack_channel.this.id
-    resource_type = "contact"
+    command = "delete contact ${run.resource_team_contact_create_slack_channel.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

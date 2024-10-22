@@ -136,12 +136,11 @@ run "resource_integration_aws_unset_optional_fields" {
 run "delete_aws_integration_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_integration_aws_create_with_all_fields.this.id
-    resource_type = "integration"
+    command = "delete integration ${run.resource_integration_aws_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

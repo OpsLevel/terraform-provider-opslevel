@@ -38,12 +38,11 @@ run "resource_rubric_category_create_with_all_fields" {
 run "delete_rubric_category_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_rubric_category_create_with_all_fields.this.id
-    resource_type = "category"
+    command = "delete category ${run.resource_rubric_category_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

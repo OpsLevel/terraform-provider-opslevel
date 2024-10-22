@@ -119,12 +119,11 @@ run "resource_integration_google_cloud_unset_optional_fields" {
 run "delete_google_cloud_integration_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_integration_google_cloud_create_with_all_fields.this.id
-    resource_type = "integration"
+    command = "delete integration ${run.resource_integration_google_cloud_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 
