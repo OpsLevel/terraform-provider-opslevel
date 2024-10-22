@@ -82,12 +82,11 @@ run "resource_rubric_level_update_unset_optional_fields" {
 run "delete_rubric_level_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_rubric_level_create_with_all_fields.this.id
-    resource_type = "level"
+    command = "delete level ${run.resource_rubric_level_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

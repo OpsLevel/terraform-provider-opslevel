@@ -118,12 +118,11 @@ run "resource_team_tag_unset_id_set_alias" {
 run "delete_team_tag_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_team_tag_unset_id_set_alias.this.id
-    resource_type = "tag"
+    command = "delete tag ${run.resource_team_tag_unset_id_set_alias.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

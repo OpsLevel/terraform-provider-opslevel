@@ -152,12 +152,11 @@ run "resource_team_unset_optional_fields" {
 run "delete_team_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_team_create_with_all_fields.this.id
-    resource_type = "team"
+    command = "delete team ${run.resource_team_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 

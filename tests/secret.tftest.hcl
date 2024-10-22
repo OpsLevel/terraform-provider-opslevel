@@ -127,12 +127,11 @@ run "resource_secret_replaced_by_alias_update" {
 run "delete_secret_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_secret_replaced_by_alias_update.this.id
-    resource_type = "secret"
+    command = "delete secret ${run.resource_secret_replaced_by_alias_update.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 
 }
