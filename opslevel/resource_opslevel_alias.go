@@ -123,8 +123,8 @@ func (r *AliasResource) deleteAlias(d *diag.Diagnostics, alias string, aliasable
 		OwnerType: aliasable.AliasableType(),
 	}
 	if err := r.client.DeleteAlias(input); err != nil {
-		// This allows locked slugs to be added to the plan and not cause a failure upon delete
-		if strings.Contains(err.Error(), "slug is locked") {
+		// This allows locked slugs to be added and not cause a failure upon delete
+		if strings.Contains(err.Error(), "slug is locked, it cannot be deleted") {
 			return
 		}
 		d.AddError(
