@@ -238,12 +238,11 @@ run "resource_check_has_recent_deploy_unset_optional_fields" {
 run "delete_check_has_recent_deploy_outside_of_terraform" {
 
   variables {
-    resource_id   = run.resource_check_has_recent_deploy_create_with_all_fields.this.id
-    resource_type = "check"
+    command = "delete check ${run.resource_check_has_recent_deploy_create_with_all_fields.this.id}"
   }
 
   module {
-    source = "./provisioner"
+    source = "./cli"
   }
 }
 
