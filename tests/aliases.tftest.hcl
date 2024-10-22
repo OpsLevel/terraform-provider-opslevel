@@ -8,10 +8,7 @@ run "from_data_module" {
   command = plan
   plan_options {
     target = [
-      data.opslevel_domains.all,
-      data.opslevel_services.all,
-      data.opslevel_systems.all,
-      data.opslevel_teams.all
+      data.opslevel_domains.all
     ]
   }
 
