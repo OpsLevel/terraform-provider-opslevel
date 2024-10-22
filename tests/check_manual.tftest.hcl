@@ -1,5 +1,5 @@
 variables {
-  check_manual = "opslevel_check_manual"
+  resource_name = "opslevel_check_manual"
 
   # -- check_manual fields --
   # required fields
@@ -71,7 +71,7 @@ run "resource_check_manual_create_with_all_fields" {
       can(opslevel_check_manual.this.update_frequency),
       can(opslevel_check_manual.this.update_requires_comment),
     ])
-    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_manual)
+    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
   }
 
   assert {
@@ -103,7 +103,7 @@ run "resource_check_manual_create_with_all_fields" {
 
   assert {
     condition     = startswith(opslevel_check_manual.this.id, var.id_prefix)
-    error_message = replace(var.error_wrong_id, "TYPE", var.check_manual)
+    error_message = replace(var.error_wrong_id, "TYPE", var.resource_name)
   }
 
   assert {
@@ -171,7 +171,7 @@ run "resource_check_manual_create_with_all_fields" {
 
 }
 
-run "resource_check_manual_update_unset_optional_fields" {
+run "resource_check_manual_unset_optional_fields" {
 
   variables {
     # other fields from file scoped variables block
@@ -205,7 +205,7 @@ run "resource_check_manual_update_unset_optional_fields" {
 
   assert {
     condition     = opslevel_check_manual.this.enabled == false
-    error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
+    error_message = "expected 'false' default for 'enabled' in opslevel_check_manual resource"
   }
 
   assert {
@@ -311,7 +311,7 @@ run "resource_check_manual_create_with_required_fields" {
 
   assert {
     condition     = opslevel_check_manual.this.enabled == false
-    error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
+    error_message = "expected 'false' default for 'enabled' in opslevel_check_manual resource"
   }
 
   assert {
@@ -406,7 +406,7 @@ run "resource_check_manual_set_all_fields" {
 
   assert {
     condition     = startswith(opslevel_check_manual.this.id, var.id_prefix)
-    error_message = replace(var.error_wrong_id, "TYPE", var.check_manual)
+    error_message = replace(var.error_wrong_id, "TYPE", var.resource_name)
   }
 
   assert {
