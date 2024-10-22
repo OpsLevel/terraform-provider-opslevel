@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
