@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.12.0
-	github.com/hashicorp/terraform-plugin-framework-validators v0.13.0
+	github.com/hashicorp/terraform-plugin-framework-validators v0.14.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/opslevel/opslevel-go/v2024 v2024.10.15
 	github.com/relvacode/iso8601 v1.4.0
