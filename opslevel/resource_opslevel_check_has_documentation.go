@@ -31,16 +31,7 @@ type CheckHasDocumentationResource struct {
 }
 
 type CheckHasDocumentationResourceModel struct {
-	Category    types.String `tfsdk:"category"`
-	Description types.String `tfsdk:"description"`
-	Enabled     types.Bool   `tfsdk:"enabled"`
-	EnableOn    types.String `tfsdk:"enable_on"`
-	Filter      types.String `tfsdk:"filter"`
-	Id          types.String `tfsdk:"id"`
-	Level       types.String `tfsdk:"level"`
-	Name        types.String `tfsdk:"name"`
-	Notes       types.String `tfsdk:"notes"`
-	Owner       types.String `tfsdk:"owner"`
+	CheckCodeBaseResourceModel
 
 	DocumentType    types.String `tfsdk:"document_type"`
 	DocumentSubtype types.String `tfsdk:"document_subtype"`
