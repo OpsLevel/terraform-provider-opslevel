@@ -68,14 +68,6 @@ func (i *IntegrationDataSourcesAll) Schema(ctx context.Context, req datasource.S
 }
 
 func (i *IntegrationDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel integrationDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	integrations, err := i.client.ListIntegrations(nil)
 	if err != nil || integrations == nil || integrations.Nodes == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list integrations, got error: %s", err))
@@ -83,7 +75,7 @@ func (i *IntegrationDataSourcesAll) Read(ctx context.Context, req datasource.Rea
 	}
 
 	foundIntegrations := *integrations
-	stateModel = NewIntegrationDataSourcesAllModel(foundIntegrations.Nodes)
+	stateModel := NewIntegrationDataSourcesAllModel(foundIntegrations.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all integrations data sources")

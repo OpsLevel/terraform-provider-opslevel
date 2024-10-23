@@ -159,10 +159,7 @@ func (d *WebhookActionDataSource) Schema(ctx context.Context, req datasource.Sch
 }
 
 func (d *WebhookActionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data webhookActionWithIdentifierDataSourceModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	data := read[webhookActionWithIdentifierDataSourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

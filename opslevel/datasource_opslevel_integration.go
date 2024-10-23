@@ -67,10 +67,7 @@ func (i *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 }
 
 func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel integrationDataSourceWithFilterModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[integrationDataSourceWithFilterModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -87,7 +84,7 @@ func (i *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	stateModel = NewIntegrationDataSourceModel(ctx, *integration, planModel.Filter)
+	stateModel := NewIntegrationDataSourceModel(ctx, *integration, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Integration data source")

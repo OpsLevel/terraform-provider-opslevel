@@ -55,14 +55,6 @@ func (d *SystemDataSourcesAll) Schema(ctx context.Context, req datasource.Schema
 }
 
 func (d *SystemDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel SystemDataSourcesAllModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	systems, err := d.client.ListSystems(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read system, got error: %s", err))

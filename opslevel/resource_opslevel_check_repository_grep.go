@@ -175,8 +175,7 @@ func (r *CheckRepositoryGrepResource) UpgradeState(ctx context.Context) map[int6
 }
 
 func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckRepositoryGrepResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	configModel := read[CheckRepositoryGrepResourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -193,11 +192,7 @@ func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req re
 }
 
 func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckRepositoryGrepResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryGrepResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -239,16 +234,12 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 }
 
 func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckRepositoryGrepResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryGrepResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -257,18 +248,14 @@ func (r *CheckRepositoryGrepResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository grep, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckRepositoryGrepResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckRepositoryGrepResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryGrepResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -311,16 +298,12 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 }
 
 func (r *CheckRepositoryGrepResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckRepositoryGrepResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryGrepResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository grep, got error: %s", err))
 		return

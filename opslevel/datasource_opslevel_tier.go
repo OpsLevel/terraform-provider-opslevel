@@ -94,10 +94,7 @@ func (d *TierDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 }
 
 func (d *TierDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data tierDataSourceModelWithFilter
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	data := read[tierDataSourceModelWithFilter](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -106,11 +106,7 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 }
 
 func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel WebhookActionResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -141,11 +137,7 @@ func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateR
 }
 
 func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel WebhookActionResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	stateModel := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -159,18 +151,15 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read webhookAction, got error: %s", err))
 		return
 	}
-	readWebhookActionResourceModel := NewWebhookActionResourceModel(*webhookAction, stateModel)
+	verifiedStateModel := NewWebhookActionResourceModel(*webhookAction, stateModel)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a webhook action resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &readWebhookActionResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel WebhookActionResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -203,10 +192,7 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *WebhookActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data WebhookActionResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

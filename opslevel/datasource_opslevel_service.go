@@ -224,12 +224,10 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var diags diag.Diagnostics
-	var planModel, stateModel ServiceDataSourceModel
 	var service opslevel.Service
 	var err error
 
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[ServiceDataSourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -247,7 +245,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	stateModel = NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
+	stateModel := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 
 	// NOTE: service's hydrate does not populate properties
 	properties, err := service.GetProperties(d.client, nil)

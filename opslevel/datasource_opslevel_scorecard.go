@@ -138,10 +138,7 @@ func (d *ScorecardDataSource) Schema(ctx context.Context, req datasource.SchemaR
 }
 
 func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel scorecardDataSourceWithIdentifierModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[scorecardDataSourceWithIdentifierModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -156,7 +153,7 @@ func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if diags.HasError() {
 		return
 	}
-	stateModel = NewScorecardDataSourceWithIdentifierModel(*scorecard, planModel.Identifier.ValueString(), categoriesModel)
+	stateModel := NewScorecardDataSourceWithIdentifierModel(*scorecard, planModel.Identifier.ValueString(), categoriesModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state

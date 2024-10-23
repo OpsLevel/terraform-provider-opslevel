@@ -253,10 +253,9 @@ func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.Valida
 }
 
 func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel FilterResourceModel
 	var predicateModels []FilterPredicateModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[FilterResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -291,10 +290,7 @@ func (r *FilterResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel FilterResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	stateModel := read[FilterResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -319,14 +315,12 @@ func (r *FilterResource) Read(ctx context.Context, req resource.ReadRequest, res
 }
 
 func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel FilterResourceModel
-	var predicateModels []FilterPredicateModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[FilterResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	var predicateModels []FilterPredicateModel
 	resp.Diagnostics.Append(planModel.Predicate.ElementsAs(ctx, &predicateModels, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -364,10 +358,7 @@ func (r *FilterResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *FilterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel FilterResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	planModel := read[FilterResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -80,11 +80,7 @@ func (r *CheckRepositoryIntegratedResource) Schema(ctx context.Context, req reso
 }
 
 func (r *CheckRepositoryIntegratedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckRepositoryIntegratedResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryIntegratedResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -119,16 +115,12 @@ func (r *CheckRepositoryIntegratedResource) Create(ctx context.Context, req reso
 }
 
 func (r *CheckRepositoryIntegratedResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckRepositoryIntegratedResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryIntegratedResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -137,18 +129,14 @@ func (r *CheckRepositoryIntegratedResource) Read(ctx context.Context, req resour
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository integrated, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckRepositoryIntegratedResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckRepositoryIntegratedResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckRepositoryIntegratedResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckRepositoryIntegratedResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryIntegratedResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -184,16 +172,12 @@ func (r *CheckRepositoryIntegratedResource) Update(ctx context.Context, req reso
 }
 
 func (r *CheckRepositoryIntegratedResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckRepositoryIntegratedResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryIntegratedResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository integrated, got error: %s", err))
 		return

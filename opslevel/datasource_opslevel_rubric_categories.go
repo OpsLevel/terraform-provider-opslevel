@@ -67,20 +67,12 @@ func (d *CategoryDataSourcesAll) Schema(ctx context.Context, req datasource.Sche
 }
 
 func (d *CategoryDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel CategoryDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	categories, err := d.client.ListCategories(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list rubric_categories datasource, got error: %s", err))
 		return
 	}
-	stateModel = NewCategoryDataSourcesAllModel(categories.Nodes)
+	stateModel := NewCategoryDataSourcesAllModel(categories.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all rubric_categories data sources")

@@ -222,8 +222,7 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 }
 
 func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel ServiceResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -331,11 +330,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel ServiceResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -357,14 +352,8 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel, stateModel ServiceResourceModel
-	var ownerFromState, parentFromState types.String
-
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("owner"), &ownerFromState)...)
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("parent"), &parentFromState)...)
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	planModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -381,14 +370,14 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	if planModel.Owner.ValueString() != "" {
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
-	} else if !ownerFromState.IsNull() && planModel.Owner.ValueString() == "" {
+	} else if !stateModel.Owner.IsNull() && planModel.Owner.ValueString() == "" {
 		// unset owner field only if it's set in state and owner field in plan is not set
 		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier()
 	}
 
 	if planModel.Parent.ValueString() != "" {
 		serviceUpdateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
-	} else if !parentFromState.IsNull() && planModel.Parent.ValueString() == "" {
+	} else if !stateModel.Parent.IsNull() && planModel.Parent.ValueString() == "" {
 		// unset parent field only if it's set in state and parent field in plan is not set
 		serviceUpdateInput.Parent = opslevel.NewIdentifier()
 	}
@@ -494,10 +483,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var stateModel ServiceResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

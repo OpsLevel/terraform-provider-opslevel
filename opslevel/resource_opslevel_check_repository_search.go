@@ -193,11 +193,7 @@ func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req 
 }
 
 func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckRepositorySearchResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositorySearchResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -240,16 +236,12 @@ func (r *CheckRepositorySearchResource) Create(ctx context.Context, req resource
 }
 
 func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var currentStateModel, verifiedStateModel CheckRepositorySearchResourceModel
-
-	// Read Terraform prior state data into the currentStateModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
-
+	stateModel := read[CheckRepositorySearchResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(currentStateModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -258,7 +250,7 @@ func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.R
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository search, got error: %s", err))
 		return
 	}
-	verifiedStateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, currentStateModel)
+	verifiedStateModel, diags := NewCheckRepositorySearchResourceModel(ctx, *data, stateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
@@ -266,11 +258,7 @@ func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.R
 }
 
 func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckRepositorySearchResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositorySearchResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -315,16 +303,12 @@ func (r *CheckRepositorySearchResource) Update(ctx context.Context, req resource
 }
 
 func (r *CheckRepositorySearchResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckRepositorySearchResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositorySearchResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository search, got error: %s", err))
 		return
