@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -121,6 +122,7 @@ func (r *CheckCodeIssueResource) Schema(ctx context.Context, req resource.Schema
 			"max_allowed": schema.Int64Attribute{
 				Description: "The threshold count of code issues beyond which the check starts failing.",
 				Optional:    true,
+				Validators:  []validator.Int64{int64validator.AtLeast(0)},
 			},
 			"resolution_time": schema.SingleNestedAttribute{
 				Description: "Defines the minimum frequency of the updates.",
@@ -145,9 +147,6 @@ func (r *CheckCodeIssueResource) Schema(ctx context.Context, req resource.Schema
 		}),
 	}
 }
-
-// func (r *CheckCodeIssueResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-// }
 
 func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var planModel CheckCodeIssueResourceModel
@@ -249,6 +248,7 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		Enabled:    planModel.Enabled.ValueBoolPointer(),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		Id:         asID(planModel.Id),
+		IssueName:  planModel.IssueName.ValueStringPointer(),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
@@ -261,23 +261,31 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		}
 		input.EnableOn = &iso8601.Time{Time: enabledOn}
 	}
-	if !planModel.IssueType.IsNull() {
+	if planModel.IssueType.IsNull() {
+		input.IssueType = opslevel.NewNullOf[[]string]()
+	} else {
 		issueType, _ := ListValueToStringSlice(ctx, planModel.IssueType)
-		input.IssueType = opslevel.RefOf(issueType)
+		input.IssueType = opslevel.NewNullableFrom(issueType)
 	}
-	if !planModel.MaxAllowed.IsNull() {
-		input.MaxAllowed = opslevel.RefOf(int(planModel.MaxAllowed.ValueInt64()))
+	if planModel.MaxAllowed.IsNull() {
+		input.MaxAllowed = opslevel.NewNullOf[int]()
+	} else {
+		input.MaxAllowed = opslevel.NewNullableFrom(int(planModel.MaxAllowed.ValueInt64()))
 	}
-	if !planModel.ResolutionTime.IsNull() {
+	if planModel.ResolutionTime.IsNull() {
+		input.ResolutionTime = opslevel.NewNullOf[opslevel.CodeIssueResolutionTimeInput]()
+	} else {
 		attrs := planModel.ResolutionTime.Attributes()
-		input.ResolutionTime = opslevel.RefOf(opslevel.CodeIssueResolutionTimeInput{
+		input.ResolutionTime = opslevel.NewNullableFrom(opslevel.CodeIssueResolutionTimeInput{
 			Unit:  opslevel.CodeIssueResolutionTimeUnitEnum(attrs["unit"].(basetypes.StringValue).ValueString()),
 			Value: int(attrs["value"].(basetypes.Int64Value).ValueInt64()),
 		})
 	}
-	if !planModel.Severity.IsNull() {
+	if planModel.Severity.IsNull() {
+		input.Severity = opslevel.NewNullOf[[]string]()
+	} else {
 		severity, _ := ListValueToStringSlice(ctx, planModel.Severity)
-		input.Severity = opslevel.RefOf(severity)
+		input.Severity = opslevel.NewNullableFrom(severity)
 	}
 
 	data, err := r.client.UpdateCheckCodeIssue(input)
