@@ -196,7 +196,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewInfrastructureResource,
 		NewIntegrationAwsResource,
 		NewIntegrationAzureResourcesResource,
-		NewIntegrationCustomEventCheckResource,
+		NewIntegrationEndpointResource,
 		NewIntegrationGoogleCloudResource,
 		NewPropertyAssignmentResource,
 		NewPropertyDefinitionResource,
