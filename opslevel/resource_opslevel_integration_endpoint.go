@@ -84,10 +84,7 @@ func (r *IntegrationEndpointResource) Schema(ctx context.Context, req resource.S
 }
 
 func (r *IntegrationEndpointResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel IntegrationEndpointResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[IntegrationEndpointResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -110,10 +107,7 @@ func (r *IntegrationEndpointResource) Create(ctx context.Context, req resource.C
 }
 
 func (r *IntegrationEndpointResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel IntegrationEndpointResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[IntegrationEndpointResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -132,10 +126,7 @@ func (r *IntegrationEndpointResource) Read(ctx context.Context, req resource.Rea
 }
 
 func (r *IntegrationEndpointResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel IntegrationEndpointResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[IntegrationEndpointResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -158,19 +149,16 @@ func (r *IntegrationEndpointResource) Update(ctx context.Context, req resource.U
 }
 
 func (r *IntegrationEndpointResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data IntegrationEndpointResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	stateModel := read[IntegrationEndpointResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := r.client.DeleteIntegration(data.Id.ValueString()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete Custom Event  integration, got error: %s", err))
+	if err := r.client.DeleteIntegration(stateModel.Id.ValueString()); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete Integration Endpoint, got error: %s", err))
 		return
 	}
-	tflog.Trace(ctx, "deleted a Custom Event  integration resource")
+	tflog.Trace(ctx, "deleted an Integration Endpoint resource")
 }
 
 func (r *IntegrationEndpointResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
