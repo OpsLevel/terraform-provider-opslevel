@@ -69,26 +69,25 @@ run "resource_integration_custom_event_check_create_aqua_security_type" {
   }
 }
 
-# run "resource_integration_custom_event_check_create_argocd_type" {
+run "resource_integration_custom_event_check_create_argocd_type" {
 
-#   variables {
-# NOTE: returns "argocdDeploy"
-#     type = "argocd"
-#   }
+  variables {
+    type = "argocd"
+  }
 
-#   module {
-#     source = "./opslevel_modules/modules/integration/custom_event_check"
-#   }
+  module {
+    source = "./opslevel_modules/modules/integration/custom_event_check"
+  }
 
-#   assert {
-#     condition = opslevel_integration_custom_event_check.this.type == var.type
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.type,
-#       opslevel_integration_custom_event_check.this.type,
-#     )
-#   }
-# }
+  assert {
+    condition = opslevel_integration_custom_event_check.this.type == var.type
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.type,
+      opslevel_integration_custom_event_check.this.type,
+    )
+  }
+}
 
 run "resource_integration_custom_event_check_create_aws_ecr_type" {
 
@@ -130,26 +129,25 @@ run "resource_integration_custom_event_check_create_bugsnag_type" {
   }
 }
 
-# run "resource_integration_custom_event_check_create_circleci_type" {
+run "resource_integration_custom_event_check_create_circleci_type" {
 
-#   variables {
-# NOTE: returns "circleciDeploy"
-#     type = "circleci"
-#   }
+  variables {
+    type = "circleci"
+  }
 
-#   module {
-#     source = "./opslevel_modules/modules/integration/custom_event_check"
-#   }
+  module {
+    source = "./opslevel_modules/modules/integration/custom_event_check"
+  }
 
-#   assert {
-#     condition = opslevel_integration_custom_event_check.this.type == var.type
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.type,
-#       opslevel_integration_custom_event_check.this.type,
-#     )
-#   }
-# }
+  assert {
+    condition = opslevel_integration_custom_event_check.this.type == var.type
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.type,
+      opslevel_integration_custom_event_check.this.type,
+    )
+  }
+}
 
 run "resource_integration_custom_event_check_create_codacy_type" {
 
@@ -191,26 +189,25 @@ run "resource_integration_custom_event_check_create_coveralls_type" {
   }
 }
 
-# run "resource_integration_custom_event_check_create_custom_event_type" {
+run "resource_integration_custom_event_check_create_custom_event_type" {
 
-#   variables {
-#     # NOTE: returns "generic"
-#     type = "customEvent"
-#   }
+  variables {
+    type = "customEvent"
+  }
 
-#   module {
-#     source = "./opslevel_modules/modules/integration/custom_event_check"
-#   }
+  module {
+    source = "./opslevel_modules/modules/integration/custom_event_check"
+  }
 
-#   assert {
-#     condition = opslevel_integration_custom_event_check.this.type == var.type
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.type,
-#       opslevel_integration_custom_event_check.this.type,
-#     )
-#   }
-# }
+  assert {
+    condition = opslevel_integration_custom_event_check.this.type == var.type
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.type,
+      opslevel_integration_custom_event_check.this.type,
+    )
+  }
+}
 
 run "resource_integration_custom_event_check_create_datadog_check_type" {
 
@@ -331,26 +328,25 @@ run "resource_integration_custom_event_check_create_github_actions_type" {
   }
 }
 
-# run "resource_integration_custom_event_check_create_gitlab_ci_type" {
+run "resource_integration_custom_event_check_create_gitlab_ci_type" {
 
-#   variables {
-# NOTE: returns "gitLabCI"
-#     type = "gitlabCi"
-#   }
+  variables {
+    type = "gitlabCi"
+  }
 
-#   module {
-#     source = "./opslevel_modules/modules/integration/custom_event_check"
-#   }
+  module {
+    source = "./opslevel_modules/modules/integration/custom_event_check"
+  }
 
-#   assert {
-#     condition = opslevel_integration_custom_event_check.this.type == var.type
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.type,
-#       opslevel_integration_custom_event_check.this.type,
-#     )
-#   }
-# }
+  assert {
+    condition = opslevel_integration_custom_event_check.this.type == var.type
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.type,
+      opslevel_integration_custom_event_check.this.type,
+    )
+  }
+}
 
 run "resource_integration_custom_event_check_create_grafana_type" {
 
@@ -472,26 +468,25 @@ run "resource_integration_custom_event_check_create_new_relic_check_type" {
   }
 }
 
-# run "resource_integration_custom_event_check_create_octopus_type" {
+run "resource_integration_custom_event_check_create_octopus_type" {
 
-#   variables {
-# NOTE: returns "octopusDeploy"
-#     type = "octopus"
-#   }
+  variables {
+    type = "octopus"
+  }
 
-#   module {
-#     source = "./opslevel_modules/modules/integration/custom_event_check"
-#   }
+  module {
+    source = "./opslevel_modules/modules/integration/custom_event_check"
+  }
 
-#   assert {
-#     condition = opslevel_integration_custom_event_check.this.type == var.type
-#     error_message = format(
-#       "expected '%v' but got '%v'",
-#       var.type,
-#       opslevel_integration_custom_event_check.this.type,
-#     )
-#   }
-# }
+  assert {
+    condition = opslevel_integration_custom_event_check.this.type == var.type
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.type,
+      opslevel_integration_custom_event_check.this.type,
+    )
+  }
+}
 
 run "resource_integration_custom_event_check_create_prisma_cloud_type" {
 

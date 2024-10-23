@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -35,11 +37,11 @@ type IntegrationCustomEventCheckResourceModel struct {
 	Type types.String `tfsdk:"type"`
 }
 
-func NewIntegrationCustomEventCheckResourceModel(cecIntegration opslevel.Integration) IntegrationCustomEventCheckResourceModel {
+func NewIntegrationCustomEventCheckResourceModel(cecIntegration opslevel.Integration, givenModel IntegrationCustomEventCheckResourceModel) IntegrationCustomEventCheckResourceModel {
 	return IntegrationCustomEventCheckResourceModel{
 		Id:   ComputedStringValue(string(cecIntegration.Id)),
 		Name: RequiredStringValue(cecIntegration.Name),
-		Type: RequiredStringValue(cecIntegration.Type),
+		Type: RequiredStringValue(givenModel.Type.ValueString()),
 	}
 }
 
@@ -48,6 +50,8 @@ func (r *IntegrationCustomEventCheckResource) Metadata(ctx context.Context, req 
 }
 
 func (r *IntegrationCustomEventCheckResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	// validTypes := slices.Concat(opslevel.AllEventIntegrationEnum, []string{"filter", "framework", "language", "lifecycle", "owner", "product", "tag", "tier"})
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Custom Event Check Integration resource",
@@ -70,6 +74,9 @@ func (r *IntegrationCustomEventCheckResource) Schema(ctx context.Context, req re
 					strings.Join(opslevel.AllEventIntegrationEnum, "`, `"),
 				),
 				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllEventIntegrationEnum...),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -98,7 +105,7 @@ func (r *IntegrationCustomEventCheckResource) Create(ctx context.Context, req re
 		return
 	}
 
-	stateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration)
+	stateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration, planModel)
 
 	tflog.Trace(ctx, "created a Custom Event Check integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -119,7 +126,7 @@ func (r *IntegrationCustomEventCheckResource) Read(ctx context.Context, req reso
 		return
 	}
 
-	verifiedStateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration)
+	verifiedStateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration, stateModel)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a Custom Event Check integration resource")
@@ -146,7 +153,7 @@ func (r *IntegrationCustomEventCheckResource) Update(ctx context.Context, req re
 		return
 	}
 
-	stateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration)
+	stateModel := NewIntegrationCustomEventCheckResourceModel(*cecIntegration, planModel)
 
 	tflog.Trace(ctx, "updated a Custom Event Check integration resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
