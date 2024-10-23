@@ -30,17 +30,17 @@ type IntegrationEndpointResource struct {
 	CommonResourceClient
 }
 
-// IntegrationEndpointResourceModel describes the CEC Integration managed resource.
+// IntegrationEndpointResourceModel describes the Integration Endpoint managed resource.
 type IntegrationEndpointResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	Type types.String `tfsdk:"type"`
 }
 
-func NewIntegrationEndpointResourceModel(cecIntegration opslevel.Integration, givenModel IntegrationEndpointResourceModel) IntegrationEndpointResourceModel {
+func NewIntegrationEndpointResourceModel(integrationEndpoint opslevel.Integration, givenModel IntegrationEndpointResourceModel) IntegrationEndpointResourceModel {
 	return IntegrationEndpointResourceModel{
-		Id:   ComputedStringValue(string(cecIntegration.Id)),
-		Name: RequiredStringValue(cecIntegration.Name),
+		Id:   ComputedStringValue(string(integrationEndpoint.Id)),
+		Name: RequiredStringValue(integrationEndpoint.Name),
 		Type: RequiredStringValue(givenModel.Type.ValueString()),
 	}
 }
@@ -94,13 +94,13 @@ func (r *IntegrationEndpointResource) Create(ctx context.Context, req resource.C
 		Type: opslevel.EventIntegrationEnum(planModel.Type.ValueString()),
 	}
 
-	cecIntegration, err := r.client.CreateEventIntegration(input)
+	integrationEndpoint, err := r.client.CreateEventIntegration(input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create Integration Endpoint, got error: %s", err))
 		return
 	}
 
-	stateModel := NewIntegrationEndpointResourceModel(*cecIntegration, planModel)
+	stateModel := NewIntegrationEndpointResourceModel(*integrationEndpoint, planModel)
 
 	tflog.Trace(ctx, "created a Integration Endpoint resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -112,13 +112,17 @@ func (r *IntegrationEndpointResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	cecIntegration, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
+	integrationEndpoint, err := r.client.GetIntegration(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil {
+		if (integrationEndpoint == nil || integrationEndpoint.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Integration Endpoint, got error: %s", err))
 		return
 	}
 
-	verifiedStateModel := NewIntegrationEndpointResourceModel(*cecIntegration, stateModel)
+	verifiedStateModel := NewIntegrationEndpointResourceModel(*integrationEndpoint, stateModel)
 
 	// Save updated data into Terraform state
 	tflog.Trace(ctx, "read a Integration Endpoint resource")
@@ -136,13 +140,13 @@ func (r *IntegrationEndpointResource) Update(ctx context.Context, req resource.U
 		Name: planModel.Name.ValueString(),
 	}
 
-	cecIntegration, err := r.client.UpdateEventIntegration(input)
+	integrationEndpoint, err := r.client.UpdateEventIntegration(input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update Integration Endpoint, got error: %s", err))
 		return
 	}
 
-	stateModel := NewIntegrationEndpointResourceModel(*cecIntegration, planModel)
+	stateModel := NewIntegrationEndpointResourceModel(*integrationEndpoint, planModel)
 
 	tflog.Trace(ctx, "updated a Integration Endpoint resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
