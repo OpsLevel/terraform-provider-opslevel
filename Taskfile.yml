@@ -2,6 +2,8 @@
 
 version: '3'
 
+env:
+  TF_CLI_ARGS_test: -compact-warnings
 vars:
   TEST_DIR: "tests"
   WORKSPACE_DIR: "workspace"
@@ -38,6 +40,7 @@ tasks:
       - go get github.com/hashicorp/terraform-plugin-docs@v0.13.0
       - go get github.com/hashicorp/terraform-plugin-docs/internal/provider@v0.13.0
       - go generate
+      - go mod tidy
 
   fix:
     desc: Fix formatting, linting, go.mod, and update submodule
@@ -110,6 +113,12 @@ tasks:
     aliases: ["dbg-plan"]
     cmds:
       - task: debug:do-debug-plan
+
+  debug-test:
+    desc: After debug-start and debug-attach, run "terraform test" with 'TF_REATTACH_PROVIDERS'
+    aliases: ["dbg-test"]
+    cmds:
+      - task: debug:do-debug-test
 
   terraform-clean:
     desc: Completely wipe terraform state, terraform generated files, and local OpsLevel provider binaries

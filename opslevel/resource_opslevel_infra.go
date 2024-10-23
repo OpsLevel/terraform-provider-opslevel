@@ -299,6 +299,10 @@ func (r *InfrastructureResource) Read(ctx context.Context, req resource.ReadRequ
 
 	infrastructure, err := r.client.GetInfrastructure(stateModel.Id.ValueString())
 	if err != nil {
+		if (infrastructure == nil || infrastructure.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read infrastructure, got error: %s", err))
 		return
 	}

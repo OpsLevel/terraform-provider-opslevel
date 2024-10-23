@@ -34,16 +34,7 @@ type CheckAlertSourceUsageResource struct {
 }
 
 type CheckAlertSourceUsageResourceModel struct {
-	Category    types.String `tfsdk:"category"`
-	Description types.String `tfsdk:"description"`
-	Enabled     types.Bool   `tfsdk:"enabled"`
-	EnableOn    types.String `tfsdk:"enable_on"`
-	Filter      types.String `tfsdk:"filter"`
-	Id          types.String `tfsdk:"id"`
-	Level       types.String `tfsdk:"level"`
-	Name        types.String `tfsdk:"name"`
-	Notes       types.String `tfsdk:"notes"`
-	Owner       types.String `tfsdk:"owner"`
+	CheckCodeBaseResourceModel
 
 	AlertType          types.String `tfsdk:"alert_type"`
 	AlertNamePredicate types.Object `tfsdk:"alert_name_predicate"`
@@ -245,6 +236,10 @@ func (r *CheckAlertSourceUsageResource) Read(ctx context.Context, req resource.R
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check alert source usage, got error: %s", err))
 		return
 	}

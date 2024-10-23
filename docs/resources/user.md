@@ -17,6 +17,7 @@ resource "opslevel_user" "john" {
   name               = "John Doe"
   email              = "john.doe@example.com"
   role               = "user" # or "admin"
+  send_invite        = true
   skip_welcome_email = true
 }
 ```
@@ -32,7 +33,8 @@ resource "opslevel_user" "john" {
 ### Optional
 
 - `role` (String) The access role of the user. One of `user`, `admin`, `team_member`, `standards_admin`
-- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. (default: true)
+- `send_invite` (Boolean) Send an invite email even if notifications are disabled for the account. **(default: false)**
+- `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. **(default: true)**
 
 ### Read-Only
 

@@ -29,21 +29,8 @@ type CheckGitBranchProtectionResource struct {
 	CommonResourceClient
 }
 
-type CheckGitBranchProtectionResourceModel struct {
-	Category    types.String `tfsdk:"category"`
-	Description types.String `tfsdk:"description"`
-	Enabled     types.Bool   `tfsdk:"enabled"`
-	EnableOn    types.String `tfsdk:"enable_on"`
-	Filter      types.String `tfsdk:"filter"`
-	Id          types.String `tfsdk:"id"`
-	Level       types.String `tfsdk:"level"`
-	Name        types.String `tfsdk:"name"`
-	Notes       types.String `tfsdk:"notes"`
-	Owner       types.String `tfsdk:"owner"`
-}
-
-func NewCheckGitBranchProtectionResourceModel(ctx context.Context, check opslevel.Check, planModel CheckGitBranchProtectionResourceModel) CheckGitBranchProtectionResourceModel {
-	var stateModel CheckGitBranchProtectionResourceModel
+func NewCheckGitBranchProtectionResourceModel(ctx context.Context, check opslevel.Check, planModel CheckCodeBaseResourceModel) CheckCodeBaseResourceModel {
+	var stateModel CheckCodeBaseResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
 	stateModel.Description = ComputedStringValue(check.Description)
@@ -82,7 +69,7 @@ func (r *CheckGitBranchProtectionResource) Schema(ctx context.Context, req resou
 }
 
 func (r *CheckGitBranchProtectionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckGitBranchProtectionResourceModel
+	var planModel CheckCodeBaseResourceModel
 
 	// Read Terraform plan data into the planModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
@@ -121,7 +108,7 @@ func (r *CheckGitBranchProtectionResource) Create(ctx context.Context, req resou
 }
 
 func (r *CheckGitBranchProtectionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckGitBranchProtectionResourceModel
+	var planModel CheckCodeBaseResourceModel
 
 	// Read Terraform prior state data into the planModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
@@ -132,6 +119,10 @@ func (r *CheckGitBranchProtectionResource) Read(ctx context.Context, req resourc
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check git branch protection, got error: %s", err))
 		return
 	}
@@ -142,7 +133,7 @@ func (r *CheckGitBranchProtectionResource) Read(ctx context.Context, req resourc
 }
 
 func (r *CheckGitBranchProtectionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckGitBranchProtectionResourceModel
+	var planModel CheckCodeBaseResourceModel
 
 	// Read Terraform plan data into the planModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
@@ -182,7 +173,7 @@ func (r *CheckGitBranchProtectionResource) Update(ctx context.Context, req resou
 }
 
 func (r *CheckGitBranchProtectionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckGitBranchProtectionResourceModel
+	var planModel CheckCodeBaseResourceModel
 
 	// Read Terraform prior state data into the planModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)

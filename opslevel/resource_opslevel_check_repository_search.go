@@ -251,6 +251,10 @@ func (r *CheckRepositorySearchResource) Read(ctx context.Context, req resource.R
 
 	data, err := r.client.GetCheck(asID(currentStateModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository search, got error: %s", err))
 		return
 	}

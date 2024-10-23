@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix predicate validation to accept interpolated values on value field
-time: 2024-10-02T09:00:48.502724-05:00

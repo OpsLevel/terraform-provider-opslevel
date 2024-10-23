@@ -130,6 +130,10 @@ func (r *CheckServiceDependencyResource) Read(ctx context.Context, req resource.
 
 	data, err := r.client.GetCheck(asID(planModel.Id))
 	if err != nil {
+		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check service dependency, got error: %s", err))
 		return
 	}

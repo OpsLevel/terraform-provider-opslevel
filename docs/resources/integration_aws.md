@@ -112,6 +112,7 @@ resource "opslevel_integration_aws" "dev" {
   external_id             = random_string.external_id.result
   ownership_tag_overrides = true
   ownership_tag_keys      = ["owner", "team", "group"]
+  region_override         = ["eu-west-1", "us-east-1"]
 }
 ```
 
@@ -128,6 +129,7 @@ resource "opslevel_integration_aws" "dev" {
 
 - `ownership_tag_keys` (List of String) Allow tags imported from AWS to override ownership set in OpsLevel directly. Max 5 (default = ["owner"])
 - `ownership_tag_overrides` (Boolean) Allow tags imported from AWS to override ownership set in OpsLevel directly.
+- `region_override` (List of String) Overrides the AWS region(s) that will be synchronized by this integration.
 
 ### Read-Only
 

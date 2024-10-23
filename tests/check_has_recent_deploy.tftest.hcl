@@ -1,5 +1,5 @@
 variables {
-  check_has_recent_deploy = "opslevel_check_has_recent_deploy"
+  resource_name = "opslevel_check_has_recent_deploy"
 
   # -- check_has_recent_deploy fields --
   # required fields
@@ -7,64 +7,42 @@ variables {
 
   # -- check base fields --
   # required fields
-  category = null
-  level    = null
+  category = null # sourced from module
+  level    = null # sourced from module
   name     = "TF Test Check Has Recent Deploy"
 
   # optional fields
   enable_on = null
   enabled   = true
-  filter    = null
+  filter    = null # sourced from module
   notes     = "Notes on Has Recent Deploy Check"
-  owner     = null
+  owner     = null # sourced from module
 }
 
-run "from_filter_module" {
+run "from_data_module" {
   command = plan
-
-  module {
-    source = "./data/filter"
+  plan_options {
+    target = [
+      data.opslevel_filters.all,
+      data.opslevel_rubric_categories.all,
+      data.opslevel_rubric_levels.all,
+      data.opslevel_teams.all
+    ]
   }
-}
-
-run "from_rubric_category_module" {
-  command = plan
 
   module {
-    source = "./opslevel_modules/modules/rubric_category"
-  }
-}
-
-run "from_rubric_level_module" {
-  command = plan
-
-  module {
-    source = "./opslevel_modules/modules/rubric_level"
-  }
-}
-
-run "from_team_module" {
-  command = plan
-
-  module {
-    source = "./data/team"
+    source = "./data"
   }
 }
 
 run "resource_check_has_recent_deploy_create_with_all_fields" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_module.first.id
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
-    name  = var.name
-    notes = var.notes
-    owner = run.from_team_module.first.id
+    # other fields from file scoped variables block
+    category = run.from_data_module.first_rubric_category.id
+    filter   = run.from_data_module.first_filter.id
+    level    = run.from_data_module.max_index_rubric_level.id
+    owner    = run.from_data_module.first_team.id
   }
 
   module {
@@ -74,6 +52,7 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
   assert {
     condition = alltrue([
       can(opslevel_check_has_recent_deploy.this.category),
+      can(opslevel_check_has_recent_deploy.this.days),
       can(opslevel_check_has_recent_deploy.this.description),
       can(opslevel_check_has_recent_deploy.this.enable_on),
       can(opslevel_check_has_recent_deploy.this.enabled),
@@ -84,73 +63,130 @@ run "resource_check_has_recent_deploy_create_with_all_fields" {
       can(opslevel_check_has_recent_deploy.this.notes),
       can(opslevel_check_has_recent_deploy.this.owner),
     ])
-    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.check_has_recent_deploy)
+    error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.category == var.category
-    error_message = "wrong category of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_has_recent_deploy.this.category,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.enabled == var.enabled
-    error_message = "wrong enabled of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.days == var.days
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.days,
+      opslevel_check_has_recent_deploy.this.days,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
-    error_message = "wrong enable_on of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.enabled == var.enabled
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enabled,
+      opslevel_check_has_recent_deploy.this.enabled,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enable_on,
+      opslevel_check_has_recent_deploy.this.enable_on,
+    )
   }
 
   assert {
     condition     = startswith(opslevel_check_has_recent_deploy.this.id, var.id_prefix)
-    error_message = replace(var.error_wrong_id, "TYPE", var.check_has_recent_deploy)
+    error_message = replace(var.error_wrong_id, "TYPE", var.resource_name)
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.filter == var.filter
-    error_message = "wrong filter ID of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.filter == var.filter
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.filter,
+      opslevel_check_has_recent_deploy.this.filter,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.level == var.level
-    error_message = "wrong level ID of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_has_recent_deploy.this.level,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.name == var.name
-    error_message = replace(var.error_wrong_name, "TYPE", var.check_has_recent_deploy)
+    condition = opslevel_check_has_recent_deploy.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_has_recent_deploy.this.name,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.notes == var.notes
-    error_message = "wrong notes of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.notes == var.notes
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.notes,
+      opslevel_check_has_recent_deploy.this.notes,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.owner == var.owner
-    error_message = "wrong owner ID of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.owner == var.owner
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.owner,
+      opslevel_check_has_recent_deploy.this.owner,
+    )
   }
 
 }
 
-run "resource_check_has_recent_deploy_update_unset_optional_fields" {
+run "resource_check_has_recent_deploy_unset_optional_fields" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
+    # other fields from file scoped variables block
+    category  = run.from_data_module.first_rubric_category.id
     enable_on = null
     enabled   = null
     filter    = null
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
+    level     = run.from_data_module.max_index_rubric_level.id
     notes     = null
     owner     = null
   }
 
   module {
     source = "./opslevel_modules/modules/check/has_recent_deploy"
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_has_recent_deploy.this.category,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.days == var.days
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.days,
+      opslevel_check_has_recent_deploy.this.days,
+    )
   }
 
   assert {
@@ -169,6 +205,24 @@ run "resource_check_has_recent_deploy_update_unset_optional_fields" {
   }
 
   assert {
+    condition = opslevel_check_has_recent_deploy.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_has_recent_deploy.this.level,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_has_recent_deploy.this.name,
+    )
+  }
+
+  assert {
     condition     = opslevel_check_has_recent_deploy.this.notes == null
     error_message = var.error_expected_null_field
   }
@@ -181,20 +235,37 @@ run "resource_check_has_recent_deploy_update_unset_optional_fields" {
 
 }
 
-run "resource_check_has_recent_deploy_update_all_fields" {
+run "delete_check_has_recent_deploy_outside_of_terraform" {
 
   variables {
-    category  = run.from_rubric_category_module.all.rubric_categories[0].id
-    enable_on = var.enable_on
-    enabled   = var.enabled
-    filter    = run.from_filter_module.first.id
-    level = element([
-      for lvl in run.from_rubric_level_module.all.rubric_levels :
-      lvl.id if lvl.index == max(run.from_rubric_level_module.all.rubric_levels[*].index...)
-    ], 0)
-    name      = var.name
-    notes     = var.notes
-    owner     = run.from_team_module.first.id
+    command = "delete check ${run.resource_check_has_recent_deploy_create_with_all_fields.this.id}"
+  }
+
+  module {
+    source = "./cli"
+  }
+}
+
+run "resource_check_has_recent_deploy_create_with_required_fields" {
+
+  variables {
+    # other fields from file scoped variables block
+    category  = run.from_data_module.first_rubric_category.id
+    enable_on = null
+    enabled   = null
+    filter    = null
+    level     = run.from_data_module.max_index_rubric_level.id
+    notes     = null
+    owner     = null
+  }
+
+  assert {
+    condition = run.resource_check_has_recent_deploy_create_with_all_fields.this.id != opslevel_check_has_recent_deploy.this.id
+    error_message = format(
+      "expected old id '%v' to be different from new id '%v'",
+      run.resource_check_has_recent_deploy_create_with_all_fields.this.id,
+      opslevel_check_has_recent_deploy.this.id,
+    )
   }
 
   module {
@@ -202,43 +273,168 @@ run "resource_check_has_recent_deploy_update_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.category == var.category
-    error_message = "wrong category of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_has_recent_deploy.this.category,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
-    error_message = "wrong enable_on of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.days == var.days
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.days,
+      opslevel_check_has_recent_deploy.this.days,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.enabled == var.enabled
-    error_message = "wrong enabled of opslevel_check_has_recent_deploy resource"
+    condition     = opslevel_check_has_recent_deploy.this.enable_on == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.filter == var.filter
-    error_message = "wrong filter ID of opslevel_check_has_recent_deploy resource"
+    condition     = opslevel_check_has_recent_deploy.this.enabled == false
+    error_message = "expected 'false' default for 'enabled' in opslevel_check_has_recent_deploy resource"
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.level == var.level
-    error_message = "wrong level ID of opslevel_check_has_recent_deploy resource"
+    condition     = opslevel_check_has_recent_deploy.this.filter == null
+    error_message = var.error_expected_null_field
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.name == var.name
-    error_message = replace(var.error_wrong_name, "TYPE", var.check_has_recent_deploy)
+    condition = opslevel_check_has_recent_deploy.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_has_recent_deploy.this.level,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.notes == var.notes
-    error_message = "wrong notes of opslevel_check_has_recent_deploy resource"
+    condition = opslevel_check_has_recent_deploy.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_has_recent_deploy.this.name,
+    )
   }
 
   assert {
-    condition     = opslevel_check_has_recent_deploy.this.owner == var.owner
-    error_message = "wrong owner ID of opslevel_check_has_recent_deploy resource"
+    condition     = opslevel_check_has_recent_deploy.this.notes == null
+    error_message = var.error_expected_null_field
   }
+
+  assert {
+    condition     = opslevel_check_has_recent_deploy.this.owner == null
+    error_message = var.error_expected_null_field
+  }
+
+
+}
+
+run "resource_check_has_recent_deploy_set_all_fields" {
+
+  variables {
+    # other fields from file scoped variables block
+    category = run.from_data_module.first_rubric_category.id
+    filter   = run.from_data_module.first_filter.id
+    level    = run.from_data_module.max_index_rubric_level.id
+    owner    = run.from_data_module.first_team.id
+  }
+
+  module {
+    source = "./opslevel_modules/modules/check/has_recent_deploy"
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.category == var.category
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.category,
+      opslevel_check_has_recent_deploy.this.category,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.days == var.days
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.days,
+      opslevel_check_has_recent_deploy.this.days,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.enabled == var.enabled
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enabled,
+      opslevel_check_has_recent_deploy.this.enabled,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.enable_on == var.enable_on
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.enable_on,
+      opslevel_check_has_recent_deploy.this.enable_on,
+    )
+  }
+
+  assert {
+    condition     = startswith(opslevel_check_has_recent_deploy.this.id, var.id_prefix)
+    error_message = replace(var.error_wrong_id, "TYPE", var.resource_name)
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.filter == var.filter
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.filter,
+      opslevel_check_has_recent_deploy.this.filter,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.level == var.level
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.level,
+      opslevel_check_has_recent_deploy.this.level,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.name == var.name
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.name,
+      opslevel_check_has_recent_deploy.this.name,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.notes == var.notes
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.notes,
+      opslevel_check_has_recent_deploy.this.notes,
+    )
+  }
+
+  assert {
+    condition = opslevel_check_has_recent_deploy.this.owner == var.owner
+    error_message = format(
+      "expected '%v' but got '%v'",
+      var.owner,
+      opslevel_check_has_recent_deploy.this.owner,
+    )
+  }
+
 
 }

@@ -152,6 +152,10 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 
 	webhookAction, err := r.client.GetCustomAction(stateModel.Id.ValueString())
 	if err != nil {
+		if (webhookAction == nil || webhookAction.Id == "") && opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read webhookAction, got error: %s", err))
 		return
 	}
