@@ -146,6 +146,7 @@ func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	var stateModel serviceDataSourcesAllModel
 	if services == nil {
 		stateModel = NewServiceDataSourcesAllModel([]opslevel.Service{})
 	} else {
