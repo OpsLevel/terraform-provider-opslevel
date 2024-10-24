@@ -72,17 +72,17 @@ func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, p
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	stateModel.Constraint = RequiredStringValue(string(check.Constraint))
-	if check.IssueName != nil {
-		stateModel.IssueName = OptionalStringValue(*check.IssueName)
-	}
+	stateModel.IssueName = OptionalStringValue(check.IssueName)
 	stateModel.IssueType = OptionalStringListValue(check.IssueType)
-	if check.MaxAllowed != nil {
-		stateModel.MaxAllowed = types.Int64Value(int64(*check.MaxAllowed))
+	// NOTE: API prevents MaxAllowed from being zero
+	if check.MaxAllowed > 0 {
+		stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
 	}
-	if check.ResolutionTime == nil {
+	emptyResolutionTime := opslevel.CodeIssueResolutionTime{}
+	if check.ResolutionTime == emptyResolutionTime {
 		stateModel.ResolutionTime = types.ObjectNull(resolutionTimeType)
 	} else {
-		resolutionTime := *check.ResolutionTime
+		resolutionTime := check.ResolutionTime
 		resolutionTimeAttrValues := map[string]attr.Value{
 			"unit":  types.StringValue(string(resolutionTime.Unit)),
 			"value": types.Int64Value(int64(resolutionTime.Value)),
