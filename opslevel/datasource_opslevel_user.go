@@ -102,10 +102,7 @@ func (d *UserDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 }
 
 func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data userWithIdentifierDataSourceModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	data := read[userWithIdentifierDataSourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -60,11 +60,10 @@ func (d *UserDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 }
 
 func (d *UserDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel userDataSourcesAllModel
 	var users *opslevel.UserConnection
 	var err error
 
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[userDataSourcesAllModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -79,7 +78,7 @@ func (d *UserDataSourcesAll) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list users, got error: %s", err))
 		return
 	}
-	stateModel = newUserDataSourcesAllModel(users.Nodes)
+	stateModel := newUserDataSourcesAllModel(users.Nodes)
 	stateModel.IgnoreDeactivated = planModel.IgnoreDeactivated
 
 	tflog.Trace(ctx, "listed all OpsLevel User data sources")

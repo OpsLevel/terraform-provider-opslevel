@@ -123,10 +123,7 @@ func (r *ServiceToolResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel ServiceToolResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceToolResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -162,20 +159,17 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var currentStateModel ServiceToolResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
+	stateModel := read[ServiceToolResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var err error
 	var service *opslevel.Service
-	if serviceId := currentStateModel.Service.ValueString(); opslevel.IsID(serviceId) {
+	if serviceId := stateModel.Service.ValueString(); opslevel.IsID(serviceId) {
 		service, err = r.client.GetService(opslevel.ID(serviceId))
 	} else {
-		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
+		service, err = r.client.GetServiceWithAlias(stateModel.ServiceAlias.ValueString())
 	}
 	if err != nil || service == nil || string(service.Id) == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
@@ -188,7 +182,7 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	var serviceTool *opslevel.Tool
-	id := currentStateModel.Id.ValueString()
+	id := stateModel.Id.ValueString()
 	for _, tool := range service.Tools.Nodes {
 		if string(tool.Id) == id {
 			serviceTool = &tool
@@ -200,17 +194,14 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	verifiedStateModel := NewServiceToolResourceModel(ctx, *serviceTool, currentStateModel)
+	verifiedStateModel := NewServiceToolResourceModel(ctx, *serviceTool, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ServiceToolResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceToolResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -234,15 +225,12 @@ func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *ServiceToolResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel ServiceToolResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[ServiceToolResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := r.client.DeleteTool(opslevel.ID(planModel.Id.ValueString())); err != nil {
+	if err := r.client.DeleteTool(opslevel.ID(stateModel.Id.ValueString())); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service tool, got error: %s", err))
 		return
 	}

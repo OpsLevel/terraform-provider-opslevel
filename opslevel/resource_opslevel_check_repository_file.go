@@ -198,11 +198,7 @@ func (r *CheckRepositoryFileResource) ValidateConfig(ctx context.Context, req re
 }
 
 func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckRepositoryFileResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryFileResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -256,16 +252,12 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 }
 
 func (r *CheckRepositoryFileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckRepositoryFileResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryFileResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -274,19 +266,15 @@ func (r *CheckRepositoryFileResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check repository file, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckRepositoryFileResourceModel(ctx, *data, planModel)
-	stateModel.EnableOn = planModel.EnableOn
+	verifiedStateModel := NewCheckRepositoryFileResourceModel(ctx, *data, stateModel)
+	verifiedStateModel.EnableOn = stateModel.EnableOn
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckRepositoryFileResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckRepositoryFileResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -340,16 +328,12 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 }
 
 func (r *CheckRepositoryFileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckRepositoryFileResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckRepositoryFileResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check repository file, got error: %s", err))
 		return

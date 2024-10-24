@@ -79,11 +79,7 @@ func (d *LevelDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 }
 
 func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel levelDataSourceWithFilterModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
+	configModel := read[levelDataSourceWithFilterModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -94,13 +90,13 @@ func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	level, err := filterRubricLevels(levels, planModel.Filter)
+	level, err := filterRubricLevels(levels, configModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_level datasource, got error: %s", err))
 		return
 	}
 
-	stateModel = NewLevelDataSourceWithFilterModel(ctx, *level, planModel.Filter)
+	stateModel := NewLevelDataSourceWithFilterModel(ctx, *level, configModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Rubric Level data source")

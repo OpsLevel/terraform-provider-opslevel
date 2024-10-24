@@ -95,14 +95,6 @@ func (d *ScorecardDataSourcesAll) Schema(ctx context.Context, req datasource.Sch
 }
 
 func (d *ScorecardDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel scorecardDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	scorecards, err := d.client.ListScorecards(nil)
 	if err != nil || scorecards == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list scorecards datasource, got error: %s", err))

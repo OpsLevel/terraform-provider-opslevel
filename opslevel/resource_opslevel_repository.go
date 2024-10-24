@@ -76,10 +76,7 @@ func (r *RepositoryResource) Schema(ctx context.Context, req resource.SchemaRequ
 }
 
 func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel RepositoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[RepositoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -129,30 +126,27 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 }
 
 func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel RepositoryResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[RepositoryResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	readRepository, err := r.client.GetRepository(opslevel.ID(planModel.Id.ValueString()))
+	readRepository, err := r.client.GetRepository(opslevel.ID(stateModel.Id.ValueString()))
 	if err != nil || readRepository == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read repository, got error: %s", err))
 		return
 	}
-	stateModel := NewRepositoryResourceModel(ctx, *readRepository)
+	verifiedStateModel := NewRepositoryResourceModel(ctx, *readRepository)
 
 	// Identifier from plan can be an id or alias
-	switch planModel.Identifier.ValueString() {
+	switch stateModel.Identifier.ValueString() {
 	case string(readRepository.Id), readRepository.DefaultAlias:
-		stateModel.Identifier = planModel.Identifier
+		verifiedStateModel.Identifier = stateModel.Identifier
 	default:
 		resp.Diagnostics.AddError(
 			"opslevel client error",
 			fmt.Sprintf("given repository identifier '%s' did not match found repository's id '%s' or alias '%s'",
-				planModel.Identifier.ValueString(),
+				stateModel.Identifier.ValueString(),
 				string(readRepository.Id),
 				readRepository.DefaultAlias,
 			),
@@ -161,14 +155,11 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *RepositoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel RepositoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[RepositoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}

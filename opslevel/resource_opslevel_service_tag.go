@@ -98,8 +98,7 @@ func (serviceTagResource *ServiceTagResource) Schema(ctx context.Context, req re
 }
 
 func (serviceTagResource *ServiceTagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ServiceTagResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[ServiceTagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -138,8 +137,7 @@ func (serviceTagResource *ServiceTagResource) Create(ctx context.Context, req re
 }
 
 func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data ServiceTagResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[ServiceTagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -186,8 +184,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 }
 
 func (serviceTagResource *ServiceTagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data ServiceTagResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[ServiceTagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -224,8 +221,7 @@ func (serviceTagResource *ServiceTagResource) Update(ctx context.Context, req re
 }
 
 func (serviceTagResource *ServiceTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data ServiceTagResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[ServiceTagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

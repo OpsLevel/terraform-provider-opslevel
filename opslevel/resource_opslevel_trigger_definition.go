@@ -170,10 +170,7 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 }
 
 func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel TriggerDefinitionResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -217,16 +214,12 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel TriggerDefinitionResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	triggerDefinition, err := r.client.GetTriggerDefinition(planModel.Id.ValueString())
+	triggerDefinition, err := r.client.GetTriggerDefinition(stateModel.Id.ValueString())
 	if err != nil {
 		if (triggerDefinition == nil || triggerDefinition.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -236,18 +229,15 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	stateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, planModel)
+	verifiedStateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, stateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel TriggerDefinitionResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -289,15 +279,12 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel TriggerDefinitionResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteTriggerDefinition(planModel.Id.ValueString())
+	err := r.client.DeleteTriggerDefinition(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete trigger definition, got error: %s", err))
 		return

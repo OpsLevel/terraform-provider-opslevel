@@ -121,10 +121,7 @@ func (sys *SystemDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 }
 
 func (sys *SystemDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data systemDataSourceModelWithIdentifier
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	data := read[systemDataSourceModelWithIdentifier](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

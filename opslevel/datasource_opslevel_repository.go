@@ -115,10 +115,7 @@ func (d *RepositoryDataSource) Schema(ctx context.Context, req datasource.Schema
 }
 
 func (d *RepositoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data RepositoryDataSourceModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	data := read[RepositoryDataSourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

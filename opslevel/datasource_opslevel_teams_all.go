@@ -63,20 +63,12 @@ func (d *TeamDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 }
 
 func (d *TeamDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel teamDataSourcesAllModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	teams, err := d.client.ListTeams(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list teams, got error: %s", err))
 		return
 	}
-	stateModel = newTeamDataSourcesAllModel(teams.Nodes)
+	stateModel := newTeamDataSourcesAllModel(teams.Nodes)
 
 	tflog.Trace(ctx, "listed all OpsLevel Team data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

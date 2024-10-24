@@ -68,10 +68,7 @@ func (r *RubricCategoryResource) Schema(ctx context.Context, req resource.Schema
 }
 
 func (r *RubricCategoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data RubricCategoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[RubricCategoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -91,11 +88,7 @@ func (r *RubricCategoryResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *RubricCategoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data RubricCategoryResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
+	data := read[RubricCategoryResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -116,10 +109,7 @@ func (r *RubricCategoryResource) Read(ctx context.Context, req resource.ReadRequ
 }
 
 func (r *RubricCategoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data RubricCategoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[RubricCategoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -139,10 +129,7 @@ func (r *RubricCategoryResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *RubricCategoryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data RubricCategoryResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[RubricCategoryResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

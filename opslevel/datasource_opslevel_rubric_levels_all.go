@@ -71,20 +71,12 @@ func (d *LevelDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaR
 }
 
 func (d *LevelDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel levelDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	levels, err := d.client.ListLevels()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list rubric_levels datasource, got error: %s", err))
 		return
 	}
-	stateModel = NewLevelDataSourcesAllModel(levels)
+	stateModel := NewLevelDataSourcesAllModel(levels)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all rubric_levels data sources")

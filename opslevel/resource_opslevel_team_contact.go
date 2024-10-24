@@ -91,8 +91,7 @@ func (teamContactResource *TeamContactResource) Schema(ctx context.Context, req 
 }
 
 func (teamContactResource *TeamContactResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data TeamContactResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[TeamContactResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -118,8 +117,7 @@ func (teamContactResource *TeamContactResource) Create(ctx context.Context, req 
 }
 
 func (teamContactResource *TeamContactResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data TeamContactResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[TeamContactResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -161,8 +159,7 @@ func (teamContactResource *TeamContactResource) Read(ctx context.Context, req re
 }
 
 func (teamContactResource *TeamContactResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data TeamContactResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[TeamContactResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -189,8 +186,7 @@ func (teamContactResource *TeamContactResource) Update(ctx context.Context, req 
 }
 
 func (teamContactResource *TeamContactResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data TeamContactResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[TeamContactResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

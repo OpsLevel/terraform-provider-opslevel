@@ -94,10 +94,7 @@ func (d *ServiceDataSourcesAll) Schema(ctx context.Context, req datasource.Schem
 }
 
 func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel serviceDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[serviceDataSourcesAllModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -149,6 +146,7 @@ func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	var stateModel serviceDataSourcesAllModel
 	if services == nil {
 		stateModel = NewServiceDataSourcesAllModel([]opslevel.Service{})
 	} else {

@@ -80,10 +80,7 @@ func (lifecycleDataSource *LifecycleDataSource) Schema(ctx context.Context, req 
 }
 
 func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel lifecycleDataSourceWithFilterModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[lifecycleDataSourceWithFilterModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -100,7 +97,7 @@ func (lifecycleDataSource *LifecycleDataSource) Read(ctx context.Context, req da
 		return
 	}
 
-	stateModel = NewLifecycleDataSourceModel(ctx, *lifecycle, planModel.Filter)
+	stateModel := NewLifecycleDataSourceModel(ctx, *lifecycle, planModel.Filter)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Lifecycle data source")

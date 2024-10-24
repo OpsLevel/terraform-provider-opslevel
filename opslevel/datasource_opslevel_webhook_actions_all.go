@@ -53,20 +53,12 @@ func (d *WebhookActionDataSourcesAll) Schema(ctx context.Context, req datasource
 }
 
 func (d *WebhookActionDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel webhookActionDataSourcesAllModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	webhookActions, err := d.client.ListCustomActions(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list webhookActions, got error: %s", err))
 		return
 	}
-	stateModel = newWebhookActionDataSourcesAllModel(webhookActions.Nodes)
+	stateModel := newWebhookActionDataSourcesAllModel(webhookActions.Nodes)
 
 	tflog.Trace(ctx, "listed all OpsLevel WebhookAction data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
