@@ -30,6 +30,32 @@ type CheckCodeBaseResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
+func NewCheckCodeBaseResourceModel(check opslevel.Check, givenModel CheckCodeBaseResourceModel) CheckCodeBaseResourceModel {
+	var stateModel CheckCodeBaseResourceModel
+
+	stateModel.Category = RequiredStringValue(string(check.Category.Id))
+	stateModel.Description = ComputedStringValue(check.Description)
+	if givenModel.Enabled.IsNull() {
+		stateModel.Enabled = types.BoolValue(false)
+	} else {
+		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
+	}
+	if givenModel.EnableOn.IsNull() {
+		stateModel.EnableOn = types.StringNull()
+	} else {
+		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
+		stateModel.EnableOn = givenModel.EnableOn
+	}
+	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
+	stateModel.Id = ComputedStringValue(string(check.Id))
+	stateModel.Level = RequiredStringValue(string(check.Level.Id))
+	stateModel.Name = RequiredStringValue(check.Name)
+	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
+
+	return stateModel
+}
+
 var checkBaseAttributes = map[string]schema.Attribute{
 	"category": schema.StringAttribute{
 		Description: "The id of the category the check belongs to.",
