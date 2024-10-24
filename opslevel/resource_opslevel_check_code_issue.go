@@ -48,21 +48,21 @@ type CheckCodeIssueResourceModel struct {
 	Severity       types.List   `tfsdk:"severity"`
 }
 
-func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, planModel CheckCodeIssueResourceModel) CheckCodeIssueResourceModel {
+func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, givenModel CheckCodeIssueResourceModel) CheckCodeIssueResourceModel {
 	var stateModel CheckCodeIssueResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
 	stateModel.Description = ComputedStringValue(check.Description)
-	if planModel.Enabled.IsNull() {
+	if givenModel.Enabled.IsNull() {
 		stateModel.Enabled = types.BoolValue(false)
 	} else {
 		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
 	}
-	if planModel.EnableOn.IsNull() {
+	if givenModel.EnableOn.IsNull() {
 		stateModel.EnableOn = types.StringNull()
 	} else {
 		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
-		stateModel.EnableOn = planModel.EnableOn
+		stateModel.EnableOn = givenModel.EnableOn
 	}
 	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
 	stateModel.Id = ComputedStringValue(string(check.Id))
@@ -149,11 +149,7 @@ func (r *CheckCodeIssueResource) Schema(ctx context.Context, req resource.Schema
 }
 
 func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckCodeIssueResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckCodeIssueResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -203,41 +199,33 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 
 	stateModel := NewCheckCodeIssueResourceModel(ctx, *data, planModel)
 
-	tflog.Trace(ctx, "created a check alert source usage resource")
+	tflog.Trace(ctx, "created a check_code_issue resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckCodeIssueResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckCodeIssueResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckCodeIssueResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check alert source usage, got error: %s", err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check_code_issue, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckCodeIssueResourceModel(ctx, *data, planModel)
+	stateModel = NewCheckCodeIssueResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckCodeIssueResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckCodeIssueResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -296,26 +284,22 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 
 	stateModel := NewCheckCodeIssueResourceModel(ctx, *data, planModel)
 
-	tflog.Trace(ctx, "updated a check alert source usage resource")
+	tflog.Trace(ctx, "updated a check_code_issue resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *CheckCodeIssueResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckCodeIssueResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckCodeIssueResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check alert source usage, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check_code_issue, got error: %s", err))
 		return
 	}
-	tflog.Trace(ctx, "deleted a check alert source usage resource")
+	tflog.Trace(ctx, "deleted a check_code_issue resource")
 }
 
 func (r *CheckCodeIssueResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

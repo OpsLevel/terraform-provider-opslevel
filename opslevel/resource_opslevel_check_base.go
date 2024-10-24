@@ -30,21 +30,21 @@ type CheckCodeBaseResourceModel struct {
 	Owner       types.String `tfsdk:"owner"`
 }
 
-func NewCheckCodeBaseResourceModel(check opslevel.Check, planModel CheckCodeBaseResourceModel) CheckCodeBaseResourceModel {
+func NewCheckCodeBaseResourceModel(check opslevel.Check, givenModel CheckCodeBaseResourceModel) CheckCodeBaseResourceModel {
 	var stateModel CheckCodeBaseResourceModel
 
 	stateModel.Category = RequiredStringValue(string(check.Category.Id))
 	stateModel.Description = ComputedStringValue(check.Description)
-	if planModel.Enabled.IsNull() {
+	if givenModel.Enabled.IsNull() {
 		stateModel.Enabled = types.BoolValue(false)
 	} else {
 		stateModel.Enabled = OptionalBoolValue(&check.Enabled)
 	}
-	if planModel.EnableOn.IsNull() {
+	if givenModel.EnableOn.IsNull() {
 		stateModel.EnableOn = types.StringNull()
 	} else {
 		// We pass through the plan value because of time formatting issue to ensure the state gets the exact value the customer specified
-		stateModel.EnableOn = planModel.EnableOn
+		stateModel.EnableOn = givenModel.EnableOn
 	}
 	stateModel.Filter = OptionalStringValue(string(check.Filter.Id))
 	stateModel.Id = ComputedStringValue(string(check.Id))
