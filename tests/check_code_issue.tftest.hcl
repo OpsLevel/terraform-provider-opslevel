@@ -6,8 +6,8 @@ variables {
   constraint = "any"
 
   # optional fields
-  issue_name  = "idk"
-  issue_type  = ["snyk:code"]
+  issue_name  = "CVE-2024-0001"
+  issue_type  = ["snyk:code", "snyk:cloud", "snyk:config", "snyk:custom", "snyk:license", "snyk:package_vulnerability"]
   max_allowed = 5
   resolution_time = {
     unit  = "week"
