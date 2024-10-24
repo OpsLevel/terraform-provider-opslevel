@@ -165,9 +165,7 @@ func (r *IntegrationAzureResourcesResource) Schema(ctx context.Context, req reso
 }
 
 func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel IntegrationAzureResourcesResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[IntegrationAzureResourcesResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -201,9 +199,7 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 }
 
 func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel IntegrationAzureResourcesResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[IntegrationAzureResourcesResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -226,9 +222,7 @@ func (r *IntegrationAzureResourcesResource) Read(ctx context.Context, req resour
 }
 
 func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel IntegrationAzureResourcesResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[IntegrationAzureResourcesResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -261,9 +255,7 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 }
 
 func (r *IntegrationAzureResourcesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data IntegrationAzureResourcesResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[IntegrationAzureResourcesResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

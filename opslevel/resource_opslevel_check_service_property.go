@@ -192,11 +192,7 @@ func (r *CheckServicePropertyResource) ValidateConfig(ctx context.Context, req r
 }
 
 func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckServicePropertyResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckServicePropertyResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -250,16 +246,12 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 }
 
 func (r *CheckServicePropertyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckServicePropertyResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckServicePropertyResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -268,20 +260,15 @@ func (r *CheckServicePropertyResource) Read(ctx context.Context, req resource.Re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check service property, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckServicePropertyResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckServicePropertyResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckServicePropertyResourceModel
-	var stateModel CheckServicePropertyResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	planModel := read[CheckServicePropertyResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[CheckServicePropertyResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -338,16 +325,12 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 }
 
 func (r *CheckServicePropertyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckServicePropertyResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckServicePropertyResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check service property, got error: %s", err))
 		return

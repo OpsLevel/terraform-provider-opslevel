@@ -177,9 +177,7 @@ func (r *integrationGoogleCloudResource) Schema(ctx context.Context, req resourc
 }
 
 func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel integrationGoogleCloudResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[integrationGoogleCloudResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -214,9 +212,7 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 }
 
 func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel integrationGoogleCloudResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[integrationGoogleCloudResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -241,9 +237,7 @@ func (r *integrationGoogleCloudResource) Read(ctx context.Context, req resource.
 }
 
 func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel integrationGoogleCloudResourceModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[integrationGoogleCloudResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -278,9 +272,7 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 }
 
 func (r *integrationGoogleCloudResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data integrationGoogleCloudResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[integrationGoogleCloudResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -58,20 +58,12 @@ func (d *FilterDataSourcesAll) Schema(ctx context.Context, req datasource.Schema
 }
 
 func (d *FilterDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel FilterDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	filters, err := d.client.ListFilters(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read filter, got error: %s", err))
 		return
 	}
-	stateModel = NewFilterDataSourcesAllModel(filters.Nodes)
+	stateModel := NewFilterDataSourcesAllModel(filters.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all OpsLevel Filter data sources")

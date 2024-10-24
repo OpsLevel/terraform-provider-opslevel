@@ -69,10 +69,7 @@ func (d *RepositoriesDataSourcesAll) Schema(ctx context.Context, req datasource.
 }
 
 func (d *RepositoriesDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel RepositoriesDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
+	planModel := read[RepositoriesDataSourcesAllModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -89,7 +86,7 @@ func (d *RepositoriesDataSourcesAll) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	stateModel = NewRepositoriesDataSourcesAllModel(repos.Nodes)
+	stateModel := NewRepositoriesDataSourcesAllModel(repos.Nodes)
 	stateModel.Filter = planModel.Filter
 
 	// Save data into Terraform state

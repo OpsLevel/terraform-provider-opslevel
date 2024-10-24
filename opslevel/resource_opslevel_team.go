@@ -124,8 +124,7 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 }
 
 func (teamResource *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel TeamResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[TeamResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -188,8 +187,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 }
 
 func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel TeamResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[TeamResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -221,13 +219,8 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (teamResource *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel, stateModel TeamResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	// Read state to help determine if Team Members should be deleted
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	planModel := read[TeamResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[TeamResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -307,8 +300,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 }
 
 func (teamResource *TeamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data TeamResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[TeamResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

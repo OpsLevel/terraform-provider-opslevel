@@ -59,9 +59,7 @@ func (p *OpslevelProvider) Schema(ctx context.Context, req provider.SchemaReques
 }
 
 func (p *OpslevelProvider) ValidateConfig(ctx context.Context, req provider.ValidateConfigRequest, resp *provider.ValidateConfigResponse) {
-	var providerModel OpslevelProviderModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &providerModel)...)
+	providerModel := read[OpslevelProviderModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -130,11 +128,9 @@ func configApiTimeOut(data *OpslevelProviderModel, resp *provider.ConfigureRespo
 }
 
 func (p *OpslevelProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data OpslevelProviderModel
 	tflog.Info(ctx, "Initializing opslevel client")
 
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
+	data := read[OpslevelProviderModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -102,11 +102,7 @@ func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 }
 
 func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel TagResourceModel
-
-	// Read Terraform plan planModel into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[TagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -136,17 +132,13 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel TagResourceModel
-
-	// Read Terraform prior state planModel into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[TagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resourceId := planModel.TargetResource.ValueString()
-	resourceType := opslevel.TaggableResource(planModel.TargetType.ValueString())
+	resourceId := stateModel.TargetResource.ValueString()
+	resourceType := opslevel.TaggableResource(stateModel.TargetType.ValueString())
 	data, err := r.client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read tag, got error: %s", err))
@@ -157,7 +149,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get tags from '%s' with id '%s'", resourceType, resourceId))
 	}
 
-	id := planModel.Id.ValueString()
+	id := stateModel.Id.ValueString()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil {
 		if (tag == nil || tag.Id == "") && opslevel.IsOpsLevelApiError(err) {
@@ -174,15 +166,14 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	stateModel := NewTagResourceModel(ctx, *tag, planModel)
+	verifiedStateModel := NewTagResourceModel(ctx, *tag, stateModel)
 
 	// Save updated planModel into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel TagResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[TagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -205,11 +196,7 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data TagResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
+	data := read[TagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

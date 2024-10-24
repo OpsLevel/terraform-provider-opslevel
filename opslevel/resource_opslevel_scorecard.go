@@ -128,11 +128,7 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 }
 
 func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel ScorecardResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -173,11 +169,7 @@ func getScorecardCategoyIds(client *opslevel.Client, scorecard opslevel.Scorecar
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel ScorecardResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	stateModel := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -202,10 +194,7 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ScorecardResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -232,10 +221,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 }
 
 func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data ScorecardResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

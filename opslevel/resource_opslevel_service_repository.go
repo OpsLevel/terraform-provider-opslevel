@@ -149,10 +149,7 @@ func (r *ServiceRepositoryResource) Schema(ctx context.Context, req resource.Sch
 }
 
 func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel ServiceRepositoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceRepositoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -186,10 +183,7 @@ func (r *ServiceRepositoryResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var currentStateModel, verifiedStateModel ServiceRepositoryResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &currentStateModel)...)
+	currentStateModel := read[ServiceRepositoryResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -219,6 +213,8 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
+
+	var verifiedStateModel ServiceRepositoryResourceModel
 	if serviceRepository == nil {
 		verifiedStateModel = ServiceRepositoryResourceModel{}
 	} else {
@@ -239,10 +235,7 @@ func extractServiceRepository(id string, serviceDependencies opslevel.ServiceDep
 }
 
 func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel ServiceRepositoryResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceRepositoryResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -271,20 +264,17 @@ func (r *ServiceRepositoryResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *ServiceRepositoryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel ServiceRepositoryResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[ServiceRepositoryResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if planModel.Id.IsNull() {
+	if stateModel.Id.IsNull() {
 		tflog.Trace(ctx, "ServiceRepository resource to delete already does not exist")
 		return
 	}
 
-	if err := r.client.DeleteServiceRepository(opslevel.ID(planModel.Id.ValueString())); err != nil {
+	if err := r.client.DeleteServiceRepository(opslevel.ID(stateModel.Id.ValueString())); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service repository, got error: %s", err))
 		return
 	}

@@ -105,8 +105,7 @@ func (teamTagResource *TeamTagResource) Schema(ctx context.Context, req resource
 }
 
 func (teamTagResource *TeamTagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data TeamTagResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[TeamTagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -145,8 +144,7 @@ func (teamTagResource *TeamTagResource) Create(ctx context.Context, req resource
 }
 
 func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data TeamTagResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[TeamTagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -193,8 +191,7 @@ func (teamTagResource *TeamTagResource) Read(ctx context.Context, req resource.R
 }
 
 func (teamTagResource *TeamTagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data TeamTagResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	data := read[TeamTagResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -231,8 +228,7 @@ func (teamTagResource *TeamTagResource) Update(ctx context.Context, req resource
 }
 
 func (teamTagResource *TeamTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data TeamTagResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[TeamTagResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

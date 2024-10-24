@@ -113,10 +113,7 @@ func (r *IntegrationAwsResource) Schema(ctx context.Context, req resource.Schema
 }
 
 func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel IntegrationAwsResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[IntegrationAwsResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -155,10 +152,7 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel IntegrationAwsResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[IntegrationAwsResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -181,11 +175,8 @@ func (r *IntegrationAwsResource) Read(ctx context.Context, req resource.ReadRequ
 }
 
 func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel, stateModel IntegrationAwsResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	planModel := read[IntegrationAwsResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[IntegrationAwsResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -225,10 +216,7 @@ func (r *IntegrationAwsResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *IntegrationAwsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data IntegrationAwsResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[IntegrationAwsResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

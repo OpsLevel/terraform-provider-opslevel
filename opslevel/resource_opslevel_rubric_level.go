@@ -85,10 +85,7 @@ func (r *RubricLevelResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel RubricLevelResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[RubricLevelResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -114,11 +111,7 @@ func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel RubricLevelResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	stateModel := read[RubricLevelResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -139,10 +132,7 @@ func (r *RubricLevelResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel RubricLevelResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[RubricLevelResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -163,10 +153,7 @@ func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *RubricLevelResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data RubricLevelResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[RubricLevelResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

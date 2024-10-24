@@ -96,21 +96,12 @@ func (d *PropertyDefinitionDataSourcesAll) Schema(ctx context.Context, req datas
 }
 
 func (d *PropertyDefinitionDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel propertyDefinitionDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	propertyDefinitions, err := d.client.ListPropertyDefinitions(nil)
 	if err != nil || propertyDefinitions == nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read property definition datasource, got error: %s", err))
 		return
 	}
-	stateModel = NewPropertyDefinitionDataSourcesAllModel(propertyDefinitions.Nodes)
+	stateModel := NewPropertyDefinitionDataSourcesAllModel(propertyDefinitions.Nodes)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel PropertyDefinition data source")

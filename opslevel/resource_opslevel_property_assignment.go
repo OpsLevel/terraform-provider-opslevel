@@ -99,8 +99,7 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 }
 
 func (resource *PropertyAssignmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel PropertyAssignmentResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[PropertyAssignmentResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -129,14 +128,13 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 }
 
 func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel PropertyAssignmentResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[PropertyAssignmentResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	definition := planModel.Definition.ValueString()
-	owner := planModel.Owner.ValueString()
+	definition := stateModel.Definition.ValueString()
+	owner := stateModel.Owner.ValueString()
 	assignment, err := resource.client.GetProperty(owner, definition)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
@@ -144,13 +142,13 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	}
 	value := *assignment.Value
 
-	stateModel := NewPropertyAssignmentResourceModel(*assignment)
+	verifiedStateModel := NewPropertyAssignmentResourceModel(*assignment)
 	// user is free to use either alias or ID for 'owner' and 'definition' fields
-	stateModel.Owner = planModel.Owner
-	stateModel.Definition = planModel.Definition
+	verifiedStateModel.Owner = stateModel.Owner
+	verifiedStateModel.Definition = stateModel.Definition
 
 	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%s'", definition, owner, value))
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (resource *PropertyAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -158,8 +156,7 @@ func (resource *PropertyAssignmentResource) Update(ctx context.Context, req reso
 }
 
 func (resource *PropertyAssignmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel PropertyAssignmentResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	planModel := read[PropertyAssignmentResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

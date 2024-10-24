@@ -86,10 +86,7 @@ func (r *ServiceDependencyResource) Schema(ctx context.Context, req resource.Sch
 }
 
 func (r *ServiceDependencyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel ServiceDependencyResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[ServiceDependencyResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -128,10 +125,7 @@ func (r *ServiceDependencyResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel ServiceDependencyResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	planModel := read[ServiceDependencyResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -185,15 +179,12 @@ func (r *ServiceDependencyResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *ServiceDependencyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel ServiceDependencyResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
+	stateModel := read[ServiceDependencyResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := r.client.DeleteServiceDependency(opslevel.ID(planModel.Id.ValueString())); err != nil {
+	if err := r.client.DeleteServiceDependency(opslevel.ID(stateModel.Id.ValueString())); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service dependency, got error: %s", err))
 		return
 	}

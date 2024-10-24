@@ -54,20 +54,12 @@ func (d *TierDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRe
 }
 
 func (d *TierDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel tierDataSourcesAllModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	tiers, err := d.client.ListTiers()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list tiers, got error: %s", err))
 		return
 	}
-	stateModel = newTierDataSourcesAllModel(tiers)
+	stateModel := newTierDataSourcesAllModel(tiers)
 
 	tflog.Trace(ctx, "listed all OpsLevel Tier data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

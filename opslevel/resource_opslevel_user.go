@@ -107,11 +107,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 }
 
 func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel, stateModel UserResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[UserResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -126,17 +122,14 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create user, got error: %s", err))
 		return
 	}
-	stateModel = NewUserResourceModel(*user, planModel)
+	stateModel := NewUserResourceModel(*user, planModel)
 
 	tflog.Trace(ctx, "created a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
 func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var stateModel, updatedStateModel UserResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	stateModel := read[UserResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -151,17 +144,15 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	updatedStateModel = NewUserResourceModel(*user, stateModel)
+	updatedStateModel := NewUserResourceModel(*user, stateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedStateModel)...)
 }
 
 func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel, stateModel UserResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	planModel := read[UserResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[UserResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -186,10 +177,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *UserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data UserResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	data := read[UserResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}

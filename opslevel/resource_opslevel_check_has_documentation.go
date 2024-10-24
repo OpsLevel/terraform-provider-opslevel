@@ -97,11 +97,7 @@ func (r *CheckHasDocumentationResource) Schema(ctx context.Context, req resource
 }
 
 func (r *CheckHasDocumentationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckHasDocumentationResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckHasDocumentationResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -139,16 +135,12 @@ func (r *CheckHasDocumentationResource) Create(ctx context.Context, req resource
 }
 
 func (r *CheckHasDocumentationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckHasDocumentationResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckHasDocumentationResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -157,19 +149,15 @@ func (r *CheckHasDocumentationResource) Read(ctx context.Context, req resource.R
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check has documentation, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckHasDocumentationResourceModel(ctx, *data, planModel)
-	stateModel.EnableOn = planModel.EnableOn
+	verifiedStateModel := NewCheckHasDocumentationResourceModel(ctx, *data, stateModel)
+	verifiedStateModel.EnableOn = stateModel.EnableOn
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckHasDocumentationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckHasDocumentationResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckHasDocumentationResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -208,16 +196,12 @@ func (r *CheckHasDocumentationResource) Update(ctx context.Context, req resource
 }
 
 func (r *CheckHasDocumentationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckHasDocumentationResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckHasDocumentationResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check has documentation, got error: %s", err))
 		return

@@ -80,11 +80,7 @@ func (r *CheckHasRecentDeployResource) Schema(ctx context.Context, req resource.
 }
 
 func (r *CheckHasRecentDeployResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckHasRecentDeployResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckHasRecentDeployResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -120,16 +116,12 @@ func (r *CheckHasRecentDeployResource) Create(ctx context.Context, req resource.
 }
 
 func (r *CheckHasRecentDeployResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckHasRecentDeployResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckHasRecentDeployResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -138,18 +130,14 @@ func (r *CheckHasRecentDeployResource) Read(ctx context.Context, req resource.Re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check has recent deploy, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckHasRecentDeployResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckHasRecentDeployResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckHasRecentDeployResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckHasRecentDeployResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -187,16 +175,12 @@ func (r *CheckHasRecentDeployResource) Update(ctx context.Context, req resource.
 }
 
 func (r *CheckHasRecentDeployResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckHasRecentDeployResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckHasRecentDeployResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check has recent deploy, got error: %s", err))
 		return

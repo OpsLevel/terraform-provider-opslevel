@@ -72,21 +72,13 @@ func (d *LifecycleDataSourcesAll) Schema(ctx context.Context, req datasource.Sch
 }
 
 func (d *LifecycleDataSourcesAll) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var planModel, stateModel lifecycleDataSourcesAllModel
-
-	// Read Terraform configuration data into the model
-	resp.Diagnostics.Append(req.Config.Get(ctx, &planModel)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	lifecycles, err := d.client.ListLifecycles()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to list lifecycles, got error: %s", err))
 		return
 	}
 
-	stateModel = NewLifecycleDataSourcesAllModel(lifecycles)
+	stateModel := NewLifecycleDataSourcesAllModel(lifecycles)
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "listed all lifecycle data sources")

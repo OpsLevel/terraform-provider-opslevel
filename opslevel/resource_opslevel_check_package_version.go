@@ -143,14 +143,13 @@ func (r *CheckPackageVersionResource) Schema(ctx context.Context, req resource.S
 }
 
 func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var configModel CheckPackageVersionResourceModel
 	packageVersionPossiblePredicateTypes := []opslevel.PredicateTypeEnum{
 		opslevel.PredicateTypeEnumDoesNotMatchRegex,
 		opslevel.PredicateTypeEnumMatchesRegex,
 		opslevel.PredicateTypeEnumSatisfiesVersionConstraint,
 	}
 
-	resp.Diagnostics.Append(req.Config.Get(ctx, &configModel)...)
+	configModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.Config)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -184,11 +183,7 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 }
 
 func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckPackageVersionResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -243,16 +238,12 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 }
 
 func (r *CheckPackageVersionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckPackageVersionResourceModel
-
-	// Read Terraform prior stateModel data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -261,19 +252,15 @@ func (r *CheckPackageVersionResource) Read(ctx context.Context, req resource.Rea
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check package_version, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckPackageVersionResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckPackageVersionResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform stateModel
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel, stateModel CheckPackageVersionResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
-
+	planModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -338,16 +325,12 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 }
 
 func (r *CheckPackageVersionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckPackageVersionResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckPackageVersionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check package_version, got error: %s", err))
 		return

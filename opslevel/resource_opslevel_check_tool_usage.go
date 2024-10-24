@@ -241,11 +241,7 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 }
 
 func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var planModel CheckToolUsageResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckToolUsageResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -327,16 +323,12 @@ func (r *CheckToolUsageResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *CheckToolUsageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var planModel CheckToolUsageResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckToolUsageResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data, err := r.client.GetCheck(asID(planModel.Id))
+	data, err := r.client.GetCheck(asID(stateModel.Id))
 	if err != nil {
 		if (data == nil || data.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -345,18 +337,14 @@ func (r *CheckToolUsageResource) Read(ctx context.Context, req resource.ReadRequ
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read check tool usage, got error: %s", err))
 		return
 	}
-	stateModel := NewCheckToolUsageResourceModel(ctx, *data, planModel)
+	verifiedStateModel := NewCheckToolUsageResourceModel(ctx, *data, stateModel)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var planModel CheckToolUsageResourceModel
-
-	// Read Terraform plan data into the planModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
-
+	planModel := read[CheckToolUsageResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -443,16 +431,12 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *CheckToolUsageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var planModel CheckToolUsageResourceModel
-
-	// Read Terraform prior state data into the planModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &planModel)...)
-
+	stateModel := read[CheckToolUsageResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCheck(asID(planModel.Id))
+	err := r.client.DeleteCheck(asID(stateModel.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete check tool usage, got error: %s", err))
 		return
