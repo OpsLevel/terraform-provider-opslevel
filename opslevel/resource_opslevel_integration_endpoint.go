@@ -32,16 +32,18 @@ type IntegrationEndpointResource struct {
 
 // IntegrationEndpointResourceModel describes the Integration Endpoint managed resource.
 type IntegrationEndpointResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
+	Id         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Type       types.String `tfsdk:"type"`
+	WebhookURL types.String `tfsdk:"webhook_url"`
 }
 
 func NewIntegrationEndpointResourceModel(integrationEndpoint opslevel.Integration, givenModel IntegrationEndpointResourceModel) IntegrationEndpointResourceModel {
 	return IntegrationEndpointResourceModel{
-		Id:   ComputedStringValue(string(integrationEndpoint.Id)),
-		Name: RequiredStringValue(integrationEndpoint.Name),
-		Type: RequiredStringValue(givenModel.Type.ValueString()),
+		Id:         ComputedStringValue(string(integrationEndpoint.Id)),
+		Name:       RequiredStringValue(integrationEndpoint.Name),
+		Type:       RequiredStringValue(givenModel.Type.ValueString()),
+		WebhookURL: ComputedStringValue(*integrationEndpoint.WebhookURL),
 	}
 }
 
@@ -78,6 +80,10 @@ func (r *IntegrationEndpointResource) Schema(ctx context.Context, req resource.S
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+			},
+			"webhook_url": schema.StringAttribute{
+				Description: "The endpoint to send events via webhook (if applicable).",
+				Computed:    true,
 			},
 		},
 	}
