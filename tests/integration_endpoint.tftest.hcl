@@ -240,6 +240,7 @@ run "resource_integration_endpoint_create_deploy_type" {
       can(opslevel_integration_endpoint.this.id),
       can(opslevel_integration_endpoint.this.name),
       can(opslevel_integration_endpoint.this.type),
+      can(opslevel_integration_endpoint.this.webhook_url),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
   }
