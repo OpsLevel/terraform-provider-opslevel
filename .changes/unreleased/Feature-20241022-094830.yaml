@@ -1,4 +1,0 @@
-kind: Feature
-body: Add `opslevel_alias` resource for managing a set of aliases on an "aliasable"
-  resource in OpsLevel
-time: 2024-10-22T09:48:30.49587-05:00
