@@ -144,6 +144,13 @@ tasks:
       - task: terraform:terraform-command
         vars: { TF_COMMAND: 'destroy -auto-approve', TF_CMD_DIR: "{{.WORKSPACE_DIR}}" }
 
+  terraform-build:
+    desc: Rebuild provider
+    aliases: ["build"]
+    cmds:
+      - task: terraform:setup-terraform-from
+        vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
+
   terraform-plan:
     desc: Rebuild and run "terraform plan" in "{{.WORKSPACE_DIR}}"
     aliases: ["plan"]
