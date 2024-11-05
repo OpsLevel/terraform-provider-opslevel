@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -36,11 +38,35 @@ type ServiceDependencyResourceModel struct {
 	Service     types.String `tfsdk:"service"`
 }
 
-func NewServiceDependencyResourceModel(ctx context.Context, serviceDependency opslevel.ServiceDependency) ServiceDependencyResourceModel {
-	return ServiceDependencyResourceModel{
+func NewServiceDependencyResourceModel(serviceDependency opslevel.ServiceDependency, givenModel ServiceDependencyResourceModel) (ServiceDependencyResourceModel, diag.Diagnostics) {
+	var diag diag.Diagnostics
+	serviceDependencyResourceModel := ServiceDependencyResourceModel{
 		Id:   ComputedStringValue(string(serviceDependency.Id)),
 		Note: OptionalStringValue(serviceDependency.Notes),
 	}
+
+	dependsUpon := identifierFromServiceId(givenModel.DependsUpon.ValueString(), serviceDependency.DependsOn)
+	if dependsUpon == "" {
+		diag.AddError("opslevel client error", fmt.Sprintf("expected depends_upon '%s' got '%s'", givenModel.DependsUpon.ValueString(), dependsUpon))
+	}
+	serviceDependencyResourceModel.DependsUpon = RequiredStringValue(dependsUpon)
+
+	serviceIdentifier := identifierFromServiceId(givenModel.Service.ValueString(), serviceDependency.Service)
+	if serviceIdentifier == "" {
+		diag.AddError("opslevel client error", fmt.Sprintf("expected service '%s' got '%s'", givenModel.Service.ValueString(), serviceIdentifier))
+	}
+	serviceDependencyResourceModel.Service = RequiredStringValue(serviceIdentifier)
+
+	return serviceDependencyResourceModel, diag
+}
+
+func identifierFromServiceId(identifier string, serviceId opslevel.ServiceId) string {
+	if opslevel.IsID(identifier) {
+		return string(serviceId.Id)
+	} else if slices.Contains(serviceId.Aliases, identifier) {
+		return identifier
+	}
+	return ""
 }
 
 func (r *ServiceDependencyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -102,23 +128,10 @@ func (r *ServiceDependencyResource) Create(ctx context.Context, req resource.Cre
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create serviceDependency, got error: %s", err))
 		return
 	}
-	stateModel := NewServiceDependencyResourceModel(ctx, *serviceDependency)
-
-	expectedDependsOn := planModel.DependsUpon.ValueString()
-	if expectedDependsOn != string(serviceDependency.DependsOn.Id) &&
-		!slices.Contains(serviceDependency.DependsOn.Aliases, expectedDependsOn) {
-		resp.Diagnostics.AddError("Plan error", fmt.Sprintf("Created service dependency returned with unexpected 'depends_upon'. '%s'", expectedDependsOn))
+	stateModel, diag := NewServiceDependencyResourceModel(*serviceDependency, planModel)
+	if diag.HasError() {
 		return
 	}
-	stateModel.DependsUpon = planModel.DependsUpon
-
-	expectedService := planModel.Service.ValueString()
-	if string(serviceDependency.Service.Id) != expectedService &&
-		!slices.Contains(serviceDependency.Service.Aliases, expectedService) {
-		resp.Diagnostics.AddError("Plan error", fmt.Sprintf("Created service dependency returned with unexpected service. '%s'", expectedService))
-		return
-	}
-	stateModel.Service = planModel.Service
 
 	tflog.Trace(ctx, "created a service dependency resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
@@ -154,11 +167,23 @@ func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	serviceDependency := opslevel.ServiceDependency{
-		Id:    opslevel.ID(planModel.Id.ValueString()),
-		Notes: extractedServiceDependency.Notes,
+	var dependsOn opslevel.ServiceId
+	if opslevel.IsID(planModel.DependsUpon.ValueString()) {
+		dependsOn.Id = opslevel.ID(planModel.DependsUpon.ValueString())
+	} else {
+		dependsOn.Aliases = []string{planModel.DependsUpon.ValueString()}
 	}
-	readServiceDependencyResourceModel := NewServiceDependencyResourceModel(ctx, serviceDependency)
+	serviceDependency := opslevel.ServiceDependency{
+		DependsOn: dependsOn,
+		Id:        opslevel.ID(planModel.Id.ValueString()),
+		Notes:     extractedServiceDependency.Notes,
+		Service:   *extractedServiceDependency.Node,
+	}
+
+	readServiceDependencyResourceModel, diag := NewServiceDependencyResourceModel(serviceDependency, planModel)
+	if diag.HasError() {
+		return
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readServiceDependencyResourceModel)...)
@@ -192,5 +217,50 @@ func (r *ServiceDependencyResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *ServiceDependencyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if !isTagValid(req.ID) {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<service-id>:<dependency-id>'. Given '%s'", req.ID),
+		)
+		return
+	}
+
+	ids := strings.Split(req.ID, ":")
+	serviceId := ids[0]
+	dependencyId := ids[1]
+
+	service, err := r.client.GetService(opslevel.ID(serviceId))
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		return
+	}
+	dependencies, err := service.GetDependencies(r.client, nil)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service dependencies, got error: %s", err))
+		return
+	}
+
+	var foundSvcDependencyId string
+	for _, serviceDependency := range dependencies.Edges {
+		if serviceDependency.Node != nil && serviceDependency.Node.Id == opslevel.ID(dependencyId) {
+			foundSvcDependencyId = string(serviceDependency.Id)
+			break
+		}
+	}
+	if foundSvcDependencyId == "" {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf(
+			"Unable to get service dependency of service '%s' dependent upon '%s'",
+			serviceId,
+			dependencyId,
+		))
+	}
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, foundSvcDependencyId)...)
+
+	servicePath := path.Root("service")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, servicePath, serviceId)...)
+
+	dependencyPath := path.Root("depends_upon")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, dependencyPath, dependencyId)...)
 }
