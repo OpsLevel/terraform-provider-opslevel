@@ -328,7 +328,7 @@ func (r *ServiceRepositoryResource) ImportState(ctx context.Context, req resourc
 	}
 	if foundRepoIdentifier == "" {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf(
-			"Unable to get service dependency of service '%s' dependent upon '%s'",
+			"Unable to find service '%s' with repository '%s'",
 			serviceIdentifier,
 			repoIdentifier,
 		))
