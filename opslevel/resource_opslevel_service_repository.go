@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -213,13 +214,12 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 			break
 		}
 	}
-
-	var verifiedStateModel ServiceRepositoryResourceModel
 	if serviceRepository == nil {
-		verifiedStateModel = ServiceRepositoryResourceModel{}
-	} else {
-		verifiedStateModel = NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
+		resp.Diagnostics.AddError("opslevel client error", "Unable to find service repository")
+		return
 	}
+
+	verifiedStateModel := NewServiceRepositoryResourceModel(ctx, *serviceRepository, currentStateModel)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
@@ -282,5 +282,74 @@ func (r *ServiceRepositoryResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (r *ServiceRepositoryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	ids := strings.SplitN(req.ID, ":", 2)
+	if len(ids) != 2 {
+		resp.Diagnostics.AddError(
+			"Invalid format for given Import Id",
+			fmt.Sprintf("Id expected to be formatted as '<service-id-or-alias>:<repository-id-or-alias>'. Given '%s'", req.ID),
+		)
+		return
+	}
+
+	serviceIdentifier := ids[0]
+	repoIdentifier := ids[1]
+
+	var service *opslevel.Service
+	var err error
+	if opslevel.IsID(serviceIdentifier) {
+		service, err = r.client.GetService(opslevel.ID(serviceIdentifier))
+	} else {
+		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
+	}
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		return
+	}
+	repositories, err := service.GetRepositories(r.client, nil)
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service dependencies, got error: %s", err))
+		return
+	}
+
+	var foundRepoIdentifier string
+	for _, serviceRepoEdge := range repositories.Edges {
+		if serviceRepoEdge.Node.Id != opslevel.ID(repoIdentifier) && serviceRepoEdge.Node.DefaultAlias != repoIdentifier {
+			continue
+		}
+		for _, serviceRepo := range serviceRepoEdge.ServiceRepositories {
+			if serviceRepo.Repository.Id == opslevel.ID(repoIdentifier) || serviceRepo.Repository.DefaultAlias == repoIdentifier {
+				foundRepoIdentifier = string(serviceRepo.Id)
+				break
+			}
+		}
+		if foundRepoIdentifier != "" {
+			break
+		}
+	}
+	if foundRepoIdentifier == "" {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf(
+			"Unable to get service dependency of service '%s' dependent upon '%s'",
+			serviceIdentifier,
+			repoIdentifier,
+		))
+	}
+
+	idPath := path.Root("id")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, foundRepoIdentifier)...)
+
+	if opslevel.IsID(serviceIdentifier) {
+		servicePath := path.Root("service")
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, servicePath, serviceIdentifier)...)
+	} else {
+		serviceAliasPath := path.Root("service_alias")
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, serviceAliasPath, serviceIdentifier)...)
+	}
+
+	if opslevel.IsID(repoIdentifier) {
+		repoPath := path.Root("repository")
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, repoPath, repoIdentifier)...)
+	} else {
+		repoAliasPath := path.Root("repository_alias")
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, repoAliasPath, repoIdentifier)...)
+	}
 }
