@@ -51,5 +51,5 @@ resource "opslevel_service_dependency" "example" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import opslevel_service_dependency.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg
+terraform import opslevel_service_dependency.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
 ```

@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix opslevel_service_dependency infinite apply bug and failing import
-time: 2024-11-05T15:42:06.390952-06:00

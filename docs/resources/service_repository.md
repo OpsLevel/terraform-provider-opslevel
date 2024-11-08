@@ -60,4 +60,7 @@ Import is supported using the following syntax:
 
 ```shell
 terraform import opslevel_service_repository.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
+terraform import opslevel_service_repository.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:github.com:my-org/my-repo
+terraform import opslevel_service_repository.example example_alias:github.com:my-org/my-repo
+terraform import opslevel_service_repository.example example_alias:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
 ```
