@@ -630,7 +630,7 @@ run "resource_check_package_version_set_package_constraint_does_not_exist" {
   }
 
   assert {
-    condition = opslevel_check_package_version.this.missing_package_result == null
+    condition     = opslevel_check_package_version.this.missing_package_result == null
     error_message = var.error_expected_null_field
   }
 
@@ -644,7 +644,7 @@ run "resource_check_package_version_set_package_constraint_does_not_exist" {
   }
 
   assert {
-    condition = opslevel_check_package_version.this.version_constraint_predicate == null
+    condition     = opslevel_check_package_version.this.version_constraint_predicate == null
     error_message = var.error_expected_null_field
   }
 
@@ -668,7 +668,7 @@ run "resource_check_package_version_set_package_constraint_exists" {
   }
 
   assert {
-    condition = opslevel_check_package_version.this.missing_package_result == null
+    condition     = opslevel_check_package_version.this.missing_package_result == null
     error_message = var.error_expected_null_field
   }
 
@@ -682,7 +682,7 @@ run "resource_check_package_version_set_package_constraint_exists" {
   }
 
   assert {
-    condition = opslevel_check_package_version.this.version_constraint_predicate == null
+    condition     = opslevel_check_package_version.this.version_constraint_predicate == null
     error_message = var.error_expected_null_field
   }
 

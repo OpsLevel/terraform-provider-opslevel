@@ -109,7 +109,7 @@ run "resource_integration_azure_create_with_all_fields" {
 run "resource_integration_azure_unset_optional_fields" {
 
   variables {
-    ownership_tag_keys = null
+    ownership_tag_keys      = null
     ownership_tag_overrides = null
   }
 
@@ -151,7 +151,7 @@ run "delete_azure_integration_outside_of_terraform" {
 run "resource_integration_azure_create_with_required_fields" {
 
   variables {
-    ownership_tag_keys = null
+    ownership_tag_keys      = null
     ownership_tag_overrides = null
   }
 
@@ -232,7 +232,7 @@ run "resource_integration_azure_create_with_required_fields" {
 run "resource_integration_azure_set_all_fields" {
 
   variables {
-    ownership_tag_keys = ["one", "two", "three", "four", "five"]
+    ownership_tag_keys      = ["one", "two", "three", "four", "five"]
     ownership_tag_overrides = false
   }
 

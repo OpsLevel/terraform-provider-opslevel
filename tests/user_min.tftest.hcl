@@ -45,7 +45,7 @@ run "resource_user_create_with_required_fields" {
   }
 
   assert {
-    condition = opslevel_user.this.send_invite == false
+    condition     = opslevel_user.this.send_invite == false
     error_message = "expected 'false' default for send_invite in opslevel_user resource"
   }
 

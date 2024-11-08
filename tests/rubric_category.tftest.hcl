@@ -25,7 +25,7 @@ run "resource_rubric_category_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_rubric_category.this.name == var.name
+    condition = opslevel_rubric_category.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -62,7 +62,7 @@ run "resource_rubric_category_recreate_when_not_found" {
   }
 
   assert {
-    condition     = opslevel_rubric_category.this.name == var.name
+    condition = opslevel_rubric_category.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,

@@ -50,7 +50,7 @@ run "resource_modify_managed_aliases" {
   variables {
     resource_type       = "domain"
     resource_identifier = run.from_data_module.first_domain.id
-    aliases = toset(["one", "four", "three"])
+    aliases             = toset(["one", "four", "three"])
   }
 
   module {
@@ -82,7 +82,7 @@ run "resource_ensure_managed_aliases" {
   variables {
     resource_type       = "domain"
     resource_identifier = run.from_data_module.first_domain.id
-    aliases = toset(["one", "four", "three"])
+    aliases             = toset(["one", "four", "three"])
   }
 
   module {

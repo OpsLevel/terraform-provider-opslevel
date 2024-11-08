@@ -31,7 +31,7 @@ run "resource_rubric_level_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_rubric_level.this.description == var.description
+    condition = opslevel_rubric_level.this.description == var.description
     error_message = format(
       "expected '%v' but got '%v'",
       var.description,
@@ -50,7 +50,7 @@ run "resource_rubric_level_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_rubric_level.this.name == var.name
+    condition = opslevel_rubric_level.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
