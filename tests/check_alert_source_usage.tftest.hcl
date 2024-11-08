@@ -74,7 +74,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_name_predicate == var.alert_name_predicate
+    condition = opslevel_check_alert_source_usage.this.alert_name_predicate == var.alert_name_predicate
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_name_predicate,
@@ -83,7 +83,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
+    condition = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_type,
@@ -92,7 +92,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.category == var.category
+    condition = opslevel_check_alert_source_usage.this.category == var.category
     error_message = format(
       "expected '%v' but got '%v'",
       var.category,
@@ -101,7 +101,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
+    condition = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
     error_message = format(
       "expected '%v' but got '%v'",
       var.enable_on,
@@ -110,7 +110,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.enabled == var.enabled
+    condition = opslevel_check_alert_source_usage.this.enabled == var.enabled
     error_message = format(
       "expected '%v' but got '%v'",
       var.enabled,
@@ -124,7 +124,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.filter == var.filter
+    condition = opslevel_check_alert_source_usage.this.filter == var.filter
     error_message = format(
       "expected '%v' but got '%v'",
       var.filter,
@@ -133,7 +133,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.level == var.level
+    condition = opslevel_check_alert_source_usage.this.level == var.level
     error_message = format(
       "expected '%v' but got '%v'",
       var.level,
@@ -142,7 +142,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.name == var.name
+    condition = opslevel_check_alert_source_usage.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -151,7 +151,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.notes == var.notes
+    condition = opslevel_check_alert_source_usage.this.notes == var.notes
     error_message = format(
       "expected '%v' but got '%v'",
       var.notes,
@@ -160,7 +160,7 @@ run "resource_check_alert_source_usage_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.owner == var.owner
+    condition = opslevel_check_alert_source_usage.this.owner == var.owner
     error_message = format(
       "expected '%v' but got '%v'",
       var.owner,
@@ -189,7 +189,7 @@ run "resource_check_alert_source_usage_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
+    condition = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_type,
@@ -203,7 +203,7 @@ run "resource_check_alert_source_usage_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.category == var.category
+    condition = opslevel_check_alert_source_usage.this.category == var.category
     error_message = format(
       "expected '%v' but got '%v'",
       var.category,
@@ -227,7 +227,7 @@ run "resource_check_alert_source_usage_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.level == var.level
+    condition = opslevel_check_alert_source_usage.this.level == var.level
     error_message = format(
       "expected '%v' but got '%v'",
       var.level,
@@ -236,7 +236,7 @@ run "resource_check_alert_source_usage_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.name == var.name
+    condition = opslevel_check_alert_source_usage.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -295,7 +295,7 @@ run "resource_check_alert_source_usage_create_with_required_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
+    condition = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_type,
@@ -309,7 +309,7 @@ run "resource_check_alert_source_usage_create_with_required_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.category == var.category
+    condition = opslevel_check_alert_source_usage.this.category == var.category
     error_message = format(
       "expected '%v' but got '%v'",
       var.category,
@@ -333,7 +333,7 @@ run "resource_check_alert_source_usage_create_with_required_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.level == var.level
+    condition = opslevel_check_alert_source_usage.this.level == var.level
     error_message = format(
       "expected '%v' but got '%v'",
       var.level,
@@ -342,7 +342,7 @@ run "resource_check_alert_source_usage_create_with_required_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.name == var.name
+    condition = opslevel_check_alert_source_usage.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -394,7 +394,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
+    condition = opslevel_check_alert_source_usage.this.alert_type == var.alert_type
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_type,
@@ -403,7 +403,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.alert_name_predicate == var.alert_name_predicate
+    condition = opslevel_check_alert_source_usage.this.alert_name_predicate == var.alert_name_predicate
     error_message = format(
       "expected '%v' but got '%v'",
       var.alert_name_predicate,
@@ -412,7 +412,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.category == var.category
+    condition = opslevel_check_alert_source_usage.this.category == var.category
     error_message = format(
       "expected '%v' but got '%v'",
       var.category,
@@ -421,7 +421,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
+    condition = opslevel_check_alert_source_usage.this.enable_on == var.enable_on
     error_message = format(
       "expected '%v' but got '%v'",
       var.enable_on,
@@ -430,7 +430,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.enabled == var.enabled
+    condition = opslevel_check_alert_source_usage.this.enabled == var.enabled
     error_message = format(
       "expected '%v' but got '%v'",
       var.enabled,
@@ -444,7 +444,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.filter == var.filter
+    condition = opslevel_check_alert_source_usage.this.filter == var.filter
     error_message = format(
       "expected '%v' but got '%v'",
       var.filter,
@@ -453,7 +453,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.level == var.level
+    condition = opslevel_check_alert_source_usage.this.level == var.level
     error_message = format(
       "expected '%v' but got '%v'",
       var.level,
@@ -462,7 +462,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.name == var.name
+    condition = opslevel_check_alert_source_usage.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -471,7 +471,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.notes == var.notes
+    condition = opslevel_check_alert_source_usage.this.notes == var.notes
     error_message = format(
       "expected '%v' but got '%v'",
       var.notes,
@@ -480,7 +480,7 @@ run "resource_check_alert_source_usage_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_check_alert_source_usage.this.owner == var.owner
+    condition = opslevel_check_alert_source_usage.this.owner == var.owner
     error_message = format(
       "expected '%v' but got '%v'",
       var.owner,

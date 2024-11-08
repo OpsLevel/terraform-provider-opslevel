@@ -55,7 +55,7 @@ run "resource_secret_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_secret.this.created_at != null && opslevel_secret.this.updated_at != null
+    condition = opslevel_secret.this.created_at != null && opslevel_secret.this.updated_at != null
     error_message = format(
       "expected '%v' but to match '%v'",
       opslevel_secret.this.created_at,
@@ -64,7 +64,7 @@ run "resource_secret_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_secret.this.created_at == opslevel_secret.this.updated_at
+    condition = opslevel_secret.this.created_at == opslevel_secret.this.updated_at
     error_message = format(
       "expected '%v' but to match '%v'",
       opslevel_secret.this.created_at,

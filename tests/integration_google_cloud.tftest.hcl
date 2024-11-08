@@ -88,7 +88,7 @@ run "resource_integration_google_cloud_create_with_all_fields" {
 run "resource_integration_google_cloud_unset_optional_fields" {
 
   variables {
-    ownership_tag_keys = null
+    ownership_tag_keys      = null
     ownership_tag_overrides = null
   }
 
@@ -130,7 +130,7 @@ run "delete_google_cloud_integration_outside_of_terraform" {
 run "resource_integration_google_cloud_create_with_required_fields" {
 
   variables {
-    ownership_tag_keys = null
+    ownership_tag_keys      = null
     ownership_tag_overrides = null
   }
 

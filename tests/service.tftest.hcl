@@ -79,7 +79,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.aliases == toset(var.aliases)
+    condition = opslevel_service.this.aliases == toset(var.aliases)
     error_message = format(
       "expected '%v' but got '%v'",
       var.aliases,
@@ -88,7 +88,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.api_document_path == var.api_document_path
+    condition = opslevel_service.this.api_document_path == var.api_document_path
     error_message = format(
       "expected '%v' but got '%v'",
       var.api_document_path,
@@ -97,7 +97,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.description == var.description
+    condition = opslevel_service.this.description == var.description
     error_message = format(
       "expected '%v' but got '%v'",
       var.description,
@@ -106,7 +106,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.framework == var.framework
+    condition = opslevel_service.this.framework == var.framework
     error_message = format(
       "expected '%v' but got '%v'",
       var.framework,
@@ -120,7 +120,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.language == var.language
+    condition = opslevel_service.this.language == var.language
     error_message = format(
       "expected '%v' but got '%v'",
       var.language,
@@ -129,7 +129,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.lifecycle_alias == var.lifecycle_alias
+    condition = opslevel_service.this.lifecycle_alias == var.lifecycle_alias
     error_message = format(
       "expected '%v' but got '%v'",
       var.lifecycle_alias,
@@ -138,7 +138,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.name == var.name
+    condition = opslevel_service.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -147,7 +147,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.note == var.note
+    condition = opslevel_service.this.note == var.note
     error_message = format(
       "expected '%v' but got '%v'",
       var.note,
@@ -156,7 +156,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.owner == var.owner
+    condition = opslevel_service.this.owner == var.owner
     error_message = format(
       "expected '%v' but got '%v'",
       var.owner,
@@ -165,7 +165,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.preferred_api_document_source == var.preferred_api_document_source
+    condition = opslevel_service.this.preferred_api_document_source == var.preferred_api_document_source
     error_message = format(
       "expected '%v' but got '%v'",
       var.preferred_api_document_source,
@@ -174,7 +174,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.product == var.product
+    condition = opslevel_service.this.product == var.product
     error_message = format(
       "expected '%v' but got '%v'",
       var.product,
@@ -183,7 +183,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.tags == var.tags
+    condition = opslevel_service.this.tags == var.tags
     error_message = format(
       "expected '%v' but got '%v'",
       var.tags,
@@ -192,7 +192,7 @@ run "resource_service_create_with_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.tier_alias == var.tier_alias
+    condition = opslevel_service.this.tier_alias == var.tier_alias
     error_message = format(
       "expected '%v' but got '%v'",
       var.tier_alias,
@@ -344,7 +344,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.aliases == toset(var.aliases)
+    condition = opslevel_service.this.aliases == toset(var.aliases)
     error_message = format(
       "expected '%v' but got '%v'",
       var.aliases,
@@ -353,7 +353,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.api_document_path == var.api_document_path
+    condition = opslevel_service.this.api_document_path == var.api_document_path
     error_message = format(
       "expected '%v' but got '%v'",
       var.api_document_path,
@@ -362,7 +362,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.description == var.description
+    condition = opslevel_service.this.description == var.description
     error_message = format(
       "expected '%v' but got '%v'",
       var.description,
@@ -371,7 +371,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.framework == var.framework
+    condition = opslevel_service.this.framework == var.framework
     error_message = format(
       "expected '%v' but got '%v'",
       var.framework,
@@ -380,7 +380,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.language == var.language
+    condition = opslevel_service.this.language == var.language
     error_message = format(
       "expected '%v' but got '%v'",
       var.language,
@@ -389,7 +389,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.lifecycle_alias == var.lifecycle_alias
+    condition = opslevel_service.this.lifecycle_alias == var.lifecycle_alias
     error_message = format(
       "expected '%v' but got '%v'",
       var.lifecycle_alias,
@@ -398,7 +398,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.name == var.name
+    condition = opslevel_service.this.name == var.name
     error_message = format(
       "expected '%v' but got '%v'",
       var.name,
@@ -407,7 +407,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.note == var.note
+    condition = opslevel_service.this.note == var.note
     error_message = format(
       "expected '%v' but got '%v'",
       var.note,
@@ -416,7 +416,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.owner == var.owner
+    condition = opslevel_service.this.owner == var.owner
     error_message = format(
       "expected '%v' but got '%v'",
       var.owner,
@@ -425,7 +425,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.preferred_api_document_source == var.preferred_api_document_source
+    condition = opslevel_service.this.preferred_api_document_source == var.preferred_api_document_source
     error_message = format(
       "expected '%v' but got '%v'",
       var.preferred_api_document_source,
@@ -434,7 +434,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.product == var.product
+    condition = opslevel_service.this.product == var.product
     error_message = format(
       "expected '%v' but got '%v'",
       var.product,
@@ -443,7 +443,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.tags == var.tags
+    condition = opslevel_service.this.tags == var.tags
     error_message = format(
       "expected '%v' but got '%v'",
       var.tags,
@@ -452,7 +452,7 @@ run "resource_service_update_set_all_fields" {
   }
 
   assert {
-    condition     = opslevel_service.this.tier_alias == var.tier_alias
+    condition = opslevel_service.this.tier_alias == var.tier_alias
     error_message = format(
       "expected '%v' but got '%v'",
       var.tier_alias,
