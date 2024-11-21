@@ -117,13 +117,16 @@ func (r *ServiceDependencyResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	serviceDependency, err := r.client.CreateServiceDependency(opslevel.ServiceDependencyCreateInput{
+	serviceDependencyCreateInput := opslevel.ServiceDependencyCreateInput{
 		DependencyKey: opslevel.ServiceDependencyKey{
 			DestinationIdentifier: opslevel.NewIdentifier(planModel.DependsUpon.ValueString()),
 			SourceIdentifier:      opslevel.NewIdentifier(planModel.Service.ValueString()),
 		},
-		Notes: planModel.Note.ValueStringPointer(),
-	})
+	}
+	if !planModel.Note.IsNull() && !planModel.Note.IsUnknown() {
+		serviceDependencyCreateInput.Notes = planModel.Note.ValueStringPointer()
+	}
+	serviceDependency, err := r.client.CreateServiceDependency(serviceDependencyCreateInput)
 	if err != nil || serviceDependency == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create serviceDependency, got error: %s", err))
 		return
@@ -200,7 +203,7 @@ func extractServiceDependency(id string, serviceDependencies opslevel.ServiceDep
 
 func (r *ServiceDependencyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.AddError("terraform plugin error",
-		"property assignments should never be updated, only replaced.\nplease file a bug report including your .tf file at: github.com/OpsLevel/terraform-provider-opslevel")
+		"service dependencies should never be updated, only replaced.\nplease file a bug report including your .tf file at: github.com/OpsLevel/terraform-provider-opslevel")
 }
 
 func (r *ServiceDependencyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

@@ -1,0 +1,3 @@
+kind: Bugfix
+body: '"note" field on service_dependency correctly takes empty string'
+time: 2024-11-21T08:14:07.471282-06:00
