@@ -73,12 +73,21 @@ run "resource_service_dependency_create_with_service_id" {
 
 }
 
-run "resource_service_dependency_update_unset_optional_fields" {
+run "resource_service_dependency_update_does_force_recreate" {
 
   variables {
     depends_upon = run.from_service_module.all.services[0].id
     service      = run.from_service_module.all.services[1].id
     note         = null
+  }
+
+  assert {
+    condition = run.resource_service_dependency_create_with_service_id.this.id != opslevel_service_dependency.this.id
+    error_message = format(
+      "expected old id '%v' to be different from new id '%v'",
+      run.resource_service_dependency_create_with_service_id.this.id,
+      opslevel_service_dependency.this.id,
+    )
   }
 
   module {
