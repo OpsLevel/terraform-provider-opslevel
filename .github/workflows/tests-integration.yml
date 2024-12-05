@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: 'true'
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -33,11 +35,11 @@ jobs:
         with:
           terraform_version: ${{ github.event.inputs.tf_version }}
           terraform_wrapper: false
-      - name: Run Tests
+      - name: Tests using only this repo
         run: task test-integration
         env:
           OPSLEVEL_API_TOKEN: ${{ secrets.OPSLEVEL_PAT_API_TOKEN }}
-      - name: Run Tests
+      - name: Tests using Terraform OpsLevel Modules repo
         run: task test-unreleased
         env:
           OPSLEVEL_API_TOKEN: ${{ secrets.OPSLEVEL_PAT_API_TOKEN }}
