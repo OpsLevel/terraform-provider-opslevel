@@ -6,13 +6,13 @@ on:
       tf_version:
         description: "Terraform version to use for integration testing"
         type: choice
-        default: "1.10.0"
+        default: "~1.10.0"
         options:
-          - "1.6.0"
-          - "1.7.0"
-          - "1.8.0"
-          - "1.9.0"
-          - "1.10.0"
+          - "~1.6.0"
+          - "~1.7.0"
+          - "~1.8.0"
+          - "~1.9.0"
+          - "~1.10.0"
 
 jobs:
   test:
