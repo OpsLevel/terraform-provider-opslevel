@@ -39,6 +39,8 @@ jobs:
         run: task test-integration
         env:
           OPSLEVEL_API_TOKEN: ${{ secrets.OPSLEVEL_PAT_API_TOKEN }}
+      - name: Setup OpsLevel CLI
+        uses: opslevel/actions/setup-cli@v1
       - name: Tests using Terraform OpsLevel Modules repo
         run: task test-unreleased
         env:
