@@ -114,6 +114,12 @@ tasks:
     cmds:
       - task: debug:do-debug-plan
 
+  debug-validate:
+    desc: After debug-start and debug-attach, run "terraform validate" with 'TF_REATTACH_PROVIDERS'
+    aliases: ["dbg-validate"]
+    cmds:
+      - task: debug:do-debug-validate
+
   debug-test:
     desc: After debug-start and debug-attach, run "terraform test" with 'TF_REATTACH_PROVIDERS'
     aliases: ["dbg-test"]
