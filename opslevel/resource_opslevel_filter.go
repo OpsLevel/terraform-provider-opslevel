@@ -247,7 +247,7 @@ func (r *FilterResource) ValidateConfig(ctx context.Context, req resource.Valida
 
 	for _, filterPredicate := range predicateModels {
 		if err := filterPredicate.Validate(); err != nil {
-			resp.Diagnostics.AddAttributeError(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
+			resp.Diagnostics.AddAttributeWarning(path.Root("predicate"), "Invalid Attribute Configuration", err.Error())
 		}
 	}
 }

@@ -235,7 +235,7 @@ func (r *CheckToolUsageResource) ValidateConfig(ctx context.Context, req resourc
 		predicateModel, diags := PredicateObjectToModel(ctx, predicate)
 		resp.Diagnostics.Append(diags...)
 		if err := predicateModel.Validate(); err != nil {
-			resp.Diagnostics.AddAttributeError(path.Root(predicateSchemaName), "Invalid Attribute Configuration", err.Error())
+			resp.Diagnostics.AddAttributeWarning(path.Root(predicateSchemaName), "Invalid Attribute Configuration", err.Error())
 		}
 	}
 }

@@ -169,7 +169,7 @@ func (r *CheckTagDefinedResource) ValidateConfig(ctx context.Context, req resour
 	predicateModel, diags := PredicateObjectToModel(ctx, tagPredicate)
 	resp.Diagnostics.Append(diags...)
 	if err := predicateModel.Validate(); err != nil {
-		resp.Diagnostics.AddAttributeError(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
+		resp.Diagnostics.AddAttributeWarning(path.Root("tag_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 
