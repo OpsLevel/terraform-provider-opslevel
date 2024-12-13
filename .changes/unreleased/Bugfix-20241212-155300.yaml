@@ -1,3 +1,0 @@
-kind: Bugfix
-body: fix incorrect validation error on predicate values set by for_each values
-time: 2024-12-12T15:53:00.747508-06:00
