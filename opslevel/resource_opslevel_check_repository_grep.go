@@ -187,7 +187,7 @@ func (r *CheckRepositoryGrepResource) ValidateConfig(ctx context.Context, req re
 		resp.Diagnostics.AddError("Config Error", "When 'directory_search' is true, file_contents_predicate type must be 'exists' or 'does_not_exist'")
 	}
 	if err := predicateModel.Validate(); err != nil {
-		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
+		resp.Diagnostics.AddAttributeWarning(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

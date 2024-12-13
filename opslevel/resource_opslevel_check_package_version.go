@@ -168,7 +168,7 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 				resp.Diagnostics.AddError("version_constraint_predicate", fmt.Sprintf("version_constraint_predicate must be one of %v", packageVersionPossiblePredicateTypes))
 			} else {
 				if err := predicateModel.Validate(); err != nil {
-					resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Configuration", err.Error())
+					resp.Diagnostics.AddAttributeWarning(path.Root("version_constraint_predicate"), "Invalid Configuration", err.Error())
 				}
 			}
 		}

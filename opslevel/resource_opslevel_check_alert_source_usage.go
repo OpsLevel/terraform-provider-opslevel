@@ -166,7 +166,7 @@ func (r *CheckAlertSourceUsageResource) ValidateConfig(ctx context.Context, req 
 	predicateModel, diags := PredicateObjectToModel(ctx, alertNamePredicate)
 	resp.Diagnostics.Append(diags...)
 	if err := predicateModel.Validate(); err != nil {
-		resp.Diagnostics.AddAttributeError(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
+		resp.Diagnostics.AddAttributeWarning(path.Root("alert_name_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 

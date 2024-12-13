@@ -193,7 +193,7 @@ func (r *CheckRepositoryFileResource) ValidateConfig(ctx context.Context, req re
 	predicateModel, diags := PredicateObjectToModel(ctx, fileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
 	if err := predicateModel.Validate(); err != nil {
-		resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
+		resp.Diagnostics.AddAttributeWarning(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 	}
 }
 
