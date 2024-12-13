@@ -156,16 +156,28 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 
 	if configModel.PackageConstraint.ValueString() == string(opslevel.PackageConstraintEnumMatchesVersion) {
 		if configModel.MissingPackageResult.IsNull() && !configModel.MissingPackageResult.IsUnknown() {
-			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is required when package_constraint is 'matches_version'")
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("missing_package_result"),
+				"Invalid Configuration",
+				"missing_package_result is required when package_constraint is 'matches_version'",
+			)
 		}
 		if configModel.VersionConstraintPredicate.IsNull() && !configModel.VersionConstraintPredicate.IsUnknown() {
-			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is required when package_constraint is 'matches_version'")
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("version_constraint_predicate"),
+				"Invalid Configuration",
+				"version_constraint_predicate is required when package_constraint is 'matches_version'",
+			)
 		}
 		if !configModel.VersionConstraintPredicate.IsNull() {
 			predicateModel, diags := PredicateObjectToModel(ctx, configModel.VersionConstraintPredicate)
 			resp.Diagnostics.Append(diags...)
 			if !slices.Contains(packageVersionPossiblePredicateTypes, opslevel.PredicateTypeEnum(predicateModel.Type.ValueString())) {
-				resp.Diagnostics.AddError("version_constraint_predicate", fmt.Sprintf("version_constraint_predicate must be one of %v", packageVersionPossiblePredicateTypes))
+				resp.Diagnostics.AddAttributeWarning(
+					path.Root("version_constraint_predicate"),
+					"Invalid Configuration",
+					fmt.Sprintf("version_constraint_predicate must be one of %v", packageVersionPossiblePredicateTypes),
+				)
 			} else {
 				if err := predicateModel.Validate(); err != nil {
 					resp.Diagnostics.AddAttributeWarning(path.Root("version_constraint_predicate"), "Invalid Configuration", err.Error())
@@ -174,10 +186,18 @@ func (r *CheckPackageVersionResource) ValidateConfig(ctx context.Context, req re
 		}
 	} else {
 		if !configModel.MissingPackageResult.IsUnknown() && !configModel.MissingPackageResult.IsNull() {
-			resp.Diagnostics.AddError("missing_package_result", "missing_package_result is only valid when package_constraint is 'matches_version'")
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("missing_package_result"),
+				"Invalid Configuration",
+				"missing_package_result is only valid when package_constraint is 'matches_version'",
+			)
 		}
 		if !configModel.VersionConstraintPredicate.IsUnknown() && !configModel.VersionConstraintPredicate.IsNull() {
-			resp.Diagnostics.AddError("version_constraint_predicate", "version_constraint_predicate is only valid when package_constraint is 'matches_version'")
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("version_constraint_predicate"),
+				"Invalid Configuration",
+				"version_constraint_predicate is only valid when package_constraint is 'matches_version'",
+			)
 		}
 	}
 }

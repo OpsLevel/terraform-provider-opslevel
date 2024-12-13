@@ -185,7 +185,7 @@ func (r *CheckRepositorySearchResource) ValidateConfig(ctx context.Context, req 
 	predicateModel, diags := PredicateObjectToModel(ctx, fileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
 	if predicateModel.Type.ValueString() == "exists" || predicateModel.Type.ValueString() == "does_not_exist" {
-		resp.Diagnostics.AddError("Config Error", "file_contents_predicate type must not be 'exists' or 'does_not_exist'")
+		resp.Diagnostics.AddAttributeWarning(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", "type must not be 'exists' or 'does_not_exist'")
 	}
 	if err := predicateModel.Validate(); err != nil {
 		resp.Diagnostics.AddAttributeWarning(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
