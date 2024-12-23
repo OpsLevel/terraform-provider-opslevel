@@ -32,14 +32,12 @@ type ServiceRelationshipResource struct {
 
 // ServiceRelationshipResourceModel describes the Service managed resource.
 type ServiceRelationshipResourceModel struct {
-	Id      types.String `tfsdk:"id"`
 	Service types.String `tfsdk:"service"`
 	System  types.String `tfsdk:"system"`
 }
 
 func NewServiceRelationshipResourceModel(service *opslevel.Service, givenModel ServiceRelationshipResourceModel) ServiceRelationshipResourceModel {
 	return ServiceRelationshipResourceModel{
-		Id:      ComputedStringValue(string(service.Id)),
 		Service: givenModel.Service,
 		System:  givenModel.System,
 	}
@@ -55,13 +53,6 @@ func (r *ServiceRelationshipResource) Schema(ctx context.Context, req resource.S
 		MarkdownDescription: "Service Relationship Resource",
 
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Description: "The ID of the service relationship.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
 			"service": schema.StringAttribute{
 				Description: "The ID or alias of the service with the system.",
 				Required:    true,
@@ -131,8 +122,8 @@ func (r *ServiceRelationshipResource) Read(ctx context.Context, req resource.Rea
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	if (opslevel.IsID(systemIdentifier) && string(service.Parent.Id) != systemIdentifier) ||
-		(!opslevel.IsID(systemIdentifier) && slices.Contains(service.Parent.Aliases, systemIdentifier)) {
+	if (opslevel.IsID(systemIdentifier) && string(service.Parent.Id) != systemIdentifier) &&
+		(!opslevel.IsID(systemIdentifier) && !slices.Contains(service.Parent.Aliases, systemIdentifier)) {
 		resp.Diagnostics.AddError(
 			"opslevel client error",
 			fmt.Sprintf("Expected service '%s' to have parent system '%s' but it does not.", serviceIdentifier, systemIdentifier),
@@ -224,14 +215,10 @@ func (r *ServiceRelationshipResource) ImportState(ctx context.Context, req resou
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
-	system, err := r.client.GetSystem(systemIdentifier)
-	if err != nil {
+	if _, err := r.client.GetSystem(systemIdentifier); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read system, got error: %s", err))
 		return
 	}
-
-	idPath := path.Root("id")
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, idPath, system.Id)...)
 
 	servicePath := path.Root("service")
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, servicePath, serviceIdentifier)...)

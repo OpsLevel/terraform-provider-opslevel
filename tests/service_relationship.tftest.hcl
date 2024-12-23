@@ -33,16 +33,10 @@ run "resource_service_relationship_create_with_ids" {
 
   assert {
     condition = alltrue([
-      can(opslevel_service_relationship.this.id),
       can(opslevel_service_relationship.this.service),
       can(opslevel_service_relationship.this.system),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
-  }
-
-  assert {
-    condition     = startswith(opslevel_service_relationship.this.id, var.id_prefix)
-    error_message = replace(var.error_wrong_id, "TYPE", var.resource_name)
   }
 
   assert {
@@ -88,11 +82,11 @@ run "resource_service_relationship_update_does_force_recreate" {
   }
 
   assert {
-    condition = run.resource_service_relationship_create_with_ids.this.id != opslevel_service_relationship.this.id
+    condition = run.resource_service_relationship_create_with_ids.this != opslevel_service_relationship.this
     error_message = format(
-      "expected old id '%v' to be different from new id '%v'",
-      run.resource_service_relationship_create_with_ids.this.id,
-      opslevel_service_relationship.this.id,
+      "expected old service_relationship '%v' to be different from new service_relationship '%v'",
+      run.resource_service_relationship_create_with_ids.this,
+      opslevel_service_relationship.this,
     )
   }
 
