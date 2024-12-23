@@ -1,0 +1,9 @@
+# With IDs
+terraform import opslevel_service_relationship.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
+
+# With aliases
+terraform import opslevel_service_relationship.example my_service:my_system
+
+# With ID and alias
+terraform import opslevel_service_relationship.example my_service:Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0
+terraform import opslevel_service_relationship.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS84Mg:my_system

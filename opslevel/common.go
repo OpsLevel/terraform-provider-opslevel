@@ -140,6 +140,14 @@ func getDatasourceFilter(validFieldNames []string) schema.SingleNestedBlock {
 	}
 }
 
+// Temp wrapper until opslevel-go is updated
+func getService(client *opslevel.Client, serviceIdentifier string) (service *opslevel.Service, err error) {
+	if opslevel.IsID(serviceIdentifier) {
+		return client.GetService(opslevel.ID(serviceIdentifier))
+	}
+	return client.GetServiceWithAlias(serviceIdentifier)
+}
+
 func flattenTag(tag opslevel.Tag) string {
 	return fmt.Sprintf("%s:%s", tag.Key, tag.Value)
 }
