@@ -65,6 +65,9 @@ func (r *ServiceRelationshipResource) Schema(ctx context.Context, req resource.S
 			"service": schema.StringAttribute{
 				Description: "The ID or alias of the service with the system.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"system": schema.StringAttribute{
 				Description: "The ID or alias of the system tied to the service.",
@@ -129,7 +132,7 @@ func (r *ServiceRelationshipResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 	if (opslevel.IsID(systemIdentifier) && string(service.Parent.Id) != systemIdentifier) ||
-		!slices.Contains(service.Parent.Aliases, systemIdentifier) {
+		(!opslevel.IsID(systemIdentifier) && slices.Contains(service.Parent.Aliases, systemIdentifier)) {
 		resp.Diagnostics.AddError(
 			"opslevel client error",
 			fmt.Sprintf("Expected service '%s' to have parent system '%s' but it does not.", serviceIdentifier, systemIdentifier),
