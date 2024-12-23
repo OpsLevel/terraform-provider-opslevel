@@ -192,7 +192,15 @@ func (r *ServiceRelationshipResource) Delete(ctx context.Context, req resource.D
 			Id:     &service.Id,
 			Parent: opslevel.NewIdentifier(),
 		}
-		_, _ = r.client.UpdateService(svcUpdate)
+		if _, err = r.client.UpdateService(svcUpdate); err != nil {
+			resp.Diagnostics.AddWarning("opslevel client error",
+				fmt.Sprintf(
+					"Issue removing parent system '%s' from service '%s', got error: %s",
+					systemIdentifier,
+					serviceIdentifier,
+					err,
+				))
+		}
 	}
 
 	tflog.Trace(ctx, "deleted a service relationship resource")
