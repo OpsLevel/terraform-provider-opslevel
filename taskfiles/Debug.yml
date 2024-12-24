@@ -16,6 +16,8 @@ tasks:
   do-debug-attach:
     desc: Second, attach to headless debug sessions
     aliases: ["dbg-attach", "dbg2", "debug2"]
+    deps:
+      - install-delve
     vars:
       LOCAL_PORT:
         sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
@@ -46,6 +48,8 @@ tasks:
   do-debug-start:
     desc: First, start headless debug
     aliases: ["dbg-start", "dbg1", "debug1"]
+    deps:
+      - install-delve
     vars:
       BINARY: terraform-provider-opslevel_debug_{{.TF_DEBUG_VERSION}}
     interactive: true
@@ -58,3 +62,10 @@ tasks:
       - task: tf:terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" }
       - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.ROOT_DIR}}/{{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
+
+  install-delve:
+    desc: Install delve for debugging
+    status:
+      - which dlv
+    cmds:
+      - go install github.com/go-delve/delve/cmd/dlv@latest
