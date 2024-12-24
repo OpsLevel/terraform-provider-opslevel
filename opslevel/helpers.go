@@ -24,7 +24,7 @@ func GetTeamID(d *diag.Diagnostics, identifier string) *opslevel.ID {
 	}
 	team, ok := opslevel.Cache.TryGetTeam(identifier)
 	if !ok {
-		d.AddError("opslevel error", fmt.Sprintf("failed to find team '%s'", identifier))
+		d.AddError("opslevel error", fmt.Sprintf("failed to find team with alias '%s'", identifier))
 		return opslevel.NewID()
 	}
 	return &team.Id
