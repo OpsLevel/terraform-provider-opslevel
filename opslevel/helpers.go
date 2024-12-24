@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+
 	"github.com/opslevel/opslevel-go/v2024"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
