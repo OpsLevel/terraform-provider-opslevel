@@ -85,7 +85,7 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Optional:    true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the domain.",
+				Description: "The id or alias of the team that owns the domain.",
 				Optional:    true,
 			},
 		},

@@ -93,7 +93,7 @@ func (r *SystemResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Optional:    true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the system.",
+				Description: "The id or alias of the team that owns the system.",
 				Optional:    true,
 			},
 		},
