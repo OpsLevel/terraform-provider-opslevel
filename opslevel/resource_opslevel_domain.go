@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2024"
@@ -86,9 +85,8 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Optional:    true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the domain.",
+				Description: "The id or alias of the team that owns the domain.",
 				Optional:    true,
-				Validators:  []validator.String{IdStringValidator()},
 			},
 		},
 	}
@@ -104,7 +102,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 		Description: planModel.Description.ValueStringPointer(),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
-		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create domain, got error: %s", err))
@@ -147,7 +145,7 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
-		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))

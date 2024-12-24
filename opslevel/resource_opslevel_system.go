@@ -93,9 +93,8 @@ func (r *SystemResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Optional:    true,
 			},
 			"owner": schema.StringAttribute{
-				Description: "The id of the team that owns the system.",
+				Description: "The id or alias of the team that owns the system.",
 				Optional:    true,
-				Validators:  []validator.String{IdStringValidator()},
 			},
 		},
 	}
@@ -110,8 +109,11 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 	systemInput := opslevel.SystemInput{
 		Name:        planModel.Name.ValueStringPointer(),
 		Description: planModel.Description.ValueStringPointer(),
-		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	if planModel.Domain.ValueString() != "" {
 		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
@@ -157,8 +159,11 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 	systemInput := opslevel.SystemInput{
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
-		OwnerId:     opslevel.NewID(planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	if planModel.Domain.IsNull() {
 		systemInput.Parent = opslevel.NewIdentifier()
