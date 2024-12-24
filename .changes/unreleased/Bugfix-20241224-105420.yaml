@@ -1,0 +1,4 @@
+kind: Bugfix
+body: Actually allow opslevel_domain and opslevel_system resources to specify an alias
+  for the owner
+time: 2024-12-24T10:54:20.871486-06:00
