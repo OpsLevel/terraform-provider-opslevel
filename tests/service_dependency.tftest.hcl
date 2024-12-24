@@ -100,3 +100,22 @@ run "resource_service_dependency_update_does_force_recreate" {
   }
 
 }
+
+run "resource_service_dependency_update_note_empty_string" {
+
+  variables {
+    depends_upon = run.from_service_module.all.services[0].id
+    service      = run.from_service_module.all.services[1].id
+    note         = ""
+  }
+
+  module {
+    source = "./opslevel_modules/modules/service/dependency"
+  }
+
+  assert {
+    condition     = opslevel_service_dependency.this.note == ""
+    error_message = "expected note to be an empty string"
+  }
+
+}

@@ -41,10 +41,14 @@ type ServiceDependencyResourceModel struct {
 func NewServiceDependencyResourceModel(serviceDependency opslevel.ServiceDependency, givenModel ServiceDependencyResourceModel) (ServiceDependencyResourceModel, diag.Diagnostics) {
 	var diag diag.Diagnostics
 	serviceDependencyResourceModel := ServiceDependencyResourceModel{
-		Id:   ComputedStringValue(string(serviceDependency.Id)),
-		Note: OptionalStringValue(serviceDependency.Notes),
+		Id: ComputedStringValue(string(serviceDependency.Id)),
 	}
 
+	if givenModel.Note.IsNull() {
+		serviceDependencyResourceModel.Note = types.StringNull()
+	} else {
+		serviceDependencyResourceModel.Note = types.StringValue(serviceDependency.Notes)
+	}
 	dependsUpon := identifierFromServiceId(givenModel.DependsUpon.ValueString(), serviceDependency.DependsOn)
 	if dependsUpon == "" {
 		diag.AddError("opslevel client error", fmt.Sprintf("expected depends_upon '%s' got '%s'", givenModel.DependsUpon.ValueString(), dependsUpon))
