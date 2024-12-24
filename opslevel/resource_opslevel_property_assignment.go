@@ -106,11 +106,12 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 
 	definition := planModel.Definition.ValueString()
 	owner := planModel.Owner.ValueString()
-	value := opslevel.JsonString(planModel.Value.ValueString())
 	input := opslevel.PropertyInput{
 		Definition: *opslevel.NewIdentifier(planModel.Definition.ValueString()),
 		Owner:      *opslevel.NewIdentifier(planModel.Owner.ValueString()),
-		Value:      value,
+	}
+	if planModel.Value.IsNull() {
+		input.Value = opslevel.JsonString(planModel.Value.ValueString())
 	}
 	assignment, err := resource.client.PropertyAssign(input)
 	if err != nil {
