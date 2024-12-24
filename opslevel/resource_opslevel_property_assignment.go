@@ -106,11 +106,12 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 
 	definition := planModel.Definition.ValueString()
 	owner := planModel.Owner.ValueString()
-	value := opslevel.JsonString(planModel.Value.ValueString())
 	input := opslevel.PropertyInput{
 		Definition: *opslevel.NewIdentifier(planModel.Definition.ValueString()),
 		Owner:      *opslevel.NewIdentifier(planModel.Owner.ValueString()),
-		Value:      value,
+	}
+	if !planModel.Value.IsNull() {
+		input.Value = opslevel.JsonString(planModel.Value.ValueString())
 	}
 	assignment, err := resource.client.PropertyAssign(input)
 	if err != nil {
@@ -123,7 +124,7 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 	stateModel.Owner = planModel.Owner
 	stateModel.Definition = planModel.Definition
 
-	tflog.Trace(ctx, fmt.Sprintf("assigned property (%s) on service (%s) with value: '%s'", definition, owner, value))
+	tflog.Trace(ctx, fmt.Sprintf("assigned property (%s) on service (%s) with value: '%s'", definition, owner, input.Value))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
@@ -140,14 +141,13 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
 		return
 	}
-	value := *assignment.Value
 
 	verifiedStateModel := NewPropertyAssignmentResourceModel(*assignment)
 	// user is free to use either alias or ID for 'owner' and 'definition' fields
 	verifiedStateModel.Owner = stateModel.Owner
 	verifiedStateModel.Definition = stateModel.Definition
 
-	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%s'", definition, owner, value))
+	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%s'", definition, owner, *assignment.Value))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 

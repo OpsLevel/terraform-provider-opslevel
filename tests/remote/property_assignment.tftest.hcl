@@ -93,22 +93,21 @@ run "resource_property_assignment_create_with_all_fields" {
 
 }
 
-# BUG: unable to unset 'value' field - see [issue](https://github.com/OpsLevel/team-platform/issues/452)
-# run "resource_property_assignment_update_unset_optional_fields" {
+run "resource_property_assignment_update_unset_optional_fields" {
 
-#   variables {
-#     definition = run.from_property_definition_module.first_property_definitions.id
-#     owner      = run.from_service_module.first_service.id
-#     value      = null
-#   }
+  variables {
+    definition = run.from_property_definition_module.first_property_definitions.id
+    owner      = run.from_service_module.first_service.id
+    value      = null
+  }
 
-#   module {
-#     source = "./property_assignment"
-#   }
+  module {
+    source = "./property_assignment"
+  }
 
-#   assert {
-#     condition     = opslevel_property_assignment.test.value == null
-#     error_message = var.error_expected_null_field
-#   }
+  assert {
+    condition     = opslevel_property_assignment.test.value == null
+    error_message = var.error_expected_null_field
+  }
 
-# }
+}
