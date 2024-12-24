@@ -102,7 +102,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 		Description: planModel.Description.ValueStringPointer(),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
-		OwnerId:     GetTeamID(&resp.Diagnostics, planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create domain, got error: %s", err))
@@ -145,7 +145,7 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))

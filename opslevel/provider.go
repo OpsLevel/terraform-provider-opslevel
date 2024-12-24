@@ -161,7 +161,6 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 		tflog.Error(ctx, fmt.Sprintf("OpsLevel client validation error: %s", err))
 	}
 	tflog.Debug(ctx, "OpsLevel client is valid")
-	opslevel.Cache.CacheTeams(client)
 	tflog.Info(ctx, "OpsLevel client is initialized")
 
 	resp.DataSourceData = client

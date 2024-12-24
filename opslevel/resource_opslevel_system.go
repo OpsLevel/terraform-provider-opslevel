@@ -109,7 +109,7 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 	systemInput := opslevel.SystemInput{
 		Name:        planModel.Name.ValueStringPointer(),
 		Description: planModel.Description.ValueStringPointer(),
-		OwnerId:     GetTeamID(&resp.Diagnostics, planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        planModel.Note.ValueStringPointer(),
 	}
 	if resp.Diagnostics.HasError() {
@@ -159,7 +159,7 @@ func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest,
 	systemInput := opslevel.SystemInput{
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, planModel.Owner.ValueString()),
+		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
 	}
 	if resp.Diagnostics.HasError() {
