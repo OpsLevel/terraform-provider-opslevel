@@ -43,7 +43,7 @@ func NewSecretResourceModel(secret opslevel.Secret, ownerIdentifier, sensitiveVa
 	return SecretResourceModel{
 		Alias:     RequiredStringValue(secret.Alias),
 		CreatedAt: ComputedStringValue(secret.Timestamps.CreatedAt.Local().Format(time.RFC850)),
-		Id:        ComputedStringValue(string(secret.ID)),
+		Id:        ComputedStringValue(string(secret.Id)),
 		Owner:     RequiredStringValue(ownerIdentifier),
 		UpdatedAt: ComputedStringValue(secret.Timestamps.UpdatedAt.Local().Format(time.RFC850)),
 		Value:     RequiredStringValue(sensitiveValue),
@@ -123,7 +123,7 @@ func (r *SecretResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	secret, err := r.client.GetSecret(data.Id.ValueString())
 	if err != nil {
-		if (secret == nil || secret.ID == "") && opslevel.IsOpsLevelApiError(err) {
+		if (secret == nil || secret.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

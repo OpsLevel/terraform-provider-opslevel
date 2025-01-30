@@ -45,11 +45,11 @@ func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalA
 	return WebhookActionResourceModel{
 		Description: StringValueFromResourceAndModelField(webhookAction.Description, givenModel.Description),
 		Headers:     jsonToMapValue(webhookAction.Headers),
-		Id:          ComputedStringValue(string(webhookAction.Id)),
-		Method:      RequiredStringValue(string(webhookAction.HTTPMethod)),
+		Id:          ComputedStringValue(string(webhookAction.CustomActionsWebhookAction.Id)),
+		Method:      RequiredStringValue(string(webhookAction.HttpMethod)),
 		Name:        RequiredStringValue(webhookAction.Name),
 		Payload:     RequiredStringValue(webhookAction.LiquidTemplate),
-		Url:         RequiredStringValue(webhookAction.WebhookURL),
+		Url:         RequiredStringValue(webhookAction.WebhookUrl),
 	}
 }
 
@@ -118,10 +118,10 @@ func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	webhookActionInput := opslevel.CustomActionsWebhookActionCreateInput{
-		Description:    planModel.Description.ValueStringPointer(),
+		Description:    nullable(planModel.Description.ValueStringPointer()),
 		Headers:        &headersAsJson,
 		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString()),
-		LiquidTemplate: planModel.Payload.ValueStringPointer(),
+		LiquidTemplate: nullable(planModel.Payload.ValueStringPointer()),
 		Name:           planModel.Name.ValueString(),
 		WebhookUrl:     planModel.Url.ValueString(),
 	}
@@ -144,7 +144,7 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 
 	webhookAction, err := r.client.GetCustomAction(stateModel.Id.ValueString())
 	if err != nil {
-		if (webhookAction == nil || webhookAction.Id == "") && opslevel.IsOpsLevelApiError(err) {
+		if (webhookAction == nil || webhookAction.CustomActionsWebhookAction.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -160,35 +160,40 @@ func (r *WebhookActionResource) Read(ctx context.Context, req resource.ReadReque
 
 func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[WebhookActionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	headersAsJson, diags := MapValueToOpslevelJson(ctx, planModel.Headers)
-	if diags.HasError() {
-		resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", planModel.Headers))
-		return
+	input := opslevel.CustomActionsWebhookActionUpdateInput{
+		Description:    unsetStringHelper(planModel.Description, stateModel.Description),
+		HttpMethod:     asEnum[opslevel.CustomActionsHttpMethodEnum](planModel.Method.ValueString()),
+		Id:             opslevel.ID(planModel.Id.ValueString()),
+		LiquidTemplate: nullable(planModel.Payload.ValueStringPointer()),
+		Name:           nullable(planModel.Name.ValueStringPointer()),
+		WebhookUrl:     nullable(planModel.Url.ValueStringPointer()),
 	}
 
-	httpMethod := opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString())
-	updateWebhookActionInput := opslevel.CustomActionsWebhookActionUpdateInput{
-		Description:    opslevel.RefOf(planModel.Description.ValueString()),
-		Headers:        &headersAsJson,
-		HttpMethod:     &httpMethod,
-		Id:             opslevel.ID(planModel.Id.ValueString()),
-		LiquidTemplate: opslevel.RefOf(planModel.Payload.ValueString()),
-		Name:           opslevel.RefOf(planModel.Name.ValueString()),
-		WebhookUrl:     opslevel.RefOf(planModel.Url.ValueString()),
+	if !planModel.Headers.IsNull() {
+		headersAsJson, diags := MapValueToOpslevelJson(ctx, planModel.Headers)
+		if diags.HasError() {
+			resp.Diagnostics.AddError("Config error", fmt.Sprintf("Unable to create opslevel.JSON from 'headers': '%s'", planModel.Headers))
+			return
+		}
+		input.Headers = &headersAsJson
+	} else if !stateModel.Headers.IsNull() {
+		input.Headers = &opslevel.JSON{}
 	}
-	resource, err := r.client.UpdateWebhookAction(updateWebhookActionInput)
+
+	res, err := r.client.UpdateWebhookAction(input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update webhookAction, got error: %s", err))
 		return
 	}
-	updatedWebhookActionResourceModel := NewWebhookActionResourceModel(*resource, planModel)
+	stateModelFinal := NewWebhookActionResourceModel(*res, planModel)
 
 	tflog.Trace(ctx, "updated a webhook action resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedWebhookActionResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModelFinal)...)
 }
 
 func (r *WebhookActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

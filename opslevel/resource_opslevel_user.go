@@ -113,9 +113,9 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	userInput := opslevel.UserInput{
-		Name:             planModel.Name.ValueStringPointer(),
-		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
-		SkipWelcomeEmail: planModel.SkipWelcomeEmail.ValueBoolPointer(),
+		Name:             nullable(planModel.Name.ValueStringPointer()),
+		Role:             asEnum[opslevel.UserRole](planModel.Role.ValueString()),
+		SkipWelcomeEmail: nullable(planModel.SkipWelcomeEmail.ValueBoolPointer()),
 	}
 	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SendInvite.ValueBool())
 	if err != nil {
@@ -160,17 +160,20 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if planModel.SendInvite != stateModel.SendInvite {
 		resp.Diagnostics.AddWarning("opslevel_user update no-op", "Modifying the send_invite attribute has no effect on an existing user.")
 	}
+	input := opslevel.UserInput{
+		Name:             unsetStringHelper(planModel.Name, stateModel.Name),
+		SkipWelcomeEmail: nullable(planModel.SkipWelcomeEmail.ValueBoolPointer()),
+	}
+	if !planModel.Role.IsNull() {
+		input.Role = asEnum[opslevel.UserRole](planModel.Role.ValueString())
+	} // We don't check state here because its ambigous what to do if the end user removes the role configuration
 
-	resource, err := r.client.UpdateUser(planModel.Id.ValueString(), opslevel.UserInput{
-		Name:             planModel.Name.ValueStringPointer(),
-		Role:             opslevel.RefOf(opslevel.UserRole(planModel.Role.ValueString())),
-		SkipWelcomeEmail: opslevel.RefOf(planModel.SkipWelcomeEmail.ValueBool()),
-	})
+	res, err := r.client.UpdateUser(planModel.Id.ValueString(), input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update user, got error: %s", err))
 		return
 	}
-	stateModel = NewUserResourceModel(*resource, planModel)
+	stateModel = NewUserResourceModel(*res, planModel)
 
 	tflog.Trace(ctx, "updated a user resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)

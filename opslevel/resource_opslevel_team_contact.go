@@ -98,7 +98,7 @@ func (teamContactResource *TeamContactResource) Create(ctx context.Context, req 
 
 	contactCreateInput := opslevel.ContactInput{
 		Address:     data.Value.ValueString(),
-		DisplayName: data.Name.ValueStringPointer(),
+		DisplayName: nullable(data.Name.ValueStringPointer()),
 		Type:        opslevel.ContactType(data.Type.ValueString()),
 	}
 

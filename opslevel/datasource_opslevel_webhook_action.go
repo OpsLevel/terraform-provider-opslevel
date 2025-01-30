@@ -65,33 +65,33 @@ func jsonToMapValue(json map[string]any) basetypes.MapValue {
 }
 
 func newWebhookActionWithIdentifierDataSourceModel(webhookAction opslevel.CustomActionsExternalAction, identifier string) webhookActionWithIdentifierDataSourceModel {
-	aliases := OptionalStringListValue(webhookAction.Aliases)
+	aliases := OptionalStringListValue(webhookAction.CustomActionsWebhookAction.Aliases)
 	action := webhookActionWithIdentifierDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
 		Headers:     jsonToMapValue(webhookAction.Headers),
-		Id:          RequiredStringValue(string(webhookAction.Id)),
+		Id:          RequiredStringValue(string(webhookAction.CustomActionsWebhookAction.Id)),
 		Identifier:  types.StringValue(identifier),
-		Method:      types.StringValue(string(webhookAction.CustomActionsWebhookAction.HTTPMethod)),
+		Method:      types.StringValue(string(webhookAction.HttpMethod)),
 		Name:        types.StringValue(webhookAction.Name),
 		Payload:     types.StringValue(webhookAction.LiquidTemplate),
-		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookURL),
+		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookUrl),
 	}
 
 	return action
 }
 
 func newWebhookActionDataSourceModel(webhookAction opslevel.CustomActionsExternalAction) webhookActionDataSourceModel {
-	aliases := OptionalStringListValue(webhookAction.Aliases)
+	aliases := OptionalStringListValue(webhookAction.CustomActionsWebhookAction.Aliases)
 	action := webhookActionDataSourceModel{
 		Aliases:     aliases,
 		Description: types.StringValue(webhookAction.Description),
 		Headers:     jsonToMapValue(webhookAction.Headers),
-		Id:          RequiredStringValue(string(webhookAction.Id)),
-		Method:      types.StringValue(string(webhookAction.CustomActionsWebhookAction.HTTPMethod)),
+		Id:          RequiredStringValue(string(webhookAction.CustomActionsWebhookAction.Id)),
+		Method:      types.StringValue(string(webhookAction.CustomActionsWebhookAction.HttpMethod)),
 		Name:        types.StringValue(webhookAction.Name),
 		Payload:     types.StringValue(webhookAction.LiquidTemplate),
-		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookURL),
+		Url:         types.StringValue(webhookAction.CustomActionsWebhookAction.WebhookUrl),
 	}
 
 	return action

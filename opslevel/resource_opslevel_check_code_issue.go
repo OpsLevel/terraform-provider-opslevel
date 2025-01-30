@@ -157,12 +157,12 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 	input := opslevel.CheckCodeIssueCreateInput{
 		CategoryId: asID(planModel.Category),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
-		IssueName:  planModel.IssueName.ValueStringPointer(),
+		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -170,18 +170,18 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 	if !planModel.IssueType.IsNull() {
 		issueType, _ := ListValueToStringSlice(ctx, planModel.IssueType)
 		input.IssueType = opslevel.RefOf(issueType)
 	}
 	if !planModel.MaxAllowed.IsNull() {
-		input.MaxAllowed = opslevel.RefOf(int(planModel.MaxAllowed.ValueInt64()))
+		input.MaxAllowed = refOf(int(planModel.MaxAllowed.ValueInt64()))
 	}
 	if !planModel.ResolutionTime.IsNull() {
 		attrs := planModel.ResolutionTime.Attributes()
-		input.ResolutionTime = opslevel.RefOf(opslevel.CodeIssueResolutionTimeInput{
+		input.ResolutionTime = refOf(opslevel.CodeIssueResolutionTimeInput{
 			Unit:  opslevel.CodeIssueResolutionTimeUnitEnum(attrs["unit"].(basetypes.StringValue).ValueString()),
 			Value: int(attrs["value"].(basetypes.Int64Value).ValueInt64()),
 		})
@@ -233,13 +233,13 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 	input := opslevel.CheckCodeIssueUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		Id:         asID(planModel.Id),
-		IssueName:  planModel.IssueName.ValueStringPointer(),
+		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -247,7 +247,7 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 	if planModel.IssueType.IsNull() {
 		input.IssueType = opslevel.NewNullOf[[]string]()
@@ -256,15 +256,15 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		input.IssueType = opslevel.NewNullableFrom(issueType)
 	}
 	if planModel.MaxAllowed.IsNull() {
-		input.MaxAllowed = opslevel.NewNullOf[int]()
+		input.MaxAllowed = (*int)(nil)
 	} else {
-		input.MaxAllowed = opslevel.NewNullableFrom(int(planModel.MaxAllowed.ValueInt64()))
+		input.MaxAllowed = refOf(int(planModel.MaxAllowed.ValueInt64()))
 	}
 	if planModel.ResolutionTime.IsNull() {
-		input.ResolutionTime = opslevel.NewNullOf[opslevel.CodeIssueResolutionTimeInput]()
+		input.ResolutionTime = (*opslevel.CodeIssueResolutionTimeInput)(nil)
 	} else {
 		attrs := planModel.ResolutionTime.Attributes()
-		input.ResolutionTime = opslevel.NewNullableFrom(opslevel.CodeIssueResolutionTimeInput{
+		input.ResolutionTime = refOf(opslevel.CodeIssueResolutionTimeInput{
 			Unit:  opslevel.CodeIssueResolutionTimeUnitEnum(attrs["unit"].(basetypes.StringValue).ValueString()),
 			Value: int(attrs["value"].(basetypes.Int64Value).ValueInt64()),
 		})

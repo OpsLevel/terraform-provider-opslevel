@@ -199,11 +199,11 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 
 	input := opslevel.CheckServicePropertyCreateInput{
 		CategoryId: asID(planModel.Category),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -211,7 +211,7 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
 	input.ServiceProperty = opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString())
@@ -275,12 +275,12 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 
 	input := opslevel.CheckServicePropertyUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -288,10 +288,10 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.ServiceProperty = opslevel.RefOf(opslevel.ServicePropertyTypeEnum(planModel.Property.ValueString()))
+	input.ServiceProperty = asEnum[opslevel.ServicePropertyTypeEnum](planModel.Property.ValueString())
 	if !planModel.PropertyDefinition.IsNull() {
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	} else if !stateModel.PropertyDefinition.IsNull() {

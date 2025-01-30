@@ -51,7 +51,7 @@ func newInfraProviderData(infrastructure opslevel.InfrastructureResource) *Infra
 		Account: RequiredStringValue(infrastructure.ProviderData.AccountName),
 		Name:    OptionalStringValue(infrastructure.ProviderData.ProviderName),
 		Type:    OptionalStringValue(infrastructure.ProviderType),
-		Url:     OptionalStringValue(infrastructure.ProviderData.ExternalURL),
+		Url:     OptionalStringValue(infrastructure.ProviderData.ExternalUrl),
 	}
 }
 
@@ -74,7 +74,7 @@ func NewInfrastructureResourceModel(ctx context.Context, infrastructure opslevel
 
 	infrastructureResourceModel := InfrastructureResourceModel{
 		Data:         OptionalStringValue(infrastructure.Data.ToJSON()),
-		Id:           ComputedStringValue(infrastructure.Id),
+		Id:           ComputedStringValue(string(infrastructure.Id)),
 		ProviderData: providerData,
 		Owner:        RequiredStringValue(string(infrastructure.Owner.Id())),
 		Schema:       RequiredStringValue(infrastructure.Schema),
@@ -272,7 +272,7 @@ func (r *InfrastructureResource) Create(ctx context.Context, req resource.Create
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to reconcile infrastructure aliases: '%s'\n%s", aliases, err))
 
 			// delete newly created infrastructure to avoid dupliate infrastructure creation on next 'terraform apply'
-			if err := r.client.DeleteInfrastructure(infrastructure.Id); err != nil {
+			if err := r.client.DeleteInfrastructure(string(infrastructure.Id)); err != nil {
 				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to delete incorrectly created infrastructure '%s' following aliases error:\n%s", infrastructure.Name, err))
 			}
 		}

@@ -124,10 +124,10 @@ func (r *IntegrationAwsResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 	input := opslevel.AWSIntegrationInput{
-		Name:                 planModel.Name.ValueStringPointer(),
-		IAMRole:              planModel.IamRole.ValueStringPointer(),
-		ExternalID:           planModel.ExternalID.ValueStringPointer(),
-		OwnershipTagOverride: planModel.OwnershipTagOverrides.ValueBoolPointer(),
+		Name:                 nullable(planModel.Name.ValueStringPointer()),
+		IAMRole:              nullable(planModel.IamRole.ValueStringPointer()),
+		ExternalID:           nullable(planModel.ExternalID.ValueStringPointer()),
+		OwnershipTagOverride: nullable(planModel.OwnershipTagOverrides.ValueBoolPointer()),
 		OwnershipTagKeys:     ownershipTagKeys,
 	}
 	if !planModel.RegionOverride.IsNull() && !planModel.RegionOverride.IsUnknown() {

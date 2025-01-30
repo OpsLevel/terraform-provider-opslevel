@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"regexp"
 	"slices"
 	"strings"
@@ -228,15 +229,15 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	serviceCreateInput := opslevel.ServiceCreateInput{
-		Description:    planModel.Description.ValueStringPointer(),
-		Framework:      planModel.Framework.ValueStringPointer(),
-		Language:       planModel.Language.ValueStringPointer(),
-		LifecycleAlias: planModel.LifecycleAlias.ValueStringPointer(),
+		Description:    nullable(planModel.Description.ValueStringPointer()),
+		Framework:      nullable(planModel.Framework.ValueStringPointer()),
+		Language:       nullable(planModel.Language.ValueStringPointer()),
+		LifecycleAlias: nullable(planModel.LifecycleAlias.ValueStringPointer()),
 		Name:           planModel.Name.ValueString(),
 		OwnerInput:     opslevel.NewIdentifier(),
 		Parent:         opslevel.NewIdentifier(),
-		Product:        planModel.Product.ValueStringPointer(),
-		TierAlias:      planModel.TierAlias.ValueStringPointer(),
+		Product:        nullable(planModel.Product.ValueStringPointer()),
+		TierAlias:      nullable(planModel.TierAlias.ValueStringPointer()),
 	}
 
 	if planModel.Owner.ValueString() != "" {
@@ -351,6 +352,33 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newStateModel)...)
 }
 
+func unsetStringHelper(plan, state basetypes.StringValue) *opslevel.Nullable[string] {
+	if !plan.IsNull() {
+		return nullable(plan.ValueStringPointer())
+	} else if !state.IsNull() { // Unset
+		return &opslevel.Nullable[string]{SetNull: true}
+	}
+	return nil
+}
+
+func unsetIDHelper(plan, state basetypes.StringValue) *opslevel.Nullable[opslevel.ID] {
+	if !plan.IsNull() {
+		return nullable(opslevel.NewID(plan.ValueString()))
+	} else if !state.IsNull() { // Unset
+		return &opslevel.Nullable[opslevel.ID]{SetNull: true}
+	}
+	return nil
+}
+
+func unsetIdentifierHelper(plan, state basetypes.StringValue) *opslevel.IdentifierInput {
+	if !plan.IsNull() {
+		return opslevel.NewIdentifier(plan.ValueString())
+	} else if !state.IsNull() { // Unset
+		return opslevel.NewIdentifier()
+	}
+	return nil
+}
+
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
@@ -358,28 +386,18 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	serviceUpdateInput := opslevel.ServiceUpdateInputV2{
-		Description:    NullableStringConfigValue(planModel.Description),
-		Framework:      NullableStringConfigValue(planModel.Framework),
-		Id:             opslevel.NewID(planModel.Id.ValueString()),
-		Language:       NullableStringConfigValue(planModel.Language),
-		LifecycleAlias: NullableStringConfigValue(planModel.LifecycleAlias),
-		Name:           opslevel.NewNullableFrom(planModel.Name.ValueString()),
-		Product:        NullableStringConfigValue(planModel.Product),
-		TierAlias:      NullableStringConfigValue(planModel.TierAlias),
-	}
-	if planModel.Owner.ValueString() != "" {
-		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
-	} else if !stateModel.Owner.IsNull() && planModel.Owner.ValueString() == "" {
-		// unset owner field only if it's set in state and owner field in plan is not set
-		serviceUpdateInput.OwnerInput = opslevel.NewIdentifier()
-	}
+	serviceUpdateInput := opslevel.ServiceUpdateInput{
+		Description:    unsetStringHelper(planModel.Description, stateModel.Description),
+		Framework:      unsetStringHelper(planModel.Framework, stateModel.Framework),
+		Id:             nullable(opslevel.NewID(planModel.Id.ValueString())),
+		Language:       unsetStringHelper(planModel.Language, stateModel.Language),
+		LifecycleAlias: unsetStringHelper(planModel.LifecycleAlias, stateModel.LifecycleAlias),
+		Name:           unsetStringHelper(planModel.Name, stateModel.Name),
+		Product:        unsetStringHelper(planModel.Product, stateModel.Product),
+		TierAlias:      unsetStringHelper(planModel.TierAlias, stateModel.TierAlias),
 
-	if planModel.Parent.ValueString() != "" {
-		serviceUpdateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
-	} else if !stateModel.Parent.IsNull() && planModel.Parent.ValueString() == "" {
-		// unset parent field only if it's set in state and parent field in plan is not set
-		serviceUpdateInput.Parent = opslevel.NewIdentifier()
+		OwnerInput: unsetIdentifierHelper(planModel.Owner, stateModel.Owner),
+		Parent:     unsetIdentifierHelper(planModel.Parent, stateModel.Parent),
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
@@ -506,14 +524,14 @@ func updateServiceNote(client opslevel.Client, service opslevel.Service, planMod
 	}
 
 	serviceNoteUpdateInput := opslevel.ServiceNoteUpdateInput{
-		Service: opslevel.IdentifierInput{Id: opslevel.RefOf(service.Id)},
+		Service: *opslevel.NewIdentifier(string(service.Id)),
 	}
 
 	if service.Note != "" && planModel.Note.IsNull() {
 		// unset the previously set note
 		serviceNoteUpdateInput.Note = opslevel.RefOf("")
 	} else {
-		serviceNoteUpdateInput.Note = planModel.Note.ValueStringPointer()
+		serviceNoteUpdateInput.Note = nullable(planModel.Note.ValueStringPointer())
 	}
 
 	return client.UpdateServiceNote(serviceNoteUpdateInput)

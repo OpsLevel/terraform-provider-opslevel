@@ -227,11 +227,11 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 
 	input := opslevel.CheckServiceOwnershipCreateInput{
 		CategoryId: asID(planModel.Category),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -239,14 +239,14 @@ func (r *CheckServiceOwnershipResource) Create(ctx context.Context, req resource
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
+	input.RequireContactMethod = nullable(planModel.RequireContactMethod.ValueBoolPointer())
 	if planModel.ContactMethod.ValueString() != "" {
 		input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
 	}
-	input.TagKey = planModel.TagKey.ValueStringPointer()
+	input.TagKey = nullable(planModel.TagKey.ValueStringPointer())
 
 	// convert tool_name_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)
@@ -303,12 +303,12 @@ func (r *CheckServiceOwnershipResource) Update(ctx context.Context, req resource
 
 	input := opslevel.CheckServiceOwnershipUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -316,12 +316,12 @@ func (r *CheckServiceOwnershipResource) Update(ctx context.Context, req resource
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.RequireContactMethod = planModel.RequireContactMethod.ValueBoolPointer()
+	input.RequireContactMethod = nullable(planModel.RequireContactMethod.ValueBoolPointer())
 	input.ContactMethod = opslevel.RefOf(strings.ToUpper(planModel.ContactMethod.ValueString()))
-	input.TagKey = planModel.TagKey.ValueStringPointer()
+	input.TagKey = nullable(planModel.TagKey.ValueStringPointer())
 
 	// convert tool_name_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.TagPredicate)

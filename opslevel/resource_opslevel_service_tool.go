@@ -144,7 +144,7 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 	serviceTool, err := r.client.CreateTool(opslevel.ToolCreateInput{
 		Category:    opslevel.ToolCategory(planModel.Category.ValueString()),
 		DisplayName: planModel.Name.ValueString(),
-		Environment: planModel.Environment.ValueStringPointer(),
+		Environment: nullable(planModel.Environment.ValueStringPointer()),
 		ServiceId:   &service.Id,
 		Url:         planModel.Url.ValueString(),
 	})
@@ -207,11 +207,11 @@ func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	serviceTool, err := r.client.UpdateTool(opslevel.ToolUpdateInput{
-		Category:    opslevel.RefOf(opslevel.ToolCategory(planModel.Category.ValueString())),
-		DisplayName: planModel.Name.ValueStringPointer(),
+		Category:    asEnum[opslevel.ToolCategory](planModel.Category.ValueString()),
+		DisplayName: nullable(planModel.Name.ValueStringPointer()),
 		Environment: opslevel.RefOf(planModel.Environment.ValueString()),
 		Id:          opslevel.ID(planModel.Id.ValueString()),
-		Url:         planModel.Url.ValueStringPointer(),
+		Url:         nullable(planModel.Url.ValueStringPointer()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service tool, got error: %s", err))

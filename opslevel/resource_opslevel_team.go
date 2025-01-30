@@ -131,7 +131,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 
 	teamCreateInput := opslevel.TeamCreateInput{
 		Name:             planModel.Name.ValueString(),
-		Responsibilities: planModel.Responsibilities.ValueStringPointer(),
+		Responsibilities: nullable(planModel.Responsibilities.ValueStringPointer()),
 	}
 
 	members, err := getMembers(planModel.Member)
@@ -227,8 +227,8 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 
 	teamUpdateInput := opslevel.TeamUpdateInput{
 		Id:               opslevel.NewID(planModel.Id.ValueString()),
-		Name:             planModel.Name.ValueStringPointer(),
-		Responsibilities: opslevel.RefOf(planModel.Responsibilities.ValueString()),
+		Name:             nullable(planModel.Name.ValueStringPointer()),
+		Responsibilities: nullable(planModel.Responsibilities.ValueStringPointer()),
 	}
 
 	// Delete Team Members only if we were tracking them and they have been removed
@@ -322,7 +322,7 @@ func getMembers(members []TeamMember) ([]opslevel.TeamMembershipUserInput, error
 	for i, mem := range members {
 		memberInputs[i] = opslevel.TeamMembershipUserInput{
 			User: opslevel.NewUserIdentifier(mem.Email.ValueString()),
-			Role: mem.Role.ValueStringPointer(),
+			Role: nullable(mem.Role.ValueStringPointer()),
 		}
 	}
 	if len(memberInputs) > 0 {

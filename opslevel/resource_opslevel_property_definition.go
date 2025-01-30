@@ -114,20 +114,16 @@ func (resource *PropertyDefinitionResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	var propertyDisplayStatus *opslevel.PropertyDisplayStatusEnum
-	if planModel.PropertyDisplayStatus.ValueString() != "" {
-		propertyDisplayStatus = opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(planModel.PropertyDisplayStatus.ValueString()))
-	}
 	input := opslevel.PropertyDefinitionInput{
-		AllowedInConfigFiles:  planModel.AllowedInConfigFiles.ValueBoolPointer(),
-		Description:           planModel.Description.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		PropertyDisplayStatus: propertyDisplayStatus,
+		AllowedInConfigFiles:  nullable(planModel.AllowedInConfigFiles.ValueBoolPointer()),
+		Description:           nullable(planModel.Description.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.CreatePropertyDefinition(input)
 	if err != nil || definition == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create definition with name '%s', got error: %s", *input.Name, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create definition with name '%s', got error: %s", input.Name.Value, err))
 		return
 	}
 
@@ -171,15 +167,11 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 	}
 
 	id := planModel.Id.ValueString()
-	var propertyDisplayStatus *opslevel.PropertyDisplayStatusEnum
-	if planModel.PropertyDisplayStatus.ValueString() != "" {
-		propertyDisplayStatus = opslevel.RefOf(opslevel.PropertyDisplayStatusEnum(planModel.PropertyDisplayStatus.ValueString()))
-	}
 	input := opslevel.PropertyDefinitionInput{
-		AllowedInConfigFiles:  planModel.AllowedInConfigFiles.ValueBoolPointer(),
-		Description:           opslevel.RefOf(planModel.Description.ValueString()),
-		Name:                  planModel.Name.ValueStringPointer(),
-		PropertyDisplayStatus: propertyDisplayStatus,
+		AllowedInConfigFiles:  nullable(planModel.AllowedInConfigFiles.ValueBoolPointer()),
+		Description:           nullable(planModel.Description.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.UpdatePropertyDefinition(id, input)
