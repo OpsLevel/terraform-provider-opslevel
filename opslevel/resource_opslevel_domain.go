@@ -99,9 +99,9 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	resource, err := r.client.CreateDomain(opslevel.DomainInput{
-		Description: planModel.Description.ValueStringPointer(),
+		Description: nullable(planModel.Description.ValueStringPointer()),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
-		Note:        planModel.Note.ValueStringPointer(),
+		Note:        nullable(planModel.Note.ValueStringPointer()),
 		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 	})
 	if err != nil {

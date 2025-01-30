@@ -203,11 +203,11 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 
 	input := opslevel.CheckRepositoryGrepCreateInput{
 		CategoryId: asID(planModel.Category),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -215,10 +215,10 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
+	input.DirectorySearch = nullable(planModel.DirectorySearch.ValueBoolPointer())
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
@@ -266,12 +266,12 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 
 	input := opslevel.CheckRepositoryGrepUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -279,10 +279,10 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.DirectorySearch = planModel.DirectorySearch.ValueBoolPointer()
+	input.DirectorySearch = nullable(planModel.DirectorySearch.ValueBoolPointer())
 	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)

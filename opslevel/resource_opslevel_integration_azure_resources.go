@@ -177,13 +177,13 @@ func (r *IntegrationAzureResourcesResource) Create(ctx context.Context, req reso
 	}
 
 	input := opslevel.AzureResourcesIntegrationInput{
-		ClientId:              planModel.ClientId.ValueStringPointer(),
-		ClientSecret:          planModel.ClientSecret.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		OwnershipTagKeys:      &ownershipTagKeys,
-		SubscriptionId:        planModel.SubscriptionId.ValueStringPointer(),
-		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
-		TenantId:              planModel.TenantId.ValueStringPointer(),
+		ClientId:              nullable(planModel.ClientId.ValueStringPointer()),
+		ClientSecret:          nullable(planModel.ClientSecret.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		OwnershipTagKeys:      &opslevel.Nullable[[]string]{Value: ownershipTagKeys}, // TODO: why does this need to be nullable?
+		SubscriptionId:        nullable(planModel.SubscriptionId.ValueStringPointer()),
+		TagsOverrideOwnership: nullable(planModel.TagsOverrideOwnership.ValueBoolPointer()),
+		TenantId:              nullable(planModel.TenantId.ValueStringPointer()),
 	}
 
 	azureResourcesIntegration, err := r.client.CreateIntegrationAzureResources(input)
@@ -233,13 +233,13 @@ func (r *IntegrationAzureResourcesResource) Update(ctx context.Context, req reso
 	}
 
 	input := opslevel.AzureResourcesIntegrationInput{
-		ClientId:              planModel.ClientId.ValueStringPointer(),
-		ClientSecret:          planModel.ClientSecret.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		OwnershipTagKeys:      &ownershipTagKeys,
-		SubscriptionId:        planModel.SubscriptionId.ValueStringPointer(),
-		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
-		TenantId:              planModel.TenantId.ValueStringPointer(),
+		ClientId:              nullable(planModel.ClientId.ValueStringPointer()),
+		ClientSecret:          nullable(planModel.ClientSecret.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		OwnershipTagKeys:      &opslevel.Nullable[[]string]{Value: ownershipTagKeys}, // TODO: why does this need to be nullable?
+		SubscriptionId:        nullable(planModel.SubscriptionId.ValueStringPointer()),
+		TagsOverrideOwnership: nullable(planModel.TagsOverrideOwnership.ValueBoolPointer()),
+		TenantId:              nullable(planModel.TenantId.ValueStringPointer()),
 	}
 
 	azureResourcesIntegration, err := r.client.UpdateIntegrationAzureResources(planModel.Id.ValueString(), input)

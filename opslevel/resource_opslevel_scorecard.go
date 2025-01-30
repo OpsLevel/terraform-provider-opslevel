@@ -53,7 +53,7 @@ func NewScorecardResourceModel(ctx context.Context, scorecard opslevel.Scorecard
 		OwnerId:                     RequiredStringValue(string(scorecard.Owner.Id())),
 		PassingChecks:               types.Int64Value(int64(scorecard.PassingChecks)),
 		ServiceCount:                types.Int64Value(int64(scorecard.ServiceCount)),
-		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
+		TotalChecks:                 types.Int64Value(int64(scorecard.TotalChecks)),
 	}
 
 	scorecardDataSourceModel.CategoryIds = OptionalStringListValue(categoryIds)
@@ -134,9 +134,9 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	scorecard, err := r.client.CreateScorecard(opslevel.ScorecardInput{
-		AffectsOverallServiceLevels: planModel.AffectsOverallServiceLevels.ValueBoolPointer(),
-		Description:                 planModel.Description.ValueStringPointer(),
-		FilterId:                    opslevel.NewID(planModel.FilterId.ValueString()),
+		AffectsOverallServiceLevels: nullable(planModel.AffectsOverallServiceLevels.ValueBoolPointer()),
+		Description:                 nullable(planModel.Description.ValueStringPointer()),
+		FilterId:                    nullable(opslevel.NewID(planModel.FilterId.ValueString())),
 		Name:                        planModel.Name.ValueString(),
 		OwnerId:                     opslevel.ID(planModel.OwnerId.ValueString()),
 	})
@@ -195,17 +195,24 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[ScorecardResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	scorecard, err := r.client.UpdateScorecard(planModel.Id.ValueString(), opslevel.ScorecardInput{
-		AffectsOverallServiceLevels: planModel.AffectsOverallServiceLevels.ValueBoolPointer(),
-		Description:                 opslevel.RefOf(planModel.Description.ValueString()),
-		FilterId:                    opslevel.NewID(planModel.FilterId.ValueString()),
+	input := opslevel.ScorecardInput{
+		AffectsOverallServiceLevels: nullable(planModel.AffectsOverallServiceLevels.ValueBoolPointer()),
+		Description:                 nullable(planModel.Description.ValueStringPointer()),
 		Name:                        planModel.Name.ValueString(),
 		OwnerId:                     opslevel.ID(planModel.OwnerId.ValueString()),
-	})
+	}
+	if !planModel.FilterId.IsNull() {
+		input.FilterId = nullable(opslevel.NewID(planModel.FilterId.ValueString()))
+	} else if !stateModel.FilterId.IsNull() { // Then unset
+		input.FilterId = nullable(opslevel.NewID(""))
+	}
+
+	scorecard, err := r.client.UpdateScorecard(planModel.Id.ValueString(), input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update scorecard, got error: %s", err))
 		return

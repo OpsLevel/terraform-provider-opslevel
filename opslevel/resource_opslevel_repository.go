@@ -94,11 +94,14 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get repository, got error: %s", err))
 		return
 	}
+	input := opslevel.RepositoryUpdateInput{
+		Id: repository.Id,
+	}
+	if !planModel.Owner.IsNull() {
+		input.OwnerId = nullable(opslevel.NewID(planModel.Owner.ValueString()))
+	}
 
-	updatedRepository, err := r.client.UpdateRepository(opslevel.RepositoryUpdateInput{
-		Id:      opslevel.ID(repository.Id),
-		OwnerId: opslevel.NewID(planModel.Owner.ValueString()),
-	})
+	updatedRepository, err := r.client.UpdateRepository(input)
 	if err != nil || updatedRepository == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update repository, got error: %s", err))
 		return
@@ -164,10 +167,14 @@ func (r *RepositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	updatedRepository, err := r.client.UpdateRepository(opslevel.RepositoryUpdateInput{
-		Id:      opslevel.ID(planModel.Id.ValueString()),
-		OwnerId: opslevel.NewID(planModel.Owner.ValueString()),
-	})
+	input := opslevel.RepositoryUpdateInput{
+		Id: opslevel.ID(planModel.Id.ValueString()),
+	}
+	if !planModel.Owner.IsNull() {
+		input.OwnerId = nullable(opslevel.NewID(planModel.Owner.ValueString()))
+	}
+
+	updatedRepository, err := r.client.UpdateRepository(input)
 	if err != nil || updatedRepository == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update repository, got error: %s", err))
 		return

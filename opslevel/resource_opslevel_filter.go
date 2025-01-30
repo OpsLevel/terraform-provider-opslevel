@@ -378,9 +378,9 @@ func (r *FilterResource) ImportState(ctx context.Context, req resource.ImportSta
 func getConnectiveEnum(connective string) *opslevel.ConnectiveEnum {
 	switch connective {
 	case "and":
-		return opslevel.RefTo(opslevel.ConnectiveEnumAnd)
+		return &opslevel.ConnectiveEnumAnd
 	case "or":
-		return opslevel.RefTo(opslevel.ConnectiveEnumOr)
+		return &opslevel.ConnectiveEnumOr
 	default:
 		return nil
 	}
@@ -392,9 +392,9 @@ func getFilterPredicates(predicates []FilterPredicateModel) (*[]opslevel.FilterP
 	for _, predicate := range predicates {
 		tmpPredicateInput := opslevel.FilterPredicateInput{
 			Key:     opslevel.PredicateKeyEnum(predicate.Key.ValueString()),
-			KeyData: predicate.KeyData.ValueStringPointer(),
+			KeyData: nullable(predicate.KeyData.ValueStringPointer()),
 			Type:    opslevel.PredicateTypeEnum(predicate.Type.ValueString()),
-			Value:   predicate.Value.ValueStringPointer(),
+			Value:   nullable(predicate.Value.ValueStringPointer()),
 		}
 		isCaseSensitiveSet := !predicate.CaseSensitive.IsNull() && !predicate.CaseSensitive.IsUnknown()
 		isCaseInsensitiveSet := !predicate.CaseInsensitive.IsNull() && !predicate.CaseInsensitive.IsUnknown()
@@ -403,7 +403,7 @@ func getFilterPredicates(predicates []FilterPredicateModel) (*[]opslevel.FilterP
 			return nil, fmt.Errorf("a predicate should not have 'case_sensitive' and 'case_insensitive' set at the same time")
 		}
 		if isCaseSensitiveSet {
-			tmpPredicateInput.CaseSensitive = predicate.CaseSensitive.ValueBoolPointer()
+			tmpPredicateInput.CaseSensitive = nullable(predicate.CaseSensitive.ValueBoolPointer())
 		} else if isCaseInsensitiveSet {
 			tmpPredicateInput.CaseSensitive = opslevel.RefOf(!predicate.CaseInsensitive.ValueBool())
 		}

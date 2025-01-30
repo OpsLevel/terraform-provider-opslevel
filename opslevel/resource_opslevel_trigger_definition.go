@@ -178,14 +178,16 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	accessControl := opslevel.CustomActionsTriggerDefinitionAccessControlEnum(planModel.AccessControl.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		AccessControl:          &accessControl,
-		ActionId:               opslevel.NewID(planModel.Action.ValueString()),
+		ActionId:               nullableID(planModel.Action.ValueStringPointer()),
 		Name:                   planModel.Name.ValueString(),
-		Description:            planModel.Description.ValueStringPointer(),
+		Description:            nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:                opslevel.ID(planModel.Owner.ValueString()),
-		FilterId:               opslevel.NewID(planModel.Filter.ValueString()),
-		ManualInputsDefinition: planModel.ManualInputsDefinition.ValueStringPointer(),
-		Published:              planModel.Published.ValueBoolPointer(),
-		ResponseTemplate:       planModel.ResponseTemplate.ValueStringPointer(),
+		ManualInputsDefinition: nullable(planModel.ManualInputsDefinition.ValueStringPointer()),
+		Published:              nullable(planModel.Published.ValueBoolPointer()),
+		ResponseTemplate:       nullable(planModel.ResponseTemplate.ValueStringPointer()),
+	}
+	if !planModel.Filter.IsNull() {
+		triggerDefinitionInput.FilterId = nullable(opslevel.NewID(planModel.Filter.ValueString()))
 	}
 	if !planModel.EntityType.IsNull() && !planModel.EntityType.IsUnknown() {
 		entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
@@ -238,6 +240,7 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 
 func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[TriggerDefinitionResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -246,17 +249,18 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 	entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionUpdateInput{
 		AccessControl:          &accessControl,
-		ActionId:               opslevel.NewID(planModel.Action.ValueString()),
-		Name:                   planModel.Name.ValueStringPointer(),
+		ActionId:               unsetIDHelper(planModel.Action, stateModel.Action),
+		Name:                   unsetStringHelper(planModel.Name, stateModel.Name),
 		Description:            opslevel.RefOf(planModel.Description.ValueString()),
 		EntityType:             &entityType,
 		Id:                     opslevel.ID(planModel.Id.ValueString()),
-		OwnerId:                opslevel.NewID(planModel.Owner.ValueString()),
-		FilterId:               opslevel.NewID(planModel.Filter.ValueString()),
-		ManualInputsDefinition: opslevel.RefOf(planModel.ManualInputsDefinition.ValueString()),
+		OwnerId:                unsetIDHelper(planModel.Owner, stateModel.Owner),
+		FilterId:               unsetIDHelper(planModel.Filter, stateModel.Filter),
+		ManualInputsDefinition: unsetStringHelper(planModel.ManualInputsDefinition, stateModel.ManualInputsDefinition),
 		Published:              opslevel.RefOf(planModel.Published.ValueBool()),
-		ResponseTemplate:       opslevel.RefOf(planModel.ResponseTemplate.ValueString()),
+		ResponseTemplate:       unsetStringHelper(planModel.ResponseTemplate, stateModel.ResponseTemplate),
 	}
+
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
 	if diags.HasError() {
 		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extended_team_access' to string slice")
@@ -271,11 +275,10 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	stateModel, diags := NewTriggerDefinitionResourceModel(r.client, *updatedTriggerDefinition, planModel)
+	stateModelFinal, diags := NewTriggerDefinitionResourceModel(r.client, *updatedTriggerDefinition, planModel)
 	resp.Diagnostics.Append(diags...)
-
 	tflog.Trace(ctx, "updated a trigger definition resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModelFinal)...)
 }
 
 func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

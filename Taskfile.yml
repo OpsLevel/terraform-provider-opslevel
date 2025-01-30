@@ -29,7 +29,6 @@ tasks:
       - install:go-install-gofumpt
       - install:go-install-golangci-lint
     cmds:
-      - task: go:workspace
       - task: lint
       - task: test
 
@@ -75,7 +74,6 @@ tasks:
       - install:go-install-gofumpt
       - install:go-install-golangci-lint
     cmds:
-      - task: go:workspace
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }
 

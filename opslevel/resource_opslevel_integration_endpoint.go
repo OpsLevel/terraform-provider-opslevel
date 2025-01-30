@@ -96,7 +96,7 @@ func (r *IntegrationEndpointResource) Create(ctx context.Context, req resource.C
 	}
 
 	input := opslevel.EventIntegrationInput{
-		Name: planModel.Name.ValueStringPointer(),
+		Name: nullable(planModel.Name.ValueStringPointer()),
 		Type: opslevel.EventIntegrationEnum(planModel.Type.ValueString()),
 	}
 

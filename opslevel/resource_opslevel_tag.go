@@ -112,13 +112,13 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	tagCreateInput := opslevel.TagCreateInput{
 		Key:   planModel.Key.ValueString(),
 		Value: planModel.Value.ValueString(),
-		Type:  opslevel.RefOf(resourceType),
+		Type:  &resourceType,
 	}
 
 	if opslevel.IsID(resourceId) {
 		tagCreateInput.Id = opslevel.NewID(resourceId)
 	} else {
-		tagCreateInput.Alias = opslevel.RefOf(resourceId)
+		tagCreateInput.Alias = &resourceId
 	}
 	data, err := r.client.CreateTag(tagCreateInput)
 	if err != nil {

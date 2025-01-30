@@ -92,7 +92,7 @@ func (r *RubricLevelResource) Create(ctx context.Context, req resource.CreateReq
 
 	levelCreateInput := opslevel.LevelCreateInput{
 		Name:        planModel.Name.ValueString(),
-		Description: planModel.Description.ValueStringPointer(),
+		Description: nullable(planModel.Description.ValueStringPointer()),
 	}
 	if !planModel.Index.IsNull() && !planModel.Index.IsUnknown() {
 		index := int(planModel.Index.ValueInt64())
@@ -140,7 +140,7 @@ func (r *RubricLevelResource) Update(ctx context.Context, req resource.UpdateReq
 	updatedRubricLevel, err := r.client.UpdateLevel(opslevel.LevelUpdateInput{
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		Id:          opslevel.ID(planModel.Id.ValueString()),
-		Name:        planModel.Name.ValueStringPointer(),
+		Name:        nullable(planModel.Name.ValueStringPointer()),
 	})
 	if err != nil || updatedRubricLevel == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update rubric level, got error: %s", err))

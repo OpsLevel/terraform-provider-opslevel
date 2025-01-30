@@ -86,9 +86,9 @@ func newIntegrationGoogleCloudResourceModel(ctx context.Context, googleCloudInte
 	projects := make([]googleCloudProjectResourceModel, len(googleCloudIntegration.Projects))
 	for i, project := range googleCloudIntegration.Projects {
 		projects[i] = googleCloudProjectResourceModel{
-			ID:   RequiredStringValue(project.ID),
+			ID:   RequiredStringValue(project.Id),
 			Name: RequiredStringValue(project.Name),
-			URL:  RequiredStringValue(project.URL),
+			URL:  RequiredStringValue(project.Url),
 		}
 	}
 	projectsList, tmp := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: googleCloudProjectAttrs()}, projects)
@@ -189,11 +189,11 @@ func (r *integrationGoogleCloudResource) Create(ctx context.Context, req resourc
 	}
 
 	input := opslevel.GoogleCloudIntegrationInput{
-		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
-		OwnershipTagKeys:      &ownershipTagKeys,
-		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
+		ClientEmail:           nullable(planModel.ClientEmail.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		PrivateKey:            nullable(planModel.PrivateKey.ValueStringPointer()),
+		OwnershipTagKeys:      &opslevel.Nullable[[]string]{Value: ownershipTagKeys},
+		TagsOverrideOwnership: nullable(planModel.TagsOverrideOwnership.ValueBoolPointer()),
 	}
 
 	createdIntegration, err := r.client.CreateIntegrationGCP(input)
@@ -249,11 +249,11 @@ func (r *integrationGoogleCloudResource) Update(ctx context.Context, req resourc
 	}
 
 	input := opslevel.GoogleCloudIntegrationInput{
-		ClientEmail:           planModel.ClientEmail.ValueStringPointer(),
-		Name:                  planModel.Name.ValueStringPointer(),
-		OwnershipTagKeys:      &ownershipTagKeys,
-		PrivateKey:            planModel.PrivateKey.ValueStringPointer(),
-		TagsOverrideOwnership: planModel.TagsOverrideOwnership.ValueBoolPointer(),
+		ClientEmail:           nullable(planModel.ClientEmail.ValueStringPointer()),
+		Name:                  nullable(planModel.Name.ValueStringPointer()),
+		OwnershipTagKeys:      &opslevel.Nullable[[]string]{Value: ownershipTagKeys}, // TODO: why does this need to be nullable?
+		PrivateKey:            nullable(planModel.PrivateKey.ValueStringPointer()),
+		TagsOverrideOwnership: nullable(planModel.TagsOverrideOwnership.ValueBoolPointer()),
 	}
 
 	updatedIntegration, err := r.client.UpdateIntegrationGCP(planModel.Id.ValueString(), input)

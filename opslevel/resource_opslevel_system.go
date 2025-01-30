@@ -107,10 +107,10 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	systemInput := opslevel.SystemInput{
-		Name:        planModel.Name.ValueStringPointer(),
-		Description: planModel.Description.ValueStringPointer(),
+		Name:        nullable(planModel.Name.ValueStringPointer()),
+		Description: nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
-		Note:        planModel.Note.ValueStringPointer(),
+		Note:        nullable(planModel.Note.ValueStringPointer()),
 	}
 	if resp.Diagnostics.HasError() {
 		return

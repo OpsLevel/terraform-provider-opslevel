@@ -210,11 +210,11 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 
 	input := opslevel.CheckPackageVersionCreateInput{
 		CategoryId: asID(planModel.Category),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      planModel.Notes.ValueStringPointer(),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 
 		PackageConstraint: opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString()),
@@ -226,14 +226,14 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
 	if !planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = opslevel.RefOf(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
+		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueString())
 	}
 	if !planModel.PackageNameIsRegex.IsNull() {
-		input.PackageNameIsRegex = planModel.PackageNameIsRegex.ValueBoolPointer()
+		input.PackageNameIsRegex = nullable(planModel.PackageNameIsRegex.ValueBoolPointer())
 	}
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
 	resp.Diagnostics.Append(diags...)
@@ -287,16 +287,16 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 
 	input := opslevel.CheckPackageVersionUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
-		Enabled:    planModel.Enabled.ValueBoolPointer(),
+		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
 		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      opslevel.RefOf(planModel.Notes.ValueString()),
+		Notes:      nullable(planModel.Notes.ValueStringPointer()),
 		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
 
-		PackageConstraint: opslevel.RefOf(opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString())),
-		PackageManager:    opslevel.RefOf(opslevel.PackageManagerEnum(planModel.PackageManager.ValueString())),
+		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueString()),
+		PackageManager:    asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueString()),
 		PackageName:       opslevel.RefOf(planModel.PackageName.ValueString()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -304,17 +304,17 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		if err != nil {
 			resp.Diagnostics.AddError("error", err.Error())
 		}
-		input.EnableOn = &iso8601.Time{Time: enabledOn}
+		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
 	if planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = opslevel.NewNullOf[opslevel.CheckResultStatusEnum]()
+		input.MissingPackageResult = (*opslevel.CheckResultStatusEnum)(nil)
 	} else {
-		input.MissingPackageResult = opslevel.NewNullableFrom(opslevel.CheckResultStatusEnum(planModel.MissingPackageResult.ValueString()))
+		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueString())
 	}
 
 	if !planModel.PackageNameIsRegex.IsNull() {
-		input.PackageNameIsRegex = planModel.PackageNameIsRegex.ValueBoolPointer()
+		input.PackageNameIsRegex = nullable(planModel.PackageNameIsRegex.ValueBoolPointer())
 	} else if !stateModel.PackageNameIsRegex.IsNull() { // Then Unset
 		input.PackageNameIsRegex = opslevel.RefOf(false)
 	}

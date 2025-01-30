@@ -128,7 +128,7 @@ func (r *ServiceDependencyResource) Create(ctx context.Context, req resource.Cre
 		},
 	}
 	if !planModel.Note.IsNull() && !planModel.Note.IsUnknown() {
-		serviceDependencyCreateInput.Notes = planModel.Note.ValueStringPointer()
+		serviceDependencyCreateInput.Notes = nullable(planModel.Note.ValueStringPointer())
 	}
 	serviceDependency, err := r.client.CreateServiceDependency(serviceDependencyCreateInput)
 	if err != nil || serviceDependency == nil {

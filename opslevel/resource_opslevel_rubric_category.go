@@ -116,7 +116,7 @@ func (r *RubricCategoryResource) Update(ctx context.Context, req resource.Update
 
 	updatedRubricCategory, err := r.client.UpdateCategory(opslevel.CategoryUpdateInput{
 		Id:   opslevel.ID(data.Id.ValueString()),
-		Name: data.Name.ValueStringPointer(),
+		Name: nullable(data.Name.ValueStringPointer()),
 	})
 	if err != nil || updatedRubricCategory == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update rubric category, got error: %s", err))

@@ -83,8 +83,8 @@ func (r *ServiceRelationshipResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	svcUpdate := opslevel.ServiceUpdateInputV2{
-		Id:     &service.Id,
+	svcUpdate := opslevel.ServiceUpdateInput{
+		Id:     &opslevel.Nullable[opslevel.ID]{Value: service.Id},
 		Parent: opslevel.NewIdentifier(systemIdentifier),
 	}
 	if _, err := r.client.UpdateService(svcUpdate); err != nil {
@@ -152,8 +152,8 @@ func (r *ServiceRelationshipResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	svcUpdate := opslevel.ServiceUpdateInputV2{
-		Id:     &service.Id,
+	svcUpdate := opslevel.ServiceUpdateInput{
+		Id:     &opslevel.Nullable[opslevel.ID]{Value: service.Id},
 		Parent: opslevel.NewIdentifier(systemIdentifier),
 	}
 	if _, err := r.client.UpdateService(svcUpdate); err != nil {
@@ -188,8 +188,8 @@ func (r *ServiceRelationshipResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 	if string(service.Parent.Id) == systemIdentifier || slices.Contains(service.Parent.Aliases, systemIdentifier) {
-		svcUpdate := opslevel.ServiceUpdateInputV2{
-			Id:     &service.Id,
+		svcUpdate := opslevel.ServiceUpdateInput{
+			Id:     &opslevel.Nullable[opslevel.ID]{Value: service.Id},
 			Parent: opslevel.NewIdentifier(),
 		}
 		if _, err = r.client.UpdateService(svcUpdate); err != nil {

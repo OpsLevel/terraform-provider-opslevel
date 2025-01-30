@@ -116,7 +116,7 @@ func NewScorecardDataSourceWithIdentifierModel(
 		OwnerId:                     ComputedStringValue(string(scorecard.Owner.Id())),
 		PassingChecks:               types.Int64Value(int64(scorecard.PassingChecks)),
 		ServiceCount:                types.Int64Value(int64(scorecard.ServiceCount)),
-		TotalChecks:                 types.Int64Value(int64(scorecard.ChecksCount)),
+		TotalChecks:                 types.Int64Value(int64(scorecard.TotalChecks)),
 	}
 }
 

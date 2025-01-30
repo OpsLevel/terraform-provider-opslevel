@@ -104,7 +104,7 @@ func (serviceTagResource *ServiceTagResource) Create(ctx context.Context, req re
 	}
 
 	tagCreateInput := opslevel.TagCreateInput{
-		Type:  opslevel.RefOf(opslevel.TaggableResourceService),
+		Type:  &opslevel.TaggableResourceService,
 		Key:   data.Key.ValueString(),
 		Value: data.Value.ValueString(),
 	}

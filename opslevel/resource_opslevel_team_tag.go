@@ -111,7 +111,7 @@ func (teamTagResource *TeamTagResource) Create(ctx context.Context, req resource
 	}
 
 	tagCreateInput := opslevel.TagCreateInput{
-		Type:  opslevel.RefOf(opslevel.TaggableResourceTeam),
+		Type:  &opslevel.TaggableResourceTeam,
 		Key:   data.Key.ValueString(),
 		Value: data.Value.ValueString(),
 	}
