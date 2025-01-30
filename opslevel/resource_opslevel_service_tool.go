@@ -132,7 +132,7 @@ func (r *ServiceToolResource) Create(ctx context.Context, req resource.CreateReq
 	var service *opslevel.Service
 	serviceId := planModel.Service.ValueString()
 	if opslevel.IsID(serviceId) {
-		service, err = r.client.GetService(opslevel.ID(serviceId))
+		service, err = r.client.GetService(serviceId)
 	} else {
 		service, err = r.client.GetServiceWithAlias(planModel.ServiceAlias.ValueString())
 	}
@@ -167,7 +167,7 @@ func (r *ServiceToolResource) Read(ctx context.Context, req resource.ReadRequest
 	var err error
 	var service *opslevel.Service
 	if serviceId := stateModel.Service.ValueString(); opslevel.IsID(serviceId) {
-		service, err = r.client.GetService(opslevel.ID(serviceId))
+		service, err = r.client.GetService(serviceId)
 	} else {
 		service, err = r.client.GetServiceWithAlias(stateModel.ServiceAlias.ValueString())
 	}
@@ -250,7 +250,7 @@ func (r *ServiceToolResource) ImportState(ctx context.Context, req resource.Impo
 	serviceId := ids[0]
 	toolId := ids[1]
 
-	service, err := r.client.GetService(opslevel.ID(serviceId))
+	service, err := r.client.GetService(serviceId)
 	if err != nil || service == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get service with id '%s', got error: %s", serviceId, err))
 		return

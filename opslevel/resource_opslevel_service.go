@@ -309,7 +309,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// fetch the service again, since other mutations are performed after the create/update step
-	service, err = r.client.GetService(service.Id)
+	service, err = r.client.GetService(string(service.Id))
 	if err != nil {
 		if (service == nil || service.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
@@ -336,7 +336,7 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	service, err := r.client.GetService(opslevel.ID(stateModel.Id.ValueString()))
+	service, err := r.client.GetService(stateModel.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
@@ -483,7 +483,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// fetch the service again, since other mutations are performed after the create/update step
-	service, err = r.client.GetService(service.Id)
+	service, err = r.client.GetService(string(service.Id))
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get service after update, got error: %s", err))
 		return

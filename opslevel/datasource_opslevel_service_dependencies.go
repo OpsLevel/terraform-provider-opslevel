@@ -112,7 +112,7 @@ func (d *ServiceDependenciesDataSource) Read(ctx context.Context, req datasource
 
 	// Retrieve Service
 	if opslevel.IsID(serviceIdentifier) {
-		service, err = d.client.GetService(opslevel.ID(serviceIdentifier))
+		service, err = d.client.GetService(serviceIdentifier)
 	} else {
 		service, err = d.client.GetServiceWithAlias(serviceIdentifier)
 	}

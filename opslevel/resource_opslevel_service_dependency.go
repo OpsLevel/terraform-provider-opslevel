@@ -154,7 +154,7 @@ func (r *ServiceDependencyResource) Read(ctx context.Context, req resource.ReadR
 	var service *opslevel.Service
 	serviceIdentifier := planModel.Service.ValueString()
 	if opslevel.IsID(serviceIdentifier) {
-		service, err = r.client.GetService(opslevel.ID(serviceIdentifier))
+		service, err = r.client.GetService(serviceIdentifier)
 	} else {
 		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
 	}
@@ -236,7 +236,7 @@ func (r *ServiceDependencyResource) ImportState(ctx context.Context, req resourc
 	serviceId := ids[0]
 	dependencyId := ids[1]
 
-	service, err := r.client.GetService(opslevel.ID(serviceId))
+	service, err := r.client.GetService(serviceId)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return

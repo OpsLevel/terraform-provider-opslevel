@@ -193,7 +193,7 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 	var service *opslevel.Service
 	serviceId := currentStateModel.Service.ValueString()
 	if opslevel.IsID(serviceId) {
-		service, err = r.client.GetService(opslevel.ID(serviceId))
+		service, err = r.client.GetService(serviceId)
 	} else {
 		service, err = r.client.GetServiceWithAlias(currentStateModel.ServiceAlias.ValueString())
 	}
@@ -297,7 +297,7 @@ func (r *ServiceRepositoryResource) ImportState(ctx context.Context, req resourc
 	var service *opslevel.Service
 	var err error
 	if opslevel.IsID(serviceIdentifier) {
-		service, err = r.client.GetService(opslevel.ID(serviceIdentifier))
+		service, err = r.client.GetService(serviceIdentifier)
 	} else {
 		service, err = r.client.GetServiceWithAlias(serviceIdentifier)
 	}

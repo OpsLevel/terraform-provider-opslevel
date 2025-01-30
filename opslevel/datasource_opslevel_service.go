@@ -285,7 +285,7 @@ func getServiceWithAlias(client opslevel.Client, data ServiceDataSourceModel) (o
 }
 
 func getServiceWithId(client opslevel.Client, data ServiceDataSourceModel) (opslevel.Service, error) {
-	service, err := client.GetService(opslevel.ID(data.Id.ValueString()))
+	service, err := client.GetService(data.Id.ValueString())
 	if err != nil {
 		return opslevel.Service{}, err
 	}

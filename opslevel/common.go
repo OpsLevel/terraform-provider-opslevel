@@ -146,7 +146,7 @@ func getService(client *opslevel.Client, serviceIdentifier string) (*opslevel.Se
 	var service *opslevel.Service
 
 	if opslevel.IsID(serviceIdentifier) {
-		service, err = client.GetService(opslevel.ID(serviceIdentifier))
+		service, err = client.GetService(serviceIdentifier)
 	} else {
 		service, err = client.GetServiceWithAlias(serviceIdentifier)
 	}

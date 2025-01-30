@@ -148,7 +148,7 @@ func (serviceTagResource *ServiceTagResource) Read(ctx context.Context, req reso
 	var err error
 	if data.Service.ValueString() != "" {
 		serviceIdentifier = data.Service.ValueString()
-		service, err = serviceTagResource.client.GetService(opslevel.ID(serviceIdentifier))
+		service, err = serviceTagResource.client.GetService(serviceIdentifier)
 	} else {
 		serviceIdentifier = data.ServiceAlias.ValueString()
 		service, err = serviceTagResource.client.GetServiceWithAlias(serviceIdentifier)
