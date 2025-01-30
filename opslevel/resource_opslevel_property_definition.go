@@ -38,6 +38,7 @@ type PropertyDefinitionResourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`
 	PropertyDisplayStatus types.String `tfsdk:"property_display_status"`
+	LockedStatus          types.String `tfsdk:"locked_status"`
 	Schema                types.String `tfsdk:"schema"`
 }
 
@@ -48,6 +49,7 @@ func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition, 
 		Id:                    ComputedStringValue(string(definition.Id)),
 		Name:                  RequiredStringValue(definition.Name),
 		PropertyDisplayStatus: RequiredStringValue(string(definition.PropertyDisplayStatus)),
+		LockedStatus:          RequiredStringValue(string(definition.LockedStatus)),
 		Schema:                RequiredStringValue(definition.Schema.ToJSON()),
 	}
 
@@ -98,6 +100,16 @@ func (resource *PropertyDefinitionResource) Schema(ctx context.Context, req reso
 					stringvalidator.OneOf(opslevel.AllPropertyDisplayStatusEnum...),
 				},
 			},
+			"locked_status": schema.StringAttribute{
+				Description: fmt.Sprintf(
+					"Values for which lock is assigned to a property definition to restrict what sources can assign values to it. One of `%s`",
+					strings.Join(opslevel.AllPropertyLockedStatusEnum, "`, `"),
+				),
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllPropertyLockedStatusEnum...),
+				},
+			},
 		},
 	}
 }
@@ -119,6 +131,7 @@ func (resource *PropertyDefinitionResource) Create(ctx context.Context, req reso
 		Description:           nullable(planModel.Description.ValueStringPointer()),
 		Name:                  nullable(planModel.Name.ValueStringPointer()),
 		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
+		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueString()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.CreatePropertyDefinition(input)
@@ -172,6 +185,7 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 		Description:           nullable(planModel.Description.ValueStringPointer()),
 		Name:                  nullable(planModel.Name.ValueStringPointer()),
 		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
+		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueString()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.UpdatePropertyDefinition(id, input)

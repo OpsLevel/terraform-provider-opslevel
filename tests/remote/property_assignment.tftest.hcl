@@ -17,6 +17,7 @@ run "from_property_definition_module" {
     name                    = ""
     schema                  = jsonencode(null)
     property_display_status = "visible"
+    locked_status           = "unlocked"
   }
 
   module {

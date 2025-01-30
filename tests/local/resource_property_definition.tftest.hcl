@@ -29,6 +29,12 @@ run "resource_property_definition" {
   }
 
   assert {
+    condition     = opslevel_property_definition.color_picker.locked_status == "unlocked"
+    error_message = "unexpected value for locked_status"
+  }
+
+
+  assert {
     condition = opslevel_property_definition.color_picker.schema == jsonencode({
       "type" : "string",
       "enum" : [

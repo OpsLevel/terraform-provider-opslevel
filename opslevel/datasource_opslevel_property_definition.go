@@ -38,6 +38,7 @@ type propertyDefinitionDataSourceWithFilterModel struct {
 	Identifier            types.String `tfsdk:"identifier"`
 	Name                  types.String `tfsdk:"name"`
 	PropertyDisplayStatus types.String `tfsdk:"property_display_status"`
+	LockedStatus          types.String `tfsdk:"locked_status"`
 	Schema                types.String `tfsdk:"schema"`
 }
 
@@ -49,6 +50,7 @@ func NewPropertyDefinitionDataSourceWithFilterModel(propertydefinition opslevel.
 		Identifier:            ComputedStringValue(identifier),
 		Name:                  ComputedStringValue(propertydefinition.Name),
 		PropertyDisplayStatus: ComputedStringValue(string(propertydefinition.PropertyDisplayStatus)),
+		LockedStatus:          ComputedStringValue(string(propertydefinition.LockedStatus)),
 		Schema:                ComputedStringValue(propertydefinition.Schema.ToJSON()),
 	}
 }

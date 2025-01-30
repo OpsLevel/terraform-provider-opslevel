@@ -36,6 +36,7 @@ func NewPropertyDefinitionDataSourcesAllModel(propertyDefinitions []opslevel.Pro
 			Id:                    ComputedStringValue(string(propertyDefinition.Id)),
 			Name:                  ComputedStringValue(propertyDefinition.Name),
 			PropertyDisplayStatus: ComputedStringValue(string(propertyDefinition.PropertyDisplayStatus)),
+			LockedStatus:          ComputedStringValue(string(propertyDefinition.LockedStatus)),
 			Schema:                ComputedStringValue(propertyDefinition.Schema.ToJSON()),
 		}
 		propDefinitionsModel = append(propDefinitionsModel, propDefinitionModel)
@@ -48,6 +49,7 @@ type propertyDefinitionDataSourceModel struct {
 	Id                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`
 	PropertyDisplayStatus types.String `tfsdk:"property_display_status"`
+	LockedStatus          types.String `tfsdk:"locked_status"`
 	Schema                types.String `tfsdk:"schema"`
 }
 
@@ -66,6 +68,10 @@ var propertyDefinitionSchemaAttrs = map[string]schema.Attribute{
 	},
 	"property_display_status": schema.StringAttribute{
 		MarkdownDescription: "The display status of a custom property on service pages. (Options: 'visible' or 'hidden')",
+		Computed:            true,
+	},
+	"locked_status": schema.StringAttribute{
+		MarkdownDescription: "Restricts what sources are able to assign values to this property. (Options: 'unlocked' or 'ui_locked')",
 		Computed:            true,
 	},
 	"schema": schema.StringAttribute{

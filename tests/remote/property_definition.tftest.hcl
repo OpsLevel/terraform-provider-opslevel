@@ -6,6 +6,7 @@ variables {
   allowed_in_config_files = true
   name                    = "TF Test Property Definition"
   property_display_status = "visible"
+  locked_status           = "unlocked"
   schema                  = "{\"type\":\"boolean\"}"
 
   # optional fields
@@ -19,6 +20,7 @@ run "resource_property_definition_create_with_all_fields" {
     description             = var.description
     name                    = var.name
     property_display_status = var.property_display_status
+    locked_status           = var.locked_status
     schema                  = var.schema
   }
 
@@ -33,6 +35,7 @@ run "resource_property_definition_create_with_all_fields" {
       can(opslevel_property_definition.test.id),
       can(opslevel_property_definition.test.name),
       can(opslevel_property_definition.test.property_display_status),
+      can(opslevel_property_definition.test.locked_status),
       can(opslevel_property_definition.test.schema),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.property_definition_one)
@@ -61,6 +64,11 @@ run "resource_property_definition_create_with_all_fields" {
   assert {
     condition     = opslevel_property_definition.test.property_display_status == var.property_display_status
     error_message = "wrong property_display_status for opslevel_property_definition resource"
+  }
+
+  assert {
+    condition     = opslevel_property_definition.test.locked_status == var.locked_status
+    error_message = "wrong locked_status for opslevel_property_definition resource"
   }
 
   assert {
@@ -112,6 +120,7 @@ run "resource_property_definition_update_all_fields" {
     description             = "${var.description} updated"
     name                    = "${var.name} updated"
     property_display_status = "hidden"
+    locked_status           = "unlocked"
     schema                  = "{\"type\":\"string\"}"
   }
 
@@ -137,6 +146,11 @@ run "resource_property_definition_update_all_fields" {
   assert {
     condition     = opslevel_property_definition.test.property_display_status == var.property_display_status
     error_message = "wrong property_display_status for opslevel_property_definition resource"
+  }
+
+  assert {
+    condition     = opslevel_property_definition.test.locked_status == var.locked_status
+    error_message = "wrong locked_status for opslevel_property_definition resource"
   }
 
   assert {
@@ -178,6 +192,7 @@ run "datasource_property_definition_first" {
       can(data.opslevel_property_definition.first_property_definition_by_id.identifier),
       can(data.opslevel_property_definition.first_property_definition_by_id.name),
       can(data.opslevel_property_definition.first_property_definition_by_id.property_display_status),
+      can(data.opslevel_property_definition.first_property_definition_by_id.locked_status),
       can(data.opslevel_property_definition.first_property_definition_by_id.schema),
     ])
     error_message = replace(var.error_unexpected_datasource_fields, "TYPE", var.property_definition_one)
