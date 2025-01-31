@@ -50,7 +50,7 @@ func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition, 
 		Name:                  RequiredStringValue(definition.Name),
 		PropertyDisplayStatus: RequiredStringValue(string(definition.PropertyDisplayStatus)),
 		LockedStatus:          RequiredStringValue(string(definition.LockedStatus)),
-		Schema:                RequiredStringValue(definition.Schema.ToJSON()),
+		Schema:                RequiredStringValue(definition.Schema.AsString()),
 	}
 
 	return model

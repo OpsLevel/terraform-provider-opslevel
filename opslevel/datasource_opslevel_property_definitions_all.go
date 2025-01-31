@@ -37,7 +37,7 @@ func NewPropertyDefinitionDataSourcesAllModel(propertyDefinitions []opslevel.Pro
 			Name:                  ComputedStringValue(propertyDefinition.Name),
 			PropertyDisplayStatus: ComputedStringValue(string(propertyDefinition.PropertyDisplayStatus)),
 			LockedStatus:          ComputedStringValue(string(propertyDefinition.LockedStatus)),
-			Schema:                ComputedStringValue(propertyDefinition.Schema.ToJSON()),
+			Schema:                ComputedStringValue(propertyDefinition.Schema.AsString()),
 		}
 		propDefinitionsModel = append(propDefinitionsModel, propDefinitionModel)
 	}

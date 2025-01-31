@@ -51,6 +51,7 @@ type ServiceResourceModel struct {
 	Product                    types.String `tfsdk:"product"`
 	Tags                       types.Set    `tfsdk:"tags"`
 	TierAlias                  types.String `tfsdk:"tier_alias"`
+	Type                       types.String `tfsdk:"type"`
 }
 
 func newServiceResourceModel(ctx context.Context, service opslevel.Service, givenModel ServiceResourceModel) (ServiceResourceModel, diag.Diagnostics) {
@@ -66,6 +67,7 @@ func newServiceResourceModel(ctx context.Context, service opslevel.Service, give
 		Note:            OptionalStringValue(service.Note),
 		Product:         OptionalStringValue(service.Product),
 		TierAlias:       OptionalStringValue(service.Tier.Alias),
+		Type:            OptionalStringValue(givenModel.Type.ValueString()),
 	}
 
 	if string(service.Owner.Id) == "" {
@@ -218,6 +220,16 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "The software tier that the service belongs to.",
 				Optional:    true,
 			},
+			"type": schema.StringAttribute{
+				Description: "The component type of the service.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
+			},
 		},
 	}
 }
@@ -228,7 +240,7 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	serviceCreateInput := opslevel.ServiceCreateInput{
+	input := opslevel.ServiceCreateInput{
 		Description:    nullable(planModel.Description.ValueStringPointer()),
 		Framework:      nullable(planModel.Framework.ValueStringPointer()),
 		Language:       nullable(planModel.Language.ValueStringPointer()),
@@ -241,14 +253,18 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if planModel.Owner.ValueString() != "" {
-		serviceCreateInput.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
+		input.OwnerInput = opslevel.NewIdentifier(planModel.Owner.ValueString())
 	}
 
 	if planModel.Parent.ValueString() != "" {
-		serviceCreateInput.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
+		input.Parent = opslevel.NewIdentifier(planModel.Parent.ValueString())
 	}
 
-	service, err := r.client.CreateService(serviceCreateInput)
+	if !planModel.Type.IsNull() {
+		input.Type = opslevel.NewIdentifier(planModel.Type.ValueString())
+	}
+
+	service, err := r.client.CreateService(input)
 	if err != nil || service == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service, got error: %s", err))
 		return
@@ -398,6 +414,7 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 		OwnerInput: unsetIdentifierHelper(planModel.Owner, stateModel.Owner),
 		Parent:     unsetIdentifierHelper(planModel.Parent, stateModel.Parent),
+		Type:       unsetIdentifierHelper(planModel.Type, stateModel.Type),
 	}
 
 	service, err := r.client.UpdateService(serviceUpdateInput)

@@ -51,7 +51,7 @@ func NewPropertyDefinitionDataSourceWithFilterModel(propertydefinition opslevel.
 		Name:                  ComputedStringValue(propertydefinition.Name),
 		PropertyDisplayStatus: ComputedStringValue(string(propertydefinition.PropertyDisplayStatus)),
 		LockedStatus:          ComputedStringValue(string(propertydefinition.LockedStatus)),
-		Schema:                ComputedStringValue(propertydefinition.Schema.ToJSON()),
+		Schema:                ComputedStringValue(propertydefinition.Schema.AsString()),
 	}
 }
 
