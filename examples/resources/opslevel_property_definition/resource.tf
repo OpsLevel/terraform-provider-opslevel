@@ -10,4 +10,5 @@ resource "opslevel_property_definition" "color_picker" {
   })
   allowed_in_config_files = false
   property_display_status = "visible"
+  locked_status = "unlocked"
 }

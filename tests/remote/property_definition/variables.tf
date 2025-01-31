@@ -19,6 +19,11 @@ variable "property_display_status" {
   description = "The display status of a custom property on service pages."
 }
 
+variable "locked_status" {
+  type        = string
+  description = "Restricts what sources are able to assign values to this property."
+}
+
 variable "schema" {
   type        = string
   description = "The schema of the property definition."

@@ -39,6 +39,11 @@ run "datasource_property_definition_mocked_fields" {
   }
 
   assert {
+    condition     = data.opslevel_property_definition.mock_property_definition.locked_status == "unlocked"
+    error_message = "wrong locked_status in mock opslevel_property_definition"
+  }
+
+  assert {
     condition = data.opslevel_property_definition.mock_property_definition.schema == jsonencode(
       {
         "$ref" : "#/$defs/MyProp",
