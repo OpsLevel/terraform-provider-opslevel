@@ -1,24 +1,24 @@
 resource "opslevel_component_type" "example" {
-  name = "Mobile Apps"
-  alias = "mobile-app"
+  name        = "Mobile Apps"
+  alias       = "mobile-app"
   description = "mobile app component type"
   properties = {
     os = {
-      name = "Operation System"
-      description = "The Operating System this app is deployed on"
+      name                    = "Operation System"
+      description             = "The Operating System this app is deployed on"
       allowed_in_config_files = "true"
-      locked_status = "unlocked"
+      locked_status           = "unlocked"
       schema = jsonencode({
-        "enum": [
+        "enum" : [
           "ios",
           "android",
           "both"
         ],
-        "type": "string"
+        "type" : "string"
       })
     }
     version = {
-      name  = "Release Version"
+      name = "Release Version"
       schema = jsonencode({
         "type" : "string",
         "pattern" : "^([0-9]+).([0-9]+).([0-9]+)"
@@ -27,32 +27,32 @@ resource "opslevel_component_type" "example" {
     bundle-id = {
       name = "Bundle ID"
       schema = jsonencode({
-        "type": "string"
+        "type" : "string"
       })
     }
     update-strategy = {
-      name = "Update Strategy"
+      name          = "Update Strategy"
       locked_status = "unlocked"
       schema = jsonencode({
-        "enum": [
+        "enum" : [
           "code-push",
           "firebase",
           "liftoff"
         ],
-        "type": "string"
+        "type" : "string"
       })
     }
     crash-reporting = {
-      name = "Crash Reporting"
+      name                    = "Crash Reporting"
       allowed_in_config_files = "true"
-      locked_status = "unlocked"
+      locked_status           = "unlocked"
       schema = jsonencode({
-        "enum": [
+        "enum" : [
           "sentry",
           "firebase",
           "crashlytics"
         ],
-        "type": "string"
+        "type" : "string"
       })
     }
   }

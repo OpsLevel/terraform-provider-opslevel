@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,8 +17,10 @@ import (
 	"golang.org/x/net/context"
 )
 
-var _ resource.Resource = &ComponentTypeResource{}
-var _ resource.ResourceWithImportState = &ComponentTypeResource{}
+var (
+	_ resource.Resource                = &ComponentTypeResource{}
+	_ resource.ResourceWithImportState = &ComponentTypeResource{}
+)
 
 type PropertyModel struct {
 	Name                 types.String `tfsdk:"name"`
