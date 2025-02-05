@@ -112,6 +112,9 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 	}
 	if !planModel.Value.IsNull() {
 		input.Value = opslevel.JsonString(planModel.Value.ValueString())
+	} else {
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("failed to assign property (%s) on service (%s), because the field 'value' was given null", definition, owner))
+		return
 	}
 	assignment, err := resource.client.PropertyAssign(input)
 	if err != nil {
