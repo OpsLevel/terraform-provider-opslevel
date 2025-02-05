@@ -45,6 +45,11 @@ func nullable[T any](s *T) *opslevel.Nullable[T] {
 
 func nullableID(s *string) *opslevel.Nullable[opslevel.ID] {
 	if s == nil {
+		return &opslevel.Nullable[opslevel.ID]{
+			SetNull: true,
+		}
+	}
+	if *s == "" {
 		return nil
 	}
 	return opslevel.RefOf(opslevel.ID(*s))
