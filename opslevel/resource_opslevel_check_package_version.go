@@ -211,11 +211,11 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 	input := opslevel.CheckPackageVersionCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
 		PackageConstraint: opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString()),
 		PackageManager:    opslevel.PackageManagerEnum(planModel.PackageManager.ValueString()),
@@ -288,12 +288,12 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 	input := opslevel.CheckPackageVersionUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
 		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueString()),
 		PackageManager:    asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueString()),

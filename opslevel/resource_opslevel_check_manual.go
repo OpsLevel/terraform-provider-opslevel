@@ -209,11 +209,11 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 	input := opslevel.CheckManualCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -273,12 +273,12 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 	input := opslevel.CheckManualUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())

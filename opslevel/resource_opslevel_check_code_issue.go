@@ -158,12 +158,12 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 		CategoryId: asID(planModel.Category),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -234,13 +234,13 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
 		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
