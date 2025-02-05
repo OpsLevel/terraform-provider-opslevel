@@ -99,7 +99,7 @@ run "resource_property_assignment_update_value" {
   variables {
     definition = run.from_property_definition_module.first_property_definitions.id
     owner      = run.from_service_module.first_service.id
-    value      = false
+    value      = jsonencode(false)
   }
 
   module {
@@ -107,7 +107,7 @@ run "resource_property_assignment_update_value" {
   }
 
   assert {
-    condition     = opslevel_property_assignment.test.value == false
+    condition     = opslevel_property_assignment.test.value == "false"
     error_message = "wrong value of opslevel_property_assignment.value"
   }
 
