@@ -105,7 +105,7 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	teamIdentifier := planModel.Owner.ValueStringPointer()
-	if !opslevel.IsID(*teamIdentifier) {
+	if teamIdentifier != nil && !opslevel.IsID(*teamIdentifier) {
 		team, err := r.client.GetTeamWithAlias(*teamIdentifier)
 		if err != nil {
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))

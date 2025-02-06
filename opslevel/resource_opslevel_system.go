@@ -109,12 +109,11 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 	input := opslevel.SystemInput{
 		Name:        nullable(planModel.Name.ValueStringPointer()),
 		Description: nullable(planModel.Description.ValueStringPointer()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        nullable(planModel.Note.ValueStringPointer()),
 	}
 
 	teamIdentifier := planModel.Owner.ValueStringPointer()
-	if !opslevel.IsID(*teamIdentifier) {
+	if teamIdentifier != nil && !opslevel.IsID(*teamIdentifier) {
 		team, err := r.client.GetTeamWithAlias(*teamIdentifier)
 		if err != nil {
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))

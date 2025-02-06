@@ -49,7 +49,7 @@ run "delete_rubric_category_outside_of_terraform" {
 run "resource_rubric_category_recreate_when_not_found" {
 
   module {
-    source = "./opslevel_modules/modules/rubric_category/data"
+    source = "./opslevel_modules/modules/rubric_category"
   }
 
   assert {
