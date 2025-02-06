@@ -212,7 +212,7 @@ func (r *CheckManualResource) Create(ctx context.Context, req resource.CreateReq
 		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -277,7 +277,7 @@ func (r *CheckManualResource) Update(ctx context.Context, req resource.UpdateReq
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {

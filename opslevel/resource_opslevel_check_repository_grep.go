@@ -207,7 +207,7 @@ func (r *CheckRepositoryGrepResource) Create(ctx context.Context, req resource.C
 		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -271,7 +271,7 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {

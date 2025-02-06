@@ -91,7 +91,7 @@ func (r *CheckRepositoryIntegratedResource) Create(ctx context.Context, req reso
 		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -148,7 +148,7 @@ func (r *CheckRepositoryIntegratedResource) Update(ctx context.Context, req reso
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {

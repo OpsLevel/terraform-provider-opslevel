@@ -214,7 +214,7 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
 		PackageConstraint: opslevel.PackageConstraintEnum(planModel.PackageConstraint.ValueString()),
@@ -292,7 +292,7 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Id:         asID(planModel.Id),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
 		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueString()),

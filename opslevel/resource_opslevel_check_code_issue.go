@@ -162,7 +162,7 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -239,7 +239,7 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
