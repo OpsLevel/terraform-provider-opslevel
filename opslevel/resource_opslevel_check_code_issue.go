@@ -123,8 +123,8 @@ func (r *CheckCodeIssueResource) Schema(ctx context.Context, req resource.Schema
 				Description: "The threshold count of code issues beyond which the check starts failing.",
 				Optional:    true,
 				Computed:    true,
-				Default:     int64default.StaticInt64(0),
-				Validators:  []validator.Int64{int64validator.AtLeast(0)},
+				Default:     int64default.StaticInt64(1),
+				Validators:  []validator.Int64{int64validator.AtLeast(1)},
 			},
 			"resolution_time": schema.SingleNestedAttribute{
 				Description: "Defines the minimum frequency of the updates.",

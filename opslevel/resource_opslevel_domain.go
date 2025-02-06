@@ -137,21 +137,39 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[DomainResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[DomainResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	resource, err := r.client.UpdateDomain(planModel.Id.ValueString(), opslevel.DomainInput{
+	input := opslevel.DomainInput{
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
-	})
+	}
+
+	teamIdentifier := planModel.Owner.ValueStringPointer()
+	if teamIdentifier == nil {
+		if !stateModel.Owner.IsNull() {
+			input.OwnerId = nullableID(teamIdentifier)
+		}
+	} else {
+		if !opslevel.IsID(*teamIdentifier) {
+			team, err := r.client.GetTeamWithAlias(*teamIdentifier)
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))
+				return
+			}
+			*teamIdentifier = string(team.Id)
+		}
+		input.OwnerId = nullableID(teamIdentifier)
+	}
+
+	res, err := r.client.UpdateDomain(planModel.Id.ValueString(), input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))
 		return
 	}
-	updatedDomainResourceModel := NewDomainResourceModel(ctx, *resource, planModel)
+	updatedDomainResourceModel := NewDomainResourceModel(ctx, *res, planModel)
 
 	tflog.Trace(ctx, "updated a domain resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)
