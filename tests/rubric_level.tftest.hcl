@@ -17,7 +17,7 @@ run "resource_rubric_level_create_with_all_fields" {
   }
 
   module {
-    source = "./opslevel_modules/modules/rubric_level"
+    source = "./opslevel_modules/modules/rubric_level/data"
   }
 
   assert {
@@ -69,7 +69,7 @@ run "resource_rubric_level_update_unset_optional_fields" {
   }
 
   module {
-    source = "./opslevel_modules/modules/rubric_level"
+    source = "./opslevel_modules/modules/rubric_level/data"
   }
 
   assert {
@@ -98,7 +98,7 @@ run "resource_rubric_level_create_with_required_fields" {
   }
 
   module {
-    source = "./opslevel_modules/modules/rubric_level"
+    source = "./opslevel_modules/modules/rubric_level/data"
   }
 
   assert {
@@ -138,7 +138,7 @@ run "resource_rubric_level_set_all_fields" {
   }
 
   module {
-    source = "./opslevel_modules/modules/rubric_level"
+    source = "./opslevel_modules/modules/rubric_level/data"
   }
 
   assert {

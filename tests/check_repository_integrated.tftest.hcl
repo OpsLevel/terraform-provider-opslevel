@@ -30,7 +30,7 @@ run "from_rubric_category_module" {
   command = plan
 
   module {
-    source = "./opslevel_modules/modules/rubric_category"
+    source = "./opslevel_modules/modules/rubric_category/data"
   }
 }
 
@@ -38,7 +38,7 @@ run "from_rubric_level_module" {
   command = plan
 
   module {
-    source = "./opslevel_modules/modules/rubric_level"
+    source = "./opslevel_modules/modules/rubric_level/data"
   }
 }
 
