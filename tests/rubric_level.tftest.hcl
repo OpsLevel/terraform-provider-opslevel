@@ -17,7 +17,7 @@ run "resource_rubric_level_create_with_all_fields" {
   }
 
   module {
-    source = "./opslevel_modules/modules/rubric_level/data"
+    source = "./opslevel_modules/modules/rubric_level"
   }
 
   assert {

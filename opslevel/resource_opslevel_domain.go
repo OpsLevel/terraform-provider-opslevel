@@ -98,20 +98,32 @@ func (r *DomainResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	resource, err := r.client.CreateDomain(opslevel.DomainInput{
+	input := opslevel.DomainInput{
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Note:        nullable(planModel.Note.ValueStringPointer()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
-	})
+	}
+
+	teamIdentifier := planModel.Owner.ValueStringPointer()
+	if !opslevel.IsID(*teamIdentifier) {
+		team, err := r.client.GetTeamWithAlias(*teamIdentifier)
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))
+			return
+		}
+		*teamIdentifier = string(team.Id)
+	}
+	input.OwnerId = nullableID(teamIdentifier)
+
+	res, err := r.client.CreateDomain(input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create domain, got error: %s", err))
 		return
 	}
-	createdDomainResourceModel := NewDomainResourceModel(ctx, *resource, planModel)
+	finalModel := NewDomainResourceModel(ctx, *res, planModel)
 
 	tflog.Trace(ctx, "created a domain resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &createdDomainResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &finalModel)...)
 }
 
 func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {

@@ -8,7 +8,7 @@ variables {
 run "resource_rubric_category_create_with_all_fields" {
 
   module {
-    source = "./opslevel_modules/modules/rubric_category/data"
+    source = "./opslevel_modules/modules/rubric_category"
   }
 
   assert {

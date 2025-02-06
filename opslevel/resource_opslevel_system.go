@@ -106,19 +106,28 @@ func (r *SystemResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	systemInput := opslevel.SystemInput{
+	input := opslevel.SystemInput{
 		Name:        nullable(planModel.Name.ValueStringPointer()),
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        nullable(planModel.Note.ValueStringPointer()),
 	}
-	if resp.Diagnostics.HasError() {
-		return
+
+	teamIdentifier := planModel.Owner.ValueStringPointer()
+	if !opslevel.IsID(*teamIdentifier) {
+		team, err := r.client.GetTeamWithAlias(*teamIdentifier)
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))
+			return
+		}
+		*teamIdentifier = string(team.Id)
 	}
+	input.OwnerId = nullableID(teamIdentifier)
+
 	if planModel.Domain.ValueString() != "" {
-		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+		input.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
 	}
-	system, err := r.client.CreateSystem(systemInput)
+	system, err := r.client.CreateSystem(input)
 	if err != nil || system == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create system, got error: %s", err))
 		return
