@@ -151,7 +151,7 @@ func (p PredicateModel) ToCreateInput() *opslevel.PredicateInput {
 
 func (s PredicateModel) ToUpdateInput() *opslevel.PredicateUpdateInput {
 	return &opslevel.PredicateUpdateInput{
-		Type:  asEnum[opslevel.PredicateTypeEnum](s.Type.ValueString()),
+		Type:  asEnum[opslevel.PredicateTypeEnum](s.Type.ValueStringPointer()),
 		Value: opslevel.RefOf(s.Value.ValueString()),
 	}
 }

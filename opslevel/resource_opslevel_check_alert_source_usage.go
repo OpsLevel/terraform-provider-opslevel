@@ -192,7 +192,7 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 		}
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
-	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueString())
+	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueStringPointer())
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)
@@ -264,7 +264,7 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		}
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
-	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueString())
+	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueStringPointer())
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)

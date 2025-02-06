@@ -370,7 +370,7 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	input.ToolCategory = asEnum[opslevel.ToolCategory](planModel.ToolCategory.ValueString())
+	input.ToolCategory = asEnum[opslevel.ToolCategory](planModel.ToolCategory.ValueStringPointer())
 	nullPredicateModel := PredicateModel{}
 
 	// convert environment_predicate object to model from plan
@@ -416,7 +416,7 @@ func (r *CheckToolUsageResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	input.ToolCategory = asEnum[opslevel.ToolCategory](planModel.ToolCategory.ValueString())
+	input.ToolCategory = asEnum[opslevel.ToolCategory](planModel.ToolCategory.ValueStringPointer())
 
 	data, err := r.client.UpdateCheckToolUsage(input)
 	if err != nil {

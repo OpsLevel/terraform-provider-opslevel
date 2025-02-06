@@ -57,7 +57,10 @@ func nullableID(s *string) *opslevel.Nullable[opslevel.ID] {
 	return opslevel.RefOf(opslevel.ID(*s))
 }
 
-func asEnum[T ~string](s string) *T {
-	value := T(s)
+func asEnum[T ~string](s *string) *T {
+	if s == nil {
+		return nil
+	}
+	value := T(*s)
 	return &value
 }

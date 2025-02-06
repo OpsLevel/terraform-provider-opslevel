@@ -180,8 +180,8 @@ func (r *CheckHasDocumentationResource) Update(ctx context.Context, req resource
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.DocumentType = asEnum[opslevel.HasDocumentationTypeEnum](planModel.DocumentType.ValueString())
-	input.DocumentSubtype = asEnum[opslevel.HasDocumentationSubtypeEnum](planModel.DocumentSubtype.ValueString())
+	input.DocumentType = asEnum[opslevel.HasDocumentationTypeEnum](planModel.DocumentType.ValueStringPointer())
+	input.DocumentSubtype = asEnum[opslevel.HasDocumentationSubtypeEnum](planModel.DocumentSubtype.ValueStringPointer())
 
 	data, err := r.client.UpdateCheckHasDocumentation(input)
 	if err != nil {

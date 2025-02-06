@@ -82,8 +82,8 @@ func NewPropertiesInput(model ComponentTypeModel) (*[]opslevel.ComponentTypeProp
 			Alias:                 alias,
 			Description:           prop.Description.ValueString(),
 			AllowedInConfigFiles:  prop.AllowedInConfigFiles.ValueBool(),
-			PropertyDisplayStatus: *asEnum[opslevel.PropertyDisplayStatusEnum](prop.DisplayStatus.ValueString()),
-			LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](prop.LockedStatus.ValueString()),
+			PropertyDisplayStatus: *asEnum[opslevel.PropertyDisplayStatusEnum](prop.DisplayStatus.ValueStringPointer()),
+			LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](prop.LockedStatus.ValueStringPointer()),
 			Schema:                *propertySchema,
 		})
 	}

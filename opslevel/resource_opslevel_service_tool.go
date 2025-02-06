@@ -207,7 +207,7 @@ func (r *ServiceToolResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	serviceTool, err := r.client.UpdateTool(opslevel.ToolUpdateInput{
-		Category:    asEnum[opslevel.ToolCategory](planModel.Category.ValueString()),
+		Category:    asEnum[opslevel.ToolCategory](planModel.Category.ValueStringPointer()),
 		DisplayName: nullable(planModel.Name.ValueStringPointer()),
 		Environment: opslevel.RefOf(planModel.Environment.ValueString()),
 		Id:          opslevel.ID(planModel.Id.ValueString()),

@@ -3,13 +3,13 @@ package opslevel
 import (
 	"context"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -122,6 +122,8 @@ func (r *CheckCodeIssueResource) Schema(ctx context.Context, req resource.Schema
 			"max_allowed": schema.Int64Attribute{
 				Description: "The threshold count of code issues beyond which the check starts failing.",
 				Optional:    true,
+				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				Validators:  []validator.Int64{int64validator.AtLeast(0)},
 			},
 			"resolution_time": schema.SingleNestedAttribute{
@@ -255,9 +257,7 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		issueType, _ := ListValueToStringSlice(ctx, planModel.IssueType)
 		input.IssueType = opslevel.NewNullableFrom(issueType)
 	}
-	if planModel.MaxAllowed.IsNull() {
-		input.MaxAllowed = (*int)(nil)
-	} else {
+	if !planModel.MaxAllowed.IsNull() {
 		input.MaxAllowed = refOf(int(planModel.MaxAllowed.ValueInt64()))
 	}
 	if planModel.ResolutionTime.IsNull() {

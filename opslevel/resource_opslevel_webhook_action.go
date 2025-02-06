@@ -167,7 +167,7 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 
 	input := opslevel.CustomActionsWebhookActionUpdateInput{
 		Description:    unsetStringHelper(planModel.Description, stateModel.Description),
-		HttpMethod:     asEnum[opslevel.CustomActionsHttpMethodEnum](planModel.Method.ValueString()),
+		HttpMethod:     asEnum[opslevel.CustomActionsHttpMethodEnum](planModel.Method.ValueStringPointer()),
 		Id:             opslevel.ID(planModel.Id.ValueString()),
 		LiquidTemplate: nullable(planModel.Payload.ValueStringPointer()),
 		Name:           nullable(planModel.Name.ValueStringPointer()),

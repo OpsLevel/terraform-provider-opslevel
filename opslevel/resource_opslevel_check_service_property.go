@@ -291,7 +291,7 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.ServiceProperty = asEnum[opslevel.ServicePropertyTypeEnum](planModel.Property.ValueString())
+	input.ServiceProperty = asEnum[opslevel.ServicePropertyTypeEnum](planModel.Property.ValueStringPointer())
 	if !planModel.PropertyDefinition.IsNull() {
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	} else if !stateModel.PropertyDefinition.IsNull() {

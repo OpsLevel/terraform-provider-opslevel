@@ -230,7 +230,7 @@ func (r *CheckPackageVersionResource) Create(ctx context.Context, req resource.C
 	}
 
 	if !planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueString())
+		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueStringPointer())
 	}
 	if !planModel.PackageNameIsRegex.IsNull() {
 		input.PackageNameIsRegex = nullable(planModel.PackageNameIsRegex.ValueBoolPointer())
@@ -295,8 +295,8 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
-		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueString()),
-		PackageManager:    asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueString()),
+		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueStringPointer()),
+		PackageManager:    asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueStringPointer()),
 		PackageName:       opslevel.RefOf(planModel.PackageName.ValueString()),
 	}
 	if !planModel.EnableOn.IsNull() {
@@ -310,7 +310,7 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 	if planModel.MissingPackageResult.IsNull() {
 		input.MissingPackageResult = (*opslevel.CheckResultStatusEnum)(nil)
 	} else {
-		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueString())
+		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueStringPointer())
 	}
 
 	if !planModel.PackageNameIsRegex.IsNull() {
