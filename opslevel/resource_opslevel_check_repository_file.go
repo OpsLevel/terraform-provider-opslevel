@@ -232,6 +232,7 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		} else {
 			resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
+
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -298,7 +299,14 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 	}
 
 	input.DirectorySearch = nullable(planModel.DirectorySearch.ValueBoolPointer())
-	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
+	if !planModel.Filepaths.IsNull() {
+		var paths []string
+		resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &paths, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		input.FilePaths = &opslevel.Nullable[[]string]{Value: paths}
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)

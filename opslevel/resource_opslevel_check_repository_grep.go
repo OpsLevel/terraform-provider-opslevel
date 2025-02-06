@@ -283,7 +283,14 @@ func (r *CheckRepositoryGrepResource) Update(ctx context.Context, req resource.U
 	}
 
 	input.DirectorySearch = nullable(planModel.DirectorySearch.ValueBoolPointer())
-	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
+	if !planModel.Filepaths.IsNull() {
+		var paths []string
+		resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &paths, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		input.FilePaths = &opslevel.Nullable[[]string]{Value: paths}
+	}
 
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)
 	resp.Diagnostics.Append(diags...)
