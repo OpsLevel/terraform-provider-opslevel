@@ -36,9 +36,11 @@ func refOf[T any](value T) *T {
 	return &value
 }
 
-func nullable[T any](s *T) *opslevel.Nullable[T] {
+func nullable[T comparable](s *T) *opslevel.Nullable[T] {
 	if s == nil {
-		return nil
+		return &opslevel.Nullable[T]{
+			SetNull: true,
+		}
 	}
 	return opslevel.RefOf[T](*s)
 }
