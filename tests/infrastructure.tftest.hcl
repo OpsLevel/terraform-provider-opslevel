@@ -145,5 +145,4 @@ run "resource_infrastructure_create_with_all_fields" {
 #     condition     = opslevel_check_alert_source_usage.this.provider_data == null
 #     error_message = var.error_expected_null_field
 #   }
-
-}
+# }
