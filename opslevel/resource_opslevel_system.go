@@ -152,34 +152,52 @@ func (r *SystemResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func (r *SystemResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[SystemResourceModel](ctx, &resp.Diagnostics, req.Plan)
+	stateModel := read[SystemResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	systemInput := opslevel.SystemInput{
+	input := opslevel.SystemInput{
 		Name:        opslevel.RefOf(planModel.Name.ValueString()),
 		Description: opslevel.RefOf(planModel.Description.ValueString()),
-		OwnerId:     GetTeamID(&resp.Diagnostics, r.client, planModel.Owner.ValueString()),
 		Note:        opslevel.RefOf(planModel.Note.ValueString()),
 	}
+
+	teamIdentifier := planModel.Owner.ValueStringPointer()
+	if teamIdentifier == nil {
+		if !stateModel.Owner.IsNull() {
+			input.OwnerId = nullableID(teamIdentifier)
+		}
+	} else {
+		if !opslevel.IsID(*teamIdentifier) {
+			team, err := r.client.GetTeamWithAlias(*teamIdentifier)
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read team, got error: %s", err))
+				return
+			}
+			*teamIdentifier = string(team.Id)
+		}
+		input.OwnerId = nullableID(teamIdentifier)
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	if planModel.Domain.IsNull() {
-		systemInput.Parent = opslevel.NewIdentifier()
+		input.Parent = opslevel.NewIdentifier()
 	} else {
-		systemInput.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
+		input.Parent = opslevel.NewIdentifier(planModel.Domain.ValueString())
 	}
 
-	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), systemInput)
+	system, err := r.client.UpdateSystem(planModel.Id.ValueString(), input)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update system, got error: %s", err))
 		return
 	}
-	stateModel := NewSystemResourceModel(*system, planModel)
+	finalModel := NewSystemResourceModel(*system, planModel)
 
 	tflog.Trace(ctx, "updated a system resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &finalModel)...)
 }
 
 func (r *SystemResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

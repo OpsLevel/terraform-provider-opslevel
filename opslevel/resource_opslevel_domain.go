@@ -169,10 +169,10 @@ func (r *DomainResource) Update(ctx context.Context, req resource.UpdateRequest,
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update domain, got error: %s", err))
 		return
 	}
-	updatedDomainResourceModel := NewDomainResourceModel(ctx, *res, planModel)
+	finalModel := NewDomainResourceModel(ctx, *res, planModel)
 
 	tflog.Trace(ctx, "updated a domain resource")
-	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedDomainResourceModel)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &finalModel)...)
 }
 
 func (r *DomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
