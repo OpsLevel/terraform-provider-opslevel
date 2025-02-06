@@ -74,8 +74,12 @@ func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, g
 	stateModel.IssueName = OptionalStringValue(check.IssueName)
 	stateModel.IssueType = OptionalStringListValue(check.IssueType)
 	// NOTE: API prevents MaxAllowed from being zero
-	if check.MaxAllowed > 0 {
-		stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
+	if !givenModel.MaxAllowed.IsNull() {
+		if check.MaxAllowed > 0 {
+			stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
+		}
+	} else {
+		stateModel.MaxAllowed = types.Int64Null()
 	}
 	emptyResolutionTime := opslevel.CodeIssueResolutionTime{}
 	if check.ResolutionTime == emptyResolutionTime {
