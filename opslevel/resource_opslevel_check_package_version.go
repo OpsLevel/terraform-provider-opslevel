@@ -295,9 +295,7 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 
-		PackageConstraint: asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueStringPointer()),
-		PackageManager:    asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueStringPointer()),
-		PackageName:       opslevel.RefOf(planModel.PackageName.ValueString()),
+		PackageName: opslevel.RefOf(planModel.PackageName.ValueString()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -307,10 +305,10 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	if planModel.MissingPackageResult.IsNull() {
-		input.MissingPackageResult = (*opslevel.CheckResultStatusEnum)(nil)
+	if planModel.PackageManager.IsNull() {
+		input.PackageManager = &opslevel.Nullable[opslevel.PackageManagerEnum]{SetNull: true}
 	} else {
-		input.MissingPackageResult = asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueStringPointer())
+		input.PackageManager = nullable(asEnum[opslevel.PackageManagerEnum](planModel.PackageManager.ValueStringPointer()))
 	}
 
 	if !planModel.PackageNameIsRegex.IsNull() {
@@ -319,17 +317,31 @@ func (r *CheckPackageVersionResource) Update(ctx context.Context, req resource.U
 		input.PackageNameIsRegex = opslevel.RefOf(false)
 	}
 
-	predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
-	resp.Diagnostics.Append(diags...)
-	if predicateModel.Type.IsUnknown() || predicateModel.Type.IsNull() {
-		input.VersionConstraintPredicate = &opslevel.PredicateUpdateInput{}
-	} else if err := predicateModel.Validate(); err == nil {
-		input.VersionConstraintPredicate = predicateModel.ToUpdateInput()
+	if planModel.MissingPackageResult.IsNull() {
+		input.MissingPackageResult = &opslevel.Nullable[opslevel.CheckResultStatusEnum]{SetNull: true}
 	} else {
-		resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Attribute Configuration", err.Error())
+		input.MissingPackageResult = nullable(asEnum[opslevel.CheckResultStatusEnum](planModel.MissingPackageResult.ValueStringPointer()))
 	}
-	if resp.Diagnostics.HasError() {
-		return
+
+	if planModel.PackageConstraint.IsNull() {
+		input.PackageConstraint = &opslevel.Nullable[opslevel.PackageConstraintEnum]{SetNull: true}
+	} else {
+		input.PackageConstraint = nullable(asEnum[opslevel.PackageConstraintEnum](planModel.PackageConstraint.ValueStringPointer()))
+	}
+
+	if planModel.VersionConstraintPredicate.IsNull() {
+		input.VersionConstraintPredicate = &opslevel.Nullable[opslevel.PredicateUpdateInput]{SetNull: true}
+	} else {
+		predicateModel, diags := PredicateObjectToModel(ctx, planModel.VersionConstraintPredicate)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if err := predicateModel.Validate(); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("version_constraint_predicate"), "Invalid Attribute Configuration", err.Error())
+			return
+		}
+		input.VersionConstraintPredicate = nullable(predicateModel.ToUpdateInput())
 	}
 
 	data, err := r.client.UpdateCheckPackageVersion(input)
