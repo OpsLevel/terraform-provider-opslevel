@@ -134,11 +134,11 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"color": schema.StringAttribute{
-						Description: "The color of the icon.",
+						Description: "The color, represented as a hexcode, for the icon.",
 						Required:    true,
 					},
 					"name": schema.StringAttribute{
-						Description: "The name of the icon.",
+						Description: "The name of the icon in Phosphor icons for Vue, e.g. `PhBird`. See https://phosphoricons.com/ for a full list.",
 						Required:    true,
 						Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllComponentTypeIconEnum...)},
 					},
