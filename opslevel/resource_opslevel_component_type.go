@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -31,11 +30,17 @@ type PropertyModel struct {
 	Schema               types.String `tfsdk:"schema"`
 }
 
+type ComponentTypeIconModel struct {
+	Color types.String `tfsdk:"color"`
+	Name  types.String `tfsdk:"name"`
+}
+
 type ComponentTypeModel struct {
 	Id          types.String             `tfsdk:"id"`
 	Name        types.String             `tfsdk:"name"`
 	Alias       types.String             `tfsdk:"alias"`
 	Description types.String             `tfsdk:"description"`
+	Icon        ComponentTypeIconModel   `tfsdk:"icon"`
 	Properties  map[string]PropertyModel `tfsdk:"properties"`
 }
 
@@ -52,6 +57,10 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	stateModel.Name = types.StringValue(res.Name)
 	stateModel.Alias = types.StringValue(res.Aliases[0])
 	stateModel.Description = types.StringValue(res.Description)
+	stateModel.Icon = ComponentTypeIconModel{
+		Color: types.StringValue(res.Icon.Color),
+		Name:  types.StringValue(string(res.Icon.Name)),
+	}
 	conn, err := res.GetProperties(s.client, nil)
 	if err != nil {
 		return stateModel, err
@@ -106,11 +115,11 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the component type.",
+				Description: "The unique name of the component type.",
 				Required:    true,
 			},
 			"alias": schema.StringAttribute{
-				Description: "The alias of the component type.",
+				Description: "The unique alias of the component type.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -120,17 +129,32 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "The description of the component type.",
 				Optional:    true,
 			},
+			"icon": schema.SingleNestedAttribute{
+				Description: "The icon associated with the component type",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"color": schema.StringAttribute{
+						Description: "The color, represented as a hexcode, for the icon.",
+						Required:    true,
+					},
+					"name": schema.StringAttribute{
+						Description: "The name of the icon in Phosphor icons for Vue, e.g. `PhBird`. See https://phosphoricons.com/ for a full list.",
+						Required:    true,
+						Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllComponentTypeIconEnum...)},
+					},
+				},
+			},
 			"properties": schema.MapNestedAttribute{
 				Description: "The properties of this component type.",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Description: "The name of the property.",
+							Description: "The name of the property definition.",
 							Required:    true,
 						},
 						"description": schema.StringAttribute{
-							Description: "The description of the property.",
+							Description: "The description of the property definition.",
 							Optional:    true,
 						},
 						"allowed_in_config_files": schema.BoolAttribute{
@@ -149,7 +173,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 							},
 						},
 						"locked_status": schema.StringAttribute{
-							Description: "The locked status of the property.",
+							Description: "Restricts what sources are able to assign values to this property.",
 							Optional:    true,
 							Computed:    true,
 							Default:     stringdefault.StaticString(string(opslevel.PropertyLockedStatusEnumUILocked)),
@@ -189,6 +213,12 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		Alias:       nullable(planModel.Alias.ValueStringPointer()),
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		Properties:  properties,
+	}
+	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+		input.Icon = &opslevel.ComponentTypeIconInput{
+			Color: planModel.Icon.Color.ValueString(),
+			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
+		}
 	}
 
 	res, err := s.client.CreateComponentType(input)
@@ -243,6 +273,12 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		Alias:       nullable(planModel.Alias.ValueStringPointer()),
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		Properties:  properties,
+	}
+	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+		input.Icon = &opslevel.ComponentTypeIconInput{
+			Color: planModel.Icon.Color.ValueString(),
+			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
+		}
 	}
 
 	id := stateModel.Id.ValueString()
