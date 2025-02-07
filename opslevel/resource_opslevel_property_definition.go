@@ -50,7 +50,7 @@ func NewPropertyDefinitionResourceModel(definition opslevel.PropertyDefinition, 
 		Name:                  RequiredStringValue(definition.Name),
 		PropertyDisplayStatus: RequiredStringValue(string(definition.PropertyDisplayStatus)),
 		LockedStatus:          RequiredStringValue(string(definition.LockedStatus)),
-		Schema:                RequiredStringValue(definition.Schema.ToJSON()),
+		Schema:                RequiredStringValue(definition.Schema.AsString()),
 	}
 
 	return model
@@ -130,8 +130,8 @@ func (resource *PropertyDefinitionResource) Create(ctx context.Context, req reso
 		AllowedInConfigFiles:  nullable(planModel.AllowedInConfigFiles.ValueBoolPointer()),
 		Description:           nullable(planModel.Description.ValueStringPointer()),
 		Name:                  nullable(planModel.Name.ValueStringPointer()),
-		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
-		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueString()),
+		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueStringPointer()),
+		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.CreatePropertyDefinition(input)
@@ -184,8 +184,8 @@ func (resource *PropertyDefinitionResource) Update(ctx context.Context, req reso
 		AllowedInConfigFiles:  nullable(planModel.AllowedInConfigFiles.ValueBoolPointer()),
 		Description:           nullable(planModel.Description.ValueStringPointer()),
 		Name:                  nullable(planModel.Name.ValueStringPointer()),
-		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueString()),
-		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueString()),
+		PropertyDisplayStatus: asEnum[opslevel.PropertyDisplayStatusEnum](planModel.PropertyDisplayStatus.ValueStringPointer()),
+		LockedStatus:          asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
 		Schema:                definitionSchema,
 	}
 	definition, err := resource.client.UpdatePropertyDefinition(id, input)

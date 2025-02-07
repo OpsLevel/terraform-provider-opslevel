@@ -179,11 +179,11 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 	input := opslevel.CheckAlertSourceUsageCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -192,7 +192,7 @@ func (r *CheckAlertSourceUsageResource) Create(ctx context.Context, req resource
 		}
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
-	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueString())
+	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueStringPointer())
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)
@@ -250,12 +250,12 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 	input := opslevel.CheckAlertSourceUsageUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -264,7 +264,7 @@ func (r *CheckAlertSourceUsageResource) Update(ctx context.Context, req resource
 		}
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
-	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueString())
+	input.AlertSourceType = asEnum[opslevel.AlertSourceTypeEnum](planModel.AlertType.ValueStringPointer())
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.AlertNamePredicate)

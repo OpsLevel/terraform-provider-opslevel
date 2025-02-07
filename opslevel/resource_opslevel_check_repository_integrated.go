@@ -88,11 +88,11 @@ func (r *CheckRepositoryIntegratedResource) Create(ctx context.Context, req reso
 	input := opslevel.CheckRepositoryIntegratedCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -144,12 +144,12 @@ func (r *CheckRepositoryIntegratedResource) Update(ctx context.Context, req reso
 	input := opslevel.CheckRepositoryIntegratedUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())

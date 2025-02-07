@@ -206,11 +206,11 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 	input := opslevel.CheckRepositoryFileCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -232,6 +232,7 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		} else {
 			resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
+
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -282,12 +283,12 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 	input := opslevel.CheckRepositoryFileUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -298,7 +299,14 @@ func (r *CheckRepositoryFileResource) Update(ctx context.Context, req resource.U
 	}
 
 	input.DirectorySearch = nullable(planModel.DirectorySearch.ValueBoolPointer())
-	resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &input.FilePaths, false)...)
+	if !planModel.Filepaths.IsNull() {
+		var paths []string
+		resp.Diagnostics.Append(planModel.Filepaths.ElementsAs(ctx, &paths, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		input.FilePaths = &opslevel.Nullable[[]string]{Value: paths}
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.FileContentsPredicate)

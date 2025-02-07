@@ -200,11 +200,11 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 	input := opslevel.CheckServicePropertyCreateInput{
 		CategoryId: asID(planModel.Category),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -276,12 +276,12 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 	input := opslevel.CheckServicePropertyUpdateInput{
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -291,7 +291,7 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		input.EnableOn = opslevel.RefOf(iso8601.Time{Time: enabledOn})
 	}
 
-	input.ServiceProperty = asEnum[opslevel.ServicePropertyTypeEnum](planModel.Property.ValueString())
+	input.ServiceProperty = asEnum[opslevel.ServicePropertyTypeEnum](planModel.Property.ValueStringPointer())
 	if !planModel.PropertyDefinition.IsNull() {
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	} else if !stateModel.PropertyDefinition.IsNull() {

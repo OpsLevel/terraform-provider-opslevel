@@ -1,0 +1,1 @@
+terraform import opslevel_component_type.example Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS82MDI0

@@ -3,7 +3,6 @@ package opslevel
 import (
 	"context"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -75,8 +74,12 @@ func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, g
 	stateModel.IssueName = OptionalStringValue(check.IssueName)
 	stateModel.IssueType = OptionalStringListValue(check.IssueType)
 	// NOTE: API prevents MaxAllowed from being zero
-	if check.MaxAllowed > 0 {
-		stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
+	if !givenModel.MaxAllowed.IsNull() {
+		if check.MaxAllowed > 0 {
+			stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
+		}
+	} else {
+		stateModel.MaxAllowed = types.Int64Null()
 	}
 	emptyResolutionTime := opslevel.CodeIssueResolutionTime{}
 	if check.ResolutionTime == emptyResolutionTime {
@@ -158,12 +161,12 @@ func (r *CheckCodeIssueResource) Create(ctx context.Context, req resource.Create
 		CategoryId: asID(planModel.Category),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    asID(planModel.Level),
 		Name:       planModel.Name.ValueString(),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -234,13 +237,13 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		CategoryId: opslevel.RefOf(asID(planModel.Category)),
 		Constraint: opslevel.CheckCodeIssueConstraintEnum(planModel.Constraint.ValueString()),
 		Enabled:    nullable(planModel.Enabled.ValueBoolPointer()),
-		FilterId:   opslevel.RefOf(asID(planModel.Filter)),
+		FilterId:   nullableID(planModel.Filter.ValueStringPointer()),
 		Id:         asID(planModel.Id),
 		IssueName:  nullable(planModel.IssueName.ValueStringPointer()),
 		LevelId:    opslevel.RefOf(asID(planModel.Level)),
 		Name:       opslevel.RefOf(planModel.Name.ValueString()),
-		Notes:      nullable(planModel.Notes.ValueStringPointer()),
-		OwnerId:    opslevel.RefOf(asID(planModel.Owner)),
+		Notes:      opslevel.NewString(planModel.Notes.ValueString()),
+		OwnerId:    nullableID(planModel.Owner.ValueStringPointer()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())
@@ -255,9 +258,7 @@ func (r *CheckCodeIssueResource) Update(ctx context.Context, req resource.Update
 		issueType, _ := ListValueToStringSlice(ctx, planModel.IssueType)
 		input.IssueType = opslevel.NewNullableFrom(issueType)
 	}
-	if planModel.MaxAllowed.IsNull() {
-		input.MaxAllowed = (*int)(nil)
-	} else {
+	if !planModel.MaxAllowed.IsNull() {
 		input.MaxAllowed = refOf(int(planModel.MaxAllowed.ValueInt64()))
 	}
 	if planModel.ResolutionTime.IsNull() {

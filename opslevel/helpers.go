@@ -36,21 +36,31 @@ func refOf[T any](value T) *T {
 	return &value
 }
 
-func nullable[T any](s *T) *opslevel.Nullable[T] {
+func nullable[T comparable](s *T) *opslevel.Nullable[T] {
 	if s == nil {
-		return nil
+		return &opslevel.Nullable[T]{
+			SetNull: true,
+		}
 	}
 	return opslevel.RefOf[T](*s)
 }
 
 func nullableID(s *string) *opslevel.Nullable[opslevel.ID] {
 	if s == nil {
+		return &opslevel.Nullable[opslevel.ID]{
+			SetNull: true,
+		}
+	}
+	if *s == "" {
 		return nil
 	}
 	return opslevel.RefOf(opslevel.ID(*s))
 }
 
-func asEnum[T ~string](s string) *T {
-	value := T(s)
+func asEnum[T ~string](s *string) *T {
+	if s == nil {
+		return nil
+	}
+	value := T(*s)
 	return &value
 }

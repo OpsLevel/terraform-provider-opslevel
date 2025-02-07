@@ -2,7 +2,7 @@ variables {
   name               = "TF Test Filter with properties predicate"
   jq_expression      = ".[] | select(.name == fancy)"
   predicate_key      = "properties"
-  predicate_key_data = "property_definition_id"
+  predicate_key_data = "Z2lkOi8vb3BzbGV2ZWwvUHJvcGVydGllczo6RGVmaW5pdGlvbi8zOTY"
   predicate_type     = "satisfies_jq_expression"
 }
 

@@ -114,7 +114,7 @@ func (r *UserResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	userInput := opslevel.UserInput{
 		Name:             nullable(planModel.Name.ValueStringPointer()),
-		Role:             asEnum[opslevel.UserRole](planModel.Role.ValueString()),
+		Role:             asEnum[opslevel.UserRole](planModel.Role.ValueStringPointer()),
 		SkipWelcomeEmail: nullable(planModel.SkipWelcomeEmail.ValueBoolPointer()),
 	}
 	user, err := r.client.InviteUser(planModel.Email.ValueString(), userInput, planModel.SendInvite.ValueBool())
@@ -165,7 +165,7 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		SkipWelcomeEmail: nullable(planModel.SkipWelcomeEmail.ValueBoolPointer()),
 	}
 	if !planModel.Role.IsNull() {
-		input.Role = asEnum[opslevel.UserRole](planModel.Role.ValueString())
+		input.Role = asEnum[opslevel.UserRole](planModel.Role.ValueStringPointer())
 	} // We don't check state here because its ambigous what to do if the end user removes the role configuration
 
 	res, err := r.client.UpdateUser(planModel.Id.ValueString(), input)

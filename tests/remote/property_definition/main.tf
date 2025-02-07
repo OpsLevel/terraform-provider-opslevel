@@ -11,5 +11,6 @@ resource "opslevel_property_definition" "test" {
   description             = var.description
   name                    = var.name
   property_display_status = var.property_display_status
+  locked_status           = var.locked_status
   schema                  = var.schema
 }

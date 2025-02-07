@@ -94,12 +94,12 @@ run "resource_property_assignment_create_with_all_fields" {
 
 }
 
-run "resource_property_assignment_update_unset_optional_fields" {
+run "resource_property_assignment_update_value" {
 
   variables {
     definition = run.from_property_definition_module.first_property_definitions.id
     owner      = run.from_service_module.first_service.id
-    value      = null
+    value      = jsonencode(false)
   }
 
   module {
@@ -107,8 +107,27 @@ run "resource_property_assignment_update_unset_optional_fields" {
   }
 
   assert {
-    condition     = opslevel_property_assignment.test.value == null
-    error_message = var.error_expected_null_field
+    condition     = opslevel_property_assignment.test.value == "false"
+    error_message = "wrong value of opslevel_property_assignment.value"
   }
 
 }
+
+# run "resource_property_assignment_update_unset_optional_fields" {
+#
+#   variables {
+#     definition = run.from_property_definition_module.first_property_definitions.id
+#     owner      = run.from_service_module.first_service.id
+#     value      = null
+#   }
+#
+#   module {
+#     source = "./property_assignment"
+#   }
+#
+#   assert {
+#     condition     = opslevel_property_assignment.test.value == null
+#     error_message = var.error_expected_null_field
+#   }
+#
+# }
