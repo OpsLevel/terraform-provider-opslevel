@@ -232,7 +232,6 @@ func (r *CheckRepositoryFileResource) Create(ctx context.Context, req resource.C
 		} else {
 			resp.Diagnostics.AddAttributeError(path.Root("file_contents_predicate"), "Invalid Attribute Configuration", err.Error())
 		}
-
 	}
 	if resp.Diagnostics.HasError() {
 		return
