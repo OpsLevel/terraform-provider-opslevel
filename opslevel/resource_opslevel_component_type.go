@@ -115,11 +115,11 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the component type.",
+				Description: "The unique name of the component type.",
 				Required:    true,
 			},
 			"alias": schema.StringAttribute{
-				Description: "The alias of the component type.",
+				Description: "The unique alias of the component type.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -130,7 +130,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 			},
 			"icon": schema.SingleNestedAttribute{
-				Description: "The icon of the component type.",
+				Description: "The icon associated with the component type",
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"color": schema.StringAttribute{
@@ -150,11 +150,11 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Description: "The name of the property.",
+							Description: "The name of the property definition.",
 							Required:    true,
 						},
 						"description": schema.StringAttribute{
-							Description: "The description of the property.",
+							Description: "The description of the property definition.",
 							Optional:    true,
 						},
 						"allowed_in_config_files": schema.BoolAttribute{
@@ -173,7 +173,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 							},
 						},
 						"locked_status": schema.StringAttribute{
-							Description: "The locked status of the property.",
+							Description: "Restricts what sources are able to assign values to this property.",
 							Optional:    true,
 							Computed:    true,
 							Default:     stringdefault.StaticString(string(opslevel.PropertyLockedStatusEnumUILocked)),
