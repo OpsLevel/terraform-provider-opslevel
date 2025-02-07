@@ -2,7 +2,6 @@ package opslevel
 
 import (
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -31,11 +30,17 @@ type PropertyModel struct {
 	Schema               types.String `tfsdk:"schema"`
 }
 
+type ComponentTypeIconModel struct {
+	Color types.String `tfsdk:"color"`
+	Name  types.String `tfsdk:"name"`
+}
+
 type ComponentTypeModel struct {
 	Id          types.String             `tfsdk:"id"`
 	Name        types.String             `tfsdk:"name"`
 	Alias       types.String             `tfsdk:"alias"`
 	Description types.String             `tfsdk:"description"`
+	Icon        ComponentTypeIconModel   `tfsdk:"icon"`
 	Properties  map[string]PropertyModel `tfsdk:"properties"`
 }
 
@@ -52,6 +57,10 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	stateModel.Name = types.StringValue(res.Name)
 	stateModel.Alias = types.StringValue(res.Aliases[0])
 	stateModel.Description = types.StringValue(res.Description)
+	stateModel.Icon = ComponentTypeIconModel{
+		Color: types.StringValue(res.Icon.Color),
+		Name:  types.StringValue(string(res.Icon.Name)),
+	}
 	conn, err := res.GetProperties(s.client, nil)
 	if err != nil {
 		return stateModel, err
@@ -119,6 +128,21 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 			"description": schema.StringAttribute{
 				Description: "The description of the component type.",
 				Optional:    true,
+			},
+			"icon": schema.SingleNestedAttribute{
+				Description: "The icon of the component type.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"color": schema.StringAttribute{
+						Description: "The color of the icon.",
+						Required:    true,
+					},
+					"name": schema.StringAttribute{
+						Description: "The name of the icon.",
+						Required:    true,
+						Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllComponentTypeIconEnum...)},
+					},
+				},
 			},
 			"properties": schema.MapNestedAttribute{
 				Description: "The properties of this component type.",
@@ -190,6 +214,12 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		Properties:  properties,
 	}
+	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+		input.Icon = &opslevel.ComponentTypeIconInput{
+			Color: planModel.Icon.Color.ValueString(),
+			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
+		}
+	}
 
 	res, err := s.client.CreateComponentType(input)
 	if err != nil {
@@ -243,6 +273,12 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		Alias:       nullable(planModel.Alias.ValueStringPointer()),
 		Description: nullable(planModel.Description.ValueStringPointer()),
 		Properties:  properties,
+	}
+	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+		input.Icon = &opslevel.ComponentTypeIconInput{
+			Color: planModel.Icon.Color.ValueString(),
+			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
+		}
 	}
 
 	id := stateModel.Id.ValueString()
