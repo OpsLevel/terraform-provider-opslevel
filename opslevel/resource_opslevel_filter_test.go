@@ -3,7 +3,7 @@ package opslevel_test
 import (
 	"testing"
 
-	opslevelgo "github.com/opslevel/opslevel-go/v2024"
+	opslevelgo "github.com/opslevel/opslevel-go/v2025"
 	opsleveltf "github.com/opslevel/terraform-provider-opslevel/opslevel"
 )
 

@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2024"
+  OPSLEVEL_GO_PKG: "github.com/opslevel/opslevel-go/v2025"
 
 tasks:
   run-unit-tests:
