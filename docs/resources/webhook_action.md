@@ -49,7 +49,7 @@ resource "opslevel_webhook_action" "example" {
 
 ### Required
 
-- `method` (String) The http method used to call the Webhook Action. One of `GET`, `PATCH`, `POST`, `PUT`, `DELETE`
+- `method` (String) The http method used to call the Webhook Action. One of `DELETE`, `GET`, `PATCH`, `POST`, `PUT`
 - `name` (String) The name of the Webhook Action.
 - `payload` (String) Template that can be used to generate a webhook payload.
 - `url` (String) The URL of the Webhook Action.

@@ -60,7 +60,7 @@ resource "opslevel_check_has_documentation" "has_docs" {
 
 - `category` (String) The id of the category the check belongs to.
 - `document_subtype` (String) The subtype of the document. One of `openapi`
-- `document_type` (String) The type of the document. One of `tech`, `api`
+- `document_type` (String) The type of the document. One of `api`, `tech`
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 

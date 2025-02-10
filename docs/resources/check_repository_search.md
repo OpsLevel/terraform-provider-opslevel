@@ -62,7 +62,7 @@ resource "opslevel_check_repository_search" "example" {
 ### Required
 
 - `category` (String) The id of the category the check belongs to.
-- `file_contents_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--file_contents_predicate))
+- `file_contents_predicate` (Attributes) A condition that should be satisfied. One of `belongs_to`, `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `does_not_match`, `does_not_match_regex`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `matches`, `matches_regex`, `satisfies_jq_expression`, `satisfies_version_constraint`, `starts_with` (see [below for nested schema](#nestedatt--file_contents_predicate))
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.
 

@@ -80,8 +80,8 @@ resource "opslevel_filter" "case_sensitive" {
 
 Required:
 
-- `key` (String) The condition key used by the predicate. Valid values are `tier_index`, `lifecycle_index`, `language`, `framework`, `product`, `name`, `tags`, `owner_id`, `group_ids`, `owner_ids`, `creation_source`, `repository_ids`, `filter_id`, `properties`, `aliases`, `domain_id`, `system_id`
-- `type` (String) The condition type used by the predicate. Valid values are `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression`
+- `key` (String) The condition key used by the predicate. Valid values are `aliases`, `component_type_id`, `creation_source`, `domain_id`, `filter_id`, `framework`, `group_ids`, `language`, `lifecycle_index`, `name`, `owner_id`, `owner_ids`, `product`, `properties`, `repository_ids`, `system_id`, `tags`, `tier_index`
+- `type` (String) The condition type used by the predicate. Valid values are `belongs_to`, `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `does_not_match`, `does_not_match_regex`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `matches`, `matches_regex`, `satisfies_jq_expression`, `satisfies_version_constraint`, `starts_with`
 
 Optional:
 

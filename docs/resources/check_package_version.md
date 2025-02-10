@@ -111,7 +111,7 @@ resource "opslevel_check_package_version" "example3" {
 - `notes` (String) Additional information to display to the service owner about the check.
 - `owner` (String) The id of the team that owns the check.
 - `package_name_is_regex` (Boolean) Whether or not the value in the package name field is a regular expression. (Optional.)
-- `version_constraint_predicate` (Attributes) A condition that should be satisfied. One of `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `starts_with`, `satisfies_version_constraint`, `matches_regex`, `does_not_match_regex`, `belongs_to`, `matches`, `does_not_match`, `satisfies_jq_expression` (see [below for nested schema](#nestedatt--version_constraint_predicate))
+- `version_constraint_predicate` (Attributes) A condition that should be satisfied. One of `belongs_to`, `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `does_not_match`, `does_not_match_regex`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `matches`, `matches_regex`, `satisfies_jq_expression`, `satisfies_version_constraint`, `starts_with` (see [below for nested schema](#nestedatt--version_constraint_predicate))
 
 ### Read-Only
 

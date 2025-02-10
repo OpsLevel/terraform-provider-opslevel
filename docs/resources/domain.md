@@ -20,7 +20,7 @@ data "opslevel_team" "devs" {
 resource "opslevel_domain" "example" {
   name        = "Example"
   description = "The whole app in one monolith"
-  owner       = data.opslevel_team.devs.id // or .alias
+  owner       = data.opslevel_team.devs.id // or .aliases[0]
   note        = "This is an example"
 }
 ```
@@ -36,7 +36,7 @@ resource "opslevel_domain" "example" {
 
 - `description` (String) The description of the domain.
 - `note` (String) Additional information about the domain.
-- `owner` (String) The id of the team that owns the domain.
+- `owner` (String) The id or alias of the team that owns the domain.
 
 ### Read-Only
 

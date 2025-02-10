@@ -32,7 +32,7 @@ resource "opslevel_user" "john" {
 
 ### Optional
 
-- `role` (String) The access role of the user. One of `user`, `admin`, `team_member`, `standards_admin`
+- `role` (String) The access role of the user. One of `admin`, `standards_admin`, `team_member`, `user`
 - `send_invite` (Boolean) Send an invite email even if notifications are disabled for the account. **(default: false)**
 - `skip_welcome_email` (Boolean) Don't send an email welcoming the user to OpsLevel. **(default: true)**
 

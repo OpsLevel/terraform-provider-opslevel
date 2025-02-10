@@ -46,7 +46,7 @@ resource "opslevel_team_contact" "example" {
 
 - `name` (String) The name shown in the UI for the contact.
 - `team` (String) The id or alias of the team the contact belongs to.
-- `type` (String) The method of contact. One of `slack`, `slack_handle`, `email`, `web`, `github`, `any`
+- `type` (String) The method of contact. One of `email`, `github`, `microsoft_teams`, `slack`, `slack_handle`, `web`, `any`
 - `value` (String) The contact value. Examples: support@company.com for type email, https://opslevel.com for type web, #devs for type slack
 
 ### Read-Only

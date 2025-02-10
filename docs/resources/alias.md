@@ -63,7 +63,7 @@ resource "opslevel_alias" "scorecard" {
 
 - `aliases` (Set of String) The unique set of aliases to ensure exist on the resource.
 - `resource_identifier` (String) The id or human-friendly, unique identifier of the resource this alias belongs to.
-- `resource_type` (String) The resource type that the alias applies to. One of `service`, `team`, `group`, `system`, `domain`, `infrastructure_resource`, `scorecard`
+- `resource_type` (String) The resource type that the alias applies to. One of `domain`, `group`, `infrastructure_resource`, `scorecard`, `service`, `system`, `team`
 
 ### Read-Only
 

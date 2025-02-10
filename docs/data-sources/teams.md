@@ -55,7 +55,7 @@ Read-Only:
 - `external_id` (String) The remote identifier of the contact method.
 - `id` (String) The unique identifier for the contact.
 - `is_default` (Boolean) Indicates if this address is a team's default for the given type.
-- `type` (String) The method of contact. One of [`slack`, `slack_handle`, `email`, `web`, `github`].
+- `type` (String) The method of contact. One of [`email`, `github`, `microsoft_teams`, `slack`, `slack_handle`, `web`].
 
 
 <a id="nestedatt--teams--members"></a>

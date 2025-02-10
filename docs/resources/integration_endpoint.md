@@ -175,7 +175,7 @@ resource "opslevel_integration_endpoint" "veracode" {
 ### Required
 
 - `name` (String) The name of the integration.
-- `type` (String) The type of the Integration Endpoint. One of `deploy`, `argocd`, `circleci`, `flux`, `jenkins`, `octopus`, `githubActions`, `gitlabCi`, `aquaSecurity`, `awsEcr`, `bugsnag`, `codacy`, `coveralls`, `datadogCheck`, `dynatrace`, `grafana`, `grype`, `jfrogXray`, `lacework`, `newRelicCheck`, `prismaCloud`, `prometheus`, `rollbar`, `sentry`, `snyk`, `sonarqube`, `stackhawk`, `sumoLogic`, `veracode`, `customEvent`, `apiDoc`
+- `type` (String) The type of the Integration Endpoint. One of `apiDoc`, `aquaSecurity`, `argocd`, `awsEcr`, `bugsnag`, `circleci`, `codacy`, `coveralls`, `customEvent`, `datadogCheck`, `deploy`, `dynatrace`, `flux`, `githubActions`, `gitlabCi`, `grafana`, `grype`, `jenkins`, `jfrogXray`, `lacework`, `newRelicCheck`, `octopus`, `prismaCloud`, `prometheus`, `rollbar`, `sentry`, `snyk`, `sonarqube`, `stackhawk`, `sumoLogic`, `veracode`
 
 ### Read-Only
 

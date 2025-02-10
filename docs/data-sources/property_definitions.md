@@ -42,9 +42,9 @@ Read-Only:
 
 - `description` (String) The description of the property definition.
 - `id` (String) The ID of this resource.
+- `locked_status` (String) Restricts what sources are able to assign values to this property. (Options: 'unlocked' or 'ui_locked')
 - `name` (String) The display name of the property definition.
 - `property_display_status` (String) The display status of a custom property on service pages. (Options: 'visible' or 'hidden')
-- `locked_status` (String) Restricts what sources are able to assign values to this property. (Options: 'unlocked' or 'ui_locked')
 - `schema` (String) The schema of the property definition.
 
 

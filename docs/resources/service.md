@@ -84,10 +84,11 @@ output "foo_aliases" {
 - `note` (String) Additional information about the service.
 - `owner` (String) The team that owns the service. ID or Alias may be used.
 - `parent` (String) The id or alias of the parent system of this service
-- `preferred_api_document_source` (String) The API document source (PUSH or PULL) used to determine the displayed document. If null, defaults to PUSH.
+- `preferred_api_document_source` (String) The API document source (PULL or PUSH) used to determine the displayed document. If null, defaults to PUSH.
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `tags` (Set of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.
+- `type` (String) The component type of the service.
 
 ### Read-Only
 
