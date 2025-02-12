@@ -2,23 +2,24 @@ changesDir: .changes
 unreleasedDir: unreleased
 headerPath: header.tpl.md
 versionHeaderPath: ""
+versionFooterPath: ""
 changelogPath: CHANGELOG.md
 versionExt: md
 versionFormat: '## {{.Version}} - [{{.Time.Format "January 02, 2006"}}](https://github.com/OpsLevel/terraform-provider-opslevel/compare/{{.PreviousVersion}}...{{.Version}})'
 kindFormat: '### {{.Kind}}'
-changeFormat: '- {{.Body}}'
+changeFormat: '* {{.Body}}'
+headerFormat: ""
+footerFormat: ""
 kinds:
-  - label: Bugfix
-  - label: Feature
-  - label: Security
-  - label: Refactor
-  - label: Deprecated
-  - label: Removed
-  - label: Docs
-  - label: Dependency
-newlines:
-  afterChangelogHeader: 1
-  afterKind: 1
-  afterChangelogVersion: 1
-  beforeKind: 1
-  endOfVersion: 1
+- label: Fixed
+  auto: patch
+- label: Added
+  auto: minor
+- label: Deprecated
+  auto: minor
+- label: Removed
+  auto: major
+- label: Security
+  auto: patch
+- label: Dependency
+  auto: patch
