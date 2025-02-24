@@ -3,8 +3,8 @@ module github.com/opslevel/terraform-provider-opslevel
 go 1.23
 
 require (
-	github.com/hashicorp/terraform-plugin-framework v1.13.0
-	github.com/hashicorp/terraform-plugin-framework-validators v0.16.0
+	github.com/hashicorp/terraform-plugin-framework v1.14.0
+	github.com/hashicorp/terraform-plugin-framework-validators v0.17.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/opslevel/opslevel-go/v2025 v2025.2.10
 	github.com/relvacode/iso8601 v1.6.0
