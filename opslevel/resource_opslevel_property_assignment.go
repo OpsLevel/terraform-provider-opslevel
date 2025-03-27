@@ -78,14 +78,14 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 				},
 			},
 			"owner": schema.StringAttribute{
-				Description: "The ID or alias of the entity (currently only supports service) that the property has been assigned to.",
+				Description: "The ID or alias of the entity that the property has been assigned to.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"value": schema.StringAttribute{
-				Description: "The value of the custom property (must be a valid JSON value or null or object).",
+				Description: "The value of the custom property (must be a valid JSON value or null).",
 				Optional:    true,
 				Validators: []validator.String{
 					JsonStringValidator(),
@@ -142,6 +142,10 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	assignment, err := resource.client.GetProperty(owner, definition)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
+		return
+	}
+	if assignment == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
