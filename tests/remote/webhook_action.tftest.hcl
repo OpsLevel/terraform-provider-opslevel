@@ -3,13 +3,13 @@ variables {
   webhook_action_all = "opslevel_webhook_actions"
 
   # required fields
-  async   = true
   method  = "GET"
   name    = "TF Test Webhook Action"
   payload = "{\"operation:\": \"create\"}"
   url     = "https://webhook.url"
 
   # optional fields
+  async       = true
   description = "Webhook Action description"
   headers     = tomap({ operation = "create", fields = "all" })
 }
