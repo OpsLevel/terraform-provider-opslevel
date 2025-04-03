@@ -3,6 +3,7 @@ variables {
   webhook_action_all = "opslevel_webhook_actions"
 
   # required fields
+  async   = true
   method  = "GET"
   name    = "TF Test Webhook Action"
   payload = "{\"operation:\": \"create\"}"
@@ -16,6 +17,7 @@ variables {
 run "resource_webhook_action_create_with_all_fields" {
 
   variables {
+    async       = var.async
     description = var.description
     headers     = var.headers
     method      = var.method
@@ -30,6 +32,7 @@ run "resource_webhook_action_create_with_all_fields" {
 
   assert {
     condition = alltrue([
+      can(opslevel_webhook_action.test.async),
       can(opslevel_webhook_action.test.description),
       can(opslevel_webhook_action.test.headers),
       can(opslevel_webhook_action.test.id),

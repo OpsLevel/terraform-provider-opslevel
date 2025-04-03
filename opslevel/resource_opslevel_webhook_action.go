@@ -32,6 +32,7 @@ type WebhookActionResource struct {
 
 // WebhookActionResourceModel describes the Webhook Action managed resource.
 type WebhookActionResourceModel struct {
+	Async       types.Bool   `tfsdk:"async"`
 	Description types.String `tfsdk:"description"`
 	Headers     types.Map    `tfsdk:"headers"`
 	Id          types.String `tfsdk:"id"`
@@ -43,6 +44,7 @@ type WebhookActionResourceModel struct {
 
 func NewWebhookActionResourceModel(webhookAction opslevel.CustomActionsExternalAction, givenModel WebhookActionResourceModel) WebhookActionResourceModel {
 	return WebhookActionResourceModel{
+		Async:       RequiredBoolValue(webhookAction.Async),
 		Description: StringValueFromResourceAndModelField(webhookAction.Description, givenModel.Description),
 		Headers:     jsonToMapValue(webhookAction.Headers),
 		Id:          ComputedStringValue(string(webhookAction.CustomActionsWebhookAction.Id)),
@@ -63,6 +65,10 @@ func (r *WebhookActionResource) Schema(ctx context.Context, req resource.SchemaR
 		MarkdownDescription: "WebhookAction resource",
 
 		Attributes: map[string]schema.Attribute{
+			"async": schema.BoolAttribute{
+				MarkdownDescription: "Whether or not the Webhook Action expects an additional, asynchronous response upon completion.",
+				Required:            true,
+			},
 			"description": schema.StringAttribute{
 				Description: "The description of the Webhook Action.",
 				Optional:    true,
@@ -118,6 +124,7 @@ func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	webhookActionInput := opslevel.CustomActionsWebhookActionCreateInput{
+		Async:				 	planModel.Async.ValueBoolPointer(),
 		Description:    nullable(planModel.Description.ValueStringPointer()),
 		Headers:        &headersAsJson,
 		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString()),
@@ -166,6 +173,7 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	input := opslevel.CustomActionsWebhookActionUpdateInput{
+		Async:				 	planModel.Async.ValueBoolPointer(),
 		Description:    unsetStringHelper(planModel.Description, stateModel.Description),
 		HttpMethod:     asEnum[opslevel.CustomActionsHttpMethodEnum](planModel.Method.ValueStringPointer()),
 		Id:             opslevel.ID(planModel.Id.ValueString()),
