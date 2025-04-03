@@ -124,7 +124,7 @@ func (r *WebhookActionResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	webhookActionInput := opslevel.CustomActionsWebhookActionCreateInput{
-		Async:				 	planModel.Async.ValueBoolPointer(),
+		Async:          planModel.Async.ValueBoolPointer(),
 		Description:    nullable(planModel.Description.ValueStringPointer()),
 		Headers:        &headersAsJson,
 		HttpMethod:     opslevel.CustomActionsHttpMethodEnum(planModel.Method.ValueString()),
@@ -173,7 +173,7 @@ func (r *WebhookActionResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	input := opslevel.CustomActionsWebhookActionUpdateInput{
-		Async:				 	planModel.Async.ValueBoolPointer(),
+		Async:          planModel.Async.ValueBoolPointer(),
 		Description:    unsetStringHelper(planModel.Description, stateModel.Description),
 		HttpMethod:     asEnum[opslevel.CustomActionsHttpMethodEnum](planModel.Method.ValueStringPointer()),
 		Id:             opslevel.ID(planModel.Id.ValueString()),
