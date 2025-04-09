@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -36,18 +37,25 @@ type TriggerDefinitionResource struct {
 
 // TriggerDefinitionResourceModel describes the trigger definition managed resource.
 type TriggerDefinitionResourceModel struct {
-	AccessControl          types.String `tfsdk:"access_control"`
-	Action                 types.String `tfsdk:"action"`
-	Description            types.String `tfsdk:"description"`
-	EntityType             types.String `tfsdk:"entity_type"`
-	ExtendedTeamAccess     types.List   `tfsdk:"extended_team_access"`
-	Filter                 types.String `tfsdk:"filter"`
-	Id                     types.String `tfsdk:"id"`
-	ManualInputsDefinition types.String `tfsdk:"manual_inputs_definition"`
-	Name                   types.String `tfsdk:"name"`
-	Owner                  types.String `tfsdk:"owner"`
-	ResponseTemplate       types.String `tfsdk:"response_template"`
-	Published              types.Bool   `tfsdk:"published"`
+	AccessControl          types.String    `tfsdk:"access_control"`
+	Action                 types.String    `tfsdk:"action"`
+	ApprovalConfig         *ApprovalConfig `tfsdk:"approval_config"`
+	Description            types.String    `tfsdk:"description"`
+	EntityType             types.String    `tfsdk:"entity_type"`
+	ExtendedTeamAccess     types.List      `tfsdk:"extended_team_access"`
+	Filter                 types.String    `tfsdk:"filter"`
+	Id                     types.String    `tfsdk:"id"`
+	ManualInputsDefinition types.String    `tfsdk:"manual_inputs_definition"`
+	Name                   types.String    `tfsdk:"name"`
+	Owner                  types.String    `tfsdk:"owner"`
+	ResponseTemplate       types.String    `tfsdk:"response_template"`
+	Published              types.Bool      `tfsdk:"published"`
+}
+
+type ApprovalConfig struct {
+	ApprovalRequired types.Bool `tfsdk:"approval_required"`
+	Teams            types.List `tfsdk:"teams"`
+	Users            types.List `tfsdk:"users"`
 }
 
 func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
@@ -105,6 +113,48 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Description: "The action that will be triggered by the Trigger Definition.",
 				Required:    true,
 				Validators:  []validator.String{IdStringValidator()},
+			},
+			"approval_config": schema.MapNestedAttribute{
+				Description: "The configuration defining conditions of approval if it is required.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"approval_required": schema.BoolAttribute{
+							Description: "Flag indicating approval is required.",
+							Optional:    true,
+							Computed:    true,
+							Default:     booldefault.StaticBool(false),
+						},
+						"teams": schema.ListNestedAttribute{
+							Description: "Teams that can approve.",
+							Optional:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"alias": schema.StringAttribute{
+										Required: true,
+									},
+									"id": schema.StringAttribute{
+										Required: true,
+									},
+								},
+							},
+						},
+						"users": schema.ListNestedAttribute{
+							Description: "Users that can approve.",
+							Optional:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"email": schema.StringAttribute{
+										Required: true,
+									},
+									"id": schema.StringAttribute{
+										Required: true,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of what the Trigger Definition will do.",
