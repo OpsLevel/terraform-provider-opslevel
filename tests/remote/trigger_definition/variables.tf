@@ -8,19 +8,19 @@ variable "action" {
   description = "The action that will be triggered by the Trigger Definition."
 }
 
-variable "approval_config" {
-  type = map(object({
-    approval_required = bool
-    teams = list(object({
-      alias = string
-      id    = string
-    }))
-    users = list(object({
-      email = string
-      id    = string
-    }))
-  }))
-  default = null
+variable "approval_required" {
+  type    = bool
+  default = false
+}
+
+variable "approval_teams" {
+  type = list(string)
+  default = []
+}
+
+variable "approval_users" {
+  type = list(string)
+  default = []
 }
 
 variable "description" {
