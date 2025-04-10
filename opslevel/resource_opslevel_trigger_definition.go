@@ -39,7 +39,7 @@ type TriggerDefinitionResource struct {
 type TriggerDefinitionResourceModel struct {
 	AccessControl          types.String    `tfsdk:"access_control"`
 	Action                 types.String    `tfsdk:"action"`
-	ApprovalConfig         *ApprovalConfig `tfsdk:"approval_config"`
+	ApprovalRequired       types.Bool      `tfsdk:"approval_required"`
 	Description            types.String    `tfsdk:"description"`
 	EntityType             types.String    `tfsdk:"entity_type"`
 	ExtendedTeamAccess     types.List      `tfsdk:"extended_team_access"`
@@ -52,11 +52,10 @@ type TriggerDefinitionResourceModel struct {
 	Published              types.Bool      `tfsdk:"published"`
 }
 
-type ApprovalConfig struct {
-	ApprovalRequired types.Bool `tfsdk:"approval_required"`
-	Teams            types.List `tfsdk:"teams"`
-	Users            types.List `tfsdk:"users"`
-}
+// type ApprovalConfig struct {
+// 	Teams            types.List `tfsdk:"teams"`
+// 	Users            types.List `tfsdk:"users"`
+// }
 
 func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -65,6 +64,7 @@ func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinitio
 	triggerDefinitionResourceModel := TriggerDefinitionResourceModel{
 		AccessControl:          RequiredStringValue(string(triggerDefinition.AccessControl)),
 		Action:                 RequiredStringValue(string(triggerDefinition.Action.Id)),
+		ApprovalRequired:       types.BoolValue(triggerDefinition.ApprovalConfig.ApprovalRequired),
 		Description:            OptionalStringValue(triggerDefinition.Description),
 		EntityType:             OptionalStringValue(string(triggerDefinition.EntityType)),
 		Filter:                 OptionalStringValue(string(triggerDefinition.Filter.Id)),
@@ -114,48 +114,49 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Required:    true,
 				Validators:  []validator.String{IdStringValidator()},
 			},
-			"approval_config": schema.MapNestedAttribute{
-				Description: "The configuration defining conditions of approval if it is required.",
+			"approval_required": schema.BoolAttribute{
+				Description: "Flag indicating approval is required.",
 				Optional:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"approval_required": schema.BoolAttribute{
-							Description: "Flag indicating approval is required.",
-							Optional:    true,
-							Computed:    true,
-							Default:     booldefault.StaticBool(false),
-						},
-						"teams": schema.ListNestedAttribute{
-							Description: "Teams that can approve.",
-							Optional:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"alias": schema.StringAttribute{
-										Required: true,
-									},
-									"id": schema.StringAttribute{
-										Required: true,
-									},
-								},
-							},
-						},
-						"users": schema.ListNestedAttribute{
-							Description: "Users that can approve.",
-							Optional:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"email": schema.StringAttribute{
-										Required: true,
-									},
-									"id": schema.StringAttribute{
-										Required: true,
-									},
-								},
-							},
-						},
-					},
-				},
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
 			},
+			// "approval_config": schema.MapNestedAttribute{
+			// 	Description: "The configuration defining conditions of approval if it is required.",
+			// 	Optional:    true,
+			// 	NestedObject: schema.NestedAttributeObject{
+			// 		Attributes: map[string]schema.Attribute{
+						
+			// 			"teams": schema.ListNestedAttribute{
+			// 				Description: "Teams that can approve.",
+			// 				Optional:    true,
+			// 				NestedObject: schema.NestedAttributeObject{
+			// 					Attributes: map[string]schema.Attribute{
+			// 						"alias": schema.StringAttribute{
+			// 							Required: true,
+			// 						},
+			// 						"id": schema.StringAttribute{
+			// 							Required: true,
+			// 						},
+			// 					},
+			// 				},
+			// 			},
+			// 			"users": schema.ListNestedAttribute{
+			// 				Description: "Users that can approve.",
+			// 				Optional:    true,
+			// 				NestedObject: schema.NestedAttributeObject{
+			// 					Attributes: map[string]schema.Attribute{
+			// 						"email": schema.StringAttribute{
+			// 							Required: true,
+			// 						},
+			// 						"id": schema.StringAttribute{
+			// 							Required: true,
+			// 						},
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// },
 			"description": schema.StringAttribute{
 				Description: "The description of what the Trigger Definition will do.",
 				Optional:    true,
@@ -226,7 +227,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	accessControl := opslevel.CustomActionsTriggerDefinitionAccessControlEnum(planModel.AccessControl.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		AccessControl:          &accessControl,
-		ActionId:               nullableID(planModel.Action.ValueStringPointer()),
+		ActionId:               nullableID(planModel.Action.ValueStringPointer()),       
 		Name:                   planModel.Name.ValueString(),
 		Description:            nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:                opslevel.ID(planModel.Owner.ValueString()),
@@ -240,6 +241,13 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	if !planModel.EntityType.IsNull() && !planModel.EntityType.IsUnknown() {
 		entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
 		triggerDefinitionInput.EntityType = &entityType
+	}
+
+	if planModel.ApprovalRequired == types.BoolValue(true) {
+		approvalConfig := opslevel.ApprovalConfigInput{
+			ApprovalRequired: planModel.ApprovalRequired.ValueBoolPointer(),
+		}
+		triggerDefinitionInput.ApprovalConfig = &approvalConfig
 	}
 
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
