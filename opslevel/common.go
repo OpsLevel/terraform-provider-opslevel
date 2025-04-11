@@ -183,3 +183,11 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	}
 	return output
 }
+
+func flattenUsersArray(users *opslevel.UserConnection) []string {
+	output := []string{}
+	for _, user := range users.Nodes {
+		output = append(output, user.Email)
+	}
+	return output
+}

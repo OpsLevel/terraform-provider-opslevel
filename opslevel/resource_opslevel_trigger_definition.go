@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -36,19 +37,26 @@ type TriggerDefinitionResource struct {
 
 // TriggerDefinitionResourceModel describes the trigger definition managed resource.
 type TriggerDefinitionResourceModel struct {
-	AccessControl          types.String `tfsdk:"access_control"`
-	Action                 types.String `tfsdk:"action"`
-	Description            types.String `tfsdk:"description"`
-	EntityType             types.String `tfsdk:"entity_type"`
-	ExtendedTeamAccess     types.List   `tfsdk:"extended_team_access"`
-	Filter                 types.String `tfsdk:"filter"`
-	Id                     types.String `tfsdk:"id"`
-	ManualInputsDefinition types.String `tfsdk:"manual_inputs_definition"`
-	Name                   types.String `tfsdk:"name"`
-	Owner                  types.String `tfsdk:"owner"`
-	ResponseTemplate       types.String `tfsdk:"response_template"`
-	Published              types.Bool   `tfsdk:"published"`
+	AccessControl          types.String    `tfsdk:"access_control"`
+	Action                 types.String    `tfsdk:"action"`
+	ApprovalRequired       types.Bool      `tfsdk:"approval_required"`
+	// ApprovalTeams          types.List      `tfsdk:"approval_teams"`
+	ApprovalUsers          types.List      `tfsdk:"approval_users"`
+	Description            types.String    `tfsdk:"description"`
+	EntityType             types.String    `tfsdk:"entity_type"`
+	ExtendedTeamAccess     types.List      `tfsdk:"extended_team_access"`
+	Filter                 types.String    `tfsdk:"filter"`
+	Id                     types.String    `tfsdk:"id"`
+	ManualInputsDefinition types.String    `tfsdk:"manual_inputs_definition"`
+	Name                   types.String    `tfsdk:"name"`
+	Owner                  types.String    `tfsdk:"owner"`
+	ResponseTemplate       types.String    `tfsdk:"response_template"`
+	Published              types.Bool      `tfsdk:"published"`
 }
+
+// func convertUser(user opslevel.UserIdentifierInput) string {
+// 	return OptionalStringValue(user.Email)
+// }
 
 func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -57,6 +65,7 @@ func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinitio
 	triggerDefinitionResourceModel := TriggerDefinitionResourceModel{
 		AccessControl:          RequiredStringValue(string(triggerDefinition.AccessControl)),
 		Action:                 RequiredStringValue(string(triggerDefinition.Action.Id)),
+		ApprovalRequired:       types.BoolValue(triggerDefinition.ApprovalConfig.ApprovalRequired),
 		Description:            OptionalStringValue(triggerDefinition.Description),
 		EntityType:             OptionalStringValue(string(triggerDefinition.EntityType)),
 		Filter:                 OptionalStringValue(string(triggerDefinition.Filter.Id)),
@@ -67,6 +76,17 @@ func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinitio
 		ResponseTemplate:       OptionalStringValue(triggerDefinition.ResponseTemplate),
 		Published:              types.BoolValue(triggerDefinition.Published),
 	}
+
+	// if givenModel.ApprovalUsers.IsNull() || givenModel.ApprovalUsers.IsUnknown() {
+	// 	triggerDefinitionResourceModel.ApprovalUsers = types.ListNull(types.StringType)
+	// } else if len(givenModel.ApprovalUsers.Elements()) == 0 {
+	// 	triggerDefinitionResourceModel.ApprovalUsers = types.ListValueMust(types.StringType, []attr.Value{})
+	// } else {
+	// 	:= OptionalStringListValue(flattenUsersArray(extendedTeams))
+	// 	for _, user := range triggerDefinition.ApprovalConfig.Users.Nodes {
+	// 		triggerDefinitionResourceModel.ApprovalUsers = append(triggerDefinitionResourceModel.ApprovalUsers, convertUser(user))
+	// 	}
+	// }
 
 	if givenModel.ExtendedTeamAccess.IsNull() || givenModel.ExtendedTeamAccess.IsUnknown() {
 		triggerDefinitionResourceModel.ExtendedTeamAccess = types.ListNull(types.StringType)
@@ -105,6 +125,22 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Description: "The action that will be triggered by the Trigger Definition.",
 				Required:    true,
 				Validators:  []validator.String{IdStringValidator()},
+			},
+			"approval_required": schema.BoolAttribute{
+				Description: "Flag indicating approval is required.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+			},
+			// "approval_teams": schema.ListAttribute{
+			// 	ElementType: types.StringType,
+			// 	Description: "Teams that can approve this Trigger Definition.",
+			// 	Optional:    true,
+			// },
+			"approval_users": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "Users that can approve this Trigger Definition.",
+				Optional:    true,
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of what the Trigger Definition will do.",
@@ -176,7 +212,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	accessControl := opslevel.CustomActionsTriggerDefinitionAccessControlEnum(planModel.AccessControl.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		AccessControl:          &accessControl,
-		ActionId:               nullableID(planModel.Action.ValueStringPointer()),
+		ActionId:               nullableID(planModel.Action.ValueStringPointer()),       
 		Name:                   planModel.Name.ValueString(),
 		Description:            nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:                opslevel.ID(planModel.Owner.ValueString()),
@@ -190,6 +226,17 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	if !planModel.EntityType.IsNull() && !planModel.EntityType.IsUnknown() {
 		entityType := opslevel.CustomActionsEntityTypeEnum(planModel.EntityType.ValueString())
 		triggerDefinitionInput.EntityType = &entityType
+	}
+
+	if planModel.ApprovalRequired == types.BoolValue(true) {
+		var approvalConfig opslevel.ApprovalConfigInput
+		var err_string string
+		approvalConfig, err_string = getApprovalConfig(ctx, planModel)
+		if len(err_string) > 0 {
+			resp.Diagnostics.AddError("opslevel client error", err_string)
+			return
+		}
+		triggerDefinitionInput.ApprovalConfig = &approvalConfig
 	}
 
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
@@ -295,6 +342,35 @@ func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.Del
 
 func (r *TriggerDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceModel) (opslevel.ApprovalConfigInput, string) {
+	approvalConfig := opslevel.ApprovalConfigInput{
+		ApprovalRequired: planModel.ApprovalRequired.ValueBoolPointer(),
+	}
+	usersStringSlice, diags := ListValueToStringSlice(ctx, planModel.ApprovalUsers)
+	if diags.HasError() {
+		return approvalConfig, "failed to convert 'approval_users' to string slice"
+	}
+	users, user_err := getUsers(usersStringSlice)
+	if user_err != nil {
+		return approvalConfig, fmt.Sprintf("unable to read members, got error: %s", user_err)
+	}
+	if len(users) > 0 {
+		approvalConfig.Users = &users
+	}
+	return approvalConfig, ""
+}
+
+func getUsers(users []string) ([]opslevel.UserIdentifierInput, error) {
+	userInputs := make([]opslevel.UserIdentifierInput, len(users))
+	for i, user := range users  {
+		userInputs[i] = *opslevel.NewUserIdentifier(user)
+	}
+	if len(userInputs) > 0 {
+		return userInputs, nil
+	}
+	return nil, nil
 }
 
 func getExtendedTeamAccessListValue(client *opslevel.Client, triggerDefinition *opslevel.CustomActionsTriggerDefinition) (basetypes.ListValue, error) {
