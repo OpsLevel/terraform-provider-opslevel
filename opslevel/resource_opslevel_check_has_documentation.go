@@ -73,7 +73,11 @@ func (r *CheckHasDocumentationResource) Metadata(ctx context.Context, req resour
 func (r *CheckHasDocumentationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Check Has Documentation Resource",
+		MarkdownDescription: `
+		  Check Has Documentation Resource.
+		  
+		  Verifies that a component has API Docs.
+		  `,
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"document_type": schema.StringAttribute{
