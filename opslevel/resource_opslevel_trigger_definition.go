@@ -228,16 +228,12 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		triggerDefinitionInput.EntityType = &entityType
 	}
 
-	if planModel.ApprovalRequired == types.BoolValue(true) {
-		var approvalConfig opslevel.ApprovalConfigInput
-		var err_string string
-		approvalConfig, err_string = getApprovalConfig(ctx, planModel)
-		if len(err_string) > 0 {
-			resp.Diagnostics.AddError("opslevel client error", err_string)
-			return
-		}
-		triggerDefinitionInput.ApprovalConfig = &approvalConfig
+	approvalConfig, diags := getApprovalConfig(ctx, planModel)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
+	triggerDefinitionInput.ApprovalConfig = &approvalConfig
 
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
 	if diags.HasError() {
@@ -344,33 +340,30 @@ func (r *TriggerDefinitionResource) ImportState(ctx context.Context, req resourc
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceModel) (opslevel.ApprovalConfigInput, string) {
+func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceModel) (opslevel.ApprovalConfigInput, diag.Diagnostics) {
 	approvalConfig := opslevel.ApprovalConfigInput{
 		ApprovalRequired: planModel.ApprovalRequired.ValueBoolPointer(),
 	}
 	usersStringSlice, diags := ListValueToStringSlice(ctx, planModel.ApprovalUsers)
 	if diags.HasError() {
-		return approvalConfig, "failed to convert 'approval_users' to string slice"
+		return approvalConfig, diags
 	}
-	users, user_err := getUsers(usersStringSlice)
-	if user_err != nil {
-		return approvalConfig, fmt.Sprintf("unable to read members, got error: %s", user_err)
-	}
+	users := getUsers(usersStringSlice)
 	if len(users) > 0 {
 		approvalConfig.Users = &users
 	}
-	return approvalConfig, ""
+	return approvalConfig, nil
 }
 
-func getUsers(users []string) ([]opslevel.UserIdentifierInput, error) {
+func getUsers(users []string) ([]opslevel.UserIdentifierInput) {
 	userInputs := make([]opslevel.UserIdentifierInput, len(users))
 	for i, user := range users  {
 		userInputs[i] = *opslevel.NewUserIdentifier(user)
 	}
 	if len(userInputs) > 0 {
-		return userInputs, nil
+		return userInputs
 	}
-	return nil, nil
+	return nil
 }
 
 func getExtendedTeamAccessListValue(client *opslevel.Client, triggerDefinition *opslevel.CustomActionsTriggerDefinition) (basetypes.ListValue, error) {
