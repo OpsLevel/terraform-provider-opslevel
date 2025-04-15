@@ -40,7 +40,7 @@ type TriggerDefinitionResourceModel struct {
 	AccessControl    types.String `tfsdk:"access_control"`
 	Action           types.String `tfsdk:"action"`
 	ApprovalRequired types.Bool   `tfsdk:"approval_required"`
-	// ApprovalTeams          types.List      `tfsdk:"approval_teams"`
+	ApprovalTeams          types.List      `tfsdk:"approval_teams"`
 	ApprovalUsers          types.List   `tfsdk:"approval_users"`
 	Description            types.String `tfsdk:"description"`
 	EntityType             types.String `tfsdk:"entity_type"`
@@ -78,7 +78,15 @@ func NewTriggerDefinitionResourceModel(ctx context.Context, client *opslevel.Cli
 	} else if len(givenModel.ApprovalUsers.Elements()) == 0 {
 		triggerDefinitionResourceModel.ApprovalUsers = types.ListValueMust(types.StringType, []attr.Value{})
 	} else {
-		triggerDefinitionResourceModel.ApprovalUsers = OptionalStringListValue(getUsersList(ctx, givenModel.ApprovalUsers, triggerDefinition.ApprovalConfig.Users))
+		triggerDefinitionResourceModel.ApprovalUsers = OptionalStringListValue(getUsersArray(ctx, givenModel.ApprovalUsers, triggerDefinition.ApprovalConfig.Users))
+	}
+
+	if givenModel.ApprovalTeams.IsNull() || givenModel.ApprovalTeams.IsUnknown() {
+		triggerDefinitionResourceModel.ApprovalTeams = types.ListNull(types.StringType)
+	} else if len(givenModel.ApprovalTeams.Elements()) == 0 {
+		triggerDefinitionResourceModel.ApprovalTeams = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		triggerDefinitionResourceModel.ApprovalTeams = OptionalStringListValue(getTeamsArray(ctx, givenModel.ApprovalTeams, triggerDefinition.ApprovalConfig.Teams))
 	}
 
 	if givenModel.ExtendedTeamAccess.IsNull() || givenModel.ExtendedTeamAccess.IsUnknown() {
@@ -125,11 +133,11 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 			},
-			// "approval_teams": schema.ListAttribute{
-			// 	ElementType: types.StringType,
-			// 	Description: "Teams that can approve this Trigger Definition.",
-			// 	Optional:    true,
-			// },
+			"approval_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "Teams that can approve this Trigger Definition.",
+				Optional:    true,
+			},
 			"approval_users": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "Users that can approve this Trigger Definition.",
@@ -344,6 +352,15 @@ func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceM
 	users := getUsers(usersStringSlice)
 	if len(users) > 0 {
 		approvalConfig.Users = &users
+	}
+
+	approvalTeamsSlice, diags := ListValueToStringSlice(ctx, planModel.ApprovalTeams)
+	if diags.HasError() {
+		return approvalConfig, diags
+	}
+	teams := opslevel.NewIdentifierArray(approvalTeamsSlice)
+	if len(teams) > 0 {
+		approvalConfig.Teams = &teams
 	}
 	return approvalConfig, nil
 }

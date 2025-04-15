@@ -13,13 +13,13 @@ variable "approval_required" {
   default = false
 }
 
-variable "approval_teams" {
-  type = list(string)
+variable "approval_users" {
+  type    = list(string)
   default = []
 }
 
-variable "approval_users" {
-  type = list(string)
+variable "approval_teams" {
+  type    = list(string)
   default = []
 }
 

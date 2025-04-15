@@ -192,7 +192,7 @@ func flattenUsersArray(users *opslevel.UserConnection) []string {
 	return output
 }
 
-func getUsersList(ctx context.Context, givenUsersList types.List, usersInput []opslevel.UserId) []string {
+func getUsersArray(ctx context.Context, givenUsersList types.List, usersInput []opslevel.UserId) []string {
 	givenUsersStringSlice, _ := ListValueToStringSlice(ctx, givenUsersList)
 	usersMap := make(map[string]bool)
 	for _, userString := range givenUsersStringSlice {
@@ -214,4 +214,28 @@ func getUsersList(ctx context.Context, givenUsersList types.List, usersInput []o
 	}
 
 	return users
+}
+
+func getTeamsArray(ctx context.Context, givenTeamsList types.List, teamsInput []opslevel.TeamId) []string {
+	givenTeamsStringSlice, _ := ListValueToStringSlice(ctx, givenTeamsList)
+	teamsMap := make(map[string]bool)
+	for _, teamString := range givenTeamsStringSlice {
+		teamsMap[teamString] = false
+	}
+
+	teams := []string{}
+	for _, team := range teamsInput {
+		identifier := string(team.Alias)
+		if _, ok := teamsMap[identifier]; ok {
+			teams = append(teams, identifier)
+			delete(teamsMap, identifier)
+		}
+		identifier = string(team.Id)
+		if _, ok := teamsMap[identifier]; ok {
+			teams = append(teams, identifier)
+			delete(teamsMap, identifier)
+		}
+	}
+
+	return teams
 }
