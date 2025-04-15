@@ -191,3 +191,27 @@ func flattenUsersArray(users *opslevel.UserConnection) []string {
 	}
 	return output
 }
+
+func getUsersList(ctx context.Context, givenUsersList types.List, usersInput []opslevel.UserId) []string {
+	givenUsersStringSlice, _ := ListValueToStringSlice(ctx, givenUsersList)
+	usersMap := make(map[string]bool)
+	for _, userString := range givenUsersStringSlice {
+		usersMap[userString] = false
+	}
+
+	users := []string{}
+	for _, user := range usersInput {
+		identifier := string(user.Email)
+		if _, ok := usersMap[identifier]; ok {
+			users = append(users, identifier)
+			delete(usersMap, identifier)
+		}
+		identifier = string(user.Id)
+		if _, ok := usersMap[identifier]; ok {
+			users = append(users, identifier)
+			delete(usersMap, identifier)
+		}
+	}
+
+	return users
+}

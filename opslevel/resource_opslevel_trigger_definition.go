@@ -37,28 +37,24 @@ type TriggerDefinitionResource struct {
 
 // TriggerDefinitionResourceModel describes the trigger definition managed resource.
 type TriggerDefinitionResourceModel struct {
-	AccessControl          types.String    `tfsdk:"access_control"`
-	Action                 types.String    `tfsdk:"action"`
-	ApprovalRequired       types.Bool      `tfsdk:"approval_required"`
+	AccessControl    types.String `tfsdk:"access_control"`
+	Action           types.String `tfsdk:"action"`
+	ApprovalRequired types.Bool   `tfsdk:"approval_required"`
 	// ApprovalTeams          types.List      `tfsdk:"approval_teams"`
-	ApprovalUsers          types.List      `tfsdk:"approval_users"`
-	Description            types.String    `tfsdk:"description"`
-	EntityType             types.String    `tfsdk:"entity_type"`
-	ExtendedTeamAccess     types.List      `tfsdk:"extended_team_access"`
-	Filter                 types.String    `tfsdk:"filter"`
-	Id                     types.String    `tfsdk:"id"`
-	ManualInputsDefinition types.String    `tfsdk:"manual_inputs_definition"`
-	Name                   types.String    `tfsdk:"name"`
-	Owner                  types.String    `tfsdk:"owner"`
-	ResponseTemplate       types.String    `tfsdk:"response_template"`
-	Published              types.Bool      `tfsdk:"published"`
+	ApprovalUsers          types.List   `tfsdk:"approval_users"`
+	Description            types.String `tfsdk:"description"`
+	EntityType             types.String `tfsdk:"entity_type"`
+	ExtendedTeamAccess     types.List   `tfsdk:"extended_team_access"`
+	Filter                 types.String `tfsdk:"filter"`
+	Id                     types.String `tfsdk:"id"`
+	ManualInputsDefinition types.String `tfsdk:"manual_inputs_definition"`
+	Name                   types.String `tfsdk:"name"`
+	Owner                  types.String `tfsdk:"owner"`
+	ResponseTemplate       types.String `tfsdk:"response_template"`
+	Published              types.Bool   `tfsdk:"published"`
 }
 
-// func convertUser(user opslevel.UserIdentifierInput) string {
-// 	return OptionalStringValue(user.Email)
-// }
-
-func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
+func NewTriggerDefinitionResourceModel(ctx context.Context, client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var err error
 
@@ -77,16 +73,13 @@ func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinitio
 		Published:              types.BoolValue(triggerDefinition.Published),
 	}
 
-	// if givenModel.ApprovalUsers.IsNull() || givenModel.ApprovalUsers.IsUnknown() {
-	// 	triggerDefinitionResourceModel.ApprovalUsers = types.ListNull(types.StringType)
-	// } else if len(givenModel.ApprovalUsers.Elements()) == 0 {
-	// 	triggerDefinitionResourceModel.ApprovalUsers = types.ListValueMust(types.StringType, []attr.Value{})
-	// } else {
-	// 	:= OptionalStringListValue(flattenUsersArray(extendedTeams))
-	// 	for _, user := range triggerDefinition.ApprovalConfig.Users.Nodes {
-	// 		triggerDefinitionResourceModel.ApprovalUsers = append(triggerDefinitionResourceModel.ApprovalUsers, convertUser(user))
-	// 	}
-	// }
+	if givenModel.ApprovalUsers.IsNull() || givenModel.ApprovalUsers.IsUnknown() {
+		triggerDefinitionResourceModel.ApprovalUsers = types.ListNull(types.StringType)
+	} else if len(givenModel.ApprovalUsers.Elements()) == 0 {
+		triggerDefinitionResourceModel.ApprovalUsers = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		triggerDefinitionResourceModel.ApprovalUsers = OptionalStringListValue(getUsersList(ctx, givenModel.ApprovalUsers, triggerDefinition.ApprovalConfig.Users))
+	}
 
 	if givenModel.ExtendedTeamAccess.IsNull() || givenModel.ExtendedTeamAccess.IsUnknown() {
 		triggerDefinitionResourceModel.ExtendedTeamAccess = types.ListNull(types.StringType)
@@ -212,7 +205,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 	accessControl := opslevel.CustomActionsTriggerDefinitionAccessControlEnum(planModel.AccessControl.ValueString())
 	triggerDefinitionInput := opslevel.CustomActionsTriggerDefinitionCreateInput{
 		AccessControl:          &accessControl,
-		ActionId:               nullableID(planModel.Action.ValueStringPointer()),       
+		ActionId:               nullableID(planModel.Action.ValueStringPointer()),
 		Name:                   planModel.Name.ValueString(),
 		Description:            nullable(planModel.Description.ValueStringPointer()),
 		OwnerId:                opslevel.ID(planModel.Owner.ValueString()),
@@ -249,7 +242,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	stateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, planModel)
+	stateModel, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *triggerDefinition, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a trigger definition resource")
@@ -272,7 +265,7 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	verifiedStateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, stateModel)
+	verifiedStateModel, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *triggerDefinition, stateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
@@ -316,7 +309,7 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	stateModelFinal, diags := NewTriggerDefinitionResourceModel(r.client, *updatedTriggerDefinition, planModel)
+	stateModelFinal, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *updatedTriggerDefinition, planModel)
 	resp.Diagnostics.Append(diags...)
 	tflog.Trace(ctx, "updated a trigger definition resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModelFinal)...)
@@ -355,9 +348,9 @@ func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceM
 	return approvalConfig, nil
 }
 
-func getUsers(users []string) ([]opslevel.UserIdentifierInput) {
+func getUsers(users []string) []opslevel.UserIdentifierInput {
 	userInputs := make([]opslevel.UserIdentifierInput, len(users))
-	for i, user := range users  {
+	for i, user := range users {
 		userInputs[i] = *opslevel.NewUserIdentifier(user)
 	}
 	if len(userInputs) > 0 {
