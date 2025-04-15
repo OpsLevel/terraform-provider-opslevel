@@ -230,4 +230,3 @@ func findIdentifier(identifierMap map[string]bool, identityArray *[]string, iden
 		delete(identifierMap, identifier)
 	}
 }
-

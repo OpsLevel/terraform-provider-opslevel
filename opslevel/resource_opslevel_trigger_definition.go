@@ -37,10 +37,10 @@ type TriggerDefinitionResource struct {
 
 // TriggerDefinitionResourceModel describes the trigger definition managed resource.
 type TriggerDefinitionResourceModel struct {
-	AccessControl    types.String `tfsdk:"access_control"`
-	Action           types.String `tfsdk:"action"`
-	ApprovalRequired types.Bool   `tfsdk:"approval_required"`
-	ApprovalTeams          types.List      `tfsdk:"approval_teams"`
+	AccessControl          types.String `tfsdk:"access_control"`
+	Action                 types.String `tfsdk:"action"`
+	ApprovalRequired       types.Bool   `tfsdk:"approval_required"`
+	ApprovalTeams          types.List   `tfsdk:"approval_teams"`
 	ApprovalUsers          types.List   `tfsdk:"approval_users"`
 	Description            types.String `tfsdk:"description"`
 	EntityType             types.String `tfsdk:"entity_type"`
