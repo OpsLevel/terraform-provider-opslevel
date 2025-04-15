@@ -201,16 +201,8 @@ func getUsersArray(ctx context.Context, givenUsersList types.List, usersInput []
 
 	users := []string{}
 	for _, user := range usersInput {
-		identifier := string(user.Email)
-		if _, ok := usersMap[identifier]; ok {
-			users = append(users, identifier)
-			delete(usersMap, identifier)
-		}
-		identifier = string(user.Id)
-		if _, ok := usersMap[identifier]; ok {
-			users = append(users, identifier)
-			delete(usersMap, identifier)
-		}
+		findIdentifier(usersMap, &users, string(user.Email))
+		findIdentifier(usersMap, &users, string(user.Id))
 	}
 
 	return users
@@ -225,17 +217,17 @@ func getTeamsArray(ctx context.Context, givenTeamsList types.List, teamsInput []
 
 	teams := []string{}
 	for _, team := range teamsInput {
-		identifier := string(team.Alias)
-		if _, ok := teamsMap[identifier]; ok {
-			teams = append(teams, identifier)
-			delete(teamsMap, identifier)
-		}
-		identifier = string(team.Id)
-		if _, ok := teamsMap[identifier]; ok {
-			teams = append(teams, identifier)
-			delete(teamsMap, identifier)
-		}
+		findIdentifier(teamsMap, &teams, string(team.Alias))
+		findIdentifier(teamsMap, &teams, string(team.Id))
 	}
 
 	return teams
 }
+
+func findIdentifier(identifierMap map[string]bool, identityArray *[]string, identifier string) {
+	if _, ok := identifierMap[identifier]; ok {
+		*identityArray = append(*identityArray, identifier)
+		delete(identifierMap, identifier)
+	}
+}
+
