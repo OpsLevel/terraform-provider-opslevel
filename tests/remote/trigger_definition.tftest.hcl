@@ -248,6 +248,9 @@ run "resource_trigger_definition_update_unset_fields" {
   variables {
     access_control           = var.access_control
     action                   = run.from_webhook_action_get_webhook_action_id.first_webhook_action.id
+    approval_required        = false
+    approval_users           = null
+    approval_teams           = null
     description              = null
     entity_type              = null # TODO: explicitly set default to match API
     extended_team_access     = null

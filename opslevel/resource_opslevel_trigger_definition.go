@@ -311,6 +311,13 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 	extendedTeamAccess := opslevel.NewIdentifierArray(extendedTeamsStringSlice)
 	triggerDefinitionInput.ExtendedTeamAccess = &extendedTeamAccess
 
+	approvalConfig, diags := getApprovalConfig(ctx, planModel)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+	triggerDefinitionInput.ApprovalConfig = &approvalConfig
+
 	updatedTriggerDefinition, err := r.client.UpdateTriggerDefinition(triggerDefinitionInput)
 	if err != nil || updatedTriggerDefinition == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update trigger definition, got error: %s", err))
