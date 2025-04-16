@@ -352,23 +352,29 @@ func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceM
 	approvalConfig := opslevel.ApprovalConfigInput{
 		ApprovalRequired: planModel.ApprovalRequired.ValueBoolPointer(),
 	}
-	usersStringSlice, diags := ListValueToStringSlice(ctx, planModel.ApprovalUsers)
+
+	approvalUsers := types.ListValueMust(types.StringType, []attr.Value{})
+	approvalTeams := types.ListValueMust(types.StringType, []attr.Value{})
+
+	if planModel.ApprovalRequired.ValueBool() {
+		approvalUsers = planModel.ApprovalUsers
+		approvalTeams = planModel.ApprovalTeams
+	}
+
+	usersStringSlice, diags := ListValueToStringSlice(ctx, approvalUsers)
 	if diags.HasError() {
 		return approvalConfig, diags
 	}
 	users := getUsers(usersStringSlice)
-	if len(users) > 0 {
-		approvalConfig.Users = &users
-	}
+	approvalConfig.Users = &users
 
-	approvalTeamsSlice, diags := ListValueToStringSlice(ctx, planModel.ApprovalTeams)
+	approvalTeamsSlice, diags := ListValueToStringSlice(ctx, approvalTeams)
 	if diags.HasError() {
 		return approvalConfig, diags
 	}
 	teams := opslevel.NewIdentifierArray(approvalTeamsSlice)
-	if len(teams) > 0 {
-		approvalConfig.Teams = &teams
-	}
+	approvalConfig.Teams = &teams
+
 	return approvalConfig, nil
 }
 
@@ -377,10 +383,8 @@ func getUsers(users []string) []opslevel.UserIdentifierInput {
 	for i, user := range users {
 		userInputs[i] = *opslevel.NewUserIdentifier(user)
 	}
-	if len(userInputs) > 0 {
-		return userInputs
-	}
-	return nil
+
+	return userInputs
 }
 
 func getExtendedTeamAccessListValue(client *opslevel.Client, triggerDefinition *opslevel.CustomActionsTriggerDefinition) (basetypes.ListValue, error) {
