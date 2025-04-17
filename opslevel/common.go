@@ -192,7 +192,7 @@ func flattenUsersArray(users *opslevel.UserConnection) []string {
 	return output
 }
 
-func getUsersArray(ctx context.Context, givenUsersList types.List, usersInput []opslevel.UserId) []string {
+func getUsersArray(ctx context.Context, remoteUsersArray []opslevel.UserId, givenUsersList types.List) []string {
 	givenUsersStringSlice, _ := ListValueToStringSlice(ctx, givenUsersList)
 	usersMap := make(map[string]bool)
 	for _, userString := range givenUsersStringSlice {
@@ -200,15 +200,16 @@ func getUsersArray(ctx context.Context, givenUsersList types.List, usersInput []
 	}
 
 	users := []string{}
-	for _, user := range usersInput {
-		findIdentifier(usersMap, &users, string(user.Email))
-		findIdentifier(usersMap, &users, string(user.Id))
+	for _, user := range remoteUsersArray {
+		if !(findIdentifier(usersMap, &users, string(user.Email)) || findIdentifier(usersMap, &users, string(user.Id))) {
+			users = append(users, string(user.Id))
+		}
 	}
 
 	return users
 }
 
-func getTeamsArray(ctx context.Context, givenTeamsList types.List, teamsInput []opslevel.TeamId) []string {
+func getTeamsArray(ctx context.Context, remoteTeamsArray []opslevel.TeamId, givenTeamsList types.List) []string {
 	givenTeamsStringSlice, _ := ListValueToStringSlice(ctx, givenTeamsList)
 	teamsMap := make(map[string]bool)
 	for _, teamString := range givenTeamsStringSlice {
@@ -216,17 +217,21 @@ func getTeamsArray(ctx context.Context, givenTeamsList types.List, teamsInput []
 	}
 
 	teams := []string{}
-	for _, team := range teamsInput {
-		findIdentifier(teamsMap, &teams, string(team.Alias))
-		findIdentifier(teamsMap, &teams, string(team.Id))
+	for _, team := range remoteTeamsArray {
+		if !(findIdentifier(teamsMap, &teams, string(team.Alias)) || findIdentifier(teamsMap, &teams, string(team.Id))) {
+			teams = append(teams, string(team.Id))
+		}
 	}
 
 	return teams
 }
 
-func findIdentifier(identifierMap map[string]bool, identityArray *[]string, identifier string) {
+func findIdentifier(identifierMap map[string]bool, identityArray *[]string, identifier string) bool {
 	if _, ok := identifierMap[identifier]; ok {
 		*identityArray = append(*identityArray, identifier)
 		delete(identifierMap, identifier)
+
+		return true
 	}
+	return false
 }
