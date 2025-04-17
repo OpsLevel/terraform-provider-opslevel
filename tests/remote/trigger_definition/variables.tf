@@ -8,6 +8,21 @@ variable "action" {
   description = "The action that will be triggered by the Trigger Definition."
 }
 
+variable "approval_required" {
+  type    = bool
+  default = false
+}
+
+variable "approval_users" {
+  type    = list(string)
+  default = []
+}
+
+variable "approval_teams" {
+  type    = list(string)
+  default = []
+}
+
 variable "description" {
   type        = string
   description = "The description of what the Trigger Definition will do."

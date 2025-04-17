@@ -9,6 +9,9 @@ variables {
   published      = true
 
   # optional fields
+  approval_required        = true
+  approval_users           = []
+  approval_teams           = []
   description              = "TF Test Trigger Definition description"
   entity_type              = "SERVICE"
   extended_team_access     = [] # team aliases
@@ -83,11 +86,27 @@ run "from_webhook_action_get_webhook_action_id" {
   }
 }
 
+run "from_data_module" {
+  command = plan
+  plan_options {
+    target = [
+      data.opslevel_teams.all,
+      data.opslevel_users.all
+    ]
+  }
+
+  module {
+    source = "../data"
+  }
+}
 run "resource_trigger_definition_create_with_all_fields" {
 
   variables {
     access_control           = var.access_control
     action                   = run.from_webhook_action_get_webhook_action_id.first_webhook_action.id
+    approval_required        = var.approval_required
+    approval_users           = [run.from_data_module.all_users.users[0].email, run.from_data_module.all_users.users[1].id]
+    approval_teams           = [run.from_data_module.all_teams.teams[0].alias]
     description              = var.description
     entity_type              = var.entity_type
     extended_team_access     = var.extended_team_access
@@ -107,6 +126,9 @@ run "resource_trigger_definition_create_with_all_fields" {
     condition = alltrue([
       can(opslevel_trigger_definition.test.access_control),
       can(opslevel_trigger_definition.test.action),
+      can(opslevel_trigger_definition.test.approval_required),
+      can(opslevel_trigger_definition.test.approval_users),
+      can(opslevel_trigger_definition.test.approval_teams),
       can(opslevel_trigger_definition.test.description),
       can(opslevel_trigger_definition.test.entity_type),
       can(opslevel_trigger_definition.test.extended_team_access),
@@ -226,6 +248,9 @@ run "resource_trigger_definition_update_unset_fields" {
   variables {
     access_control           = var.access_control
     action                   = run.from_webhook_action_get_webhook_action_id.first_webhook_action.id
+    approval_required        = false
+    approval_users           = null
+    approval_teams           = null
     description              = null
     entity_type              = null # TODO: explicitly set default to match API
     extended_team_access     = null

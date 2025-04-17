@@ -3,6 +3,7 @@ resource "opslevel_webhook_action" "example" {
   description = "Pages the On Call"
   url         = "https://api.pagerduty.com/incidents"
   method      = "POST"
+  #async      = true #Uncomment if your action is long running
   headers = {
     content-type  = "application/json"
     accept        = "application/vnd.pagerduty+json;version=2"

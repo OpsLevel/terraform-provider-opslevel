@@ -1,6 +1,9 @@
 resource "opslevel_trigger_definition" "test" {
   access_control           = var.access_control
   action                   = var.action
+  approval_required        = var.approval_required
+  approval_users           = var.approval_users
+  approval_teams           = var.approval_teams
   description              = var.description
   entity_type              = var.entity_type
   extended_team_access     = var.extended_team_access
