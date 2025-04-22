@@ -5,6 +5,7 @@ data "opslevel_webhook_action" "first_webhook_action_by_id" {
 }
 
 resource "opslevel_webhook_action" "test" {
+  async       = var.async
   description = var.description
   headers     = var.headers
   method      = var.method

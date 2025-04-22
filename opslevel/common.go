@@ -183,3 +183,55 @@ func flattenTeamsArray(teams *opslevel.TeamConnection) []string {
 	}
 	return output
 }
+
+func flattenUsersArray(users *opslevel.UserConnection) []string {
+	output := []string{}
+	for _, user := range users.Nodes {
+		output = append(output, user.Email)
+	}
+	return output
+}
+
+func getUsersArray(ctx context.Context, remoteUsersArray []opslevel.UserId, givenUsersList types.List) []string {
+	givenUsersStringSlice, _ := ListValueToStringSlice(ctx, givenUsersList)
+	usersMap := make(map[string]bool)
+	for _, userString := range givenUsersStringSlice {
+		usersMap[userString] = false
+	}
+
+	users := []string{}
+	for _, user := range remoteUsersArray {
+		if !(findIdentifier(usersMap, &users, string(user.Email)) || findIdentifier(usersMap, &users, string(user.Id))) {
+			users = append(users, string(user.Id))
+		}
+	}
+
+	return users
+}
+
+func getTeamsArray(ctx context.Context, remoteTeamsArray []opslevel.TeamId, givenTeamsList types.List) []string {
+	givenTeamsStringSlice, _ := ListValueToStringSlice(ctx, givenTeamsList)
+	teamsMap := make(map[string]bool)
+	for _, teamString := range givenTeamsStringSlice {
+		teamsMap[teamString] = false
+	}
+
+	teams := []string{}
+	for _, team := range remoteTeamsArray {
+		if !(findIdentifier(teamsMap, &teams, string(team.Alias)) || findIdentifier(teamsMap, &teams, string(team.Id))) {
+			teams = append(teams, string(team.Id))
+		}
+	}
+
+	return teams
+}
+
+func findIdentifier(identifierMap map[string]bool, identityArray *[]string, identifier string) bool {
+	if _, ok := identifierMap[identifier]; ok {
+		*identityArray = append(*identityArray, identifier)
+		delete(identifierMap, identifier)
+
+		return true
+	}
+	return false
+}

@@ -1,3 +1,9 @@
+variable "async" {
+  type        = string
+  description = "Whether or not the Webhook Action expects an additional, asynchronous response upon completion."
+  default     = true
+}
+
 variable "description" {
   type        = string
   description = "The description of the Webhook Action."

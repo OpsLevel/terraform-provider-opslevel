@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -38,6 +40,9 @@ type TriggerDefinitionResource struct {
 type TriggerDefinitionResourceModel struct {
 	AccessControl          types.String `tfsdk:"access_control"`
 	Action                 types.String `tfsdk:"action"`
+	ApprovalRequired       types.Bool   `tfsdk:"approval_required"`
+	ApprovalTeams          types.List   `tfsdk:"approval_teams"`
+	ApprovalUsers          types.List   `tfsdk:"approval_users"`
 	Description            types.String `tfsdk:"description"`
 	EntityType             types.String `tfsdk:"entity_type"`
 	ExtendedTeamAccess     types.List   `tfsdk:"extended_team_access"`
@@ -50,13 +55,14 @@ type TriggerDefinitionResourceModel struct {
 	Published              types.Bool   `tfsdk:"published"`
 }
 
-func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
+func NewTriggerDefinitionResourceModel(ctx context.Context, client *opslevel.Client, triggerDefinition opslevel.CustomActionsTriggerDefinition, givenModel TriggerDefinitionResourceModel) (TriggerDefinitionResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var err error
 
 	triggerDefinitionResourceModel := TriggerDefinitionResourceModel{
 		AccessControl:          RequiredStringValue(string(triggerDefinition.AccessControl)),
 		Action:                 RequiredStringValue(string(triggerDefinition.Action.Id)),
+		ApprovalRequired:       types.BoolValue(triggerDefinition.ApprovalConfig.ApprovalRequired),
 		Description:            OptionalStringValue(triggerDefinition.Description),
 		EntityType:             OptionalStringValue(string(triggerDefinition.EntityType)),
 		Filter:                 OptionalStringValue(string(triggerDefinition.Filter.Id)),
@@ -66,6 +72,18 @@ func NewTriggerDefinitionResourceModel(client *opslevel.Client, triggerDefinitio
 		Owner:                  RequiredStringValue(string(triggerDefinition.Owner.Id)),
 		ResponseTemplate:       OptionalStringValue(triggerDefinition.ResponseTemplate),
 		Published:              types.BoolValue(triggerDefinition.Published),
+	}
+
+	if len(triggerDefinition.ApprovalConfig.Users) == 0 {
+		triggerDefinitionResourceModel.ApprovalUsers = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		triggerDefinitionResourceModel.ApprovalUsers = OptionalStringListValue(getUsersArray(ctx, triggerDefinition.ApprovalConfig.Users, givenModel.ApprovalUsers))
+	}
+
+	if len(triggerDefinition.ApprovalConfig.Teams) == 0 {
+		triggerDefinitionResourceModel.ApprovalTeams = types.ListValueMust(types.StringType, []attr.Value{})
+	} else {
+		triggerDefinitionResourceModel.ApprovalTeams = OptionalStringListValue(getTeamsArray(ctx, triggerDefinition.ApprovalConfig.Teams, givenModel.ApprovalTeams))
 	}
 
 	if givenModel.ExtendedTeamAccess.IsNull() || givenModel.ExtendedTeamAccess.IsUnknown() {
@@ -105,6 +123,26 @@ func (r *TriggerDefinitionResource) Schema(ctx context.Context, req resource.Sch
 				Description: "The action that will be triggered by the Trigger Definition.",
 				Required:    true,
 				Validators:  []validator.String{IdStringValidator()},
+			},
+			"approval_required": schema.BoolAttribute{
+				Description: "Flag indicating approval is required.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+			},
+			"approval_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "Teams that can approve this Trigger Definition.",
+				Optional:    true,
+				Computed:    true,
+				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+			},
+			"approval_users": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "Users that can approve this Trigger Definition.",
+				Optional:    true,
+				Computed:    true,
+				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of what the Trigger Definition will do.",
@@ -192,6 +230,13 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		triggerDefinitionInput.EntityType = &entityType
 	}
 
+	approvalConfig, diags := getApprovalConfig(ctx, planModel)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+	triggerDefinitionInput.ApprovalConfig = &approvalConfig
+
 	extendedTeamsStringSlice, diags := ListValueToStringSlice(ctx, planModel.ExtendedTeamAccess)
 	if diags.HasError() {
 		resp.Diagnostics.AddError("opslevel client error", "failed to convert 'extended_team_access' to string slice")
@@ -206,7 +251,7 @@ func (r *TriggerDefinitionResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	stateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, planModel)
+	stateModel, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *triggerDefinition, planModel)
 	resp.Diagnostics.Append(diags...)
 
 	tflog.Trace(ctx, "created a trigger definition resource")
@@ -229,7 +274,7 @@ func (r *TriggerDefinitionResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	verifiedStateModel, diags := NewTriggerDefinitionResourceModel(r.client, *triggerDefinition, stateModel)
+	verifiedStateModel, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *triggerDefinition, stateModel)
 	resp.Diagnostics.Append(diags...)
 
 	// Save updated data into Terraform state
@@ -267,13 +312,20 @@ func (r *TriggerDefinitionResource) Update(ctx context.Context, req resource.Upd
 	extendedTeamAccess := opslevel.NewIdentifierArray(extendedTeamsStringSlice)
 	triggerDefinitionInput.ExtendedTeamAccess = &extendedTeamAccess
 
+	approvalConfig, diags := getApprovalConfig(ctx, planModel)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+	triggerDefinitionInput.ApprovalConfig = &approvalConfig
+
 	updatedTriggerDefinition, err := r.client.UpdateTriggerDefinition(triggerDefinitionInput)
 	if err != nil || updatedTriggerDefinition == nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update trigger definition, got error: %s", err))
 		return
 	}
 
-	stateModelFinal, diags := NewTriggerDefinitionResourceModel(r.client, *updatedTriggerDefinition, planModel)
+	stateModelFinal, diags := NewTriggerDefinitionResourceModel(ctx, r.client, *updatedTriggerDefinition, planModel)
 	resp.Diagnostics.Append(diags...)
 	tflog.Trace(ctx, "updated a trigger definition resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModelFinal)...)
@@ -295,6 +347,45 @@ func (r *TriggerDefinitionResource) Delete(ctx context.Context, req resource.Del
 
 func (r *TriggerDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func getApprovalConfig(ctx context.Context, planModel TriggerDefinitionResourceModel) (opslevel.ApprovalConfigInput, diag.Diagnostics) {
+	approvalConfig := opslevel.ApprovalConfigInput{
+		ApprovalRequired: planModel.ApprovalRequired.ValueBoolPointer(),
+	}
+
+	approvalUsers := types.ListValueMust(types.StringType, []attr.Value{})
+	approvalTeams := types.ListValueMust(types.StringType, []attr.Value{})
+
+	if planModel.ApprovalRequired.ValueBool() {
+		approvalUsers = planModel.ApprovalUsers
+		approvalTeams = planModel.ApprovalTeams
+	}
+
+	usersStringSlice, diags := ListValueToStringSlice(ctx, approvalUsers)
+	if diags.HasError() {
+		return approvalConfig, diags
+	}
+	users := getUsers(usersStringSlice)
+	approvalConfig.Users = &users
+
+	approvalTeamsSlice, diags := ListValueToStringSlice(ctx, approvalTeams)
+	if diags.HasError() {
+		return approvalConfig, diags
+	}
+	teams := opslevel.NewIdentifierArray(approvalTeamsSlice)
+	approvalConfig.Teams = &teams
+
+	return approvalConfig, nil
+}
+
+func getUsers(users []string) []opslevel.UserIdentifierInput {
+	userInputs := make([]opslevel.UserIdentifierInput, len(users))
+	for i, user := range users {
+		userInputs[i] = *opslevel.NewUserIdentifier(user)
+	}
+
+	return userInputs
 }
 
 func getExtendedTeamAccessListValue(client *opslevel.Client, triggerDefinition *opslevel.CustomActionsTriggerDefinition) (basetypes.ListValue, error) {

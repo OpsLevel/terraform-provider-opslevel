@@ -75,3 +75,82 @@ Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
   EOT
   published                = true
 }
+
+resource "opslevel_trigger_definition" "approval_required_by_team_example" {
+  name                     = "Page The On Call"
+  description              = "Pages the On Call"
+  owner                    = data.opslevel_team.platform.id
+  filter                   = data.opslevel_filter.tier_1.id
+  action                   = opslevel_webhook_action.example.id
+  access_control           = "everyone"
+  extended_team_access     = ["team_1", "team_2"]
+  approval_required        = true
+  approval_teams           = ["team_3"]
+  manual_inputs_definition = <<EOT
+---
+version: 1
+inputs:
+  - identifier: IncidentTitle
+    displayName: Title
+    description: Title of the incident to trigger
+    type: text_input
+    required: true
+    maxLength: 60
+    defaultValue: Service Incident Manual Trigger
+  - identifier: IncidentDescription
+    displayName: Incident Description
+    description: The description of the incident
+    type: text_area
+    required: true
+  EOT
+  response_template        = <<EOT
+{% if response.status >= 200 and response.status < 300 %}
+## Congratulations!
+Your request for {{ service.name }} has succeeded. See the incident here: {{response.body.incident.html_url}}
+{% else %}
+## Oops something went wrong!
+Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
+{% endif %}
+  EOT
+  published                = true
+}
+
+resource "opslevel_trigger_definition" "approval_required_by_users_and_teams_example" {
+  name                     = "Page The On Call"
+  description              = "Pages the On Call"
+  owner                    = data.opslevel_team.platform.id
+  filter                   = data.opslevel_filter.tier_1.id
+  action                   = opslevel_webhook_action.example.id
+  access_control           = "everyone"
+  extended_team_access     = ["team_1", "team_2"]
+  approval_required        = true
+  approval_users           = ["some.user@mydomain.com"]
+  approval_teams           = ["team_3"]
+  manual_inputs_definition = <<EOT
+---
+version: 1
+inputs:
+  - identifier: IncidentTitle
+    displayName: Title
+    description: Title of the incident to trigger
+    type: text_input
+    required: true
+    maxLength: 60
+    defaultValue: Service Incident Manual Trigger
+  - identifier: IncidentDescription
+    displayName: Incident Description
+    description: The description of the incident
+    type: text_area
+    required: true
+  EOT
+  response_template        = <<EOT
+{% if response.status >= 200 and response.status < 300 %}
+## Congratulations!
+Your request for {{ service.name }} has succeeded. See the incident here: {{response.body.incident.html_url}}
+{% else %}
+## Oops something went wrong!
+Please contact [{{ action_owner.name }}]({{ action_owner.href }}) for more help.
+{% endif %}
+  EOT
+  published                = true
+}

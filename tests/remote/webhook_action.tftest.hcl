@@ -9,6 +9,7 @@ variables {
   url     = "https://webhook.url"
 
   # optional fields
+  async       = true
   description = "Webhook Action description"
   headers     = tomap({ operation = "create", fields = "all" })
 }
@@ -16,6 +17,7 @@ variables {
 run "resource_webhook_action_create_with_all_fields" {
 
   variables {
+    async       = var.async
     description = var.description
     headers     = var.headers
     method      = var.method
@@ -30,6 +32,7 @@ run "resource_webhook_action_create_with_all_fields" {
 
   assert {
     condition = alltrue([
+      can(opslevel_webhook_action.test.async),
       can(opslevel_webhook_action.test.description),
       can(opslevel_webhook_action.test.headers),
       can(opslevel_webhook_action.test.id),
