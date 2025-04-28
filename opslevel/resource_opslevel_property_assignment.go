@@ -40,7 +40,9 @@ type PropertyAssignmentResourceModel struct {
 func NewPropertyAssignmentResourceModel(assignment opslevel.Property) PropertyAssignmentResourceModel {
 	model := PropertyAssignmentResourceModel{
 		Locked: types.BoolValue(assignment.Locked),
-		Value:  types.StringValue(string(*assignment.Value)),
+	}
+	if assignment.Value != nil {
+		model.Value = types.StringValue(string(*assignment.Value))
 	}
 	// TODO: do we need to keep using this method of setting an ID in the new plugin version?
 	// the API does not have unique ID's for property assignments, so what we did in the past was use <owner_id>:<definition_id>
@@ -154,7 +156,7 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	verifiedStateModel.Owner = stateModel.Owner
 	verifiedStateModel.Definition = stateModel.Definition
 
-	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%s'", definition, owner, *assignment.Value))
+	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%v'", definition, owner, assignment.Value))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
