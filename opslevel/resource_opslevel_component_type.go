@@ -41,7 +41,7 @@ type ComponentTypeModel struct {
 	Name        types.String             `tfsdk:"name"`
 	Alias       types.String             `tfsdk:"alias"`
 	Description types.String             `tfsdk:"description"`
-	Icon        ComponentTypeIconModel   `tfsdk:"icon"`
+	Icon        *ComponentTypeIconModel  `tfsdk:"icon"`
 	Properties  map[string]PropertyModel `tfsdk:"properties"`
 }
 
@@ -58,7 +58,7 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	stateModel.Name = types.StringValue(res.Name)
 	stateModel.Alias = types.StringValue(res.Aliases[0])
 	stateModel.Description = types.StringValue(res.Description)
-	stateModel.Icon = ComponentTypeIconModel{
+	stateModel.Icon = &ComponentTypeIconModel{
 		Color: types.StringValue(res.Icon.Color),
 		Name:  types.StringValue(string(res.Icon.Name)),
 	}
