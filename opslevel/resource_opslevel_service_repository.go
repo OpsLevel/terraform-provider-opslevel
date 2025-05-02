@@ -215,7 +215,8 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 		}
 	}
 	if serviceRepository == nil {
-		resp.Diagnostics.AddError("opslevel client error", "Unable to find service repository")
+		resp.Diagnostics.AddWarning("opslevel client error", "Unable to find service repository")
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), nil)...)
 		return
 	}
 
