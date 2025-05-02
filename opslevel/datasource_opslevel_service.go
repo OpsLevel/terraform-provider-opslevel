@@ -212,7 +212,7 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:    true,
 			},
 			"system": schema.ObjectAttribute{
-				Description: "The isystem that the service belongs to.",
+				Description: "The system that the service belongs to.",
 				Computed:    true,
 				AttributeTypes: map[string]attr.Type{
 					"aliases": types.ListType{ElemType: types.StringType},
