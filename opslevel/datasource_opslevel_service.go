@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -27,23 +29,24 @@ type ServiceDataSource struct {
 
 // ServiceDataSourceModel describes the data source data model.
 type ServiceDataSourceModel struct {
-	Alias                      types.String    `tfsdk:"alias"`
-	Aliases                    types.List      `tfsdk:"aliases"`
-	ApiDocumentPath            types.String    `tfsdk:"api_document_path"`
-	Description                types.String    `tfsdk:"description"`
-	Framework                  types.String    `tfsdk:"framework"`
-	Id                         types.String    `tfsdk:"id"`
-	Language                   types.String    `tfsdk:"language"`
-	LifecycleAlias             types.String    `tfsdk:"lifecycle_alias"`
-	Name                       types.String    `tfsdk:"name"`
-	Owner                      types.String    `tfsdk:"owner"`
-	OwnerId                    types.String    `tfsdk:"owner_id"`
-	PreferredApiDocumentSource types.String    `tfsdk:"preferred_api_document_source"`
-	Product                    types.String    `tfsdk:"product"`
-	Properties                 []propertyModel `tfsdk:"properties"`
-	Repositories               types.List      `tfsdk:"repositories"`
-	Tags                       types.List      `tfsdk:"tags"`
-	TierAlias                  types.String    `tfsdk:"tier_alias"`
+	Alias                      types.String          `tfsdk:"alias"`
+	Aliases                    types.List            `tfsdk:"aliases"`
+	ApiDocumentPath            types.String          `tfsdk:"api_document_path"`
+	Description                types.String          `tfsdk:"description"`
+	Framework                  types.String          `tfsdk:"framework"`
+	Id                         types.String          `tfsdk:"id"`
+	Language                   types.String          `tfsdk:"language"`
+	LifecycleAlias             types.String          `tfsdk:"lifecycle_alias"`
+	Name                       types.String          `tfsdk:"name"`
+	Owner                      types.String          `tfsdk:"owner"`
+	OwnerId                    types.String          `tfsdk:"owner_id"`
+	PreferredApiDocumentSource types.String          `tfsdk:"preferred_api_document_source"`
+	Product                    types.String          `tfsdk:"product"`
+	Properties                 []propertyModel       `tfsdk:"properties"`
+	Repositories               types.List            `tfsdk:"repositories"`
+	System                     systemDataSourceModel `tfsdk:"system"`
+	Tags                       types.List            `tfsdk:"tags"`
+	TierAlias                  types.String          `tfsdk:"tier_alias"`
 }
 
 type propertyModel struct {
@@ -209,6 +212,14 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "List of repositories connected to the service.",
 				Computed:    true,
 			},
+			"system": schema.ObjectAttribute{
+				Description: "The system that the service belongs to.",
+				Computed:    true,
+				AttributeTypes: map[string]attr.Type{
+					"aliases": types.ListType{ElemType: types.StringType},
+					"id":      types.StringType,
+				},
+			},
 			"tags": schema.ListAttribute{
 				ElementType: types.StringType,
 				Description: "A list of tags applied to the service.",
@@ -246,6 +257,19 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	stateModel := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
+
+	system, err := service.GetSystem(d.client, nil)
+	if err != nil {
+		diags.AddAttributeError(
+			path.Root("system"),
+			"OpsLevel Client Error",
+			fmt.Sprintf("unable to read System for service, got error: %s", err),
+		)
+		return
+	}
+	if system != nil {
+		stateModel.System = newSystemDataSourceModel(*system)
+	}
 
 	// NOTE: service's hydrate does not populate properties
 	properties, err := service.GetProperties(d.client, nil)
