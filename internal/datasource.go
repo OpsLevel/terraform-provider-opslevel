@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -61,7 +62,7 @@ func (s *TFDataSourceSingle[TData, TModel]) Schema(ctx context.Context, req data
 }
 
 func (s *TFDataSourceSingle[TData, TModel]) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var id = ""
+	id := ""
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("identifier"), &id)...)
 	if resp.Diagnostics.HasError() {
 		return
