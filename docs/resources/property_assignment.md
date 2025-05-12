@@ -38,11 +38,11 @@ resource "opslevel_property_assignment" "example_3" {
 ### Required
 
 - `definition` (String) The custom property definition's ID or alias.
-- `owner` (String) The ID or alias of the entity (currently only supports service) that the property has been assigned to.
+- `owner` (String) The ID or alias of the entity that the property has been assigned to.
 
 ### Optional
 
-- `value` (String) The value of the custom property (must be a valid JSON value or null or object).
+- `value` (String) The value of the custom property (must be a valid JSON value or null).
 
 ### Read-Only
 

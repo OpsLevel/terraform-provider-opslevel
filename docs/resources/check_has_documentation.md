@@ -3,12 +3,16 @@
 page_title: "opslevel_check_has_documentation Resource - terraform-provider-opslevel"
 subcategory: ""
 description: |-
-  Check Has Documentation Resource
+  Check Has Documentation Resource.
+  
+        Verifies that a component has API Docs.
 ---
 
 # opslevel_check_has_documentation (Resource)
 
-Check Has Documentation Resource
+Check Has Documentation Resource.
+		  
+		  Verifies that a component has API Docs.
 
 ## Example Usage
 

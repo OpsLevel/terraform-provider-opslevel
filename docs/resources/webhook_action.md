@@ -18,6 +18,7 @@ resource "opslevel_webhook_action" "example" {
   description = "Pages the On Call"
   url         = "https://api.pagerduty.com/incidents"
   method      = "POST"
+  #async      = true #Uncomment if your action is long running
   headers = {
     content-type  = "application/json"
     accept        = "application/vnd.pagerduty+json;version=2"
@@ -56,6 +57,7 @@ resource "opslevel_webhook_action" "example" {
 
 ### Optional
 
+- `async` (Boolean) Whether or not the Webhook Action expects an additional, asynchronous response upon completion.
 - `description` (String) The description of the Webhook Action.
 - `headers` (Map of String) HTTP headers to be passed along with your webhook when triggered.
 

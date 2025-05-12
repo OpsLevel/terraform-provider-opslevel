@@ -45,6 +45,7 @@ data "opslevel_service" "bar" {
 - `product` (String) A product is an application that your end user interacts with. Multiple services can work together to power a single product.
 - `properties` (Attributes List) Custom properties assigned to this service. (see [below for nested schema](#nestedatt--properties))
 - `repositories` (List of String) List of repositories connected to the service.
+- `system` (Object) The system that the service belongs to. (see [below for nested schema](#nestedatt--system))
 - `tags` (List of String) A list of tags applied to the service.
 - `tier_alias` (String) The software tier that the service belongs to.
 
@@ -63,5 +64,15 @@ Read-Only:
 
 - `aliases` (List of String) A list of human-friendly, unique identifiers of the property definition.
 - `id` (String) The id of the property definition.
+
+
+
+<a id="nestedatt--system"></a>
+### Nested Schema for `system`
+
+Read-Only:
+
+- `aliases` (List of String)
+- `id` (String)
 
 
