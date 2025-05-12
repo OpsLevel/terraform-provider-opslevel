@@ -29,24 +29,24 @@ type ServiceDataSource struct {
 
 // ServiceDataSourceModel describes the data source data model.
 type ServiceDataSourceModel struct {
-	Alias                      types.String          `tfsdk:"alias"`
-	Aliases                    types.List            `tfsdk:"aliases"`
-	ApiDocumentPath            types.String          `tfsdk:"api_document_path"`
-	Description                types.String          `tfsdk:"description"`
-	Framework                  types.String          `tfsdk:"framework"`
-	Id                         types.String          `tfsdk:"id"`
-	Language                   types.String          `tfsdk:"language"`
-	LifecycleAlias             types.String          `tfsdk:"lifecycle_alias"`
-	Name                       types.String          `tfsdk:"name"`
-	Owner                      types.String          `tfsdk:"owner"`
-	OwnerId                    types.String          `tfsdk:"owner_id"`
-	PreferredApiDocumentSource types.String          `tfsdk:"preferred_api_document_source"`
-	Product                    types.String          `tfsdk:"product"`
-	Properties                 []propertyModel       `tfsdk:"properties"`
-	Repositories               types.List            `tfsdk:"repositories"`
-	System                     systemDataSourceModel `tfsdk:"system"`
-	Tags                       types.List            `tfsdk:"tags"`
-	TierAlias                  types.String          `tfsdk:"tier_alias"`
+	Alias                      types.String           `tfsdk:"alias"`
+	Aliases                    types.List             `tfsdk:"aliases"`
+	ApiDocumentPath            types.String           `tfsdk:"api_document_path"`
+	Description                types.String           `tfsdk:"description"`
+	Framework                  types.String           `tfsdk:"framework"`
+	Id                         types.String           `tfsdk:"id"`
+	Language                   types.String           `tfsdk:"language"`
+	LifecycleAlias             types.String           `tfsdk:"lifecycle_alias"`
+	Name                       types.String           `tfsdk:"name"`
+	Owner                      types.String           `tfsdk:"owner"`
+	OwnerId                    types.String           `tfsdk:"owner_id"`
+	PreferredApiDocumentSource types.String           `tfsdk:"preferred_api_document_source"`
+	Product                    types.String           `tfsdk:"product"`
+	Properties                 []propertyModel        `tfsdk:"properties"`
+	Repositories               types.List             `tfsdk:"repositories"`
+	System                     *systemDataSourceModel `tfsdk:"system"`
+	Tags                       types.List             `tfsdk:"tags"`
+	TierAlias                  types.String           `tfsdk:"tier_alias"`
 }
 
 type propertyModel struct {
@@ -267,8 +267,9 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		)
 		return
 	}
-	if system != nil {
-		stateModel.System = newSystemDataSourceModel(*system)
+	if system == nil {
+		sys := newSystemDataSourceModel(*system)
+		stateModel.System = &sys
 	}
 
 	// NOTE: service's hydrate does not populate properties
