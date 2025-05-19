@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
-	github.com/hashicorp/terraform-plugin-framework-validators v0.17.0
+	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/opslevel/opslevel-go/v2025 v2025.2.10
 	github.com/relvacode/iso8601 v1.6.0
