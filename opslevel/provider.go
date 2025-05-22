@@ -198,6 +198,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewIntegrationGoogleCloudResource,
 		NewPropertyAssignmentResource,
 		NewPropertyDefinitionResource,
+		NewRelationshipDefinitionResource,
 		NewRepositoryResource,
 		NewRubricCategoryResource,
 		NewRubricLevelResource,

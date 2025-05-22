@@ -3,11 +3,11 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"strings"
-
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -36,7 +36,7 @@ type RelationshipDefinitionResourceModel struct {
 	Alias         types.String `tfsdk:"alias"`
 	Description   types.String `tfsdk:"description"`
 	ComponentType types.String `tfsdk:"component_type"`
-	Metadata      types.Object `tfsdk:"metadata"`
+	AllowedTypes  types.List   `tfsdk:"allowed_types"`
 }
 
 func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefinitionType, givenModel RelationshipDefinitionResourceModel) RelationshipDefinitionResourceModel {
@@ -45,24 +45,16 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		Name:          RequiredStringValue(definition.Name),
 		Alias:         RequiredStringValue(definition.Alias),
 		Description:   StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
-		ComponentType: RequiredStringValue(string(definition.ComponentType.Id)),
-		Metadata: types.ObjectValueMust(
-			map[string]attr.Type{
-				"allowed_types": types.ListType{ElemType: types.StringType},
-				"max_items":     types.Int64Type,
-				"min_items":     types.Int64Type,
-			},
-			map[string]attr.Value{
-				"allowed_types": types.ListValueMust(types.StringType, func() []attr.Value {
-					values := make([]attr.Value, len(definition.Metadata.AllowedTypes))
-					for i, v := range definition.Metadata.AllowedTypes {
-						values[i] = types.StringValue(v)
-					}
-					return values
-				}()),
-				"max_items": types.Int64Value(int64(definition.Metadata.MaxItems)),
-				"min_items": types.Int64Value(int64(definition.Metadata.MinItems)),
-			},
+		ComponentType: givenModel.ComponentType,
+		AllowedTypes: types.ListValueMust(
+			types.StringType,
+			func() []attr.Value {
+				values := make([]attr.Value, len(definition.Metadata.AllowedTypes))
+				for i, v := range definition.Metadata.AllowedTypes {
+					values[i] = types.StringValue(v)
+				}
+				return values
+			}(),
 		),
 	}
 
@@ -75,7 +67,11 @@ func (r *RelationshipDefinitionResource) Metadata(ctx context.Context, req resou
 
 func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Relationship Definition Resource",
+		MarkdownDescription: `A relationship definition in OpsLevel defines how different resources can be related to each other. It specifies:
+- Which component type the relationship is on
+- What types of resources can be related (allowed_types)
+
+`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of this resource.",
@@ -91,22 +87,27 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 			"alias": schema.StringAttribute{
 				Description: "The unique identifier of the relationship.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of the relationship definition.",
 				Optional:    true,
 			},
 			"component_type": schema.StringAttribute{
-				Description: "The component type that the relationship belongs to.",
+				Description: "The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"metadata": schema.ObjectAttribute{
-				Description: "The metadata of the relationship.",
+			"allowed_types": schema.ListAttribute{
+				Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
 				Required:    true,
-				AttributeTypes: map[string]attr.Type{
-					"allowed_types": types.ListType{ElemType: types.StringType},
-					"max_items":     types.Int64Type,
-					"min_items":     types.Int64Type,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.RequiresReplace(),
 				},
 			},
 		},
@@ -119,31 +120,25 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	metadata := planModel.Metadata.Attributes()
 	allowedTypes := make([]string, 0)
-	if err := metadata["allowed_types"].(types.List).ElementsAs(ctx, &allowedTypes, false); err != nil {
+	if err := planModel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types: %s", err))
 		return
 	}
 
-	maxItems := int(metadata["max_items"].(types.Int64).ValueInt64())
-	minItems := int(metadata["min_items"].(types.Int64).ValueInt64())
-
 	input := opslevel.RelationshipDefinitionInput{
-		Name:          nullable(planModel.Name.ValueStringPointer()),
-		Alias:         nullable(planModel.Alias.ValueStringPointer()),
+		Name:          planModel.Name.ValueStringPointer(),
+		Alias:         planModel.Alias.ValueStringPointer(),
 		Description:   nullable(planModel.Description.ValueStringPointer()),
 		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
 			AllowedTypes: allowedTypes,
-			MaxItems:     &maxItems,
-			MinItems:     &minItems,
 		},
 	}
 
 	definition, err := r.client.CreateRelationshipDefinition(input)
 	if err != nil || definition == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create relationship definition with name '%s', got error: %s", input.Name.Value, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create relationship definition with name '%s', got error: %s", planModel.Name.ValueString(), err))
 		return
 	}
 
@@ -180,26 +175,20 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	metadata := planModel.Metadata.Attributes()
 	allowedTypes := make([]string, 0)
-	if err := metadata["allowed_types"].(types.List).ElementsAs(ctx, &allowedTypes, false); err != nil {
+	if err := planModel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types: %s", err))
 		return
 	}
 
-	maxItems := int(metadata["max_items"].(types.Int64).ValueInt64())
-	minItems := int(metadata["min_items"].(types.Int64).ValueInt64())
-
 	id := planModel.Id.ValueString()
 	input := opslevel.RelationshipDefinitionInput{
-		Name:          nullable(planModel.Name.ValueStringPointer()),
-		Alias:         nullable(planModel.Alias.ValueStringPointer()),
+		Name:          planModel.Name.ValueStringPointer(),
+		Alias:         planModel.Alias.ValueStringPointer(),
 		Description:   nullable(planModel.Description.ValueStringPointer()),
 		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
 			AllowedTypes: allowedTypes,
-			MaxItems:     &maxItems,
-			MinItems:     &minItems,
 		},
 	}
 
@@ -221,7 +210,7 @@ func (r *RelationshipDefinitionResource) Delete(ctx context.Context, req resourc
 	}
 
 	id := stateModel.Id.ValueString()
-	err := r.client.DeleteRelationshipDefinition(id)
+	_, err := r.client.DeleteRelationshipDefinition(id)
 	if err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete relationship definition (%s), got error: %s", id, err))
 		return
@@ -231,4 +220,4 @@ func (r *RelationshipDefinitionResource) Delete(ctx context.Context, req resourc
 
 func (r *RelationshipDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-} 
+}
