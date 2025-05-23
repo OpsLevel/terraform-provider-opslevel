@@ -84,13 +84,13 @@ func (d *LevelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	levels, err := d.client.ListLevels()
+	levels, err := d.client.ListLevels(nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read rubric_level datasource, got error: %s", err))
 		return
 	}
 
-	level, err := filterRubricLevels(levels, configModel.Filter)
+	level, err := filterRubricLevels(levels.Nodes, configModel.Filter)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to filter rubric_level datasource, got error: %s", err))
 		return

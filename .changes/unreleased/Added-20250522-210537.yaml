@@ -1,0 +1,3 @@
+kind: Added
+body: Add resource `opslevel_relationship_assignment` to manage creating relationships between components
+time: 2025-05-22T21:05:37.657052-05:00

@@ -3,6 +3,7 @@ data "opslevel_team" "devs" {
 }
 
 resource "opslevel_repository" "repo" {
-  identifier = "github.com:rocktavious/autopilot"
-  owner      = data.opslevel_team.devs.id
+  identifier      = "github.com:rocktavious/autopilot"
+  owner           = data.opslevel_team.devs.id
+  sbom_generation = "opt_in"
 }
