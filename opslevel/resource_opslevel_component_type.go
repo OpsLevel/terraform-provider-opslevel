@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -454,7 +455,6 @@ func (s ComponentTypeResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	id := stateModel.Id.ValueString()
-
 
 	// Delete the component type
 	if err := s.client.DeleteComponentType(id); err != nil {
