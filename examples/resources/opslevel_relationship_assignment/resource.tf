@@ -1,8 +1,8 @@
 # Infrastructure resource relationship using
 resource "opslevel_relationship_assignment" "basic" {
-  source      = opslevel_service.example.id  # Component ID
-  target      = opslevel_infrastructure.example.id   # Infrastructure ID
-  type        = "belongs_to"                            # One of: belongs_to, depends_on
+  source = opslevel_service.example.id        # Component ID
+  target = opslevel_infrastructure.example.id # Infrastructure ID
+  type   = "belongs_to"                       # One of: belongs_to, depends_on
 }
 
 # Component relationship using a relationship definition
