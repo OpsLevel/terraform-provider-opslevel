@@ -199,6 +199,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewPropertyAssignmentResource,
 		NewPropertyDefinitionResource,
 		NewRelationshipDefinitionResource,
+		NewRelationshipAssignmentResource,
 		NewRepositoryResource,
 		NewRubricCategoryResource,
 		NewRubricLevelResource,
