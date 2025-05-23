@@ -455,21 +455,6 @@ func (s ComponentTypeResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	id := stateModel.Id.ValueString()
 
-	// Delete all relationship definitions first
-	//rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
-	//	"componentType": opslevel.NewIdentifier(id),
-	//})
-	//if err != nil {
-	//	resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
-	//	return
-	//}
-	//
-	//for _, rel := range rels.Nodes {
-	//	_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
-	//	if err != nil {
-	//		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete relationship definition '%s', got error: %s", rel.Alias, err))
-	//	}
-	//}
 
 	// Delete the component type
 	if err := s.client.DeleteComponentType(id); err != nil {
