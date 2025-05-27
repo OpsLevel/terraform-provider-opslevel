@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -30,15 +33,17 @@ type RepositoryResource struct {
 
 // RepositoryResourceModel describes the Repository managed resource.
 type RepositoryResourceModel struct {
-	Id         types.String `tfsdk:"id"`
-	Identifier types.String `tfsdk:"identifier"`
-	Owner      types.String `tfsdk:"owner"`
+	Id             types.String `tfsdk:"id"`
+	Identifier     types.String `tfsdk:"identifier"`
+	Owner          types.String `tfsdk:"owner"`
+	SBOMGeneration types.String `tfsdk:"sbom_generation"`
 }
 
 func NewRepositoryResourceModel(ctx context.Context, repository opslevel.Repository) RepositoryResourceModel {
 	return RepositoryResourceModel{
-		Id:    ComputedStringValue(string(repository.Id)),
-		Owner: OptionalStringValue(string(repository.Owner.Id)),
+		Id:             ComputedStringValue(string(repository.Id)),
+		Owner:          OptionalStringValue(string(repository.Owner.Id)),
+		SBOMGeneration: OptionalStringValue(string(repository.SBOMGenerationConfiguration.State)),
 	}
 }
 
@@ -71,6 +76,15 @@ func (r *RepositoryResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional:    true,
 				Validators:  []validator.String{IdStringValidator()},
 			},
+			"sbom_generation": schema.StringAttribute{
+				Description: "The desired configuration state at the repository level for SBOM generation. Can be either 'opt_in' or 'opt_out'.",
+				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString(string(opslevel.RepositorySBOMGenerationConfigEnumOptIn)),
+				Validators: []validator.String{
+					stringvalidator.OneOf(opslevel.AllRepositorySBOMGenerationConfigEnum...),
+				},
+			},
 		},
 	}
 }
@@ -99,6 +113,10 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	if !planModel.Owner.IsNull() {
 		input.OwnerId = nullable(opslevel.NewID(planModel.Owner.ValueString()))
+	}
+	if !planModel.SBOMGeneration.IsNull() {
+		sbomGen := opslevel.RepositorySBOMGenerationConfigEnum(planModel.SBOMGeneration.ValueString())
+		input.SbomGeneration = &sbomGen
 	}
 
 	updatedRepository, err := r.client.UpdateRepository(input)
@@ -172,6 +190,10 @@ func (r *RepositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 	if !planModel.Owner.IsNull() {
 		input.OwnerId = nullable(opslevel.NewID(planModel.Owner.ValueString()))
+	}
+	if !planModel.SBOMGeneration.IsNull() {
+		sbomGen := opslevel.RepositorySBOMGenerationConfigEnum(planModel.SBOMGeneration.ValueString())
+		input.SbomGeneration = &sbomGen
 	}
 
 	updatedRepository, err := r.client.UpdateRepository(input)

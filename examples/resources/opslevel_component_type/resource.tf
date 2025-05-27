@@ -62,6 +62,13 @@ resource "opslevel_component_type" "mobile" {
       })
     }
   }
+  relationships = {
+    services = {
+      name          = "Services Needed"
+      description   = "The services this Mobile App depends on."
+      allowed_types = ["service"]
+    }
+  }
 }
 
 resource "opslevel_component_type" "lambda" {
@@ -139,6 +146,18 @@ resource "opslevel_component_type" "lambda" {
       schema = jsonencode({
         "type" : "boolean"
       })
+    }
+  }
+  relationships = {
+    services = {
+      name          = "Services Needed"
+      description   = "The services this Lambda depends on."
+      allowed_types = ["service"]
+    }
+    libraries = {
+      name          = "Libraries Needed"
+      description   = "The libraries this Lambda depends on."
+      allowed_types = ["service"]
     }
   }
 }

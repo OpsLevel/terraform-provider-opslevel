@@ -3,6 +3,8 @@ package opslevel
 import (
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,13 +38,20 @@ type ComponentTypeIconModel struct {
 	Name  types.String `tfsdk:"name"`
 }
 
+type RelationshipModel struct {
+	Name         types.String `tfsdk:"name"`
+	Description  types.String `tfsdk:"description"`
+	AllowedTypes types.List   `tfsdk:"allowed_types"`
+}
+
 type ComponentTypeModel struct {
-	Id          types.String             `tfsdk:"id"`
-	Name        types.String             `tfsdk:"name"`
-	Alias       types.String             `tfsdk:"alias"`
-	Description types.String             `tfsdk:"description"`
-	Icon        *ComponentTypeIconModel  `tfsdk:"icon"`
-	Properties  map[string]PropertyModel `tfsdk:"properties"`
+	Id            types.String                 `tfsdk:"id"`
+	Name          types.String                 `tfsdk:"name"`
+	Alias         types.String                 `tfsdk:"alias"`
+	Description   types.String                 `tfsdk:"description"`
+	Icon          *ComponentTypeIconModel      `tfsdk:"icon"`
+	Properties    map[string]PropertyModel     `tfsdk:"properties"`
+	Relationships map[string]RelationshipModel `tfsdk:"relationships"`
 }
 
 type ComponentTypeResource struct {
@@ -194,6 +203,27 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 					},
 				},
 			},
+			"relationships": schema.MapNestedAttribute{
+				Description: "The relationships that can be defined for this component type.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The display name of the relationship definition.",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "The description of the relationship definition.",
+							Optional:    true,
+						},
+						"allowed_types": schema.ListAttribute{
+							Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
+							Required:    true,
+							ElementType: types.StringType,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -209,6 +239,8 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to use schema, got error: %s", err))
 		return
 	}
+
+	// Create the component type first
 	input := opslevel.ComponentTypeInput{
 		Name:        nullable(planModel.Name.ValueStringPointer()),
 		Alias:       nullable(planModel.Alias.ValueStringPointer()),
@@ -227,6 +259,34 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create resource, got error: %s", err))
 		return
 	}
+
+	// Create relationship definitions if any are specified
+	if len(planModel.Relationships) > 0 {
+		for alias, rel := range planModel.Relationships {
+			allowedTypes := make([]string, 0)
+			if err := rel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
+				resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types for relationship '%s': %s", alias, err))
+				continue
+			}
+
+			relInput := opslevel.RelationshipDefinitionInput{
+				Name:          rel.Name.ValueStringPointer(),
+				Alias:         &alias,
+				Description:   nullable(rel.Description.ValueStringPointer()),
+				ComponentType: opslevel.NewIdentifier(string(res.Id)),
+				Metadata: &opslevel.RelationshipDefinitionMetadataInput{
+					AllowedTypes: allowedTypes,
+				},
+			}
+
+			_, err := s.client.CreateRelationshipDefinition(relInput)
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create relationship definition '%s', got error: %s", alias, err))
+				continue
+			}
+		}
+	}
+
 	finalModel, err := s.NewModel(res, planModel)
 	if err != nil {
 		resp.Diagnostics.AddError("error", fmt.Sprintf("unable to build resource, got error: %s", err))
@@ -250,6 +310,31 @@ func (s ComponentTypeResource) Read(ctx context.Context, req resource.ReadReques
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to get resource with id '%s', got error: %s", id, err))
 		return
 	}
+
+	// Get relationship definitions
+	rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
+		"componentType": opslevel.NewIdentifier(id),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
+		return
+	}
+
+	// Add relationships to the state model
+	stateModel.Relationships = make(map[string]RelationshipModel)
+	for _, rel := range rels.Nodes {
+		allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
+		for i, t := range rel.Metadata.AllowedTypes {
+			allowedTypes[i] = types.StringValue(t)
+		}
+
+		stateModel.Relationships[rel.Alias] = RelationshipModel{
+			Name:         types.StringValue(rel.Name),
+			Description:  types.StringValue(rel.Description),
+			AllowedTypes: types.ListValueMust(types.StringType, allowedTypes),
+		}
+	}
+
 	finalModel, err := s.NewModel(res, stateModel)
 	if err != nil {
 		resp.Diagnostics.AddError("error", fmt.Sprintf("unable to build resource, got error: %s", err))
@@ -269,6 +354,8 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to use schema, got error: %s", err))
 		return
 	}
+
+	// Update the component type first
 	input := opslevel.ComponentTypeInput{
 		Name:        nullable(planModel.Name.ValueStringPointer()),
 		Alias:       nullable(planModel.Alias.ValueStringPointer()),
@@ -288,11 +375,77 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update resource, got error: %s", err))
 		return
 	}
-	finalModel, err := s.NewModel(res, stateModel)
+
+	if s.reconcileRelationships(ctx, err, id, resp, planModel) {
+		return
+	}
+
+	finalModel, err := s.NewModel(res, planModel)
 	if err != nil {
 		resp.Diagnostics.AddError("error", fmt.Sprintf("unable to build resource, got error: %s", err))
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, finalModel)...)
+}
+
+func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err error, id string, resp *resource.UpdateResponse, planModel ComponentTypeModel) bool {
+	// Handle relationship definitions
+	// First, get existing relationship definitions
+	existingRels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
+		"componentType": opslevel.NewIdentifier(id),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list existing relationship definitions, got error: %s", err))
+		return true
+	}
+
+	// Create a map of existing relationships by alias
+	existingRelMap := make(map[string]opslevel.RelationshipDefinitionType)
+	for _, rel := range existingRels.Nodes {
+		existingRelMap[rel.Alias] = rel
+	}
+
+	// Create or update relationships from the plan
+	for alias, rel := range planModel.Relationships {
+		allowedTypes := make([]string, 0)
+		if err := rel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
+			resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types for relationship '%s': %s", alias, err))
+			continue
+		}
+
+		relInput := opslevel.RelationshipDefinitionInput{
+			Name:          rel.Name.ValueStringPointer(),
+			Alias:         &alias,
+			Description:   nullable(rel.Description.ValueStringPointer()),
+			ComponentType: opslevel.NewIdentifier(id),
+			Metadata: &opslevel.RelationshipDefinitionMetadataInput{
+				AllowedTypes: allowedTypes,
+			},
+		}
+
+		if existingRel, exists := existingRelMap[alias]; exists {
+			// Update existing relationship
+			_, err := s.client.UpdateRelationshipDefinition(string(existingRel.Id), relInput)
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to update relationship definition '%s', got error: %s", alias, err))
+			}
+			delete(existingRelMap, alias)
+		} else {
+			// Create new relationship
+			_, err := s.client.CreateRelationshipDefinition(relInput)
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create relationship definition '%s', got error: %s", alias, err))
+			}
+		}
+	}
+
+	// Delete any relationships that were removed
+	for _, rel := range existingRelMap {
+		_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete relationship definition '%s', got error: %s", rel.Alias, err))
+		}
+	}
+	return false
 }
 
 func (s ComponentTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -302,6 +455,8 @@ func (s ComponentTypeResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	id := stateModel.Id.ValueString()
+
+	// Delete the component type
 	if err := s.client.DeleteComponentType(id); err != nil {
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete resource, got error: %s", err))
 		return
