@@ -77,6 +77,13 @@ resource "opslevel_component_type" "mobile" {
       })
     }
   }
+  relationships = {
+    services = {
+      name          = "Services Needed"
+      description   = "The services this Mobile App depends on."
+      allowed_types = ["service"]
+    }
+  }
 }
 
 resource "opslevel_component_type" "lambda" {
@@ -154,6 +161,18 @@ resource "opslevel_component_type" "lambda" {
       schema = jsonencode({
         "type" : "boolean"
       })
+    }
+  }
+  relationships = {
+    services = {
+      name          = "Services Needed"
+      description   = "The services this Lambda depends on."
+      allowed_types = ["service"]
+    }
+    libraries = {
+      name          = "Libraries Needed"
+      description   = "The libraries this Lambda depends on."
+      allowed_types = ["service"]
     }
   }
 }
@@ -392,6 +411,7 @@ resource "opslevel_component_type" "ml-ai" {
 
 - `description` (String) The description of the component type.
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--icon))
+- `relationships` (Attributes Map) The relationships that can be defined for this component type. (see [below for nested schema](#nestedatt--relationships))
 
 ### Read-Only
 
@@ -420,6 +440,19 @@ Required:
 
 - `color` (String) The color, represented as a hexcode, for the icon.
 - `name` (String) The name of the icon in Phosphor icons for Vue, e.g. `PhBird`. See https://phosphoricons.com/ for a full list.
+
+
+<a id="nestedatt--relationships"></a>
+### Nested Schema for `relationships`
+
+Required:
+
+- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
+- `name` (String) The display name of the relationship definition.
+
+Optional:
+
+- `description` (String) The description of the relationship definition.
 
 ## Import
 

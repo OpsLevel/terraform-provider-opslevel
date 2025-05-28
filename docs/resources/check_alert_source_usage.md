@@ -62,7 +62,7 @@ resource "opslevel_check_alert_source_usage" "example" {
 
 ### Required
 
-- `alert_type` (String) The type of the alert source. One of `datadog`, `fire_hydrant`, `incident_io`, `new_relic`, `opsgenie`, `pagerduty`
+- `alert_type` (String) The type of the alert source. One of `custom`, `datadog`, `fire_hydrant`, `incident_io`, `new_relic`, `opsgenie`, `pagerduty`
 - `category` (String) The id of the category the check belongs to.
 - `level` (String) The id of the level the check belongs to.
 - `name` (String) The display name of the check.

@@ -18,8 +18,9 @@ data "opslevel_team" "devs" {
 }
 
 resource "opslevel_repository" "repo" {
-  identifier = "github.com:rocktavious/autopilot"
-  owner      = data.opslevel_team.devs.id
+  identifier      = "github.com:rocktavious/autopilot"
+  owner           = data.opslevel_team.devs.id
+  sbom_generation = "opt_in"
 }
 ```
 
@@ -33,6 +34,7 @@ resource "opslevel_repository" "repo" {
 ### Optional
 
 - `owner` (String) The ID of the owner of the repository.
+- `sbom_generation` (String) The desired configuration state at the repository level for SBOM generation. Can be either 'opt_in' or 'opt_out'.
 
 ### Read-Only
 
