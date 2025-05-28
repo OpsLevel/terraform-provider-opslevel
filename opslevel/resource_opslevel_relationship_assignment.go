@@ -195,14 +195,27 @@ func (r *RelationshipAssignmentResource) Create(ctx context.Context, req resourc
 }
 
 func (r *RelationshipAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	// Since there's no GetRelationship function, we'll just keep the state as is
-	// The relationship will be deleted if it doesn't exist when trying to delete it
 	stateModel := read[RelationshipAssignmentResourceModel](ctx, &resp.Diagnostics, req.State)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
+	obj, err := r.client.GetRelationship(stateModel.Id.ValueString())
+	if err != nil {
+		if strings.Contains(err.Error(), "is not a valid ID") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read relationship assignment, got error: %s", err))
+		return
+	}
+	if obj == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	verifiedStateModel := NewRelationshipAssignmentResourceModel(obj, stateModel)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
 func (r *RelationshipAssignmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -218,7 +231,7 @@ func (r *RelationshipAssignmentResource) Delete(ctx context.Context, req resourc
 	id := stateModel.Id.ValueString()
 	_, err := r.client.DeleteRelationship(id)
 	if err != nil {
-		if strings.Contains(err.Error(), "does not exist on this account") {
+		if strings.Contains(err.Error(), "Invalid global id") {
 			resp.State.RemoveResource(ctx)
 			return
 		}
