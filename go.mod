@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/opslevel/opslevel-go/v2025 v2025.2.10
+	github.com/opslevel/opslevel-go/v2025 v2025.5.28
 	github.com/relvacode/iso8601 v1.6.0
 	golang.org/x/net v0.40.0
 )
@@ -54,4 +54,4 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-replace github.com/opslevel/opslevel-go/v2025 => ./submodules/opslevel-go
+// replace github.com/opslevel/opslevel-go/v2025 => ./submodules/opslevel-go
