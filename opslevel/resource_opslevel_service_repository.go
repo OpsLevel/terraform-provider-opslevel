@@ -49,7 +49,7 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 		Id:            ComputedStringValue(string(serviceRepository.Id)),
 		Name:          OptionalStringValue(serviceRepository.DisplayName),
 	}
-	
+
 	// Safely handle repository fields
 	if serviceRepository.Repository.Id != "" && planModel.Repository.ValueString() == string(serviceRepository.Repository.Id) {
 		stateModel.Repository = OptionalStringValue(string(serviceRepository.Repository.Id))
@@ -57,7 +57,7 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 	if serviceRepository.Repository.DefaultAlias != "" && planModel.RepositoryAlias.ValueString() == serviceRepository.Repository.DefaultAlias {
 		stateModel.RepositoryAlias = OptionalStringValue(serviceRepository.Repository.DefaultAlias)
 	}
-	
+
 	// Safely handle service fields
 	if serviceRepository.Service.Id != "" && planModel.Service.ValueString() == string(serviceRepository.Service.Id) {
 		stateModel.Service = OptionalStringValue(string(serviceRepository.Service.Id))
@@ -65,7 +65,7 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 	if len(serviceRepository.Service.Aliases) > 0 && slices.Contains(serviceRepository.Service.Aliases, planModel.ServiceAlias.ValueString()) {
 		stateModel.ServiceAlias = planModel.ServiceAlias
 	}
-	
+
 	return stateModel
 }
 
