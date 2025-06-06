@@ -49,18 +49,23 @@ func NewServiceRepositoryResourceModel(ctx context.Context, serviceRepository op
 		Id:            ComputedStringValue(string(serviceRepository.Id)),
 		Name:          OptionalStringValue(serviceRepository.DisplayName),
 	}
-	if planModel.Repository.ValueString() == string(serviceRepository.Repository.Id) {
+	
+	// Safely handle repository fields
+	if serviceRepository.Repository.Id != "" && planModel.Repository.ValueString() == string(serviceRepository.Repository.Id) {
 		stateModel.Repository = OptionalStringValue(string(serviceRepository.Repository.Id))
 	}
-	if planModel.RepositoryAlias.ValueString() == serviceRepository.Repository.DefaultAlias {
+	if serviceRepository.Repository.DefaultAlias != "" && planModel.RepositoryAlias.ValueString() == serviceRepository.Repository.DefaultAlias {
 		stateModel.RepositoryAlias = OptionalStringValue(serviceRepository.Repository.DefaultAlias)
 	}
-	if planModel.Service.ValueString() == string(serviceRepository.Service.Id) {
+	
+	// Safely handle service fields
+	if serviceRepository.Service.Id != "" && planModel.Service.ValueString() == string(serviceRepository.Service.Id) {
 		stateModel.Service = OptionalStringValue(string(serviceRepository.Service.Id))
 	}
-	if slices.Contains(serviceRepository.Service.Aliases, planModel.ServiceAlias.ValueString()) {
+	if len(serviceRepository.Service.Aliases) > 0 && slices.Contains(serviceRepository.Service.Aliases, planModel.ServiceAlias.ValueString()) {
 		stateModel.ServiceAlias = planModel.ServiceAlias
 	}
+	
 	return stateModel
 }
 
@@ -216,7 +221,7 @@ func (r *ServiceRepositoryResource) Read(ctx context.Context, req resource.ReadR
 	}
 	if serviceRepository == nil {
 		resp.Diagnostics.AddWarning("opslevel client error", "Unable to find service repository")
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), nil)...)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
