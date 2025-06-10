@@ -357,6 +357,10 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
 		return
 	}
+	if service.Id == "" {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
 	newStateModel, diags := newServiceResourceModel(ctx, *service, stateModel)
 	resp.Diagnostics.Append(diags...)
