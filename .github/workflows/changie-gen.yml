@@ -1,10 +1,13 @@
 name: Changie Gen
 
 on:
-  workflow_run:
-    workflows: [Dependabot Labels]
-    types:
-      - completed
+  pull_request:
+    # catch when the PR is opened with the label or when the label is added
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
   generate-changelog:
@@ -19,7 +22,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         ref: ${{ env.PR_BRANCH }}
-        token: ${{ secrets.ORG_GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check if changelog file exists already
       if: github.event.workflow_run.conclusion == 'success'
