@@ -85,7 +85,7 @@ func NewCheckRelationshipResourceModel(ctx context.Context, check opslevel.Check
 		stateModel.RelationshipCountPredicate = types.ObjectNull(predicateType)
 	}
 
-	stateModel.RelationshipDefinitionId = RequiredStringValue(string(check.RelationshipCheckFragment.RelationshipDefinitionId))
+	stateModel.RelationshipDefinitionId = RequiredStringValue(string(check.RelationshipCheckFragment.RelationshipDefinition.Id))
 
 	return stateModel
 }
@@ -206,7 +206,7 @@ func (r *CheckRelationshipResource) Update(ctx context.Context, req resource.Upd
 		Notes:                      opslevel.NewString(planModel.Notes.ValueString()),
 		OwnerId:                    nullableID(planModel.Owner.ValueStringPointer()),
 		RelationshipCountPredicate: predicateInput,
-		RelationshipDefinitionId:   opslevel.RefOf(asID(planModel.RelationshipDefinitionId)),
+		RelationshipDefinitionId:   opslevel.NewID(planModel.RelationshipDefinitionId.ValueString()),
 	}
 	if !planModel.EnableOn.IsNull() {
 		enabledOn, err := iso8601.ParseString(planModel.EnableOn.ValueString())

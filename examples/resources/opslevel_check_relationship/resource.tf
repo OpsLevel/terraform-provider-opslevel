@@ -39,7 +39,7 @@ resource "opslevel_check_relationship" "example" {
   relationship_definition_id = "Z2lkOi8vc2VydmljZS8xMjM0NTY3ODk"  # Replace with actual relationship definition ID
   
   # Predicate to check that the count is greater than or equal to 2
-  relationship_count_predicate {
+  relationship_count_predicate = {
     type  = "greater_than_or_equal_to"
     value = "2"
   }
