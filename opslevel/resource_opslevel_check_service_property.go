@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -93,7 +91,9 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 		stateModel.Predicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
-	stateModel.ComponentType = RequiredStringValue(planModel.ComponentType.ValueString())
+	if !planModel.ComponentType.IsNull() {
+		stateModel.ComponentType = RequiredStringValue(planModel.ComponentType.ValueString())
+	}
 
 	return stateModel
 }
@@ -110,10 +110,8 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"component_type": schema.StringAttribute{
-				Description: "The Component Type that a custom property belongs to. Defaults to Service properties if not provided.",
+				Description: "The Component Type that a custom property belongs to. If not specified, the check will apply to all component types with that property if the property_definition given is an alias.",
 				Optional:    true,
-				Computed:    true,
-				Default:     stringdefault.StaticString("service"),
 			},
 			"property": schema.StringAttribute{
 				Description: fmt.Sprintf(
@@ -230,7 +228,9 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	}
 
-	input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
+	if !planModel.ComponentType.IsNull() && !planModel.ComponentType.IsUnknown() {
+		input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
@@ -311,7 +311,9 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		input.PropertyDefinition = &opslevel.IdentifierInput{}
 	}
 
-	input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
+	if !planModel.ComponentType.IsNull() && !planModel.ComponentType.IsUnknown() {
+		input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
+	}
 
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
