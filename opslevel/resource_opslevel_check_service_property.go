@@ -45,6 +45,7 @@ type CheckServicePropertyResourceModel struct {
 	Notes       types.String `tfsdk:"notes"`
 	Owner       types.String `tfsdk:"owner"`
 
+	ComponentType      types.String `tfsdk:"component_type"`
 	Property           types.String `tfsdk:"property"`
 	PropertyDefinition types.String `tfsdk:"property_definition"`
 	Predicate          types.Object `tfsdk:"predicate"`
@@ -90,6 +91,10 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 		stateModel.Predicate = types.ObjectValueMust(predicateType, predicateAttrValues)
 	}
 
+	if !planModel.ComponentType.IsNull() {
+		stateModel.ComponentType = RequiredStringValue(planModel.ComponentType.ValueString())
+	}
+
 	return stateModel
 }
 
@@ -104,6 +109,10 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 		MarkdownDescription: "Check Service Property Resource",
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
+			"component_type": schema.StringAttribute{
+				Description: "The Component Type that a custom property belongs to. If not specified, the check will apply to all component types with that property if the property_definition given is an alias.",
+				Optional:    true,
+			},
 			"property": schema.StringAttribute{
 				Description: fmt.Sprintf(
 					"The property of the service that the check will verify. One of `%s`",
@@ -219,6 +228,10 @@ func (r *CheckServicePropertyResource) Create(ctx context.Context, req resource.
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	}
 
+	if !planModel.ComponentType.IsNull() && !planModel.ComponentType.IsUnknown() {
+		input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
+	}
+
 	// convert environment_predicate object to model from plan
 	predicateModel, diags := PredicateObjectToModel(ctx, planModel.Predicate)
 	resp.Diagnostics.Append(diags...)
@@ -296,6 +309,10 @@ func (r *CheckServicePropertyResource) Update(ctx context.Context, req resource.
 		input.PropertyDefinition = opslevel.NewIdentifier(planModel.PropertyDefinition.ValueString())
 	} else if !stateModel.PropertyDefinition.IsNull() {
 		input.PropertyDefinition = &opslevel.IdentifierInput{}
+	}
+
+	if !planModel.ComponentType.IsNull() && !planModel.ComponentType.IsUnknown() {
+		input.ComponentType = opslevel.NewIdentifier(planModel.ComponentType.ValueString())
 	}
 
 	// convert environment_predicate object to model from plan
