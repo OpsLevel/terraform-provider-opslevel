@@ -32,15 +32,17 @@ type ServiceDependenciesModel struct {
 }
 
 type dependentsModel struct {
-	Id     types.String `tfsdk:"id"`
-	Locked types.Bool   `tfsdk:"locked"`
-	Notes  types.String `tfsdk:"notes"`
+	Id        types.String `tfsdk:"id"`
+	ServiceId types.String `tfsdk:"service_id"`
+	Locked    types.Bool   `tfsdk:"locked"`
+	Notes     types.String `tfsdk:"notes"`
 }
 
 type dependenciesModel struct {
-	Id     types.String `tfsdk:"id"`
-	Locked types.Bool   `tfsdk:"locked"`
-	Notes  types.String `tfsdk:"notes"`
+	Id        types.String `tfsdk:"id"`
+	ServiceId types.String `tfsdk:"service_id"`
+	Locked    types.Bool   `tfsdk:"locked"`
+	Notes     types.String `tfsdk:"notes"`
 }
 
 func NewServiceDependenciesModel(serviceIdentifier string, dependents []dependentsModel, dependencies []dependenciesModel) ServiceDependenciesModel {
@@ -58,6 +60,10 @@ func (d *ServiceDependenciesDataSource) Metadata(ctx context.Context, req dataso
 var depsAttrs = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Description: "The ID of the service dependency.",
+		Computed:    true,
+	},
+	"service_id": schema.StringAttribute{
+		Description: "The ID of the service this dependency points to.",
 		Computed:    true,
 	},
 	"locked": schema.BoolAttribute{
@@ -149,9 +155,10 @@ func getDependenciesModelOfService(client *opslevel.Client, service *opslevel.Se
 
 	for _, svcDependency := range svcDependencies.Edges {
 		dependencies = append(dependencies, dependenciesModel{
-			Locked: types.BoolValue(svcDependency.Locked),
-			Id:     ComputedStringValue(string(svcDependency.Id)),
-			Notes:  ComputedStringValue(svcDependency.Notes),
+			Locked:    types.BoolValue(svcDependency.Locked),
+			Id:        ComputedStringValue(string(svcDependency.Id)),
+			ServiceId: ComputedStringValue(string(svcDependency.Node.Id)),
+			Notes:     ComputedStringValue(svcDependency.Notes),
 		})
 	}
 	return dependencies, nil
@@ -166,9 +173,10 @@ func getDependentsModelOfService(client *opslevel.Client, service *opslevel.Serv
 
 	for _, svcDependent := range svcDependents.Edges {
 		dependents = append(dependents, dependentsModel{
-			Locked: types.BoolValue(svcDependent.Locked),
-			Id:     ComputedStringValue(string(svcDependent.Id)),
-			Notes:  ComputedStringValue(svcDependent.Notes),
+			Locked:    types.BoolValue(svcDependent.Locked),
+			Id:        ComputedStringValue(string(svcDependent.Id)),
+			ServiceId: ComputedStringValue(string(svcDependent.Node.Id)),
+			Notes:     ComputedStringValue(svcDependent.Notes),
 		})
 	}
 	return dependents, nil

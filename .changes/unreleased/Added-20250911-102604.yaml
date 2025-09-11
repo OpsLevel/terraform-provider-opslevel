@@ -1,0 +1,3 @@
+kind: Added
+body: Add ability to get at the actual service dependency service id on datasource opslevel_service_dependencies
+time: 2025-09-11T10:26:04.889822-04:00
