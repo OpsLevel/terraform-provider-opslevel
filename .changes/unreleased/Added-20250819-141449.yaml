@@ -1,3 +1,0 @@
-kind: Added
-body: Add field "component_type" to "opslevel_check_service_property" so you can create property checks for custom components
-time: 2025-08-19T14:14:49.641762-04:00

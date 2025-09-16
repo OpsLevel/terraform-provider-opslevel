@@ -83,6 +83,7 @@ resource "opslevel_check_service_property" "example2" {
 
 ### Optional
 
+- `component_type` (String) The Component Type that a custom property belongs to. If not specified, the check will apply to all component types with that property if the property_definition given is an alias.
 - `enable_on` (String) The date when the check will be automatically enabled.
  If you use this field you should add both 'enabled' and 'enable_on' to the lifecycle ignore_changes settings.
  See example in opslevel_check_manual for proper configuration.

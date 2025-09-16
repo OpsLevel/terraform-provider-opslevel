@@ -53,6 +53,7 @@ Read-Only:
 
 - `id` (String) The ID of the service dependency.
 - `locked` (Boolean) Is the dependency locked by a service config?
+- `service_id` (String) The ID of the service this dependency points to.
 
 
 <a id="nestedatt--dependents"></a>
@@ -66,5 +67,6 @@ Read-Only:
 
 - `id` (String) The ID of the service dependency.
 - `locked` (Boolean) Is the dependency locked by a service config?
+- `service_id` (String) The ID of the service this dependency points to.
 
 
