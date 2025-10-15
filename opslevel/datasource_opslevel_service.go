@@ -258,32 +258,27 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	stateModel := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 
-	system, err := service.GetSystem(d.client, nil)
-	if err != nil {
-		diags.AddAttributeError(
-			path.Root("system"),
-			"OpsLevel Client Error",
-			fmt.Sprintf("unable to read System for service, got error: %s", err),
-		)
-		return
-	}
-	if system == nil {
-		sys := newSystemDataSourceModel(*system)
-		stateModel.System = &sys
+	// In the future we can use `service.GetSystem()` to get full data
+	// but for now, GetSystem is not working in opslevel-go
+	if service.Parent != nil {
+		aliases := OptionalStringListValue(service.Parent.Aliases)
+		stateModel.System = &systemDataSourceModel{
+			Aliases: aliases,
+			Id:      ComputedStringValue(string(service.Parent.Id)),
+		}
 	}
 
 	// NOTE: service's hydrate does not populate properties
 	properties, err := service.GetProperties(d.client, nil)
 	if err != nil {
-		diags.AddAttributeError(
+		resp.Diagnostics.AddAttributeError(
 			path.Root("properties"),
 			"OpsLevel Client Error",
 			fmt.Sprintf("unable to read Properties for service, got error: %s", err),
 		)
-		return
-	}
-	if properties != nil {
+	} else if properties != nil {
 		stateModel.Properties, diags = NewPropertiesAllModel(ctx, properties.Nodes)
+		resp.Diagnostics.Append(diags...)
 	}
 
 	if service.Repositories == nil {
@@ -294,6 +289,7 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			types.StringType,
 			flattenServiceRepositoriesArray(service.Repositories),
 		)
+		resp.Diagnostics.Append(diags...)
 	}
 
 	// Save data into Terraform state
