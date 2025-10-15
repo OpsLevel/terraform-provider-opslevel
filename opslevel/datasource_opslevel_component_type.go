@@ -73,32 +73,18 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 			},
 		},
 	},
-	"relationships": schema.MapNestedAttribute{
-		Description: "The relationships that can be defined for this component type.",
-		Computed:    true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"name": schema.StringAttribute{
-					Description: "The display name of the relationship definition.",
-					Computed:    true,
-				},
-				"description": schema.StringAttribute{
-					Description: "The description of the relationship definition.",
-					Computed:    true,
-				},
-				"allowed_types": schema.ListAttribute{
-					Description: "The types of resources that can be selected for this relationship definition.",
-					Computed:    true,
-					ElementType: types.StringType,
-				},
-			},
-		},
-	},
 }
 
+// ComponentTypeDataSourceModel is a simplified version of ComponentTypeModel for data sources
+// It excludes relationships, because opslevel-go does not yet have Relationships on ComponentType
 type ComponentTypeDataSourceModel struct {
-	Identifier types.String `tfsdk:"identifier"`
-	ComponentTypeModel
+	Identifier  types.String             `tfsdk:"identifier"`
+	Id          types.String             `tfsdk:"id"`
+	Name        types.String             `tfsdk:"name"`
+	Alias       types.String             `tfsdk:"alias"`
+	Description types.String             `tfsdk:"description"`
+	Icon        *ComponentTypeIconModel  `tfsdk:"icon"`
+	Properties  map[string]PropertyModel `tfsdk:"properties"`
 }
 
 func NewComponentTypeDataSourceSingle() datasource.DataSource {
@@ -119,7 +105,8 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 			return *data, err
 		},
 		ToModel: func(ctx context.Context, identifier string, data opslevel.ComponentType) (ComponentTypeDataSourceModel, error) {
-			model := ComponentTypeModel{
+			model := ComponentTypeDataSourceModel{
+				Identifier:  types.StringValue(identifier),
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
@@ -128,8 +115,7 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 					Color: types.StringValue(data.Icon.Color),
 					Name:  types.StringValue(string(data.Icon.Name)),
 				},
-				Properties:    map[string]PropertyModel{},
-				Relationships: map[string]RelationshipModel{},
+				Properties: map[string]PropertyModel{},
 			}
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
@@ -141,16 +127,13 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 					Schema:               types.StringValue(prop.Schema.AsString()),
 				}
 			}
-			return ComponentTypeDataSourceModel{
-				Identifier:         types.StringValue(identifier),
-				ComponentTypeModel: model,
-			}, nil
+			return model, nil
 		},
 	}
 }
 
 func NewComponentTypeDataSourceMulti() datasource.DataSource {
-	return &internal.TFDataSourceMulti[opslevel.ComponentType, ComponentTypeModel]{
+	return &internal.TFDataSourceMulti[opslevel.ComponentType, ComponentTypeDataSourceModel]{
 		Name:        "component_types",
 		Description: "Component Type Definition Resource",
 		Attributes:  ComponentTypeDataSourceSchema,
@@ -168,8 +151,8 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 			}
 			return resp.Nodes, err
 		},
-		ToModel: func(ctx context.Context, data opslevel.ComponentType) (ComponentTypeModel, error) {
-			model := ComponentTypeModel{
+		ToModel: func(ctx context.Context, data opslevel.ComponentType) (ComponentTypeDataSourceModel, error) {
+			model := ComponentTypeDataSourceModel{
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
@@ -178,8 +161,7 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 					Color: types.StringValue(data.Icon.Color),
 					Name:  types.StringValue(string(data.Icon.Name)),
 				},
-				Properties:    map[string]PropertyModel{},
-				Relationships: map[string]RelationshipModel{},
+				Properties: map[string]PropertyModel{},
 			}
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{

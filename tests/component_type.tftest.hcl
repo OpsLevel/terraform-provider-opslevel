@@ -22,7 +22,6 @@ run "datasource_component_type_all_fields_accessible" {
       can(data.opslevel_component_type.test.description),
       can(data.opslevel_component_type.test.icon),
       can(data.opslevel_component_type.test.properties),
-      can(data.opslevel_component_type.test.relationships),
     ])
     error_message = format("'%s' data source missing expected fields", var.component_type_one)
   }

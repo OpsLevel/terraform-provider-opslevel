@@ -16,13 +16,6 @@ mock_data "opslevel_component_type" {
         }
       }
     }
-    relationships = {
-      "depends_on" = {
-        name          = "Depends On"
-        description   = "Services this component depends on"
-        allowed_types = ["service", "system"]
-      }
-    }
   }
 }
 

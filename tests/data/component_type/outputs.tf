@@ -14,7 +14,3 @@ output "description" {
   value = data.opslevel_component_type.test.description
 }
 
-output "relationships" {
-  value = data.opslevel_component_type.test.relationships
-}
-
