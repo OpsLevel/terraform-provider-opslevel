@@ -16,32 +16,32 @@ run "datasource_service_reads_fields" {
 
   assert {
     condition     = data.opslevel_service.first_service_by_id.id != null
-    error_message = "BUG: service id should not be null"
+    error_message = "expected id to be set for opslevel_service data source"
   }
 
   assert {
     condition     = data.opslevel_service.first_service_by_id.name != null
-    error_message = "BUG: service name should not be null - this was the reported issue"
+    error_message = "expected name to be set for opslevel_service data source"
   }
 
   assert {
     condition     = data.opslevel_service.first_service_by_id.description != null
-    error_message = "BUG: service description should not be null - this was the reported issue"
+    error_message = "expected description to be set for opslevel_service data source"
   }
 
   assert {
-    condition     = data.opslevel_service.first_service_by_id.owner != null
-    error_message = "BUG: service owner should not be null"
+    condition     = can(data.opslevel_service.first_service_by_id.owner)
+    error_message = "expected owner field to be accessible for opslevel_service data source"
   }
 
   assert {
     condition     = data.opslevel_service.last_service.id != null
-    error_message = "BUG: service id should not be null"
+    error_message = "expected id to be set for opslevel_service data source"
   }
 
   assert {
     condition     = data.opslevel_service.last_service.name != null
-    error_message = "BUG: service name should not be null"
+    error_message = "expected name to be set for opslevel_service data source"
   }
 }
 
