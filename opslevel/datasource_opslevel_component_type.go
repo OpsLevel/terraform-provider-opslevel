@@ -73,6 +73,27 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 			},
 		},
 	},
+	"relationships": schema.MapNestedAttribute{
+		Description: "The relationships that can be defined for this component type.",
+		Computed:    true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"name": schema.StringAttribute{
+					Description: "The display name of the relationship definition.",
+					Computed:    true,
+				},
+				"description": schema.StringAttribute{
+					Description: "The description of the relationship definition.",
+					Computed:    true,
+				},
+				"allowed_types": schema.ListAttribute{
+					Description: "The types of resources that can be selected for this relationship definition.",
+					Computed:    true,
+					ElementType: types.StringType,
+				},
+			},
+		},
+	},
 }
 
 type ComponentTypeDataSourceModel struct {
@@ -107,7 +128,8 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 					Color: types.StringValue(data.Icon.Color),
 					Name:  types.StringValue(string(data.Icon.Name)),
 				},
-				Properties: map[string]PropertyModel{},
+				Properties:    map[string]PropertyModel{},
+				Relationships: map[string]RelationshipModel{},
 			}
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
@@ -156,7 +178,8 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 					Color: types.StringValue(data.Icon.Color),
 					Name:  types.StringValue(string(data.Icon.Name)),
 				},
-				Properties: map[string]PropertyModel{},
+				Properties:    map[string]PropertyModel{},
+				Relationships: map[string]RelationshipModel{},
 			}
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
