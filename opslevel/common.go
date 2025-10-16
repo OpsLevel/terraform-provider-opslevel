@@ -20,6 +20,18 @@ import (
 
 const providerIssueUrl = "https://github.com/OpsLevel/terraform-provider-opslevel/issues"
 
+const rateLimitGuidance = `
+API rate limit exceeded. Your OpsLevel API token is limited to 400 requests per minute.
+
+Possible solutions:
+  • Reduce parallelism (default is 10): terraform apply -parallelism=1
+  • Ensure the OpsLevel API token being used for Terraform is not being used elsewhere
+  • Use saved plans to avoid double refreshes: terraform plan -out=plan && terraform apply plan
+  • For large deployments, break your configuration into smaller modules
+
+For more information on rate limits, see: https://docs.opslevel.com/docs/graphql#what-is-the-api-rate-limit
+`
+
 type CommonResourceClient struct {
 	client *opslevel.Client
 }
@@ -234,4 +246,19 @@ func findIdentifier(identifierMap map[string]bool, identityArray *[]string, iden
 		return true
 	}
 	return false
+}
+
+func isRateLimitError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "429 Too Many Requests")
+}
+
+// helper to decorate error messages with additional guidance (just on rate limit errors for now)
+func formatOpslevelError(operation string, err error) (title string, detail string) {
+	if isRateLimitError(err) {
+		return "Rate Limit Exceeded", fmt.Sprintf("%s\n\nOriginal error: %s", rateLimitGuidance, err)
+	}
+	return "OpsLevel Client Error", fmt.Sprintf("Unable to %s, got error: %s", operation, err)
 }
