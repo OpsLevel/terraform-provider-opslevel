@@ -148,7 +148,8 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 
 	team, err := teamResource.client.CreateTeam(teamCreateInput)
 	if err != nil || team == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
+		title, detail := formatOpslevelError("create team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -198,12 +199,14 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read team, got error: %s", err))
+		title, detail := formatOpslevelError("read team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	err = team.Hydrate(teamResource.client)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
+		title, detail := formatOpslevelError("hydrate team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -252,12 +255,14 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 	}
 	updatedTeam, err := teamResource.client.UpdateTeam(teamUpdateInput)
 	if err != nil || updatedTeam == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to create team, got error: %s", err))
+		title, detail := formatOpslevelError("update team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	err = updatedTeam.Hydrate(teamResource.client)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to hydrate team, got error: %s", err))
+		title, detail := formatOpslevelError("hydrate team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -307,7 +312,8 @@ func (teamResource *TeamResource) Delete(ctx context.Context, req resource.Delet
 
 	err := teamResource.client.DeleteTeam(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("unable to delete team, got error: %s", err))
+		title, detail := formatOpslevelError("delete team", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	tflog.Trace(ctx, "deleted a team resource")

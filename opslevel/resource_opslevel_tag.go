@@ -122,7 +122,8 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 	data, err := r.client.CreateTag(tagCreateInput)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create tag, got error: %s", err))
+		title, detail := formatOpslevelError("create tag", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	stateModel := NewTagResourceModel(ctx, *data, planModel)
@@ -141,12 +142,24 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resourceType := opslevel.TaggableResource(stateModel.TargetType.ValueString())
 	data, err := r.client.GetTaggableResource(resourceType, resourceId)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read tag, got error: %s", err))
+		// If the parent resource is gone, remove the tag from state
+		if opslevel.IsOpsLevelApiError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		title, detail := formatOpslevelError("read tag", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	tags, err := data.GetTags(r.client, nil)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to get tags from '%s' with id '%s'", resourceType, resourceId))
+		title, detail := formatOpslevelError(fmt.Sprintf("get tags from '%s' with id '%s'", resourceType, resourceId), err)
+		resp.Diagnostics.AddError(title, detail)
+		return
+	}
+	if tags == nil {
+		resp.State.RemoveResource(ctx)
+		return
 	}
 
 	id := stateModel.Id.ValueString()
@@ -156,13 +169,11 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("opslevel client error",
-			fmt.Sprintf("Tag '%s' for type %s with id '%s' not found. %s",
-				id,
-				data.ResourceType(),
-				data.ResourceId(),
-				err,
-			))
+		title, detail := formatOpslevelError(
+			fmt.Sprintf("find tag '%s' for type %s with id '%s'", id, data.ResourceType(), data.ResourceId()),
+			err,
+		)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -185,7 +196,8 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 	updatedTag, err := r.client.UpdateTag(tagUpdateInput)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update tag with id '%s', got error: %s", planModel.Id.ValueString(), err))
+		title, detail := formatOpslevelError(fmt.Sprintf("update tag with id '%s'", planModel.Id.ValueString()), err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -203,7 +215,8 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	err := r.client.DeleteTag(asID(data.Id))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete tag, got error: %s", err))
+		title, detail := formatOpslevelError("delete tag", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	tflog.Trace(ctx, "deleted a tag resource")

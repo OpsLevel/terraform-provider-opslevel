@@ -266,7 +266,8 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 	service, err := r.client.CreateService(input)
 	if err != nil || service == nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to create service, got error: %s", err))
+		title, detail := formatOpslevelError("create service", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -354,7 +355,8 @@ func (r *ServiceResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	service, err := r.client.GetService(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read service, got error: %s", err))
+		title, detail := formatOpslevelError("read service", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	if service.Id == "" {
@@ -423,7 +425,8 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	service, err := r.client.UpdateService(serviceUpdateInput)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update service, got error: %s", err))
+		title, detail := formatOpslevelError("update service", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 
@@ -529,7 +532,8 @@ func (r *ServiceResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	err := r.client.DeleteService(stateModel.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete service, got error: %s", err))
+		title, detail := formatOpslevelError("delete service", err)
+		resp.Diagnostics.AddError(title, detail)
 		return
 	}
 	tflog.Trace(ctx, "deleted a service resource")
