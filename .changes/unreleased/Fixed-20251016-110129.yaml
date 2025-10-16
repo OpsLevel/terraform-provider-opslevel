@@ -1,0 +1,4 @@
+kind: Fixed
+body: Support property checks with no explicit component_type again, and better document
+  the check behaviour change
+time: 2025-10-16T11:01:29.651813-07:00
