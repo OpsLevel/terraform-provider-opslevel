@@ -1,0 +1,3 @@
+kind: Fixed
+body: Remove relationships from ComponentTypeDataSourceModel to fix struct mismatch error
+time: 2025-10-15T14:01:39.309375-07:00

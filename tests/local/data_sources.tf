@@ -216,3 +216,9 @@ data "opslevel_webhook_action" "mock_webhook_action" {
 data "opslevel_user" "mock_user" {
   identifier = "mock-user-name@example.com"
 }
+
+# Component Type data sources
+
+data "opslevel_component_type" "mock_component_type" {
+  identifier = "service"
+}
