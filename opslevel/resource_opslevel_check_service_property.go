@@ -78,6 +78,12 @@ func NewCheckServicePropertyResourceModel(ctx context.Context, check opslevel.Ch
 
 	if check.ServicePropertyCheckFragment.PropertyDefinition != nil {
 		stateModel.PropertyDefinition = planModel.PropertyDefinition
+	} else if !planModel.PropertyDefinition.IsNull() && !planModel.PropertyDefinition.IsUnknown() {
+		// API returned null but user provided an alias - this is the new cross-component-type behavior
+		// Preserve the plan value to avoid Terraform errors
+		stateModel.PropertyDefinition = planModel.PropertyDefinition
+	} else {
+		stateModel.PropertyDefinition = types.StringNull()
 	}
 
 	if check.ServicePropertyCheckFragment.Predicate == nil {
@@ -110,7 +116,7 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 
 		Attributes: CheckBaseAttributes(map[string]schema.Attribute{
 			"component_type": schema.StringAttribute{
-				Description: "The Component Type that a custom property belongs to. If not specified, the check will apply to all component types with that property if the property_definition given is an alias.",
+				Description: "The Component Type that a custom property belongs to. When property_definition is set without component_type, the check will apply to ALL component types that have a property with that alias. To limit the check to a specific component type (e.g., only Services), explicitly set this field.",
 				Optional:    true,
 			},
 			"property": schema.StringAttribute{
@@ -124,7 +130,7 @@ func (r *CheckServicePropertyResource) Schema(ctx context.Context, req resource.
 				},
 			},
 			"property_definition": schema.StringAttribute{
-				Description: "The alias of the property that the check will verify (e.g. the specific custom property).",
+				Description: "The alias of the property that the check will verify (e.g. the specific custom property). When used without component_type, targets all component types with this property alias.",
 				Optional:    true,
 			},
 			"predicate": PredicateSchema(),

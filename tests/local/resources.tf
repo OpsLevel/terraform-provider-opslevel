@@ -632,6 +632,31 @@ resource "opslevel_check_service_property" "example" {
   }
 }
 
+resource "opslevel_check_service_property" "with_property_definition_alias_only" {
+  name                = "Custom Property Check - Cross Component Type"
+  enabled             = true
+  category            = var.test_id
+  level               = var.test_id
+  property            = "custom_property"
+  property_definition = "test_property_alias"
+  predicate = {
+    type = "exists"
+  }
+}
+
+resource "opslevel_check_service_property" "with_property_definition_and_component_type" {
+  name                = "Custom Property Check - Specific Component Type"
+  enabled             = true
+  category            = var.test_id
+  level               = var.test_id
+  property            = "custom_property"
+  property_definition = "test_property_alias"
+  component_type      = var.test_id
+  predicate = {
+    type = "exists"
+  }
+}
+
 # Check Tag Defined
 
 resource "opslevel_check_tag_defined" "example" {
