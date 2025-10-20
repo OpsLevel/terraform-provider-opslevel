@@ -5,7 +5,7 @@ mock_data "opslevel_component_type" {
     description = "A service component type"
     icon = {
       color = "#3B82F6"
-      name  = "service"
+      name  = "PhCube"
     }
     properties = {
       "deployment_platform" = {
@@ -18,4 +18,3 @@ mock_data "opslevel_component_type" {
     }
   }
 }
-

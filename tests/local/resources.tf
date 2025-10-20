@@ -1,3 +1,24 @@
+# Component Type resources
+
+resource "opslevel_component_type" "api" {
+  name        = "API"
+  alias       = "api"
+  description = "An API component type"
+  icon = {
+    color = "#F59E0B"
+    name  = "PhCloud"
+  }
+  properties = {
+    api_version = {
+      name                    = "API Version"
+      description             = "The version of the API"
+      allowed_in_config_files = true
+      display_status          = "visible"
+      schema                  = jsonencode({ type = "string" })
+    }
+  }
+}
+
 # Domain resources
 
 resource "opslevel_domain" "fancy" {
