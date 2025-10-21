@@ -1,0 +1,3 @@
+kind: Fixed
+body: Improve state reconciliation when tags are deleted outside of Terraform
+time: 2025-10-21T10:44:24.695411-07:00
