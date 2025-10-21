@@ -165,7 +165,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	id := stateModel.Id.ValueString()
 	tag, err := tags.GetTagById(*opslevel.NewID(id))
 	if err != nil {
-		if (tag == nil || tag.Id == "") && opslevel.IsOpsLevelApiError(err) {
+		if tag == nil || tag.Id == "" {
 			resp.State.RemoveResource(ctx)
 			return
 		}

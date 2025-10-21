@@ -1,0 +1,4 @@
+kind: Fixed
+body: Fix struct mismatch error on opslevel_component_types (plural) data source identifier
+  field
+time: 2025-10-20T14:39:40.739982-07:00

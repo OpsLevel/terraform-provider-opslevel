@@ -78,7 +78,6 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 // ComponentTypeDataSourceModel is a simplified version of ComponentTypeModel for data sources
 // It excludes relationships, because opslevel-go does not yet have Relationships on ComponentType
 type ComponentTypeDataSourceModel struct {
-	Identifier  types.String             `tfsdk:"identifier"`
 	Id          types.String             `tfsdk:"id"`
 	Name        types.String             `tfsdk:"name"`
 	Alias       types.String             `tfsdk:"alias"`
@@ -106,7 +105,6 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 		},
 		ToModel: func(ctx context.Context, identifier string, data opslevel.ComponentType) (ComponentTypeDataSourceModel, error) {
 			model := ComponentTypeDataSourceModel{
-				Identifier:  types.StringValue(identifier),
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
