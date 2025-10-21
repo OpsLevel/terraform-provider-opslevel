@@ -86,8 +86,13 @@ type ComponentTypeDataSourceModel struct {
 	Properties  map[string]PropertyModel `tfsdk:"properties"`
 }
 
+type ComponentTypeDataSourceSingleModel struct {
+	Identifier types.String `tfsdk:"identifier"`
+	ComponentTypeDataSourceModel
+}
+
 func NewComponentTypeDataSourceSingle() datasource.DataSource {
-	return &internal.TFDataSourceSingle[opslevel.ComponentType, ComponentTypeDataSourceModel]{
+	return &internal.TFDataSourceSingle[opslevel.ComponentType, ComponentTypeDataSourceSingleModel]{
 		Name:        "component_type",
 		Description: "Component Type Definition Resource",
 		Attributes:  ComponentTypeDataSourceSchema,
@@ -103,8 +108,8 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 			(*data).Properties = conn
 			return *data, err
 		},
-		ToModel: func(ctx context.Context, identifier string, data opslevel.ComponentType) (ComponentTypeDataSourceModel, error) {
-			model := ComponentTypeDataSourceModel{
+		ToModel: func(ctx context.Context, identifier string, data opslevel.ComponentType) (ComponentTypeDataSourceSingleModel, error) {
+			baseModel := ComponentTypeDataSourceModel{
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
@@ -116,7 +121,7 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				Properties: map[string]PropertyModel{},
 			}
 			for _, prop := range data.Properties.Nodes {
-				model.Properties[prop.Aliases[0]] = PropertyModel{
+				baseModel.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
 					Description:          ComputedStringValue(prop.Description),
 					AllowedInConfigFiles: types.BoolValue(prop.AllowedInConfigFiles),
@@ -125,7 +130,11 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 					Schema:               types.StringValue(prop.Schema.AsString()),
 				}
 			}
-			return model, nil
+
+			return ComponentTypeDataSourceSingleModel{
+				Identifier:                   types.StringValue(identifier),
+				ComponentTypeDataSourceModel: baseModel,
+			}, nil
 		},
 	}
 }
