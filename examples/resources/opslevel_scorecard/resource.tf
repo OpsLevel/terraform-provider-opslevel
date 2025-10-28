@@ -27,7 +27,7 @@ resource "opslevel_scorecard" "my_scorecard" {
 // Example of how to assign a check to a scorecard
 resource "opslevel_check_manual" "my_check" {
   name                    = "My check that uses a scorecard"
-  category                = opslevel_scorecard.my_scorecard.id
+  category                = opslevel_scorecard.my_scorecard.categories[0]
   level                   = data.opslevel_rubric_level.bronze.id
   update_requires_comment = true
 }
