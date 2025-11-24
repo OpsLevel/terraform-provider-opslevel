@@ -1,13 +1,13 @@
 module github.com/opslevel/terraform-provider-opslevel
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.2
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
-	github.com/hashicorp/terraform-plugin-log v0.9.0
+	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/opslevel/opslevel-go/v2025 v2025.8.5
 	github.com/relvacode/iso8601 v1.7.0
 	golang.org/x/net v0.43.0
