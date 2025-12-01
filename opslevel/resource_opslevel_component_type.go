@@ -39,9 +39,10 @@ type ComponentTypeIconModel struct {
 }
 
 type RelationshipModel struct {
-	Name         types.String `tfsdk:"name"`
-	Description  types.String `tfsdk:"description"`
-	AllowedTypes types.List   `tfsdk:"allowed_types"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	AllowedCategories types.List   `tfsdk:"allowed_categories"`
+	AllowedTypes      types.List   `tfsdk:"allowed_types"`
 }
 
 type ComponentTypeModel struct {
@@ -216,6 +217,11 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 							Description: "The description of the relationship definition.",
 							Optional:    true,
 						},
+						"allowed_categories": schema.ListAttribute{
+							MarkdownDescription: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",
+							Computed:            true,
+							ElementType:         types.StringType,
+						},
 						"allowed_types": schema.ListAttribute{
 							Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
 							Required:    true,
@@ -263,6 +269,12 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 	// Create relationship definitions if any are specified
 	if len(planModel.Relationships) > 0 {
 		for alias, rel := range planModel.Relationships {
+			allowedCategories := make([]string, 0)
+			if err := rel.AllowedCategories.ElementsAs(ctx, &allowedCategories, false); err != nil {
+				resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_categories for relationship '%s': %s", alias, err))
+				continue
+			}
+
 			allowedTypes := make([]string, 0)
 			if err := rel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 				resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types for relationship '%s': %s", alias, err))
@@ -275,7 +287,8 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 				Description:   nullable(rel.Description.ValueStringPointer()),
 				ComponentType: opslevel.NewIdentifier(string(res.Id)),
 				Metadata: &opslevel.RelationshipDefinitionMetadataInput{
-					AllowedTypes: allowedTypes,
+					AllowedCategories: allowedCategories,
+					AllowedTypes:      allowedTypes,
 				},
 			}
 
@@ -323,15 +336,21 @@ func (s ComponentTypeResource) Read(ctx context.Context, req resource.ReadReques
 	// Add relationships to the state model
 	stateModel.Relationships = make(map[string]RelationshipModel)
 	for _, rel := range rels.Nodes {
+		allowedCategories := make([]attr.Value, len(rel.Metadata.AllowedCategories))
+		for i, t := range rel.Metadata.AllowedCategories {
+			allowedCategories[i] = types.StringValue(t)
+		}
+
 		allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
 		for i, t := range rel.Metadata.AllowedTypes {
 			allowedTypes[i] = types.StringValue(t)
 		}
 
 		stateModel.Relationships[rel.Alias] = RelationshipModel{
-			Name:         types.StringValue(rel.Name),
-			Description:  types.StringValue(rel.Description),
-			AllowedTypes: types.ListValueMust(types.StringType, allowedTypes),
+			Name:              types.StringValue(rel.Name),
+			Description:       types.StringValue(rel.Description),
+			AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
+			AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
 		}
 	}
 
@@ -406,6 +425,12 @@ func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err e
 
 	// Create or update relationships from the plan
 	for alias, rel := range planModel.Relationships {
+		allowedCategories := make([]string, 0)
+		if err := rel.AllowedCategories.ElementsAs(ctx, &allowedCategories, false); err != nil {
+			resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_categories for relationship '%s': %s", alias, err))
+			continue
+		}
+
 		allowedTypes := make([]string, 0)
 		if err := rel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 			resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types for relationship '%s': %s", alias, err))
@@ -418,7 +443,8 @@ func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err e
 			Description:   nullable(rel.Description.ValueStringPointer()),
 			ComponentType: opslevel.NewIdentifier(id),
 			Metadata: &opslevel.RelationshipDefinitionMetadataInput{
-				AllowedTypes: allowedTypes,
+				AllowedCategories: allowedCategories,
+				AllowedTypes:      allowedTypes,
 			},
 		}
 

@@ -32,12 +32,13 @@ type RelationshipDefinitionResource struct {
 
 // RelationshipDefinitionResourceModel describes the Relationship Definition managed resource.
 type RelationshipDefinitionResourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	Alias         types.String `tfsdk:"alias"`
-	Description   types.String `tfsdk:"description"`
-	ComponentType types.String `tfsdk:"component_type"`
-	AllowedTypes  types.List   `tfsdk:"allowed_types"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	Alias             types.String `tfsdk:"alias"`
+	Description       types.String `tfsdk:"description"`
+	ComponentType     types.String `tfsdk:"component_type"`
+	AllowedCategories types.List   `tfsdk:"allowed_categories"`
+	AllowedTypes      types.List   `tfsdk:"allowed_types"`
 }
 
 func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefinitionType, givenModel RelationshipDefinitionResourceModel) RelationshipDefinitionResourceModel {
@@ -47,6 +48,16 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		Alias:         RequiredStringValue(definition.Alias),
 		Description:   StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
 		ComponentType: givenModel.ComponentType,
+		AllowedCategories: types.ListValueMust(
+			types.StringType,
+			func() []attr.Value {
+				values := make([]attr.Value, len(definition.Metadata.AllowedCategories))
+				for i, v := range definition.Metadata.AllowedCategories {
+					values[i] = types.StringValue(v)
+				}
+				return values
+			}(),
+		),
 		AllowedTypes: types.ListValueMust(
 			types.StringType,
 			func() []attr.Value {
@@ -103,9 +114,17 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"allowed_categories": schema.ListAttribute{
+				Description: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",
+				Optional:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.RequiresReplace(),
+				},
+			},
 			"allowed_types": schema.ListAttribute{
 				Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
-				Required:    true,
+				Optional:    true,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
@@ -121,6 +140,12 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		return
 	}
 
+	allowedCategories := make([]string, 0)
+	if err := planModel.AllowedCategories.ElementsAs(ctx, &allowedCategories, false); err != nil {
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_categories: %s", err))
+		return
+	}
+
 	allowedTypes := make([]string, 0)
 	if err := planModel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types: %s", err))
@@ -133,7 +158,8 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		Description:   nullable(planModel.Description.ValueStringPointer()),
 		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
-			AllowedTypes: allowedTypes,
+			AllowedTypes:      allowedTypes,
+			AllowedCategories: allowedCategories,
 		},
 	}
 
@@ -176,6 +202,12 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		return
 	}
 
+	allowedCategories := make([]string, 0)
+	if err := planModel.AllowedCategories.ElementsAs(ctx, &allowedCategories, false); err != nil {
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_categories: %s", err))
+		return
+	}
+
 	allowedTypes := make([]string, 0)
 	if err := planModel.AllowedTypes.ElementsAs(ctx, &allowedTypes, false); err != nil {
 		resp.Diagnostics.AddError("config error", fmt.Sprintf("unable to parse allowed_types: %s", err))
@@ -189,7 +221,8 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		Description:   nullable(planModel.Description.ValueStringPointer()),
 		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
-			AllowedTypes: allowedTypes,
+			AllowedCategories: allowedCategories,
+			AllowedTypes:      allowedTypes,
 		},
 	}
 

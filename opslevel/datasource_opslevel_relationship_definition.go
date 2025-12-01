@@ -32,6 +32,11 @@ var RelationshipDefinitionDataSourceSchema = map[string]schema.Attribute{
 		MarkdownDescription: "The component type that the relationship belongs to.",
 		Computed:            true,
 	},
+	"allowed_categories": schema.ListAttribute{
+		MarkdownDescription: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",
+		Computed:            true,
+		ElementType:         types.StringType,
+	},
 	"allowed_types": schema.ListAttribute{
 		MarkdownDescription: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
 		Computed:            true,
@@ -57,18 +62,24 @@ func NewRelationshipDefinitionDataSourceSingle() datasource.DataSource {
 			return *data, nil
 		},
 		ToModel: func(ctx context.Context, identifier string, data opslevel.RelationshipDefinitionType) (RelationshipDefinitionDataSourceModel, error) {
+			allowedCategories := make([]attr.Value, len(data.Metadata.AllowedCategories))
+			for i, t := range data.Metadata.AllowedCategories {
+				allowedCategories[i] = types.StringValue(t)
+			}
+
 			allowedTypes := make([]attr.Value, len(data.Metadata.AllowedTypes))
 			for i, t := range data.Metadata.AllowedTypes {
 				allowedTypes[i] = types.StringValue(t)
 			}
 
 			model := RelationshipDefinitionResourceModel{
-				Id:            types.StringValue(string(data.Id)),
-				Name:          types.StringValue(data.Name),
-				Alias:         types.StringValue(data.Alias),
-				Description:   types.StringValue(data.Description),
-				ComponentType: types.StringValue(string(data.ComponentType.Id)),
-				AllowedTypes:  types.ListValueMust(types.StringType, allowedTypes),
+				Id:                types.StringValue(string(data.Id)),
+				Name:              types.StringValue(data.Name),
+				Alias:             types.StringValue(data.Alias),
+				Description:       types.StringValue(data.Description),
+				ComponentType:     types.StringValue(string(data.ComponentType.Id)),
+				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
+				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
 			}
 
 			return RelationshipDefinitionDataSourceModel{
@@ -92,18 +103,24 @@ func NewRelationshipDefinitionDataSourceMulti() datasource.DataSource {
 			return resp.Nodes, err
 		},
 		ToModel: func(ctx context.Context, data opslevel.RelationshipDefinitionType) (RelationshipDefinitionResourceModel, error) {
+			allowedCategories := make([]attr.Value, len(data.Metadata.AllowedCategories))
+			for i, t := range data.Metadata.AllowedCategories {
+				allowedCategories[i] = types.StringValue(t)
+			}
+
 			allowedTypes := make([]attr.Value, len(data.Metadata.AllowedTypes))
 			for i, t := range data.Metadata.AllowedTypes {
 				allowedTypes[i] = types.StringValue(t)
 			}
 
 			return RelationshipDefinitionResourceModel{
-				Id:            types.StringValue(string(data.Id)),
-				Name:          types.StringValue(data.Name),
-				Alias:         types.StringValue(data.Alias),
-				Description:   types.StringValue(data.Description),
-				ComponentType: types.StringValue(string(data.ComponentType.Id)),
-				AllowedTypes:  types.ListValueMust(types.StringType, allowedTypes),
+				Id:                types.StringValue(string(data.Id)),
+				Name:              types.StringValue(data.Name),
+				Alias:             types.StringValue(data.Alias),
+				Description:       types.StringValue(data.Description),
+				ComponentType:     types.StringValue(string(data.ComponentType.Id)),
+				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
+				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
 			}, nil
 		},
 	}
