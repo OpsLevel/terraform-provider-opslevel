@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2025"
@@ -185,6 +186,9 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 			"management_rules": schema.ListNestedAttribute{
 				Description: "Rules that automatically manage relationships based on property matching conditions.",
 				Optional:    true,
+				Validators: []validator.List{
+					ManagementRuleTagValidator(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"operator": schema.StringAttribute{
@@ -196,11 +200,11 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 							Required:    true,
 						},
 						"source_tag_key": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the tag key to match.",
+							Description: "When source_property is 'tag', this specifies the tag key to match. Required if source_property is 'tag', must not be set otherwise.",
 							Optional:    true,
 						},
 						"source_tag_operation": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'.",
+							Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if source_property is 'tag', must not be set otherwise",
 							Optional:    true,
 						},
 						"target_category": schema.StringAttribute{
@@ -212,11 +216,11 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 							Required:    true,
 						},
 						"target_tag_key": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the tag key to match.",
+							Description: "When target_property is 'tag', this specifies the tag key to match. Required if target_property is 'tag', must not be set otherwise.",
 							Optional:    true,
 						},
 						"target_tag_operation": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'.",
+							Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.",
 							Optional:    true,
 						},
 						"target_type": schema.StringAttribute{
