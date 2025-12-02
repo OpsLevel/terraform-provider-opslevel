@@ -104,7 +104,7 @@ func NewRelationshipDefinitionDataSourceSingle() datasource.DataSource {
 			if len(data.ManagementRules) > 0 {
 				ruleValues := make([]attr.Value, len(data.ManagementRules))
 				for i, rule := range data.ManagementRules {
-					ruleValues[i] = NewManagementRuleValue(rule)
+					ruleValues[i] = newManagementRuleValue(rule)
 				}
 				managementRules = types.ListValueMust(
 					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
@@ -160,7 +160,7 @@ func NewRelationshipDefinitionDataSourceMulti() datasource.DataSource {
 			if len(data.ManagementRules) > 0 {
 				ruleValues := make([]attr.Value, len(data.ManagementRules))
 				for i, rule := range data.ManagementRules {
-					ruleValues[i] = NewManagementRuleValue(rule)
+					ruleValues[i] = newManagementRuleValue(rule)
 				}
 				managementRules = types.ListValueMust(
 					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},

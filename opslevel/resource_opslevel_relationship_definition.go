@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -50,20 +51,28 @@ type RelationshipDefinitionResourceModel struct {
 }
 
 type ManagementRuleModel struct {
-	Operator       types.String `tfsdk:"operator"`
-	SourceProperty types.String `tfsdk:"source_property"`
-	TargetCategory types.String `tfsdk:"target_category"`
-	TargetProperty types.String `tfsdk:"target_property"`
-	TargetType     types.String `tfsdk:"target_type"`
+	Operator           types.String `tfsdk:"operator"`
+	SourceProperty     types.String `tfsdk:"source_property"`
+	SourceTagKey       types.String `tfsdk:"source_tag_key"`
+	SourceTagOperation types.String `tfsdk:"source_tag_operation"`
+	TargetCategory     types.String `tfsdk:"target_category"`
+	TargetProperty     types.String `tfsdk:"target_property"`
+	TargetTagKey       types.String `tfsdk:"target_tag_key"`
+	TargetTagOperation types.String `tfsdk:"target_tag_operation"`
+	TargetType         types.String `tfsdk:"target_type"`
 }
 
 func ManagementRuleModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
-		"operator":        types.StringType,
-		"source_property": types.StringType,
-		"target_category": types.StringType,
-		"target_property": types.StringType,
-		"target_type":     types.StringType,
+		"operator":             types.StringType,
+		"source_property":      types.StringType,
+		"source_tag_key":       types.StringType,
+		"source_tag_operation": types.StringType,
+		"target_category":      types.StringType,
+		"target_property":      types.StringType,
+		"target_tag_key":       types.StringType,
+		"target_tag_operation": types.StringType,
+		"target_type":          types.StringType,
 	}
 }
 
@@ -186,6 +195,14 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 							Description: "The property on the source component to evaluate.",
 							Required:    true,
 						},
+						"source_tag_key": schema.StringAttribute{
+							Description: "When source_property is 'tag', this specifies the tag key to match.",
+							Optional:    true,
+						},
+						"source_tag_operation": schema.StringAttribute{
+							Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'.",
+							Optional:    true,
+						},
 						"target_category": schema.StringAttribute{
 							Description: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
 							Optional:    true,
@@ -193,6 +210,14 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 						"target_property": schema.StringAttribute{
 							Description: "The property on the target resource to match against.",
 							Required:    true,
+						},
+						"target_tag_key": schema.StringAttribute{
+							Description: "When target_property is 'tag', this specifies the tag key to match.",
+							Optional:    true,
+						},
+						"target_tag_operation": schema.StringAttribute{
+							Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'.",
+							Optional:    true,
 						},
 						"target_type": schema.StringAttribute{
 							Description: "The type of the target resource. Either target_category or target_type must be specified, but not both.",
@@ -387,14 +412,26 @@ func parseManagementRules(ctx context.Context, planRules types.List, componentTy
 			isType = false
 		}
 
+		sourcePropertyStr := buildPropertyString(
+			rule.SourceProperty.ValueString(),
+			rule.SourceTagKey.ValueString(),
+			rule.SourceTagOperation.ValueString(),
+		)
+
+		targetPropertyStr := buildPropertyString(
+			rule.TargetProperty.ValueString(),
+			rule.TargetTagKey.ValueString(),
+			rule.TargetTagOperation.ValueString(),
+		)
+
 		sourcePropertyBuiltin := isBuiltinProperty(componentTypeAlias, rule.SourceProperty.ValueString(), true)
 		targetPropertyBuiltin := isBuiltinProperty(targetTypeOrCategory, rule.TargetProperty.ValueString(), isType)
 
 		managementRules[i] = opslevel.RelationshipDefinitionManagementRulesInput{
 			Operator:              opslevel.RelationshipOperatorEnum(rule.Operator.ValueString()),
-			SourceProperty:        rule.SourceProperty.ValueString(),
+			SourceProperty:        sourcePropertyStr,
 			SourcePropertyBuiltin: sourcePropertyBuiltin,
-			TargetProperty:        rule.TargetProperty.ValueString(),
+			TargetProperty:        targetPropertyStr,
 			TargetPropertyBuiltin: targetPropertyBuiltin,
 		}
 
@@ -427,14 +464,21 @@ func newManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules)
 		targetType = types.StringNull()
 	}
 
+	sourceProperty, sourceTagKey, sourceTagOp := parsePropertyString(rule.SourceProperty)
+	targetProperty, targetTagKey, targetTagOp := parsePropertyString(rule.TargetProperty)
+
 	return types.ObjectValueMust(
 		ManagementRuleModelAttrs(),
 		map[string]attr.Value{
-			"operator":        types.StringValue(string(rule.Operator)),
-			"source_property": types.StringValue(rule.SourceProperty),
-			"target_category": targetCategory,
-			"target_property": types.StringValue(rule.TargetProperty),
-			"target_type":     targetType,
+			"operator":             types.StringValue(string(rule.Operator)),
+			"source_property":      types.StringValue(sourceProperty),
+			"source_tag_key":       OptionalStringValue(sourceTagKey),
+			"source_tag_operation": OptionalStringValue(sourceTagOp),
+			"target_category":      targetCategory,
+			"target_property":      types.StringValue(targetProperty),
+			"target_tag_key":       OptionalStringValue(targetTagKey),
+			"target_tag_operation": OptionalStringValue(targetTagOp),
+			"target_type":          targetType,
 		},
 	)
 }
@@ -464,4 +508,38 @@ func isBuiltinProperty(targetTypeOrCategory string, propertyName string, isType 
 		}
 	}
 	return false
+}
+
+func buildPropertyString(property, tagKey, tagOperation string) string {
+	if property != "tag" {
+		return property
+	}
+
+	operation := "eq"
+	if tagOperation != "" {
+		if tagOperation == "starts_with" {
+			operation = "starts_with"
+		}
+	}
+
+	return fmt.Sprintf("tag_key_%s:%s", operation, tagKey)
+}
+func parsePropertyString(propertyStr string) (property, tagKey, tagOperation string) {
+	if !strings.HasPrefix(propertyStr, "tag_key_") {
+		return propertyStr, "", ""
+	}
+
+	property = "tag"
+
+	remainder := strings.TrimPrefix(propertyStr, "tag_key_")
+
+	if strings.HasPrefix(remainder, "eq:") {
+		tagOperation = "equals"
+		tagKey = strings.TrimPrefix(remainder, "eq:")
+	} else if strings.HasPrefix(remainder, "starts_with:") {
+		tagOperation = "starts_with"
+		tagKey = strings.TrimPrefix(remainder, "starts_with:")
+	}
+
+	return
 }
