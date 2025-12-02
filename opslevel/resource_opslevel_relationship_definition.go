@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,6 +20,12 @@ import (
 var (
 	_ resource.ResourceWithConfigure   = &RelationshipDefinitionResource{}
 	_ resource.ResourceWithImportState = &RelationshipDefinitionResource{}
+)
+
+var (
+	TEAM_BUILTIN_PROPERTIES      = []string{"name", "alias", "contact", "tag"}
+	USER_BUILTIN_PROPERTIES      = []string{"name", "contact", "tag"}
+	COMPONENT_BUILTIN_PROPERTIES = []string{"name", "alias", "tag"}
 )
 
 func NewRelationshipDefinitionResource() resource.Resource {
@@ -39,6 +46,30 @@ type RelationshipDefinitionResourceModel struct {
 	ComponentType     types.String `tfsdk:"component_type"`
 	AllowedCategories types.List   `tfsdk:"allowed_categories"`
 	AllowedTypes      types.List   `tfsdk:"allowed_types"`
+	ManagementRules   types.List   `tfsdk:"management_rules"`
+}
+
+type ManagementRuleModel struct {
+	Operator              types.String `tfsdk:"operator"`
+	SourceProperty        types.String `tfsdk:"source_property"`
+	SourcePropertyBuiltin types.Bool   `tfsdk:"source_property_builtin"`
+	TargetCategory        types.String `tfsdk:"target_category"`
+	TargetProperty        types.String `tfsdk:"target_property"`
+	TargetPropertyBuiltin types.Bool   `tfsdk:"target_property_builtin"`
+	TargetType            types.String `tfsdk:"target_type"`
+}
+
+// Helper to get AttrTypes for the nested object
+func ManagementRuleModelAttrs() map[string]attr.Type {
+	return map[string]attr.Type{
+		"operator":                types.StringType,
+		"source_property":         types.StringType,
+		"source_property_builtin": types.BoolType,
+		"target_category":         types.StringType,
+		"target_property":         types.StringType,
+		"target_property_builtin": types.BoolType,
+		"target_type":             types.StringType,
+	}
 }
 
 func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefinitionType, givenModel RelationshipDefinitionResourceModel) RelationshipDefinitionResourceModel {
@@ -68,6 +99,23 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 				return values
 			}(),
 		),
+	}
+
+	if len(definition.ManagementRules) > 0 {
+		ruleValues := make([]attr.Value, len(definition.ManagementRules))
+		for i, rule := range definition.ManagementRules {
+
+			ruleValues[i] = NewManagementRuleValue(rule)
+		}
+
+		model.ManagementRules = types.ListValueMust(
+			types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+			ruleValues,
+		)
+	} else if !givenModel.ManagementRules.IsNull() {
+		model.ManagementRules = givenModel.ManagementRules
+	} else {
+		model.ManagementRules = types.ListNull(types.ObjectType{AttrTypes: ManagementRuleModelAttrs()})
 	}
 
 	return model
@@ -130,6 +178,42 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 					listplanmodifier.RequiresReplace(),
 				},
 			},
+			"management_rules": schema.ListNestedAttribute{
+				Description: "Rules that automatically manage relationships based on property matching conditions.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"operator": schema.StringAttribute{
+							Description: "The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS.",
+							Required:    true,
+						},
+						"source_property": schema.StringAttribute{
+							Description: "The property on the source component to evaluate.",
+							Required:    true,
+						},
+						"source_property_builtin": schema.BoolAttribute{
+							Description: "Whether the source property is a built-in property (true) or a custom property (false).",
+							Required:    true,
+						},
+						"target_category": schema.StringAttribute{
+							Description: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
+							Optional:    true,
+						},
+						"target_property": schema.StringAttribute{
+							Description: "The property on the target resource to match against.",
+							Required:    true,
+						},
+						"target_property_builtin": schema.BoolAttribute{
+							Description: "Whether the target property is a built-in property (true) or a custom property (false).",
+							Required:    true,
+						},
+						"target_type": schema.StringAttribute{
+							Description: "The type of the target resource. Either target_category or target_type must be specified, but not both.",
+							Optional:    true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -152,11 +236,17 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		return
 	}
 
+	managementRules := parseManagementRules(ctx, planModel.ManagementRules, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	input := opslevel.RelationshipDefinitionInput{
-		Name:          planModel.Name.ValueStringPointer(),
-		Alias:         planModel.Alias.ValueStringPointer(),
-		Description:   nullable(planModel.Description.ValueStringPointer()),
-		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
+		Name:            planModel.Name.ValueStringPointer(),
+		Alias:           planModel.Alias.ValueStringPointer(),
+		Description:     nullable(planModel.Description.ValueStringPointer()),
+		ComponentType:   opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
+		ManagementRules: &managementRules,
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
 			AllowedTypes:      allowedTypes,
 			AllowedCategories: allowedCategories,
@@ -214,12 +304,18 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		return
 	}
 
+	managementRules := parseManagementRules(ctx, planModel.ManagementRules, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := planModel.Id.ValueString()
 	input := opslevel.RelationshipDefinitionInput{
-		Name:          planModel.Name.ValueStringPointer(),
-		Alias:         planModel.Alias.ValueStringPointer(),
-		Description:   nullable(planModel.Description.ValueStringPointer()),
-		ComponentType: opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
+		Name:            planModel.Name.ValueStringPointer(),
+		Alias:           planModel.Alias.ValueStringPointer(),
+		Description:     nullable(planModel.Description.ValueStringPointer()),
+		ComponentType:   opslevel.NewIdentifier(planModel.ComponentType.ValueString()),
+		ManagementRules: &managementRules,
 		Metadata: &opslevel.RelationshipDefinitionMetadataInput{
 			AllowedCategories: allowedCategories,
 			AllowedTypes:      allowedTypes,
@@ -255,3 +351,94 @@ func (r *RelationshipDefinitionResource) Delete(ctx context.Context, req resourc
 func (r *RelationshipDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
+
+func parseManagementRules(ctx context.Context, planRules types.List, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
+	if planRules.IsNull() || planRules.IsUnknown() {
+		return nil
+	}
+
+	var planRulesModels []ManagementRuleModel
+	if err := planRules.ElementsAs(ctx, &planRulesModels, false); err != nil {
+		diags.AddError("config error", fmt.Sprintf("unable to parse management_rules: %s", err))
+		return nil
+	}
+
+	managementRules := make([]opslevel.RelationshipDefinitionManagementRulesInput, len(planRulesModels))
+	for i, rule := range planRulesModels {
+		managementRules[i] = opslevel.RelationshipDefinitionManagementRulesInput{
+			Operator:              opslevel.RelationshipOperatorEnum(rule.Operator.ValueString()),
+			SourceProperty:        rule.SourceProperty.ValueString(),
+			SourcePropertyBuiltin: rule.SourcePropertyBuiltin.ValueBool(),
+			TargetProperty:        rule.TargetProperty.ValueString(),
+			TargetPropertyBuiltin: rule.TargetPropertyBuiltin.ValueBool(),
+		}
+
+		if !rule.TargetCategory.IsNull() && !rule.TargetCategory.IsUnknown() {
+			targetCategory := rule.TargetCategory.ValueString()
+			managementRules[i].TargetCategory = nullable(&targetCategory)
+		}
+
+		if !rule.TargetType.IsNull() && !rule.TargetType.IsUnknown() {
+			targetType := rule.TargetType.ValueString()
+			managementRules[i].TargetType = nullable(&targetType)
+		}
+	}
+
+	return managementRules
+}
+
+func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
+	var targetCategory types.String
+	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
+		targetCategory = types.StringValue(rule.TargetCategory.Value)
+	} else {
+		targetCategory = types.StringNull()
+	}
+
+	var targetType types.String
+	if rule.TargetType != nil && !rule.TargetType.SetNull {
+		targetType = types.StringValue(rule.TargetType.Value)
+	} else {
+		targetType = types.StringNull()
+	}
+
+	return types.ObjectValueMust(
+		ManagementRuleModelAttrs(),
+		map[string]attr.Value{
+			"operator":                types.StringValue(string(rule.Operator)),
+			"source_property":         types.StringValue(rule.SourceProperty),
+			"source_property_builtin": types.BoolValue(rule.SourcePropertyBuiltin),
+			"target_category":         targetCategory,
+			"target_property":         types.StringValue(rule.TargetProperty),
+			"target_property_builtin": types.BoolValue(rule.TargetPropertyBuiltin),
+			"target_type":             targetType,
+		},
+	)
+}
+
+// func isBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
+// 	var builtinProps []string
+
+// 	if isType {
+// 		if targetTypeOrCategory == "team" {
+// 			builtinProps = TEAM_BUILTIN_PROPERTIES
+// 		} else if targetTypeOrCategory == "user" {
+// 			builtinProps = USER_BUILTIN_PROPERTIES
+// 		} else {
+// 			builtinProps = COMPONENT_BUILTIN_PROPERTIES
+// 		}
+// 	} else {
+// 		if targetTypeOrCategory == "people" {
+// 			builtinProps = TEAM_BUILTIN_PROPERTIES
+// 		} else {
+// 			builtinProps = COMPONENT_BUILTIN_PROPERTIES
+// 		}
+// 	}
+
+// 	for _, prop := range builtinProps {
+// 		if prop == propertyName {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
