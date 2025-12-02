@@ -55,12 +55,28 @@ var RelationshipDefinitionDataSourceSchema = map[string]schema.Attribute{
 					MarkdownDescription: "The property on the source component to evaluate.",
 					Computed:            true,
 				},
+				"source_tag_key": schema.StringAttribute{
+					MarkdownDescription: "When source_property is 'tag', this specifies the tag key to match.",
+					Computed:            true,
+				},
+				"source_tag_operation": schema.StringAttribute{
+					MarkdownDescription: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.",
+					Computed:            true,
+				},
 				"target_category": schema.StringAttribute{
 					MarkdownDescription: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
 					Computed:            true,
 				},
 				"target_property": schema.StringAttribute{
 					MarkdownDescription: "The property on the target resource to match against.",
+					Computed:            true,
+				},
+				"target_tag_key": schema.StringAttribute{
+					MarkdownDescription: "When target_property is 'tag', this specifies the tag key to match.",
+					Computed:            true,
+				},
+				"target_tag_operation": schema.StringAttribute{
+					MarkdownDescription: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.",
 					Computed:            true,
 				},
 				"target_type": schema.StringAttribute{
@@ -104,7 +120,7 @@ func NewRelationshipDefinitionDataSourceSingle() datasource.DataSource {
 			if len(data.ManagementRules) > 0 {
 				ruleValues := make([]attr.Value, len(data.ManagementRules))
 				for i, rule := range data.ManagementRules {
-					ruleValues[i] = newManagementRuleValue(rule)
+					ruleValues[i] = NewManagementRuleValue(rule)
 				}
 				managementRules = types.ListValueMust(
 					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
@@ -160,7 +176,7 @@ func NewRelationshipDefinitionDataSourceMulti() datasource.DataSource {
 			if len(data.ManagementRules) > 0 {
 				ruleValues := make([]attr.Value, len(data.ManagementRules))
 				for i, rule := range data.ManagementRules {
-					ruleValues[i] = newManagementRuleValue(rule)
+					ruleValues[i] = NewManagementRuleValue(rule)
 				}
 				managementRules = types.ListValueMust(
 					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},

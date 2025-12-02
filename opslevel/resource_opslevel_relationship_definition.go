@@ -109,7 +109,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		ruleValues := make([]attr.Value, len(definition.ManagementRules))
 		for i, rule := range definition.ManagementRules {
 
-			ruleValues[i] = newManagementRuleValue(rule)
+			ruleValues[i] = NewManagementRuleValue(rule)
 		}
 
 		model.ManagementRules = types.ListValueMust(
@@ -449,7 +449,7 @@ func parseManagementRules(ctx context.Context, planRules types.List, componentTy
 	return managementRules
 }
 
-func newManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
+func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
 	var targetCategory types.String
 	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
 		targetCategory = types.StringValue(rule.TargetCategory.Value)
@@ -524,6 +524,7 @@ func buildPropertyString(property, tagKey, tagOperation string) string {
 
 	return fmt.Sprintf("tag_key_%s:%s", operation, tagKey)
 }
+
 func parsePropertyString(propertyStr string) (property, tagKey, tagOperation string) {
 	if !strings.HasPrefix(propertyStr, "tag_key_") {
 		return propertyStr, "", ""
