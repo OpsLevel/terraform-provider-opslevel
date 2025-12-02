@@ -50,25 +50,20 @@ type RelationshipDefinitionResourceModel struct {
 }
 
 type ManagementRuleModel struct {
-	Operator              types.String `tfsdk:"operator"`
-	SourceProperty        types.String `tfsdk:"source_property"`
-	SourcePropertyBuiltin types.Bool   `tfsdk:"source_property_builtin"`
-	TargetCategory        types.String `tfsdk:"target_category"`
-	TargetProperty        types.String `tfsdk:"target_property"`
-	TargetPropertyBuiltin types.Bool   `tfsdk:"target_property_builtin"`
-	TargetType            types.String `tfsdk:"target_type"`
+	Operator       types.String `tfsdk:"operator"`
+	SourceProperty types.String `tfsdk:"source_property"`
+	TargetCategory types.String `tfsdk:"target_category"`
+	TargetProperty types.String `tfsdk:"target_property"`
+	TargetType     types.String `tfsdk:"target_type"`
 }
 
-// Helper to get AttrTypes for the nested object
 func ManagementRuleModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
-		"operator":                types.StringType,
-		"source_property":         types.StringType,
-		"source_property_builtin": types.BoolType,
-		"target_category":         types.StringType,
-		"target_property":         types.StringType,
-		"target_property_builtin": types.BoolType,
-		"target_type":             types.StringType,
+		"operator":        types.StringType,
+		"source_property": types.StringType,
+		"target_category": types.StringType,
+		"target_property": types.StringType,
+		"target_type":     types.StringType,
 	}
 }
 
@@ -191,20 +186,12 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 							Description: "The property on the source component to evaluate.",
 							Required:    true,
 						},
-						"source_property_builtin": schema.BoolAttribute{
-							Description: "Whether the source property is a built-in property (true) or a custom property (false).",
-							Required:    true,
-						},
 						"target_category": schema.StringAttribute{
 							Description: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
 							Optional:    true,
 						},
 						"target_property": schema.StringAttribute{
 							Description: "The property on the target resource to match against.",
-							Required:    true,
-						},
-						"target_property_builtin": schema.BoolAttribute{
-							Description: "Whether the target property is a built-in property (true) or a custom property (false).",
 							Required:    true,
 						},
 						"target_type": schema.StringAttribute{
@@ -236,7 +223,12 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	managementRules := parseManagementRules(ctx, planModel.ManagementRules, &resp.Diagnostics)
+	componentTypeAlias := r.GetComponentTypeAlias(planModel.ComponentType.ValueString(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	managementRules := ParseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -304,7 +296,12 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	managementRules := parseManagementRules(ctx, planModel.ManagementRules, &resp.Diagnostics)
+	componentTypeAlias := r.GetComponentTypeAlias(planModel.ComponentType.ValueString(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	managementRules := ParseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -352,7 +349,21 @@ func (r *RelationshipDefinitionResource) ImportState(ctx context.Context, req re
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func parseManagementRules(ctx context.Context, planRules types.List, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
+func (r *RelationshipDefinitionResource) GetComponentTypeAlias(componentTypeValue string, diags *diag.Diagnostics) string {
+	if componentTypeValue == "team" {
+		return componentTypeValue
+	}
+
+	componentType, err := r.client.GetComponentType(componentTypeValue)
+	if err != nil {
+		diags.AddError("opslevel client error", fmt.Sprintf("unable to fetch component type with id '%s': %s", componentTypeValue, err))
+		return ""
+	}
+
+	return componentType.Aliases[0]
+}
+
+func ParseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
 	if planRules.IsNull() || planRules.IsUnknown() {
 		return nil
 	}
@@ -365,12 +376,26 @@ func parseManagementRules(ctx context.Context, planRules types.List, diags *diag
 
 	managementRules := make([]opslevel.RelationshipDefinitionManagementRulesInput, len(planRulesModels))
 	for i, rule := range planRulesModels {
+		var targetTypeOrCategory string
+		isType := false
+
+		if !rule.TargetType.IsNull() && !rule.TargetType.IsUnknown() {
+			targetTypeOrCategory = rule.TargetType.ValueString()
+			isType = true
+		} else if !rule.TargetCategory.IsNull() && !rule.TargetCategory.IsUnknown() {
+			targetTypeOrCategory = rule.TargetCategory.ValueString()
+			isType = false
+		}
+
+		sourcePropertyBuiltin := IsBuiltinProperty(componentTypeAlias, rule.SourceProperty.ValueString(), true)
+		targetPropertyBuiltin := IsBuiltinProperty(targetTypeOrCategory, rule.TargetProperty.ValueString(), isType)
+
 		managementRules[i] = opslevel.RelationshipDefinitionManagementRulesInput{
 			Operator:              opslevel.RelationshipOperatorEnum(rule.Operator.ValueString()),
 			SourceProperty:        rule.SourceProperty.ValueString(),
-			SourcePropertyBuiltin: rule.SourcePropertyBuiltin.ValueBool(),
+			SourcePropertyBuiltin: sourcePropertyBuiltin,
 			TargetProperty:        rule.TargetProperty.ValueString(),
-			TargetPropertyBuiltin: rule.TargetPropertyBuiltin.ValueBool(),
+			TargetPropertyBuiltin: targetPropertyBuiltin,
 		}
 
 		if !rule.TargetCategory.IsNull() && !rule.TargetCategory.IsUnknown() {
@@ -405,40 +430,38 @@ func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules)
 	return types.ObjectValueMust(
 		ManagementRuleModelAttrs(),
 		map[string]attr.Value{
-			"operator":                types.StringValue(string(rule.Operator)),
-			"source_property":         types.StringValue(rule.SourceProperty),
-			"source_property_builtin": types.BoolValue(rule.SourcePropertyBuiltin),
-			"target_category":         targetCategory,
-			"target_property":         types.StringValue(rule.TargetProperty),
-			"target_property_builtin": types.BoolValue(rule.TargetPropertyBuiltin),
-			"target_type":             targetType,
+			"operator":        types.StringValue(string(rule.Operator)),
+			"source_property": types.StringValue(rule.SourceProperty),
+			"target_category": targetCategory,
+			"target_property": types.StringValue(rule.TargetProperty),
+			"target_type":     targetType,
 		},
 	)
 }
 
-// func isBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
-// 	var builtinProps []string
+func IsBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
+	var builtinProps []string
 
-// 	if isType {
-// 		if targetTypeOrCategory == "team" {
-// 			builtinProps = TEAM_BUILTIN_PROPERTIES
-// 		} else if targetTypeOrCategory == "user" {
-// 			builtinProps = USER_BUILTIN_PROPERTIES
-// 		} else {
-// 			builtinProps = COMPONENT_BUILTIN_PROPERTIES
-// 		}
-// 	} else {
-// 		if targetTypeOrCategory == "people" {
-// 			builtinProps = TEAM_BUILTIN_PROPERTIES
-// 		} else {
-// 			builtinProps = COMPONENT_BUILTIN_PROPERTIES
-// 		}
-// 	}
+	if isType {
+		if targetTypeOrCategory == "team" {
+			builtinProps = TEAM_BUILTIN_PROPERTIES
+		} else if targetTypeOrCategory == "user" {
+			builtinProps = USER_BUILTIN_PROPERTIES
+		} else {
+			builtinProps = COMPONENT_BUILTIN_PROPERTIES
+		}
+	} else {
+		if targetTypeOrCategory == "people" {
+			builtinProps = TEAM_BUILTIN_PROPERTIES
+		} else {
+			builtinProps = COMPONENT_BUILTIN_PROPERTIES
+		}
+	}
 
-// 	for _, prop := range builtinProps {
-// 		if prop == propertyName {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+	for _, prop := range builtinProps {
+		if prop == propertyName {
+			return true
+		}
+	}
+	return false
+}
