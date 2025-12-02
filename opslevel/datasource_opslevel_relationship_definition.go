@@ -42,6 +42,34 @@ var RelationshipDefinitionDataSourceSchema = map[string]schema.Attribute{
 		Computed:            true,
 		ElementType:         types.StringType,
 	},
+	"management_rules": schema.ListNestedAttribute{
+		MarkdownDescription: "Rules that automatically manage relationships based on property matching conditions.",
+		Computed:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"operator": schema.StringAttribute{
+					MarkdownDescription: "The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS",
+					Computed:            true,
+				},
+				"source_property": schema.StringAttribute{
+					MarkdownDescription: "The property on the source component to evaluate.",
+					Computed:            true,
+				},
+				"target_category": schema.StringAttribute{
+					MarkdownDescription: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
+					Computed:            true,
+				},
+				"target_property": schema.StringAttribute{
+					MarkdownDescription: "The property on the target resource to match against.",
+					Computed:            true,
+				},
+				"target_type": schema.StringAttribute{
+					MarkdownDescription: "The type of the target resource. Either target_category or target_type must be specified, but not both.",
+					Computed:            true,
+				},
+			},
+		},
+	},
 }
 
 type RelationshipDefinitionDataSourceModel struct {
@@ -72,6 +100,20 @@ func NewRelationshipDefinitionDataSourceSingle() datasource.DataSource {
 				allowedTypes[i] = types.StringValue(t)
 			}
 
+			var managementRules types.List
+			if len(data.ManagementRules) > 0 {
+				ruleValues := make([]attr.Value, len(data.ManagementRules))
+				for i, rule := range data.ManagementRules {
+					ruleValues[i] = NewManagementRuleValue(rule)
+				}
+				managementRules = types.ListValueMust(
+					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+					ruleValues,
+				)
+			} else {
+				managementRules = types.ListNull(types.ObjectType{AttrTypes: ManagementRuleModelAttrs()})
+			}
+
 			model := RelationshipDefinitionResourceModel{
 				Id:                types.StringValue(string(data.Id)),
 				Name:              types.StringValue(data.Name),
@@ -80,6 +122,7 @@ func NewRelationshipDefinitionDataSourceSingle() datasource.DataSource {
 				ComponentType:     types.StringValue(string(data.ComponentType.Id)),
 				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
 				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+				ManagementRules:   managementRules,
 			}
 
 			return RelationshipDefinitionDataSourceModel{
@@ -113,6 +156,20 @@ func NewRelationshipDefinitionDataSourceMulti() datasource.DataSource {
 				allowedTypes[i] = types.StringValue(t)
 			}
 
+			var managementRules types.List
+			if len(data.ManagementRules) > 0 {
+				ruleValues := make([]attr.Value, len(data.ManagementRules))
+				for i, rule := range data.ManagementRules {
+					ruleValues[i] = NewManagementRuleValue(rule)
+				}
+				managementRules = types.ListValueMust(
+					types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+					ruleValues,
+				)
+			} else {
+				managementRules = types.ListNull(types.ObjectType{AttrTypes: ManagementRuleModelAttrs()})
+			}
+
 			return RelationshipDefinitionResourceModel{
 				Id:                types.StringValue(string(data.Id)),
 				Name:              types.StringValue(data.Name),
@@ -121,6 +178,7 @@ func NewRelationshipDefinitionDataSourceMulti() datasource.DataSource {
 				ComponentType:     types.StringValue(string(data.ComponentType.Id)),
 				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
 				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+				ManagementRules:   managementRules,
 			}, nil
 		},
 	}

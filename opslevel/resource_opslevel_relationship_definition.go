@@ -100,7 +100,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		ruleValues := make([]attr.Value, len(definition.ManagementRules))
 		for i, rule := range definition.ManagementRules {
 
-			ruleValues[i] = NewManagementRuleValue(rule)
+			ruleValues[i] = newManagementRuleValue(rule)
 		}
 
 		model.ManagementRules = types.ListValueMust(
@@ -151,7 +151,7 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 				Optional:    true,
 			},
 			"component_type": schema.StringAttribute{
-				Description: "The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account.",
+				Description: "The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account or 'team'.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -166,7 +166,7 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 				},
 			},
 			"allowed_types": schema.ListAttribute{
-				Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
+				Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team' or 'user'.",
 				Optional:    true,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.List{
@@ -228,7 +228,7 @@ func (r *RelationshipDefinitionResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	managementRules := ParseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
+	managementRules := parseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -301,7 +301,7 @@ func (r *RelationshipDefinitionResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	managementRules := ParseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
+	managementRules := parseManagementRules(ctx, planModel.ManagementRules, componentTypeAlias, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -363,7 +363,7 @@ func (r *RelationshipDefinitionResource) GetComponentTypeAlias(componentTypeValu
 	return componentType.Aliases[0]
 }
 
-func ParseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
+func parseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
 	if planRules.IsNull() || planRules.IsUnknown() {
 		return nil
 	}
@@ -387,8 +387,8 @@ func ParseManagementRules(ctx context.Context, planRules types.List, componentTy
 			isType = false
 		}
 
-		sourcePropertyBuiltin := IsBuiltinProperty(componentTypeAlias, rule.SourceProperty.ValueString(), true)
-		targetPropertyBuiltin := IsBuiltinProperty(targetTypeOrCategory, rule.TargetProperty.ValueString(), isType)
+		sourcePropertyBuiltin := isBuiltinProperty(componentTypeAlias, rule.SourceProperty.ValueString(), true)
+		targetPropertyBuiltin := isBuiltinProperty(targetTypeOrCategory, rule.TargetProperty.ValueString(), isType)
 
 		managementRules[i] = opslevel.RelationshipDefinitionManagementRulesInput{
 			Operator:              opslevel.RelationshipOperatorEnum(rule.Operator.ValueString()),
@@ -412,7 +412,7 @@ func ParseManagementRules(ctx context.Context, planRules types.List, componentTy
 	return managementRules
 }
 
-func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
+func newManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
 	var targetCategory types.String
 	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
 		targetCategory = types.StringValue(rule.TargetCategory.Value)
@@ -439,7 +439,7 @@ func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules)
 	)
 }
 
-func IsBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
+func isBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
 	var builtinProps []string
 
 	if isType {
