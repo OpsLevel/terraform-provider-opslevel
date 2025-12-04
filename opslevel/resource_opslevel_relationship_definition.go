@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -185,6 +186,9 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 				Description: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",
 				Optional:    true,
 				ElementType: types.StringType,
+				Validators: []validator.List{
+					listvalidator.AtLeastOneOf(path.MatchRoot("allowed_types")),
+				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
 				},
@@ -193,6 +197,9 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 				Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team' or 'user'.",
 				Optional:    true,
 				ElementType: types.StringType,
+				Validators: []validator.List{
+					listvalidator.AtLeastOneOf(path.MatchRoot("allowed_categories")),
+				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
 				},
