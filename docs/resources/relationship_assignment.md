@@ -41,10 +41,11 @@ resource "opslevel_relationship_assignment" "basic" {
 
 # Component relationship using a relationship definition
 resource "opslevel_relationship_definition" "example" {
-  name           = "Example"
-  alias          = "example"
-  component_type = "service"
-  allowed_types  = ["service"]
+  name               = "Example"
+  alias              = "example"
+  component_type     = "service"
+  allowed_categories = ["default"]
+  allowed_types      = ["service"]
 }
 
 resource "opslevel_relationship_assignment" "custom" {

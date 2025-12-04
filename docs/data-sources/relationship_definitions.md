@@ -42,10 +42,27 @@ output "service_relationships" {
 Read-Only:
 
 - `alias` (String) The unique identifier of the relationship.
+- `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
 - `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
 - `component_type` (String) The component type that the relationship belongs to.
 - `description` (String) The description of the relationship definition.
 - `id` (String) The ID of this resource.
+- `management_rules` (Attributes List) Rules that automatically manage relationships based on property matching conditions. (see [below for nested schema](#nestedatt--all--management_rules))
 - `name` (String) The display name of the relationship definition.
+
+<a id="nestedatt--all--management_rules"></a>
+### Nested Schema for `all.management_rules`
+
+Read-Only:
+
+- `operator` (String) The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS
+- `source_property` (String) The property on the source component to evaluate.
+- `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.
+- `target_category` (String) The category of the target resource. Either target_category or target_type must be specified, but not both.
+- `target_property` (String) The property on the target resource to match against.
+- `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.
+- `target_type` (String) The type of the target resource. Either target_category or target_type must be specified, but not both.
 
 

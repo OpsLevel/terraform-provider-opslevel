@@ -18,11 +18,12 @@ A relationship definition in OpsLevel defines how different resources can be rel
 
 ```terraform
 resource "opslevel_relationship_definition" "example" {
-  name           = "Example Relationship"
-  alias          = "example_relationship"
-  description    = "An example relationship definition"
-  component_type = "service"                      # This should be a valid component type alias from your OpsLevel account
-  allowed_types  = ["service", "library", "team"] # Valid types this relationship can target, component alias or 'team'
+  name               = "Example Relationship"
+  alias              = "example_relationship"
+  description        = "An example relationship definition"
+  component_type     = "service" # This should be a valid component type alias from your OpsLevel account
+  allowed_categories = ["infrastructure"]
+  allowed_types      = ["service", "library", "team"] # Valid types this relationship can target, component alias or 'team'
 }
 ```
 
@@ -32,17 +33,37 @@ resource "opslevel_relationship_definition" "example" {
 ### Required
 
 - `alias` (String) The unique identifier of the relationship.
-- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
-- `component_type` (String) The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account.
+- `component_type` (String) The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account or 'team'.
 - `name` (String) The display name of the relationship definition.
 
 ### Optional
 
+- `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
+- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team' or 'user'.
 - `description` (String) The description of the relationship definition.
+- `management_rules` (Attributes List) Rules that automatically manage relationships based on property matching conditions. (see [below for nested schema](#nestedatt--management_rules))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--management_rules"></a>
+### Nested Schema for `management_rules`
+
+Required:
+
+- `operator` (String) The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS.
+- `source_property` (String) The property on the source component to evaluate.
+- `target_property` (String) The property on the target resource to match against.
+
+Optional:
+
+- `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match. Required if source_property is 'tag', must not be set otherwise.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if source_property is 'tag', must not be set otherwise
+- `target_category` (String) The category of the target resource. Either target_category or target_type must be specified, but not both.
+- `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match. Required if target_property is 'tag', must not be set otherwise.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.
+- `target_type` (String) The type of the target resource. Either target_category or target_type must be specified, but not both.
 
 ## Import
 

@@ -79,9 +79,10 @@ resource "opslevel_component_type" "mobile" {
   }
   relationships = {
     services = {
-      name          = "Services Needed"
-      description   = "The services this Mobile App depends on."
-      allowed_types = ["service"]
+      name               = "Services Needed"
+      description        = "The services this Mobile App depends on."
+      allowed_categories = ["default"]
+      allowed_types      = ["service"]
     }
   }
 }
@@ -165,9 +166,9 @@ resource "opslevel_component_type" "lambda" {
   }
   relationships = {
     services = {
-      name          = "Services Needed"
-      description   = "The services this Lambda depends on."
-      allowed_types = ["service"]
+      name               = "Services Needed"
+      description        = "The services this Lambda depends on."
+      allowed_categories = ["default"]
     }
     libraries = {
       name          = "Libraries Needed"
@@ -453,6 +454,10 @@ Required:
 Optional:
 
 - `description` (String) The description of the relationship definition.
+
+Read-Only:
+
+- `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
 
 ## Import
 
