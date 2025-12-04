@@ -25,6 +25,19 @@ func StringValueFromResourceAndModelField(resourceValue string, modelValue baset
 	return types.StringValue(unquote(resourceValue))
 }
 
+func StringListValueFromResourceAndModelField(resourceValues []string, modelValue basetypes.ListValue) basetypes.ListValue {
+	values := make([]attr.Value, len(resourceValues))
+	for i, v := range resourceValues {
+		values[i] = types.StringValue(v)
+	}
+
+	if len(resourceValues) > 0 || !modelValue.IsNull() {
+		return types.ListValueMust(types.StringType, values)
+	}
+
+	return types.ListNull(types.StringType)
+}
+
 // Returns value wrapped in a types.StringValue, or types.StringNull if blank
 func OptionalStringValue(value string) basetypes.StringValue {
 	if value == "" {

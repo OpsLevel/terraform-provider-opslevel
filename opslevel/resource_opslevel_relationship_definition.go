@@ -77,33 +77,49 @@ func ManagementRuleModelAttrs() map[string]attr.Type {
 	}
 }
 
+func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
+	var targetCategory types.String
+	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
+		targetCategory = types.StringValue(rule.TargetCategory.Value)
+	} else {
+		targetCategory = types.StringNull()
+	}
+
+	var targetType types.String
+	if rule.TargetType != nil && !rule.TargetType.SetNull {
+		targetType = types.StringValue(rule.TargetType.Value)
+	} else {
+		targetType = types.StringNull()
+	}
+
+	sourceProperty, sourceTagKey, sourceTagOp := parsePropertyString(rule.SourceProperty)
+	targetProperty, targetTagKey, targetTagOp := parsePropertyString(rule.TargetProperty)
+
+	return types.ObjectValueMust(
+		ManagementRuleModelAttrs(),
+		map[string]attr.Value{
+			"operator":             types.StringValue(string(rule.Operator)),
+			"source_property":      types.StringValue(sourceProperty),
+			"source_tag_key":       OptionalStringValue(sourceTagKey),
+			"source_tag_operation": OptionalStringValue(sourceTagOp),
+			"target_category":      targetCategory,
+			"target_property":      types.StringValue(targetProperty),
+			"target_tag_key":       OptionalStringValue(targetTagKey),
+			"target_tag_operation": OptionalStringValue(targetTagOp),
+			"target_type":          targetType,
+		},
+	)
+}
+
 func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefinitionType, givenModel RelationshipDefinitionResourceModel) RelationshipDefinitionResourceModel {
 	model := RelationshipDefinitionResourceModel{
-		Id:            ComputedStringValue(string(definition.Id)),
-		Name:          RequiredStringValue(definition.Name),
-		Alias:         RequiredStringValue(definition.Alias),
-		Description:   StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
-		ComponentType: givenModel.ComponentType,
-		AllowedCategories: types.ListValueMust(
-			types.StringType,
-			func() []attr.Value {
-				values := make([]attr.Value, len(definition.Metadata.AllowedCategories))
-				for i, v := range definition.Metadata.AllowedCategories {
-					values[i] = types.StringValue(v)
-				}
-				return values
-			}(),
-		),
-		AllowedTypes: types.ListValueMust(
-			types.StringType,
-			func() []attr.Value {
-				values := make([]attr.Value, len(definition.Metadata.AllowedTypes))
-				for i, v := range definition.Metadata.AllowedTypes {
-					values[i] = types.StringValue(v)
-				}
-				return values
-			}(),
-		),
+		Id:                ComputedStringValue(string(definition.Id)),
+		Name:              RequiredStringValue(definition.Name),
+		Alias:             RequiredStringValue(definition.Alias),
+		Description:       StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
+		ComponentType:     givenModel.ComponentType,
+		AllowedCategories: StringListValueFromResourceAndModelField(definition.Metadata.AllowedCategories, givenModel.AllowedCategories),
+		AllowedTypes:      StringListValueFromResourceAndModelField(definition.Metadata.AllowedTypes, givenModel.AllowedTypes),
 	}
 
 	if len(definition.ManagementRules) > 0 {
@@ -117,8 +133,6 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 			types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
 			ruleValues,
 		)
-	} else if !givenModel.ManagementRules.IsNull() {
-		model.ManagementRules = givenModel.ManagementRules
 	} else {
 		model.ManagementRules = types.ListNull(types.ObjectType{AttrTypes: ManagementRuleModelAttrs()})
 	}
@@ -451,40 +465,6 @@ func parseManagementRules(ctx context.Context, planRules types.List, componentTy
 	}
 
 	return managementRules
-}
-
-func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
-	var targetCategory types.String
-	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
-		targetCategory = types.StringValue(rule.TargetCategory.Value)
-	} else {
-		targetCategory = types.StringNull()
-	}
-
-	var targetType types.String
-	if rule.TargetType != nil && !rule.TargetType.SetNull {
-		targetType = types.StringValue(rule.TargetType.Value)
-	} else {
-		targetType = types.StringNull()
-	}
-
-	sourceProperty, sourceTagKey, sourceTagOp := parsePropertyString(rule.SourceProperty)
-	targetProperty, targetTagKey, targetTagOp := parsePropertyString(rule.TargetProperty)
-
-	return types.ObjectValueMust(
-		ManagementRuleModelAttrs(),
-		map[string]attr.Value{
-			"operator":             types.StringValue(string(rule.Operator)),
-			"source_property":      types.StringValue(sourceProperty),
-			"source_tag_key":       OptionalStringValue(sourceTagKey),
-			"source_tag_operation": OptionalStringValue(sourceTagOp),
-			"target_category":      targetCategory,
-			"target_property":      types.StringValue(targetProperty),
-			"target_tag_key":       OptionalStringValue(targetTagKey),
-			"target_tag_operation": OptionalStringValue(targetTagOp),
-			"target_type":          targetType,
-		},
-	)
 }
 
 func isBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
