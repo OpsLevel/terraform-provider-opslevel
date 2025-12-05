@@ -166,3 +166,73 @@ func (v tagFormatValidator) ValidateSet(ctx context.Context, req validator.SetRe
 func TagFormatValidator() validator.Set {
 	return tagFormatValidator{}
 }
+
+// managementRuleTagValidator validates that tag_key and tag_operation are only set when property is 'tag'
+type managementRuleTagValidator struct{}
+
+func (v managementRuleTagValidator) Description(_ context.Context) string {
+	return "ensures that tag_key and tag_operation are only set when property is 'tag'"
+}
+
+func (v managementRuleTagValidator) MarkdownDescription(_ context.Context) string {
+	return "ensures that `tag_key` and `tag_operation` are only set when `property` is `'tag'`"
+}
+
+func (v managementRuleTagValidator) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	var rules []ManagementRuleModel
+	diags := req.ConfigValue.ElementsAs(ctx, &rules, false)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	for i, rule := range rules {
+		sourceProperty := rule.SourceProperty.ValueString()
+		hasSourceTagKey := !rule.SourceTagKey.IsNull() && !rule.SourceTagKey.IsUnknown()
+		hasSourceTagOp := !rule.SourceTagOperation.IsNull() && !rule.SourceTagOperation.IsUnknown()
+
+		if sourceProperty != "tag" && (hasSourceTagKey || hasSourceTagOp) {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i),
+				"Invalid Management Rule Configuration",
+				fmt.Sprintf("source_tag_key and source_tag_operation can only be set when source_property is 'tag', but source_property is '%s'", sourceProperty),
+			)
+		}
+
+		if sourceProperty == "tag" && !hasSourceTagKey {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i),
+				"Invalid Management Rule Configuration",
+				"source_tag_key is required when source_property is 'tag'",
+			)
+		}
+
+		targetProperty := rule.TargetProperty.ValueString()
+		hasTargetTagKey := !rule.TargetTagKey.IsNull() && !rule.TargetTagKey.IsUnknown()
+		hasTargetTagOp := !rule.TargetTagOperation.IsNull() && !rule.TargetTagOperation.IsUnknown()
+
+		if targetProperty != "tag" && (hasTargetTagKey || hasTargetTagOp) {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i),
+				"Invalid Management Rule Configuration",
+				fmt.Sprintf("target_tag_key and target_tag_operation can only be set when target_property is 'tag', but target_property is '%s'", targetProperty),
+			)
+		}
+
+		if targetProperty == "tag" && !hasTargetTagKey {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i),
+				"Invalid Management Rule Configuration",
+				"target_tag_key is required when target_property is 'tag'",
+			)
+		}
+	}
+}
+
+func ManagementRuleTagValidator() validator.List {
+	return managementRuleTagValidator{}
+}
