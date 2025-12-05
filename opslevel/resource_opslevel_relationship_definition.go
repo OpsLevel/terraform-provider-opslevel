@@ -126,7 +126,6 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 	if len(definition.ManagementRules) > 0 {
 		ruleValues := make([]attr.Value, len(definition.ManagementRules))
 		for i, rule := range definition.ManagementRules {
-
 			ruleValues[i] = NewManagementRuleValue(rule)
 		}
 
