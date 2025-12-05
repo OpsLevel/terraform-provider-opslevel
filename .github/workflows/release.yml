@@ -58,7 +58,7 @@ jobs:
           then
             echo "Skip Changie..."
           else
-            go install github.com/miniscruff/changie@latest
+            go install github.com/miniscruff/changie@v1.23.0
             changie batch ${{ steps.next_version.outputs.version_tag }}
             changie merge
           fi
