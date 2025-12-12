@@ -46,50 +46,7 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 		MarkdownDescription: "The owner relationship configuration for this component type.",
 		Computed:            true,
 		Attributes: map[string]schema.Attribute{
-			"management_rules": schema.ListNestedAttribute{
-				Description: "Rules that automatically determine ownership based on property matching conditions.",
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"operator": schema.StringAttribute{
-							Description: "The condition operator for this rule.",
-							Computed:    true,
-						},
-						"source_property": schema.StringAttribute{
-							Description: "The property on the source component to evaluate.",
-							Computed:    true,
-						},
-						"source_tag_key": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the tag key to match.",
-							Computed:    true,
-						},
-						"source_tag_operation": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the matching operation.",
-							Computed:    true,
-						},
-						"target_category": schema.StringAttribute{
-							Description: "The category of the target resource.",
-							Computed:    true,
-						},
-						"target_property": schema.StringAttribute{
-							Description: "The property on the target resource to match against.",
-							Computed:    true,
-						},
-						"target_tag_key": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the tag key to match.",
-							Computed:    true,
-						},
-						"target_tag_operation": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the matching operation.",
-							Computed:    true,
-						},
-						"target_type": schema.StringAttribute{
-							Description: "The type of the target resource.",
-							Computed:    true,
-						},
-					},
-				},
-			},
+			"management_rules": ManagementRulesDataSourceAttribute(),
 		},
 	},
 	"properties": schema.MapNestedAttribute{

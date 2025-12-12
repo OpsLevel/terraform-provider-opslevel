@@ -42,50 +42,7 @@ var RelationshipDefinitionDataSourceSchema = map[string]schema.Attribute{
 		Computed:            true,
 		ElementType:         types.StringType,
 	},
-	"management_rules": schema.ListNestedAttribute{
-		MarkdownDescription: "Rules that automatically manage relationships based on property matching conditions.",
-		Computed:            true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"operator": schema.StringAttribute{
-					MarkdownDescription: "The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS",
-					Computed:            true,
-				},
-				"source_property": schema.StringAttribute{
-					MarkdownDescription: "The property on the source component to evaluate.",
-					Computed:            true,
-				},
-				"source_tag_key": schema.StringAttribute{
-					MarkdownDescription: "When source_property is 'tag', this specifies the tag key to match.",
-					Computed:            true,
-				},
-				"source_tag_operation": schema.StringAttribute{
-					MarkdownDescription: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.",
-					Computed:            true,
-				},
-				"target_category": schema.StringAttribute{
-					MarkdownDescription: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
-					Computed:            true,
-				},
-				"target_property": schema.StringAttribute{
-					MarkdownDescription: "The property on the target resource to match against.",
-					Computed:            true,
-				},
-				"target_tag_key": schema.StringAttribute{
-					MarkdownDescription: "When target_property is 'tag', this specifies the tag key to match.",
-					Computed:            true,
-				},
-				"target_tag_operation": schema.StringAttribute{
-					MarkdownDescription: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.",
-					Computed:            true,
-				},
-				"target_type": schema.StringAttribute{
-					MarkdownDescription: "The type of the target resource. Either target_category or target_type must be specified, but not both.",
-					Computed:            true,
-				},
-			},
-		},
-	},
+	"management_rules": ManagementRulesDataSourceAttribute(),
 }
 
 type RelationshipDefinitionDataSourceModel struct {

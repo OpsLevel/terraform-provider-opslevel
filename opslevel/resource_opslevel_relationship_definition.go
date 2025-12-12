@@ -136,53 +136,7 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 					listplanmodifier.RequiresReplace(),
 				},
 			},
-			"management_rules": schema.ListNestedAttribute{
-				Description: "Rules that automatically manage relationships based on property matching conditions.",
-				Optional:    true,
-				Validators: []validator.List{
-					ManagementRuleTagValidator(),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"operator": schema.StringAttribute{
-							Description: "The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS.",
-							Required:    true,
-						},
-						"source_property": schema.StringAttribute{
-							Description: "The property on the source component to evaluate.",
-							Required:    true,
-						},
-						"source_tag_key": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the tag key to match. Required if source_property is 'tag', must not be set otherwise.",
-							Optional:    true,
-						},
-						"source_tag_operation": schema.StringAttribute{
-							Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if source_property is 'tag', must not be set otherwise",
-							Optional:    true,
-						},
-						"target_category": schema.StringAttribute{
-							Description: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
-							Optional:    true,
-						},
-						"target_property": schema.StringAttribute{
-							Description: "The property on the target resource to match against.",
-							Required:    true,
-						},
-						"target_tag_key": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the tag key to match. Required if target_property is 'tag', must not be set otherwise.",
-							Optional:    true,
-						},
-						"target_tag_operation": schema.StringAttribute{
-							Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.",
-							Optional:    true,
-						},
-						"target_type": schema.StringAttribute{
-							Description: "The type of the target resource. Either target_category or target_type must be specified, but not both.",
-							Optional:    true,
-						},
-					},
-				},
-			},
+			"management_rules": ManagementRulesResourceAttribute(),
 		},
 	}
 }
