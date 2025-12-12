@@ -448,16 +448,13 @@ Required:
 
 Required:
 
-- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
 - `name` (String) The display name of the relationship definition.
 
 Optional:
 
-- `description` (String) The description of the relationship definition.
-
-Read-Only:
-
 - `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
+- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
+- `description` (String) The description of the relationship definition.
 
 ## Import
 
