@@ -412,6 +412,7 @@ resource "opslevel_component_type" "ml-ai" {
 
 - `description` (String) The description of the component type.
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--icon))
+- `owner_relationship` (Attributes) The owner relationship configuration for this component type. (see [below for nested schema](#nestedatt--owner_relationship))
 - `relationships` (Attributes Map) The relationships that can be defined for this component type. (see [below for nested schema](#nestedatt--relationships))
 
 ### Read-Only
@@ -441,6 +442,33 @@ Required:
 
 - `color` (String) The color, represented as a hexcode, for the icon.
 - `name` (String) The name of the icon in Phosphor icons for Vue, e.g. `PhBird`. See https://phosphoricons.com/ for a full list.
+
+
+<a id="nestedatt--owner_relationship"></a>
+### Nested Schema for `owner_relationship`
+
+Optional:
+
+- `management_rules` (Attributes List) Rules that automatically manage relationships based on property matching conditions. (see [below for nested schema](#nestedatt--owner_relationship--management_rules))
+
+<a id="nestedatt--owner_relationship--management_rules"></a>
+### Nested Schema for `owner_relationship.management_rules`
+
+Required:
+
+- `operator` (String) The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS.
+- `source_property` (String) The property on the source component to evaluate.
+- `target_property` (String) The property on the target resource to match against.
+
+Optional:
+
+- `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match. Required if source_property is 'tag', must not be set otherwise.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if source_property is 'tag', must not be set otherwise
+- `target_category` (String) The category of the target resource. Either target_category or target_type must be specified, but not both.
+- `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match. Required if target_property is 'tag', must not be set otherwise.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.
+- `target_type` (String) The type of the target resource. Either target_category or target_type must be specified, but not both.
+
 
 
 <a id="nestedatt--relationships"></a>

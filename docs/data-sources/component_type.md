@@ -32,6 +32,7 @@ data "opslevel_component_type" "example" {
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--icon))
 - `id` (String) The ID of this resource.
 - `name` (String) The unique name of the component type.
+- `owner_relationship` (Attributes) The owner relationship configuration for this component type. (see [below for nested schema](#nestedatt--owner_relationship))
 - `properties` (Attributes Map) The properties of this component type. (see [below for nested schema](#nestedatt--properties))
 
 <a id="nestedatt--icon"></a>
@@ -41,6 +42,30 @@ Read-Only:
 
 - `color` (String) The color, represented as a hexcode, for the icon.
 - `name` (String) The name of the icon in Phosphor icons for Vue, e.g. `PhBird`. See https://phosphoricons.com/ for a full list.
+
+
+<a id="nestedatt--owner_relationship"></a>
+### Nested Schema for `owner_relationship`
+
+Read-Only:
+
+- `management_rules` (Attributes List) Rules that automatically manage relationships based on property matching conditions. (see [below for nested schema](#nestedatt--owner_relationship--management_rules))
+
+<a id="nestedatt--owner_relationship--management_rules"></a>
+### Nested Schema for `owner_relationship.management_rules`
+
+Read-Only:
+
+- `operator` (String) The condition operator for this rule.
+- `source_property` (String) The property on the source component to evaluate.
+- `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation.
+- `target_category` (String) The category of the target resource.
+- `target_property` (String) The property on the target resource to match against.
+- `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation.
+- `target_type` (String) The type of the target resource.
+
 
 
 <a id="nestedatt--properties"></a>
