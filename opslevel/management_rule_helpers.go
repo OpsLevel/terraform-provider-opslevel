@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/opslevel/opslevel-go/v2025"
@@ -15,6 +16,66 @@ var (
 	USER_BUILTIN_PROPERTIES      = []string{"name", "contact", "tag"}
 	COMPONENT_BUILTIN_PROPERTIES = []string{"name", "alias", "tag"}
 )
+
+type ManagementRuleModel struct {
+	Operator           types.String `tfsdk:"operator"`
+	SourceProperty     types.String `tfsdk:"source_property"`
+	SourceTagKey       types.String `tfsdk:"source_tag_key"`
+	SourceTagOperation types.String `tfsdk:"source_tag_operation"`
+	TargetCategory     types.String `tfsdk:"target_category"`
+	TargetProperty     types.String `tfsdk:"target_property"`
+	TargetTagKey       types.String `tfsdk:"target_tag_key"`
+	TargetTagOperation types.String `tfsdk:"target_tag_operation"`
+	TargetType         types.String `tfsdk:"target_type"`
+}
+
+func ManagementRuleModelAttrs() map[string]attr.Type {
+	return map[string]attr.Type{
+		"operator":             types.StringType,
+		"source_property":      types.StringType,
+		"source_tag_key":       types.StringType,
+		"source_tag_operation": types.StringType,
+		"target_category":      types.StringType,
+		"target_property":      types.StringType,
+		"target_tag_key":       types.StringType,
+		"target_tag_operation": types.StringType,
+		"target_type":          types.StringType,
+	}
+}
+
+func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRule) attr.Value {
+	var targetCategory types.String
+	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
+		targetCategory = types.StringValue(rule.TargetCategory.Value)
+	} else {
+		targetCategory = types.StringNull()
+	}
+
+	var targetType types.String
+	if rule.TargetType != nil && !rule.TargetType.SetNull {
+		targetType = types.StringValue(rule.TargetType.Value)
+	} else {
+		targetType = types.StringNull()
+	}
+
+	sourceProperty, sourceTagKey, sourceTagOp := ParsePropertyString(rule.SourceProperty)
+	targetProperty, targetTagKey, targetTagOp := ParsePropertyString(rule.TargetProperty)
+
+	return types.ObjectValueMust(
+		ManagementRuleModelAttrs(),
+		map[string]attr.Value{
+			"operator":             types.StringValue(string(rule.Operator)),
+			"source_property":      types.StringValue(sourceProperty),
+			"source_tag_key":       OptionalStringValue(sourceTagKey),
+			"source_tag_operation": OptionalStringValue(sourceTagOp),
+			"target_category":      targetCategory,
+			"target_property":      types.StringValue(targetProperty),
+			"target_tag_key":       OptionalStringValue(targetTagKey),
+			"target_tag_operation": OptionalStringValue(targetTagOp),
+			"target_type":          targetType,
+		},
+	)
+}
 
 func ParseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.ManagementRuleInput {
 	if planRules.IsNull() || planRules.IsUnknown() {
