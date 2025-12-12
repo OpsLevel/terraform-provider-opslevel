@@ -79,6 +79,23 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		Color: types.StringValue(res.Icon.Color),
 		Name:  types.StringValue(string(res.Icon.Name)),
 	}
+
+	if len(res.OwnerRelationship.ManagementRules) > 0 {
+		ruleValues := make([]attr.Value, len(res.OwnerRelationship.ManagementRules))
+		for i, rule := range res.OwnerRelationship.ManagementRules {
+			ruleValues[i] = NewManagementRuleValue(rule)
+		}
+
+		stateModel.OwnerRelationship = &OwnerRelationshipModel{
+			ManagementRules: types.ListValueMust(
+				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+				ruleValues,
+			),
+		}
+	} else {
+		stateModel.OwnerRelationship = nil
+	}
+
 	conn, err := res.GetProperties(s.client, nil)
 	if err != nil {
 		return stateModel, err
@@ -318,12 +335,25 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	var ownerRelInput *opslevel.OwnerRelationshipInput
+	if planModel.OwnerRelationship != nil && !planModel.OwnerRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.OwnerRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ownerRelInput = &opslevel.OwnerRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Create the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:        nullable(planModel.Name.ValueStringPointer()),
-		Alias:       nullable(planModel.Alias.ValueStringPointer()),
-		Description: nullable(planModel.Description.ValueStringPointer()),
-		Properties:  properties,
+		Name:              nullable(planModel.Name.ValueStringPointer()),
+		Alias:             nullable(planModel.Alias.ValueStringPointer()),
+		Description:       nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship: ownerRelInput,
+		Properties:        properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
@@ -446,12 +476,25 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	var ownerRelInput *opslevel.OwnerRelationshipInput
+	if planModel.OwnerRelationship != nil && !planModel.OwnerRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.OwnerRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ownerRelInput = &opslevel.OwnerRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Update the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:        nullable(planModel.Name.ValueStringPointer()),
-		Alias:       nullable(planModel.Alias.ValueStringPointer()),
-		Description: nullable(planModel.Description.ValueStringPointer()),
-		Properties:  properties,
+		Name:              nullable(planModel.Name.ValueStringPointer()),
+		Alias:             nullable(planModel.Alias.ValueStringPointer()),
+		Description:       nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship: ownerRelInput,
+		Properties:        properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
