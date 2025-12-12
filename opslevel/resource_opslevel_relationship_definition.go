@@ -78,7 +78,7 @@ func ManagementRuleModelAttrs() map[string]attr.Type {
 	}
 }
 
-func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRules) attr.Value {
+func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRule) attr.Value {
 	var targetCategory types.String
 	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
 		targetCategory = types.StringValue(rule.TargetCategory.Value)
@@ -412,7 +412,7 @@ func (r *RelationshipDefinitionResource) GetComponentTypeAlias(componentTypeValu
 	return componentType.Aliases[0]
 }
 
-func parseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.RelationshipDefinitionManagementRulesInput {
+func parseManagementRules(ctx context.Context, planRules types.List, componentTypeAlias string, diags *diag.Diagnostics) []opslevel.ManagementRuleInput {
 	if planRules.IsNull() || planRules.IsUnknown() {
 		return nil
 	}
@@ -423,7 +423,7 @@ func parseManagementRules(ctx context.Context, planRules types.List, componentTy
 		return nil
 	}
 
-	managementRules := make([]opslevel.RelationshipDefinitionManagementRulesInput, len(planRulesModels))
+	managementRules := make([]opslevel.ManagementRuleInput, len(planRulesModels))
 	for i, rule := range planRulesModels {
 		var targetTypeOrCategory string
 		isType := false
@@ -451,8 +451,8 @@ func parseManagementRules(ctx context.Context, planRules types.List, componentTy
 		sourcePropertyBuiltin := isBuiltinProperty(componentTypeAlias, rule.SourceProperty.ValueString(), true)
 		targetPropertyBuiltin := isBuiltinProperty(targetTypeOrCategory, rule.TargetProperty.ValueString(), isType)
 
-		managementRules[i] = opslevel.RelationshipDefinitionManagementRulesInput{
-			Operator:              opslevel.RelationshipOperatorEnum(rule.Operator.ValueString()),
+		managementRules[i] = opslevel.ManagementRuleInput{
+			Operator:              opslevel.RelationshipDefinitionManagementRuleOperator(rule.Operator.ValueString()),
 			SourceProperty:        sourcePropertyStr,
 			SourcePropertyBuiltin: sourcePropertyBuiltin,
 			TargetProperty:        targetPropertyStr,
