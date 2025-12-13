@@ -1,7 +1,7 @@
 [submodule "submodules/opslevel-go"]
 	path = submodules/opslevel-go
 	url = git@github.com:OpsLevel/opslevel-go.git
-	branch = main
+	branch = andrew/14198/add-support-for-owner-relationships-on-read
 [submodule "tests/opslevel_modules"]
 	path = tests/opslevel_modules
 	url = git@github.com:OpsLevel/terraform-opslevel-modules.git

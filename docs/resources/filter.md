@@ -80,7 +80,7 @@ resource "opslevel_filter" "case_sensitive" {
 
 Required:
 
-- `key` (String) The condition key used by the predicate. Valid values are `aliases`, `component_type_id`, `creation_source`, `domain_id`, `filter_id`, `framework`, `group_ids`, `language`, `lifecycle_index`, `name`, `owner_id`, `owner_ids`, `product`, `properties`, `relationships`, `repository_ids`, `system_id`, `tags`, `tier_index`
+- `key` (String) The condition key used by the predicate. Valid values are `aliases`, `component_category`, `component_type_id`, `creation_source`, `domain_id`, `filter_id`, `framework`, `group_ids`, `language`, `lifecycle_index`, `name`, `owner_id`, `owner_ids`, `product`, `properties`, `relationships`, `repository_ids`, `system_id`, `tags`, `tier_index`
 - `type` (String) The condition type used by the predicate. Valid values are `belongs_to`, `contains`, `does_not_contain`, `does_not_equal`, `does_not_exist`, `does_not_match`, `does_not_match_regex`, `ends_with`, `equals`, `exists`, `greater_than_or_equal_to`, `less_than_or_equal_to`, `matches`, `matches_regex`, `satisfies_jq_expression`, `satisfies_version_constraint`, `starts_with`
 
 Optional:

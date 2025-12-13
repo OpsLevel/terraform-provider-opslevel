@@ -5,11 +5,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -46,13 +48,18 @@ type RelationshipModel struct {
 }
 
 type ComponentTypeModel struct {
-	Id            types.String                 `tfsdk:"id"`
-	Name          types.String                 `tfsdk:"name"`
-	Alias         types.String                 `tfsdk:"alias"`
-	Description   types.String                 `tfsdk:"description"`
-	Icon          *ComponentTypeIconModel      `tfsdk:"icon"`
-	Properties    map[string]PropertyModel     `tfsdk:"properties"`
-	Relationships map[string]RelationshipModel `tfsdk:"relationships"`
+	Id                types.String                 `tfsdk:"id"`
+	Name              types.String                 `tfsdk:"name"`
+	Alias             types.String                 `tfsdk:"alias"`
+	Description       types.String                 `tfsdk:"description"`
+	Icon              *ComponentTypeIconModel      `tfsdk:"icon"`
+	OwnerRelationship *OwnerRelationshipModel      `tfsdk:"owner_relationship"`
+	Properties        map[string]PropertyModel     `tfsdk:"properties"`
+	Relationships     map[string]RelationshipModel `tfsdk:"relationships"`
+}
+
+type OwnerRelationshipModel struct {
+	ManagementRules types.List `tfsdk:"management_rules"`
 }
 
 type ComponentTypeResource struct {
@@ -72,6 +79,18 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		Color: types.StringValue(res.Icon.Color),
 		Name:  types.StringValue(string(res.Icon.Name)),
 	}
+
+	if stateModel.OwnerRelationship != nil {
+		stateModel.OwnerRelationship = &OwnerRelationshipModel{
+			ManagementRules: ManagementRuleListValueFromResourceAndModel(
+				res.OwnerRelationship.ManagementRules,
+				stateModel.OwnerRelationship.ManagementRules,
+			),
+		}
+	} else {
+		stateModel.OwnerRelationship = nil
+	}
+
 	conn, err := res.GetProperties(s.client, nil)
 	if err != nil {
 		return stateModel, err
@@ -155,6 +174,13 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 					},
 				},
 			},
+			"owner_relationship": schema.SingleNestedAttribute{
+				Description: "The owner relationship configuration for this component type.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"management_rules": ManagementRulesResourceAttribute(),
+				},
+			},
 			"properties": schema.MapNestedAttribute{
 				Description: "The properties of this component type.",
 				Required:    true,
@@ -219,13 +245,25 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 						"allowed_categories": schema.ListAttribute{
 							MarkdownDescription: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",
-							Computed:            true,
+							Optional:            true,
 							ElementType:         types.StringType,
+							Validators: []validator.List{
+								listvalidator.AtLeastOneOf(path.MatchRelative().AtParent().AtName("allowed_types")),
+							},
+							PlanModifiers: []planmodifier.List{
+								listplanmodifier.RequiresReplace(),
+							},
 						},
 						"allowed_types": schema.ListAttribute{
 							Description: "The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.",
-							Required:    true,
+							Optional:    true,
 							ElementType: types.StringType,
+							Validators: []validator.List{
+								listvalidator.AtLeastOneOf(path.MatchRelative().AtParent().AtName("allowed_categories")),
+							},
+							PlanModifiers: []planmodifier.List{
+								listplanmodifier.RequiresReplace(),
+							},
 						},
 					},
 				},
@@ -246,12 +284,25 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	var ownerRelInput *opslevel.OwnerRelationshipInput
+	if planModel.OwnerRelationship != nil && !planModel.OwnerRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.OwnerRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ownerRelInput = &opslevel.OwnerRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Create the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:        nullable(planModel.Name.ValueStringPointer()),
-		Alias:       nullable(planModel.Alias.ValueStringPointer()),
-		Description: nullable(planModel.Description.ValueStringPointer()),
-		Properties:  properties,
+		Name:              nullable(planModel.Name.ValueStringPointer()),
+		Alias:             nullable(planModel.Alias.ValueStringPointer()),
+		Description:       nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship: ownerRelInput,
+		Properties:        properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
@@ -324,33 +375,37 @@ func (s ComponentTypeResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	// Get relationship definitions
-	rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
-		"componentType": opslevel.NewIdentifier(id),
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
-		return
-	}
-
-	// Add relationships to the state model
-	stateModel.Relationships = make(map[string]RelationshipModel)
-	for _, rel := range rels.Nodes {
-		allowedCategories := make([]attr.Value, len(rel.Metadata.AllowedCategories))
-		for i, t := range rel.Metadata.AllowedCategories {
-			allowedCategories[i] = types.StringValue(t)
+	// Relationships can either be managed independently or within the context of a component but not both. Only fetch relationships if they have
+	// been defined in the config
+	if len(stateModel.Relationships) > 0 {
+		// Get relationship definitions
+		rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
+			"componentType": opslevel.NewIdentifier(id),
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
+			return
 		}
 
-		allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
-		for i, t := range rel.Metadata.AllowedTypes {
-			allowedTypes[i] = types.StringValue(t)
-		}
+		// Add relationships to the state model
+		stateModel.Relationships = make(map[string]RelationshipModel)
+		for _, rel := range rels.Nodes {
+			allowedCategories := make([]attr.Value, len(rel.Metadata.AllowedCategories))
+			for i, t := range rel.Metadata.AllowedCategories {
+				allowedCategories[i] = types.StringValue(t)
+			}
 
-		stateModel.Relationships[rel.Alias] = RelationshipModel{
-			Name:              types.StringValue(rel.Name),
-			Description:       types.StringValue(rel.Description),
-			AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
-			AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+			allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
+			for i, t := range rel.Metadata.AllowedTypes {
+				allowedTypes[i] = types.StringValue(t)
+			}
+
+			stateModel.Relationships[rel.Alias] = RelationshipModel{
+				Name:              types.StringValue(rel.Name),
+				Description:       types.StringValue(rel.Description),
+				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
+				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+			}
 		}
 	}
 
@@ -374,12 +429,25 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	var ownerRelInput *opslevel.OwnerRelationshipInput
+	if planModel.OwnerRelationship != nil && !planModel.OwnerRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.OwnerRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ownerRelInput = &opslevel.OwnerRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Update the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:        nullable(planModel.Name.ValueStringPointer()),
-		Alias:       nullable(planModel.Alias.ValueStringPointer()),
-		Description: nullable(planModel.Description.ValueStringPointer()),
-		Properties:  properties,
+		Name:              nullable(planModel.Name.ValueStringPointer()),
+		Alias:             nullable(planModel.Alias.ValueStringPointer()),
+		Description:       nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship: ownerRelInput,
+		Properties:        properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{

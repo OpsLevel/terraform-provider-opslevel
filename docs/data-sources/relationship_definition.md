@@ -45,14 +45,14 @@ output "relationship_definition_id" {
 
 Read-Only:
 
-- `operator` (String) The condition operator for this rule. Either EQUALS or ARRAY_CONTAINS
+- `operator` (String) The condition operator for this rule.
 - `source_property` (String) The property on the source component to evaluate.
 - `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match.
-- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.
-- `target_category` (String) The category of the target resource. Either target_category or target_type must be specified, but not both.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation.
+- `target_category` (String) The category of the target resource.
 - `target_property` (String) The property on the target resource to match against.
 - `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match.
-- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'.
-- `target_type` (String) The type of the target resource. Either target_category or target_type must be specified, but not both.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation.
+- `target_type` (String) The type of the target resource.
 
 
