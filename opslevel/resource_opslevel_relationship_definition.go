@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -56,19 +55,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		AllowedTypes:      StringListValueFromResourceAndModelField(definition.Metadata.AllowedTypes, givenModel.AllowedTypes),
 	}
 
-	if len(definition.ManagementRules) > 0 {
-		ruleValues := make([]attr.Value, len(definition.ManagementRules))
-		for i, rule := range definition.ManagementRules {
-			ruleValues[i] = NewManagementRuleValue(rule)
-		}
-
-		model.ManagementRules = types.ListValueMust(
-			types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
-			ruleValues,
-		)
-	} else {
-		model.ManagementRules = types.ListNull(types.ObjectType{AttrTypes: ManagementRuleModelAttrs()})
-	}
+	model.ManagementRules = ManagementRuleListValueFromResourceAndModel(definition.ManagementRules, givenModel.ManagementRules)
 
 	return model
 }
