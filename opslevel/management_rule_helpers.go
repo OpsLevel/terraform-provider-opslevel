@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/opslevel/opslevel-go/v2025"
 )
 
@@ -198,4 +199,19 @@ func IsBuiltinProperty(targetTypeOrCategory string, propertyName string, isType 
 		}
 	}
 	return false
+}
+
+func ManagementRuleListValueFromResourceAndModel(resourceRules []opslevel.RelationshipDefinitionManagementRule, modelValue basetypes.ListValue) basetypes.ListValue {
+	ruleValues := make([]attr.Value, len(resourceRules))
+	for i, rule := range resourceRules {
+		ruleValues[i] = NewManagementRuleValue(rule)
+	}
+
+	objectType := types.ObjectType{AttrTypes: ManagementRuleModelAttrs()}
+
+	if len(resourceRules) > 0 || !modelValue.IsNull() {
+		return types.ListValueMust(objectType, ruleValues)
+	}
+
+	return types.ListNull(objectType)
 }

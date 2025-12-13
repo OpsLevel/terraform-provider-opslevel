@@ -80,16 +80,11 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		Name:  types.StringValue(string(res.Icon.Name)),
 	}
 
-	if len(res.OwnerRelationship.ManagementRules) > 0 {
-		ruleValues := make([]attr.Value, len(res.OwnerRelationship.ManagementRules))
-		for i, rule := range res.OwnerRelationship.ManagementRules {
-			ruleValues[i] = NewManagementRuleValue(rule)
-		}
-
+	if stateModel.OwnerRelationship != nil {
 		stateModel.OwnerRelationship = &OwnerRelationshipModel{
-			ManagementRules: types.ListValueMust(
-				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
-				ruleValues,
+			ManagementRules: ManagementRuleListValueFromResourceAndModel(
+				res.OwnerRelationship.ManagementRules,
+				stateModel.OwnerRelationship.ManagementRules,
 			),
 		}
 	} else {
