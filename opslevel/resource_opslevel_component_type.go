@@ -380,33 +380,37 @@ func (s ComponentTypeResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	// Get relationship definitions
-	rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
-		"componentType": opslevel.NewIdentifier(id),
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
-		return
-	}
-
-	// Add relationships to the state model
-	stateModel.Relationships = make(map[string]RelationshipModel)
-	for _, rel := range rels.Nodes {
-		allowedCategories := make([]attr.Value, len(rel.Metadata.AllowedCategories))
-		for i, t := range rel.Metadata.AllowedCategories {
-			allowedCategories[i] = types.StringValue(t)
+	// Relationships can either be managed independently or within the context of a component but not both. Only fetch relationships if they have
+	// been defined in the config
+	if len(stateModel.Relationships) > 0 {
+		// Get relationship definitions
+		rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
+			"componentType": opslevel.NewIdentifier(id),
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to list relationship definitions, got error: %s", err))
+			return
 		}
 
-		allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
-		for i, t := range rel.Metadata.AllowedTypes {
-			allowedTypes[i] = types.StringValue(t)
-		}
+		// Add relationships to the state model
+		stateModel.Relationships = make(map[string]RelationshipModel)
+		for _, rel := range rels.Nodes {
+			allowedCategories := make([]attr.Value, len(rel.Metadata.AllowedCategories))
+			for i, t := range rel.Metadata.AllowedCategories {
+				allowedCategories[i] = types.StringValue(t)
+			}
 
-		stateModel.Relationships[rel.Alias] = RelationshipModel{
-			Name:              types.StringValue(rel.Name),
-			Description:       types.StringValue(rel.Description),
-			AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
-			AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+			allowedTypes := make([]attr.Value, len(rel.Metadata.AllowedTypes))
+			for i, t := range rel.Metadata.AllowedTypes {
+				allowedTypes[i] = types.StringValue(t)
+			}
+
+			stateModel.Relationships[rel.Alias] = RelationshipModel{
+				Name:              types.StringValue(rel.Name),
+				Description:       types.StringValue(rel.Description),
+				AllowedCategories: types.ListValueMust(types.StringType, allowedCategories),
+				AllowedTypes:      types.ListValueMust(types.StringType, allowedTypes),
+			}
 		}
 	}
 
