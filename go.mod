@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
-	github.com/opslevel/opslevel-go/v2025 v2025.12.5
+	github.com/opslevel/opslevel-go/v2025 v2025.12.15
 	github.com/relvacode/iso8601 v1.7.0
 	golang.org/x/net v0.48.0
 )
@@ -55,4 +55,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/opslevel/opslevel-go/v2025 => ./submodules/opslevel-go
+// replace github.com/opslevel/opslevel-go/v2025 => ./submodules/opslevel-go
