@@ -145,10 +145,8 @@ func BuildPropertyString(property, tagKey, tagOperation string) string {
 	}
 
 	operation := "eq"
-	if tagOperation != "" {
-		if tagOperation == "starts_with" {
-			operation = "starts_with"
-		}
+	if tagOperation == "starts_with" {
+		operation = "starts_with"
 	}
 
 	return fmt.Sprintf("tag_key_%s:%s", operation, tagKey)
