@@ -68,6 +68,8 @@ github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
 github.com/hasura/go-graphql-client v0.15.0 h1:C8gO+pilV5jyH7zuvQ0tJwxt/QSXRrhEJz35phPLk9Y=
 github.com/hasura/go-graphql-client v0.15.0/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
+github.com/hasura/go-graphql-client v0.15.1 h1:mCb5I+8Bk3FU3GKWvf/zDXkTh7FbGlqJmP3oisBdnN8=
+github.com/hasura/go-graphql-client v0.15.1/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
 github.com/huandu/xstrings v1.5.0 h1:2ag3IFq9ZDANvthTwTiqSSZLjDc+BedvHPAp5tJy2TI=
 github.com/huandu/xstrings v1.5.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/jhump/protoreflect v1.17.0 h1:qOEr613fac2lOuTgWN4tPAtLL7fUSbuJL5X5XumQh94=
@@ -106,6 +108,8 @@ github.com/opslevel/moredefaults v0.0.0-20240529152742-17d1318a3c12 h1:OQZ3W8kby
 github.com/opslevel/moredefaults v0.0.0-20240529152742-17d1318a3c12/go.mod h1:g2GSXVP6LO+5+AIsnMRPN+BeV86OXuFRTX7HXCDtYeI=
 github.com/opslevel/opslevel-go/v2025 v2025.12.15 h1:065OpBpxSIQJv437loEBNmYlI3MoJDRjysHNjPmzM54=
 github.com/opslevel/opslevel-go/v2025 v2025.12.15/go.mod h1:J4ydZTHWceXfGnw7bQZp39DxQVXZSHMZ8ww09hH8mvY=
+github.com/opslevel/opslevel-go/v2025 v2025.12.17 h1:81bNehxhptwKhU0pO0xQYSYVN4xI1bi/UH9urIP0rjg=
+github.com/opslevel/opslevel-go/v2025 v2025.12.17/go.mod h1:Y+Q7DH+Afcf/GK59AaaE4OGt2EHnvO4samzaOueVvhk=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
