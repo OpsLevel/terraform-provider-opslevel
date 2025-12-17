@@ -66,8 +66,6 @@ github.com/hashicorp/terraform-svchost v0.1.1 h1:EZZimZ1GxdqFRinZ1tpJwVxxt49xc/S
 github.com/hashicorp/terraform-svchost v0.1.1/go.mod h1:mNsjQfZyf/Jhz35v6/0LWcv26+X7JPS+buii2c9/ctc=
 github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
-github.com/hasura/go-graphql-client v0.15.0 h1:C8gO+pilV5jyH7zuvQ0tJwxt/QSXRrhEJz35phPLk9Y=
-github.com/hasura/go-graphql-client v0.15.0/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
 github.com/hasura/go-graphql-client v0.15.1 h1:mCb5I+8Bk3FU3GKWvf/zDXkTh7FbGlqJmP3oisBdnN8=
 github.com/hasura/go-graphql-client v0.15.1/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
 github.com/huandu/xstrings v1.5.0 h1:2ag3IFq9ZDANvthTwTiqSSZLjDc+BedvHPAp5tJy2TI=
@@ -106,8 +104,6 @@ github.com/oklog/run v1.2.0 h1:O8x3yXwah4A73hJdlrwo/2X6J62gE5qTMusH0dvz60E=
 github.com/oklog/run v1.2.0/go.mod h1:mgDbKRSwPhJfesJ4PntqFUbKQRZ50NgmZTSPlFA0YFk=
 github.com/opslevel/moredefaults v0.0.0-20240529152742-17d1318a3c12 h1:OQZ3W8kbyCcdS8QUWFTnZd6xtdkfhdckc7Paro7nXio=
 github.com/opslevel/moredefaults v0.0.0-20240529152742-17d1318a3c12/go.mod h1:g2GSXVP6LO+5+AIsnMRPN+BeV86OXuFRTX7HXCDtYeI=
-github.com/opslevel/opslevel-go/v2025 v2025.12.15 h1:065OpBpxSIQJv437loEBNmYlI3MoJDRjysHNjPmzM54=
-github.com/opslevel/opslevel-go/v2025 v2025.12.15/go.mod h1:J4ydZTHWceXfGnw7bQZp39DxQVXZSHMZ8ww09hH8mvY=
 github.com/opslevel/opslevel-go/v2025 v2025.12.17 h1:81bNehxhptwKhU0pO0xQYSYVN4xI1bi/UH9urIP0rjg=
 github.com/opslevel/opslevel-go/v2025 v2025.12.17/go.mod h1:Y+Q7DH+Afcf/GK59AaaE4OGt2EHnvO4samzaOueVvhk=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
