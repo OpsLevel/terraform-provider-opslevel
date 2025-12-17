@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -251,7 +250,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 								listvalidator.AtLeastOneOf(path.MatchRelative().AtParent().AtName("allowed_types")),
 							},
 							PlanModifiers: []planmodifier.List{
-								listplanmodifier.RequiresReplace(),
+								PreventRemovalPlanModifier("allowed_categories"),
 							},
 						},
 						"allowed_types": schema.ListAttribute{
@@ -262,7 +261,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 								listvalidator.AtLeastOneOf(path.MatchRelative().AtParent().AtName("allowed_categories")),
 							},
 							PlanModifiers: []planmodifier.List{
-								listplanmodifier.RequiresReplace(),
+								PreventRemovalPlanModifier("allowed_types"),
 							},
 						},
 					},
