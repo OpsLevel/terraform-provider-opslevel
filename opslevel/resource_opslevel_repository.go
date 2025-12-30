@@ -126,20 +126,10 @@ func (r *RepositoryResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	stateModel := NewRepositoryResourceModel(ctx, *updatedRepository)
 
-	// Identifier from plan can be an id or alias
-	switch planModel.Identifier.ValueString() {
-	case string(updatedRepository.Id), updatedRepository.DefaultAlias:
-		stateModel.Identifier = planModel.Identifier
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("given repository identifier '%s' did not match found repository's id '%s' or alias '%s'",
-				planModel.Identifier.ValueString(),
-				string(updatedRepository.Id),
-				updatedRepository.DefaultAlias,
-			),
-		)
-		return
+	if opslevel.IsID(identifier) {
+		stateModel.Identifier = types.StringValue(string(updatedRepository.Id))
+	} else {
+		stateModel.Identifier = types.StringValue(updatedRepository.DefaultAlias)
 	}
 
 	tflog.Trace(ctx, "created a repository resource")
@@ -160,19 +150,11 @@ func (r *RepositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 	verifiedStateModel := NewRepositoryResourceModel(ctx, *readRepository)
 
 	// Identifier from plan can be an id or alias
-	switch stateModel.Identifier.ValueString() {
-	case string(readRepository.Id), readRepository.DefaultAlias:
-		verifiedStateModel.Identifier = stateModel.Identifier
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("given repository identifier '%s' did not match found repository's id '%s' or alias '%s'",
-				stateModel.Identifier.ValueString(),
-				string(readRepository.Id),
-				readRepository.DefaultAlias,
-			),
-		)
-		return
+	stateIdentifier := stateModel.Identifier.ValueString()
+	if opslevel.IsID(stateIdentifier) {
+		verifiedStateModel.Identifier = types.StringValue(string(readRepository.Id))
+	} else {
+		verifiedStateModel.Identifier = types.StringValue(readRepository.DefaultAlias)
 	}
 
 	// Save updated data into Terraform state
@@ -203,20 +185,11 @@ func (r *RepositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 	stateModel := NewRepositoryResourceModel(ctx, *updatedRepository)
 
-	// Identifier from plan can be an id or alias
-	switch planModel.Identifier.ValueString() {
-	case string(updatedRepository.Id), updatedRepository.DefaultAlias:
-		stateModel.Identifier = planModel.Identifier
-	default:
-		resp.Diagnostics.AddError(
-			"opslevel client error",
-			fmt.Sprintf("given repository identifier '%s' did not match found repository's id '%s' or alias '%s'",
-				planModel.Identifier.ValueString(),
-				string(updatedRepository.Id),
-				updatedRepository.DefaultAlias,
-			),
-		)
-		return
+	stateIdentifier := planModel.Identifier.ValueString()
+	if opslevel.IsID(stateIdentifier) {
+		stateModel.Identifier = types.StringValue(string(updatedRepository.Id))
+	} else {
+		stateModel.Identifier = types.StringValue(updatedRepository.DefaultAlias)
 	}
 
 	// Owner from plan can be an id or alias
