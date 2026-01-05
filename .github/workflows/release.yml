@@ -30,7 +30,7 @@ jobs:
           echo version_bump=$(echo $VERSION_BUMP | tr -d "\"") >> $GITHUB_OUTPUT
       - name: Determine Next Version
         id: next_version
-        uses: zwaldowski/semver-release-action@v4
+        uses: zwaldowski/semver-release-action@v5
         with:
           dry_run: true
           bump: ${{ steps.bump.outputs.version_bump }}
