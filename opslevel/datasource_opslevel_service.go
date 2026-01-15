@@ -262,7 +262,6 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	stateModel := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 
-	// Get full system data using the fixed GetSystem() method
 	if service.Parent != nil {
 		system, err := service.GetSystem(d.client, nil)
 		if err != nil {
