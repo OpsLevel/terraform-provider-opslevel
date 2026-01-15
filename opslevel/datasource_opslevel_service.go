@@ -216,8 +216,12 @@ func (d *ServiceDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "The system that the service belongs to.",
 				Computed:    true,
 				AttributeTypes: map[string]attr.Type{
-					"aliases": types.ListType{ElemType: types.StringType},
-					"id":      types.StringType,
+					"aliases":     types.ListType{ElemType: types.StringType},
+					"description": types.StringType,
+					"domain":      types.StringType,
+					"id":          types.StringType,
+					"name":        types.StringType,
+					"owner":       types.StringType,
 				},
 			},
 			"tags": schema.ListAttribute{
@@ -258,13 +262,18 @@ func (d *ServiceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	stateModel := NewServiceDataSourceModel(ctx, service, planModel.Alias.ValueString())
 
-	// In the future we can use `service.GetSystem()` to get full data
-	// but for now, GetSystem is not working in opslevel-go
+	// Get full system data using the fixed GetSystem() method
 	if service.Parent != nil {
-		aliases := OptionalStringListValue(service.Parent.Aliases)
-		stateModel.System = &systemDataSourceModel{
-			Aliases: aliases,
-			Id:      ComputedStringValue(string(service.Parent.Id)),
+		system, err := service.GetSystem(d.client, nil)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("system"),
+				"OpsLevel Client Error",
+				fmt.Sprintf("unable to read System for service, got error: %s", err),
+			)
+		} else if system != nil {
+			systemModel := newSystemDataSourceModel(*system)
+			stateModel.System = &systemModel
 		}
 	}
 
