@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	opslevelgo "github.com/opslevel/opslevel-go/v2025"
+	opslevelgo "github.com/opslevel/opslevel-go/v2026"
 	opsleveltf "github.com/opslevel/terraform-provider-opslevel/opslevel"
 )
 

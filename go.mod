@@ -8,9 +8,9 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
-	github.com/opslevel/opslevel-go/v2025 v2025.12.17
+	github.com/opslevel/opslevel-go/v2026 v2026.1.15
 	github.com/relvacode/iso8601 v1.7.0
-	golang.org/x/net v0.48.0
+	golang.org/x/net v0.49.0
 )
 
 require (
@@ -19,8 +19,8 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.29.0 // indirect
-	github.com/go-resty/resty/v2 v2.17.0 // indirect
+	github.com/go-playground/validator/v10 v10.30.1 // indirect
+	github.com/go-resty/resty/v2 v2.17.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gosimple/slug v1.15.0 // indirect
@@ -45,9 +45,9 @@ require (
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

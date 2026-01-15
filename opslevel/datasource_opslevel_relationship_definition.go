@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/opslevel/opslevel-go/v2025"
+	"github.com/opslevel/opslevel-go/v2026"
 	"github.com/opslevel/terraform-provider-opslevel/internal"
 )
 

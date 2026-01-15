@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/opslevel/opslevel-go/v2025"
+	"github.com/opslevel/opslevel-go/v2026"
 )
 
 var _ resource.ResourceWithConfigure = &ServiceDependencyResource{}

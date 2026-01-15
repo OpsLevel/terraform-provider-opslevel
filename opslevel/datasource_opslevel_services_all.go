@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/opslevel/opslevel-go/v2025"
+	"github.com/opslevel/opslevel-go/v2026"
 )
 
 // Ensure ServiceDataSource implements DataSourceWithConfigure interface

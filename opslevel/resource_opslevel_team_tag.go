@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/opslevel/opslevel-go/v2025"
+	"github.com/opslevel/opslevel-go/v2026"
 )
 
 // Tag key names are stored in OpsLevel as lowercase so we need to ensure the configuration is written as lowercase

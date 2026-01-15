@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/opslevel/opslevel-go/v2025"
+	"github.com/opslevel/opslevel-go/v2026"
 )
 
 type TerraformSource interface {
