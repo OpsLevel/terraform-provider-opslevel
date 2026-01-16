@@ -73,6 +73,10 @@ Read-Only:
 Read-Only:
 
 - `aliases` (List of String)
+- `description` (String)
+- `domain` (String)
 - `id` (String)
+- `name` (String)
+- `owner` (String)
 
 
