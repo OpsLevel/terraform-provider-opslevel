@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
@@ -98,6 +100,9 @@ func (teamResource *TeamResource) Schema(ctx context.Context, req resource.Schem
 			"parent": schema.StringAttribute{
 				Description: "The id or alias of the parent team.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
 			},
 			"responsibilities": schema.StringAttribute{
 				Description: "A description of what the team is responsible for.",
@@ -180,7 +185,7 @@ func (teamResource *TeamResource) Create(ctx context.Context, req resource.Creat
 		createdTeamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
 	} else {
 		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		createdTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
+		createdTeamResourceModel.Parent = StringValueFromResourceAndModelField(team.ParentTeam.Alias, planModel.Parent)
 	}
 
 	tflog.Trace(ctx, "created a team resource")
@@ -216,7 +221,7 @@ func (teamResource *TeamResource) Read(ctx context.Context, req resource.ReadReq
 		readTeamResourceModel.Parent = types.StringValue(string(team.ParentTeam.Id))
 	} else {
 		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		readTeamResourceModel.Parent = OptionalStringValue(team.ParentTeam.Alias)
+		readTeamResourceModel.Parent = StringValueFromResourceAndModelField(team.ParentTeam.Alias, stateModel.Parent)
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readTeamResourceModel)...)
 }
@@ -298,7 +303,7 @@ func (teamResource *TeamResource) Update(ctx context.Context, req resource.Updat
 		updatedTeamResourceModel.Parent = types.StringValue(string(updatedTeam.ParentTeam.Id))
 	} else {
 		// TODO: error thrown if config has alias from the parent team that is not the default alias
-		updatedTeamResourceModel.Parent = OptionalStringValue(updatedTeam.ParentTeam.Alias)
+		updatedTeamResourceModel.Parent = StringValueFromResourceAndModelField(updatedTeam.ParentTeam.Alias, planModel.Parent)
 	}
 	tflog.Trace(ctx, "updated a team resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedTeamResourceModel)...)

@@ -44,7 +44,7 @@ type ServiceToolResourceModel struct {
 func NewServiceToolResourceModel(ctx context.Context, serviceTool opslevel.Tool, planModel ServiceToolResourceModel) ServiceToolResourceModel {
 	stateModel := ServiceToolResourceModel{
 		Category:    RequiredStringValue(string(serviceTool.Category)),
-		Environment: OptionalStringValue(serviceTool.Environment),
+		Environment: StringValueFromResourceAndModelField(serviceTool.Environment, planModel.Environment),
 		Id:          ComputedStringValue(string(serviceTool.Id)),
 		Name:        RequiredStringValue(serviceTool.DisplayName),
 		Url:         RequiredStringValue(serviceTool.Url),
@@ -77,6 +77,9 @@ func (r *ServiceToolResource) Schema(ctx context.Context, req resource.SchemaReq
 			"environment": schema.StringAttribute{
 				Description: "The environment that the tool belongs to.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.NoneOf(""),
+				},
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the serviceTool.",
