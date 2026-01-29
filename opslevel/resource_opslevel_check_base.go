@@ -50,7 +50,7 @@ func NewCheckCodeBaseResourceModel(check opslevel.Check, givenModel CheckCodeBas
 	stateModel.Id = ComputedStringValue(string(check.Id))
 	stateModel.Level = RequiredStringValue(string(check.Level.Id))
 	stateModel.Name = RequiredStringValue(check.Name)
-	stateModel.Notes = OptionalStringValue(check.Notes)
+	stateModel.Notes = StringValueFromResourceAndModelField(check.Notes, givenModel.Notes)
 	stateModel.Owner = OptionalStringValue(string(check.Owner.Team.Id))
 
 	return stateModel
@@ -105,6 +105,9 @@ var checkBaseAttributes = map[string]schema.Attribute{
 	"notes": schema.StringAttribute{
 		Description: "Additional information to display to the service owner about the check.",
 		Optional:    true,
+		Validators: []validator.String{
+			stringvalidator.NoneOf(""),
+		},
 	},
 	"owner": schema.StringAttribute{
 		Description: "The id of the team that owns the check.",
