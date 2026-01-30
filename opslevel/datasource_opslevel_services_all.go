@@ -69,7 +69,7 @@ type serviceMinimalaDataSourceModel struct {
 }
 
 func (d *ServiceDataSourcesAll) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	validFieldNames := []string{"filter", "framework", "language", "lifecycle", "owner", "product", "tag", "tier"}
+	validFieldNames := []string{"component_type", "filter", "framework", "language", "lifecycle", "owner", "product", "tag", "tier"}
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Services data source",
 
@@ -106,6 +106,13 @@ func (d *ServiceDataSourcesAll) Read(ctx context.Context, req datasource.ReadReq
 		services, err = d.client.ListServices(nil)
 	} else {
 		switch planModel.Filter.Field.ValueString() {
+		case "component_type":
+			componentTypeValue := planModel.Filter.Value.ValueString()
+			filterInput := opslevel.ServiceFilterInput{
+				Key: &opslevel.ServiceFilterEnumComponentTypeID,
+				Arg: componentTypeValue,
+			}
+			services, err = d.client.ListServicesWithInputFilter(filterInput, nil)
 		case "filter":
 			filterId := planModel.Filter.Value.ValueString()
 			if opslevel.IsID(filterId) {
