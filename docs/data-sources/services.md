@@ -36,17 +36,6 @@ data "opslevel_services" "frontend" {
   }
 }
 
-data "opslevel_component_type" "service" {
-  identifier = "service"
-}
-
-data "opslevel_services" "only_services" {
-  filter = {
-    field = "component_type"
-    value = data.opslevel_component_type.service.id
-  }
-}
-
 output "all_services" {
   value = data.opslevel_services.all.services
 }
@@ -74,7 +63,7 @@ output "frontend_services_urls" {
 
 ### Optional
 
-- `filter` (Attributes) Used to filter services by one of `component_type`, `filter`, `framework`, `language`, `lifecycle`, `owner`, `product`, `tag`, `tier` (see [below for nested schema](#nestedatt--filter))
+- `filter` (Attributes) Used to filter services by one of 'component_type`, `filter`, `framework`, `language`, `lifecycle`, `owner`, `product`, `tag`, `tier' (see [below for nested schema](#nestedatt--filter))
 
 ### Read-Only
 
@@ -86,7 +75,7 @@ output "frontend_services_urls" {
 Required:
 
 - `field` (String) The field of the target resource to filter upon. One of `component_type`, `filter`, `framework`, `language`, `lifecycle`, `owner`, `product`, `tag`, `tier`
-- `value` (String) The field value of the target resource to match. Note: For `component_type`, this must be the component type ID (not alias). Use a `data.opslevel_component_type` data source to get the ID.
+- `value` (String) The field value of the target resource to match.
 
 
 <a id="nestedatt--services"></a>
