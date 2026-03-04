@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -34,6 +35,7 @@ type PropertyAssignmentResourceModel struct {
 	Id         types.String `tfsdk:"id"`
 	Locked     types.Bool   `tfsdk:"locked"`
 	Owner      types.String `tfsdk:"owner"`
+	OwnerType  types.String `tfsdk:"owner_type"`
 	Value      types.String `tfsdk:"value"`
 }
 
@@ -80,8 +82,18 @@ func (resource *PropertyAssignmentResource) Schema(ctx context.Context, req reso
 				},
 			},
 			"owner": schema.StringAttribute{
-				Description: "The ID or alias of the entity that the property has been assigned to.",
+				Description: "The ID or alias of the entity (service or team) that the property has been assigned to.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"owner_type": schema.StringAttribute{
+				Description: "The type of the entity that the property is assigned to. Use \"TEAM\" when the owner is a team; defaults to \"COMPONENT\" (service).",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOfCaseInsensitive("COMPONENT", "TEAM"),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -112,15 +124,19 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 		Definition: *opslevel.NewIdentifier(planModel.Definition.ValueString()),
 		Owner:      *opslevel.NewIdentifier(planModel.Owner.ValueString()),
 	}
+	if planModel.OwnerType.ValueString() == "TEAM" {
+		te := opslevel.PropertyOwnerTypeEnumTeam
+		input.OwnerType = &te
+	}
 	if !planModel.Value.IsNull() {
 		input.Value = opslevel.JsonString(planModel.Value.ValueString())
 	} else {
-		resp.Diagnostics.AddError("config error", fmt.Sprintf("failed to assign property (%s) on service (%s), because the field 'value' was given null", definition, owner))
+		resp.Diagnostics.AddError("config error", fmt.Sprintf("failed to assign property (%s) on owner (%s), because the field 'value' was given null", definition, owner))
 		return
 	}
 	assignment, err := resource.client.PropertyAssign(input)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to assign property (%s) on service (%s), got error: %s", definition, owner, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to assign property (%s) on owner (%s), got error: %s", definition, owner, err))
 		return
 	}
 
@@ -128,8 +144,16 @@ func (resource *PropertyAssignmentResource) Create(ctx context.Context, req reso
 	// user is free to use either alias or ID for 'owner' and 'definition' fields
 	stateModel.Owner = planModel.Owner
 	stateModel.Definition = planModel.Definition
+	stateModel.OwnerType = planModel.OwnerType
+	if stateModel.OwnerType.IsNull() {
+		stateModel.OwnerType = types.StringValue("COMPONENT")
+	}
 
-	tflog.Trace(ctx, fmt.Sprintf("assigned property (%s) on service (%s) with value: '%s'", definition, owner, input.Value))
+	entityDesc := "service"
+	if planModel.OwnerType.ValueString() == "TEAM" {
+		entityDesc = "team"
+	}
+	tflog.Trace(ctx, fmt.Sprintf("assigned property (%s) on %s (%s) with value: '%s'", definition, entityDesc, owner, input.Value))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
 
@@ -143,7 +167,7 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	owner := stateModel.Owner.ValueString()
 	assignment, err := resource.client.GetProperty(owner, definition)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on service '%s', got error: %s", definition, owner, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read property assignment '%s' on owner '%s', got error: %s", definition, owner, err))
 		return
 	}
 	if assignment == nil {
@@ -155,8 +179,12 @@ func (resource *PropertyAssignmentResource) Read(ctx context.Context, req resour
 	// user is free to use either alias or ID for 'owner' and 'definition' fields
 	verifiedStateModel.Owner = stateModel.Owner
 	verifiedStateModel.Definition = stateModel.Definition
+	verifiedStateModel.OwnerType = stateModel.OwnerType
+	if verifiedStateModel.OwnerType.IsNull() {
+		verifiedStateModel.OwnerType = types.StringValue("COMPONENT")
+	}
 
-	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on service (%s) with value: '%v'", definition, owner, assignment.Value))
+	tflog.Trace(ctx, fmt.Sprintf("read property assignment (%s) on owner (%s) with value: '%v'", definition, owner, assignment.Value))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &verifiedStateModel)...)
 }
 
@@ -172,12 +200,17 @@ func (resource *PropertyAssignmentResource) Delete(ctx context.Context, req reso
 
 	definition := planModel.Definition.ValueString()
 	owner := planModel.Owner.ValueString()
-	err := resource.client.PropertyUnassign(owner, definition)
+	var ownerType *opslevel.PropertyOwnerTypeEnum
+	if planModel.OwnerType.ValueString() == "TEAM" {
+		te := opslevel.PropertyOwnerTypeEnumTeam
+		ownerType = &te
+	}
+	err := resource.client.PropertyUnassign(owner, definition, ownerType)
 	if err != nil {
-		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to unassign property (%s) on service (%s), got error: %s", definition, owner, err))
+		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("failed to unassign property (%s) on owner (%s), got error: %s", definition, owner, err))
 		return
 	}
-	tflog.Trace(ctx, fmt.Sprintf("unassigned property (%s) on service (%s)", definition, owner))
+	tflog.Trace(ctx, fmt.Sprintf("unassigned property (%s) on owner (%s)", definition, owner))
 }
 
 func (r *PropertyAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -185,17 +218,17 @@ func (r *PropertyAssignmentResource) ImportState(ctx context.Context, req resour
 	if len(ids) != 2 {
 		resp.Diagnostics.AddError(
 			"Invalid format given for Import Id",
-			fmt.Sprintf("Id expected to be formatted as '<service-id-or-alias>:<property-id-or-alias>'. Given '%s'", req.ID),
+			fmt.Sprintf("Id expected to be formatted as '<owner-id-or-alias>:<definition-id-or-alias>' (owner can be a service or team). Given '%s'", req.ID),
 		)
 		return
 	}
 
-	serviceId := ids[0]
+	ownerId := ids[0]
 	propertyId := ids[1]
 
 	definitionPath := path.Root("definition")
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, definitionPath, propertyId)...)
 
 	ownerPath := path.Root("owner")
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, ownerPath, serviceId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, ownerPath, ownerId)...)
 }

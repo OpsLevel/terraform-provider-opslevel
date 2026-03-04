@@ -56,3 +56,5 @@ require (
 )
 
 // replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
+// For local testing with opslevel-go team-properties changes, uncomment:
+// replace github.com/opslevel/opslevel-go/v2026 => ../opslevel-go
