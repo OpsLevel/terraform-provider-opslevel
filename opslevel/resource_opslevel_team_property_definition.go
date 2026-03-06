@@ -39,20 +39,12 @@ type TeamPropertyDefinitionResourceModel struct {
 	Schema       types.String `tfsdk:"schema"`
 }
 
-func lockedStatusEnumFrom(s string) *opslevel.PropertyLockedStatusEnum {
-	if s == "" {
-		return nil
-	}
-	v := opslevel.PropertyLockedStatusEnum(s)
-	return &v
-}
-
 func NewTeamPropertyDefinitionResourceModel(definition opslevel.TeamPropertyDefinition, givenModel TeamPropertyDefinitionResourceModel) TeamPropertyDefinitionResourceModel {
 	return TeamPropertyDefinitionResourceModel{
 		Alias:        RequiredStringValue(definition.Alias),
 		Description:  StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
 		Id:           ComputedStringValue(string(definition.Id)),
-		LockedStatus: RequiredStringValue(string(definition.LockedStatus)),
+		LockedStatus: ComputedStringValue(string(definition.LockedStatus)),
 		Name:         RequiredStringValue(definition.Name),
 		Schema:       RequiredStringValue(definition.Schema.AsString()),
 	}
@@ -122,7 +114,7 @@ func (r *TeamPropertyDefinitionResource) Create(ctx context.Context, req resourc
 	input := opslevel.TeamPropertyDefinitionInput{
 		Alias:        planModel.Alias.ValueString(),
 		Description:  planModel.Description.ValueString(),
-		LockedStatus: lockedStatusEnumFrom(planModel.LockedStatus.ValueString()),
+		LockedStatus: asEnumNonEmpty[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
 		Name:         planModel.Name.ValueString(),
 		Schema:       *definitionSchema,
 	}
@@ -146,7 +138,7 @@ func (r *TeamPropertyDefinitionResource) Read(ctx context.Context, req resource.
 	id := stateModel.Id.ValueString()
 	definition, err := r.client.GetTeamPropertyDefinition(id)
 	if err != nil {
-		if (definition == nil || definition.Id == "") && opslevel.IsOpsLevelApiError(err) {
+		if definition == nil || definition.Id == "" {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -175,7 +167,7 @@ func (r *TeamPropertyDefinitionResource) Update(ctx context.Context, req resourc
 	input := opslevel.TeamPropertyDefinitionInput{
 		Alias:        planModel.Alias.ValueString(),
 		Description:  planModel.Description.ValueString(),
-		LockedStatus: lockedStatusEnumFrom(planModel.LockedStatus.ValueString()),
+		LockedStatus: asEnumNonEmpty[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
 		Name:         planModel.Name.ValueString(),
 		Schema:       *definitionSchema,
 	}
@@ -203,11 +195,16 @@ func (r *TeamPropertyDefinitionResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
+	seen := make(map[string]bool)
 	remaining := make([]opslevel.TeamPropertyDefinitionInput, 0, len(defs.Nodes))
 	for _, d := range defs.Nodes {
 		if string(d.Id) == stateModel.Id.ValueString() {
 			continue
 		}
+		if seen[d.Alias] {
+			continue
+		}
+		seen[d.Alias] = true
 		lockedStatus := d.LockedStatus
 		remaining = append(remaining, opslevel.TeamPropertyDefinitionInput{
 			Alias:        d.Alias,

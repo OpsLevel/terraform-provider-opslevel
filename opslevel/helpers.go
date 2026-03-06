@@ -63,3 +63,14 @@ func asEnum[T ~string](s *string) *T {
 	value := T(*s)
 	return &value
 }
+
+// asEnumNonEmpty is like asEnum but also returns nil for empty strings.
+// Use this for Optional+Computed enum fields where the framework may return
+// a non-nil pointer to "" for unset values.
+func asEnumNonEmpty[T ~string](s *string) *T {
+	if s == nil || *s == "" {
+		return nil
+	}
+	value := T(*s)
+	return &value
+}
