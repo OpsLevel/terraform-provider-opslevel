@@ -39,6 +39,14 @@ type TeamPropertyDefinitionResourceModel struct {
 	Schema       types.String `tfsdk:"schema"`
 }
 
+func lockedStatusEnumFrom(s string) *opslevel.PropertyLockedStatusEnum {
+	if s == "" {
+		return nil
+	}
+	v := opslevel.PropertyLockedStatusEnum(s)
+	return &v
+}
+
 func NewTeamPropertyDefinitionResourceModel(definition opslevel.TeamPropertyDefinition, givenModel TeamPropertyDefinitionResourceModel) TeamPropertyDefinitionResourceModel {
 	return TeamPropertyDefinitionResourceModel{
 		Alias:        RequiredStringValue(definition.Alias),
@@ -114,7 +122,7 @@ func (r *TeamPropertyDefinitionResource) Create(ctx context.Context, req resourc
 	input := opslevel.TeamPropertyDefinitionInput{
 		Alias:        planModel.Alias.ValueString(),
 		Description:  planModel.Description.ValueString(),
-		LockedStatus: asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
+		LockedStatus: lockedStatusEnumFrom(planModel.LockedStatus.ValueString()),
 		Name:         planModel.Name.ValueString(),
 		Schema:       *definitionSchema,
 	}
@@ -167,7 +175,7 @@ func (r *TeamPropertyDefinitionResource) Update(ctx context.Context, req resourc
 	input := opslevel.TeamPropertyDefinitionInput{
 		Alias:        planModel.Alias.ValueString(),
 		Description:  planModel.Description.ValueString(),
-		LockedStatus: asEnum[opslevel.PropertyLockedStatusEnum](planModel.LockedStatus.ValueStringPointer()),
+		LockedStatus: lockedStatusEnumFrom(planModel.LockedStatus.ValueString()),
 		Name:         planModel.Name.ValueString(),
 		Schema:       *definitionSchema,
 	}
