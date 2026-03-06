@@ -138,7 +138,7 @@ func (r *TeamPropertyDefinitionResource) Read(ctx context.Context, req resource.
 	id := stateModel.Id.ValueString()
 	definition, err := r.client.GetTeamPropertyDefinition(id)
 	if err != nil {
-		if definition == nil || definition.Id == "" {
+		if (definition == nil || definition.Id == "") && opslevel.IsOpsLevelApiError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
