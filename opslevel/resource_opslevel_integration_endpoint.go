@@ -42,7 +42,7 @@ func NewIntegrationEndpointResourceModel(integrationEndpoint opslevel.Integratio
 	return IntegrationEndpointResourceModel{
 		Id:         ComputedStringValue(string(integrationEndpoint.Id)),
 		Name:       RequiredStringValue(integrationEndpoint.Name),
-		Type:       RequiredStringValue(givenModel.Type.ValueString()),
+		Type:       RequiredStringValue(integrationEndpoint.Type),
 		WebhookURL: ComputedStringValue(*integrationEndpoint.WebhookURL),
 	}
 }
