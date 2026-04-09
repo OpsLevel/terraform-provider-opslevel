@@ -189,6 +189,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewCheckServicePropertyResource,
 		NewCheckTagDefinedResource,
 		NewCheckToolUsageResource,
+		NewCampaignResource,
 		NewComponentTypeResource,
 		NewDomainResource,
 		NewFilterResource,
