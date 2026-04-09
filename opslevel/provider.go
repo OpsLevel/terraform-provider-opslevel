@@ -229,6 +229,8 @@ func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		NewComponentTypeDataSourceSingle,
 		NewComponentTypeDataSourceMulti,
+		NewCampaignDataSource,
+		NewCampaignDataSourcesAll,
 		NewCategoryDataSource,
 		NewCategoryDataSourcesAll,
 		NewDomainDataSource,
