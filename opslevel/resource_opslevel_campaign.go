@@ -19,6 +19,8 @@ var _ resource.ResourceWithConfigure = &CampaignResource{}
 
 var _ resource.ResourceWithImportState = &CampaignResource{}
 
+var _ resource.ResourceWithValidateConfig = &CampaignResource{}
+
 func NewCampaignResource() resource.Resource {
 	return &CampaignResource{}
 }
@@ -120,6 +122,23 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Computed:    true,
 			},
 		},
+	}
+}
+
+func (r *CampaignResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config CampaignResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	hasStart := !config.StartDate.IsNull() && !config.StartDate.IsUnknown()
+	hasTarget := !config.TargetDate.IsNull() && !config.TargetDate.IsUnknown()
+	if hasStart != hasTarget {
+		resp.Diagnostics.AddError(
+			"Invalid Campaign Schedule",
+			"Both start_date and target_date must be set together to schedule a campaign, or both must be omitted.",
+		)
 	}
 }
 
