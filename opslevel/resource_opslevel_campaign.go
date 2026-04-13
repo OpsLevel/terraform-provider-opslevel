@@ -30,15 +30,16 @@ type CampaignResource struct {
 }
 
 type CampaignResourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	OwnerId      types.String `tfsdk:"owner_id"`
-	FilterId     types.String `tfsdk:"filter_id"`
-	ProjectBrief types.String `tfsdk:"project_brief"`
-	StartDate    types.String `tfsdk:"start_date"`
-	TargetDate   types.String `tfsdk:"target_date"`
-	Status       types.String `tfsdk:"status"`
-	HtmlUrl      types.String `tfsdk:"html_url"`
+	Id             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	OwnerId        types.String `tfsdk:"owner_id"`
+	FilterId       types.String `tfsdk:"filter_id"`
+	ProjectBrief   types.String `tfsdk:"project_brief"`
+	CheckIds       types.List   `tfsdk:"check_ids"`
+	StartDate      types.String `tfsdk:"start_date"`
+	TargetDate     types.String `tfsdk:"target_date"`
+	Status         types.String `tfsdk:"status"`
+	HtmlUrl        types.String `tfsdk:"html_url"`
 }
 
 func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignResourceModel) CampaignResourceModel {
@@ -105,6 +106,11 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Description: "The project brief of the campaign (Markdown).",
 				Optional:    true,
 			},
+			"check_ids": schema.ListAttribute{
+				Description: "List of check IDs to associate with this campaign.",
+				Optional:    true,
+				ElementType: types.StringType,
+			},
 			"start_date": schema.StringAttribute{
 				Description: "The start date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.",
 				Optional:    true,
@@ -158,6 +164,16 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	if !planModel.ProjectBrief.IsNull() {
 		brief := planModel.ProjectBrief.ValueString()
 		input.ProjectBrief = &brief
+	}
+	if !planModel.CheckIds.IsNull() && !planModel.CheckIds.IsUnknown() {
+		var checkIdStrings []string
+		resp.Diagnostics.Append(planModel.CheckIds.ElementsAs(ctx, &checkIdStrings, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		for _, cid := range checkIdStrings {
+			input.CheckIdsToCopy = append(input.CheckIdsToCopy, opslevel.ID(cid))
+		}
 	}
 
 	campaign, err := r.client.CreateCampaign(input)
