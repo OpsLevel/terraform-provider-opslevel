@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -51,14 +52,9 @@ func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignRes
 		OwnerId:      OptionalStringValue(string(campaign.Owner.Id)),
 		FilterId:     OptionalStringValue(string(campaign.Filter.Id)),
 		ProjectBrief: StringValueFromResourceAndModelField(campaign.RawProjectBrief, givenModel.ProjectBrief),
+		CheckIds:     types.ListNull(types.StringType),
 		Status:       ComputedStringValue(string(campaign.Status)),
 		HtmlUrl:      ComputedStringValue(campaign.HtmlUrl),
-	}
-
-	if givenModel.CheckIds.IsNull() || givenModel.CheckIds.IsUnknown() {
-		model.CheckIds = types.ListNull(types.StringType)
-	} else {
-		model.CheckIds = givenModel.CheckIds
 	}
 
 	if !campaign.StartDate.IsZero() {
@@ -221,6 +217,7 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	createdModel := NewCampaignResourceModel(*campaign, planModel)
+	createdModel.CheckIds = planModel.CheckIds
 	tflog.Trace(ctx, "created a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdModel)...)
 }
@@ -243,6 +240,10 @@ func (r *CampaignResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	readModel := NewCampaignResourceModel(*campaign, stateModel)
+	readModel.CheckIds = r.readCampaignCheckIds(ctx, &resp.Diagnostics, campaign.Id, stateModel.CheckIds)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &readModel)...)
 }
 
@@ -319,6 +320,7 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
+	updatedModel.CheckIds = planModel.CheckIds
 	tflog.Trace(ctx, "updated a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedModel)...)
 }
@@ -340,6 +342,69 @@ func (r *CampaignResource) Delete(ctx context.Context, req resource.DeleteReques
 
 func (r *CampaignResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// readCampaignCheckIds queries the campaign's actual checks from the API and
+// returns only the rubric check IDs (from priorCheckIds) whose corresponding
+// campaign check still exists. This enables drift detection when checks are
+// removed outside Terraform.
+func (r *CampaignResource) readCampaignCheckIds(
+	ctx context.Context,
+	diags *diag.Diagnostics,
+	campaignId opslevel.ID,
+	priorCheckIds types.List,
+) types.List {
+	if priorCheckIds.IsNull() || priorCheckIds.IsUnknown() {
+		return types.ListNull(types.StringType)
+	}
+
+	var priorIds []string
+	diags.Append(priorCheckIds.ElementsAs(ctx, &priorIds, false)...)
+	if diags.HasError() {
+		return types.ListNull(types.StringType)
+	}
+	if len(priorIds) == 0 {
+		return priorCheckIds
+	}
+
+	campaignChecks, err := r.client.ListCampaignChecks(campaignId)
+	if err != nil {
+		title, detail := formatOpslevelError("list campaign checks for read", err)
+		diags.AddError(title, detail)
+		return types.ListNull(types.StringType)
+	}
+
+	campaignCheckNames := make(map[string]bool, len(campaignChecks))
+	for _, cc := range campaignChecks {
+		campaignCheckNames[cc.Name] = true
+	}
+
+	var verified []string
+	for _, rubricID := range priorIds {
+		check, err := r.client.GetCheck(opslevel.ID(rubricID))
+		if err != nil {
+			tflog.Warn(ctx, "could not look up rubric check during read, keeping in state",
+				map[string]any{"rubric_check_id": rubricID, "error": err.Error()})
+			verified = append(verified, rubricID)
+			continue
+		}
+		if campaignCheckNames[check.Name] {
+			verified = append(verified, rubricID)
+		} else {
+			tflog.Info(ctx, "rubric check no longer present in campaign, removing from state",
+				map[string]any{"rubric_check_id": rubricID, "check_name": check.Name})
+		}
+	}
+
+	if len(verified) == 0 {
+		return types.ListValueMust(types.StringType, []attr.Value{})
+	}
+
+	vals := make([]attr.Value, len(verified))
+	for i, id := range verified {
+		vals[i] = types.StringValue(id)
+	}
+	return types.ListValueMust(types.StringType, vals)
 }
 
 func (r *CampaignResource) reconcileCampaignChecks(
