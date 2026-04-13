@@ -159,6 +159,14 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 		brief := planModel.ProjectBrief.ValueString()
 		input.ProjectBrief = &brief
 	}
+
+	campaign, err := r.client.CreateCampaign(input)
+	if err != nil || campaign == nil {
+		title, detail := formatOpslevelError("create campaign", err)
+		resp.Diagnostics.AddError(title, detail)
+		return
+	}
+
 	if !planModel.StartDate.IsNull() && !planModel.TargetDate.IsNull() {
 		startDate, sdErr := iso8601.ParseString(planModel.StartDate.ValueString() + "T00:00:00Z")
 		targetDate, tdErr := iso8601.ParseString(planModel.TargetDate.ValueString() + "T00:00:00Z")
@@ -166,15 +174,17 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 			resp.Diagnostics.AddError("invalid date", "start_date and target_date must be valid dates (YYYY-MM-DD)")
 			return
 		}
-		input.StartDate = &iso8601.Time{Time: startDate}
-		input.TargetDate = &iso8601.Time{Time: targetDate}
-	}
-
-	campaign, err := r.client.CreateCampaign(input)
-	if err != nil || campaign == nil {
-		title, detail := formatOpslevelError("create campaign", err)
-		resp.Diagnostics.AddError(title, detail)
-		return
+		scheduled, err := r.client.ScheduleCampaign(opslevel.CampaignScheduleUpdateInput{
+			Id:         campaign.Id,
+			StartDate:  iso8601.Time{Time: startDate},
+			TargetDate: iso8601.Time{Time: targetDate},
+		})
+		if err != nil {
+			title, detail := formatOpslevelError("schedule campaign", err)
+			resp.Diagnostics.AddError(title, detail)
+			return
+		}
+		campaign = scheduled
 	}
 
 	createdModel := NewCampaignResourceModel(*campaign, planModel)
@@ -232,6 +242,13 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 		updateInput.ProjectBrief = &brief
 	}
 
+	campaign, err := r.client.UpdateCampaign(updateInput)
+	if err != nil {
+		title, detail := formatOpslevelError("update campaign", err)
+		resp.Diagnostics.AddError(title, detail)
+		return
+	}
+
 	planHasDates := !planModel.StartDate.IsNull() && !planModel.TargetDate.IsNull()
 	stateHasDates := !stateModel.StartDate.IsNull() && !stateModel.TargetDate.IsNull()
 
@@ -242,18 +259,18 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 			resp.Diagnostics.AddError("invalid date", "start_date and target_date must be valid dates (YYYY-MM-DD)")
 			return
 		}
-		updateInput.StartDate = &iso8601.Time{Time: startDate}
-		updateInput.TargetDate = &iso8601.Time{Time: targetDate}
-	}
-
-	campaign, err := r.client.UpdateCampaign(updateInput)
-	if err != nil {
-		title, detail := formatOpslevelError("update campaign", err)
-		resp.Diagnostics.AddError(title, detail)
-		return
-	}
-
-	if stateHasDates && !planHasDates {
+		scheduled, err := r.client.ScheduleCampaign(opslevel.CampaignScheduleUpdateInput{
+			Id:         campaignId,
+			StartDate:  iso8601.Time{Time: startDate},
+			TargetDate: iso8601.Time{Time: targetDate},
+		})
+		if err != nil {
+			title, detail := formatOpslevelError("schedule campaign", err)
+			resp.Diagnostics.AddError(title, detail)
+			return
+		}
+		campaign = scheduled
+	} else if stateHasDates && !planHasDates {
 		unscheduled, err := r.client.UnscheduleCampaign(campaignId)
 		if err != nil {
 			title, detail := formatOpslevelError("unschedule campaign", err)
