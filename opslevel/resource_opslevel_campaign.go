@@ -407,6 +407,21 @@ func (r *CampaignResource) readCampaignCheckIds(
 	return types.ListValueMust(types.StringType, vals)
 }
 
+// DiffCheckIds computes which IDs to add and remove given two sets of IDs.
+func DiffCheckIds(stateIds, planIds map[string]bool) (toAdd []string, toRemove []string) {
+	for id := range planIds {
+		if !stateIds[id] {
+			toAdd = append(toAdd, id)
+		}
+	}
+	for id := range stateIds {
+		if !planIds[id] {
+			toRemove = append(toRemove, id)
+		}
+	}
+	return toAdd, toRemove
+}
+
 func (r *CampaignResource) reconcileCampaignChecks(
 	ctx context.Context,
 	diags *diag.Diagnostics,
@@ -420,18 +435,11 @@ func (r *CampaignResource) reconcileCampaignChecks(
 		return
 	}
 
-	var toAdd []opslevel.ID
-	for id := range planIds {
-		if !stateIds[id] {
-			toAdd = append(toAdd, opslevel.ID(id))
-		}
-	}
+	added, toRemove := DiffCheckIds(stateIds, planIds)
 
-	var toRemove []string
-	for id := range stateIds {
-		if !planIds[id] {
-			toRemove = append(toRemove, id)
-		}
+	toAdd := make([]opslevel.ID, len(added))
+	for i, id := range added {
+		toAdd[i] = opslevel.ID(id)
 	}
 
 	if len(toAdd) == 0 && len(toRemove) == 0 {
