@@ -114,7 +114,7 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:    true,
 			},
 			"check_ids": schema.ListAttribute{
-				Description: "List of check IDs to associate with this campaign.",
+				Description: "List of rubric check IDs to copy into this campaign on creation. The OpsLevel API only supports adding checks (not removing), so changes after initial creation are ignored.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -310,27 +310,6 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 			return
 		}
 		campaign = unscheduled
-	}
-
-	if !planModel.CheckIds.IsNull() && !planModel.CheckIds.IsUnknown() {
-		if !planModel.CheckIds.Equal(stateModel.CheckIds) {
-			checkIds := extractCheckIds(ctx, &resp.Diagnostics, planModel.CheckIds)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			if len(checkIds) > 0 {
-				updated, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
-					CampaignId: campaignId,
-					CheckIds:   checkIds,
-				})
-				if err != nil {
-					title, detail := formatOpslevelError("copy checks to campaign", err)
-					resp.Diagnostics.AddError(title, detail)
-					return
-				}
-				campaign = updated
-			}
-		}
 	}
 
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
