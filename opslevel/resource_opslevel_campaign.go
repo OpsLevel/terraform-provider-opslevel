@@ -156,11 +156,9 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	input := opslevel.CampaignCreateInput{
-		Name:    planModel.Name.ValueString(),
-		OwnerId: opslevel.ID(planModel.OwnerId.ValueString()),
-	}
-	if !planModel.FilterId.IsNull() {
-		input.FilterId = opslevel.RefOf(opslevel.ID(planModel.FilterId.ValueString()))
+		Name:     planModel.Name.ValueString(),
+		OwnerId:  opslevel.ID(planModel.OwnerId.ValueString()),
+		FilterId: nullableID(planModel.FilterId.ValueStringPointer()),
 	}
 	if !planModel.ProjectBrief.IsNull() {
 		brief := planModel.ProjectBrief.ValueString()
@@ -262,11 +260,7 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 
 	updateInput.OwnerId = opslevel.RefOf(opslevel.ID(planModel.OwnerId.ValueString()))
 
-	if !planModel.FilterId.IsNull() {
-		updateInput.FilterId = opslevel.RefOf(opslevel.ID(planModel.FilterId.ValueString()))
-	} else if !stateModel.FilterId.IsNull() {
-		updateInput.FilterId = opslevel.RefOf(opslevel.ID(""))
-	}
+	updateInput.FilterId = nullableID(planModel.FilterId.ValueStringPointer())
 
 	if !planModel.ProjectBrief.IsNull() {
 		brief := planModel.ProjectBrief.ValueString()
