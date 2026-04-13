@@ -82,13 +82,13 @@ type campaignDataSourceModel struct {
 
 func newCampaignDataSourceModel(campaign opslevel.Campaign, identifier string) campaignDataSourceModel {
 	model := campaignDataSourceModel{
-		FilterId:     OptionalStringValue(string(campaign.Filter.Id)),
+		FilterId:     ComputedStringValue(string(campaign.Filter.Id)),
 		HtmlUrl:      ComputedStringValue(campaign.HtmlUrl),
 		Id:           ComputedStringValue(string(campaign.Id)),
 		Identifier:   ComputedStringValue(identifier),
 		Name:         ComputedStringValue(campaign.Name),
-		OwnerId:      OptionalStringValue(string(campaign.Owner.Id)),
-		ProjectBrief: OptionalStringValue(campaign.RawProjectBrief),
+		OwnerId:      ComputedStringValue(string(campaign.Owner.Id)),
+		ProjectBrief: ComputedStringValue(campaign.RawProjectBrief),
 		Status:       ComputedStringValue(string(campaign.Status)),
 	}
 	if !campaign.StartDate.IsZero() {

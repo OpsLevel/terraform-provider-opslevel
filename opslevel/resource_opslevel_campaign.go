@@ -59,16 +59,12 @@ func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignRes
 
 	if !campaign.StartDate.IsZero() {
 		model.StartDate = types.StringValue(campaign.StartDate.Format("2006-01-02"))
-	} else if givenModel.StartDate.IsNull() || givenModel.StartDate.IsUnknown() {
-		model.StartDate = types.StringNull()
 	} else {
 		model.StartDate = types.StringNull()
 	}
 
 	if !campaign.TargetDate.IsZero() {
 		model.TargetDate = types.StringValue(campaign.TargetDate.Format("2006-01-02"))
-	} else if givenModel.TargetDate.IsNull() || givenModel.TargetDate.IsUnknown() {
-		model.TargetDate = types.StringNull()
 	} else {
 		model.TargetDate = types.StringNull()
 	}
@@ -113,6 +109,7 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 			"check_ids": schema.ListAttribute{
 				Description: "List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.",
 				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 			},
 			"start_date": schema.StringAttribute{
@@ -374,9 +371,15 @@ func (r *CampaignResource) readCampaignCheckIds(
 		return types.ListNull(types.StringType)
 	}
 
-	campaignCheckNames := make(map[string]bool, len(campaignChecks))
+	campaignCheckNames := make(map[string]int, len(campaignChecks))
 	for _, cc := range campaignChecks {
-		campaignCheckNames[cc.Name] = true
+		campaignCheckNames[cc.Name]++
+	}
+	for name, count := range campaignCheckNames {
+		if count > 1 {
+			tflog.Warn(ctx, "multiple campaign checks share the same name; matching may be unreliable",
+				map[string]any{"check_name": name, "count": count})
+		}
 	}
 
 	var verified []string
@@ -388,7 +391,7 @@ func (r *CampaignResource) readCampaignCheckIds(
 			verified = append(verified, rubricID)
 			continue
 		}
-		if campaignCheckNames[check.Name] {
+		if campaignCheckNames[check.Name] > 0 {
 			verified = append(verified, rubricID)
 		} else {
 			tflog.Info(ctx, "rubric check no longer present in campaign, removing from state",
@@ -468,8 +471,16 @@ func (r *CampaignResource) reconcileCampaignChecks(
 		}
 
 		campaignCheckByName := make(map[string]opslevel.ID, len(campaignChecks))
+		seen := make(map[string]int, len(campaignChecks))
 		for _, cc := range campaignChecks {
+			seen[cc.Name]++
 			campaignCheckByName[cc.Name] = cc.Id
+		}
+		for name, count := range seen {
+			if count > 1 {
+				tflog.Warn(ctx, "multiple campaign checks share the same name; deletion may target the wrong check",
+					map[string]any{"check_name": name, "count": count})
+			}
 		}
 
 		for _, name := range rubricNamesByID {

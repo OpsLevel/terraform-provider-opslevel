@@ -1,3 +1,9 @@
+# Campaign data sources
+
+data "opslevel_campaign" "mock_campaign" {
+  identifier = "Z2lkOi8vb3BzbGV2ZWwvQ2FtcGFpZ24vMTIz"
+}
+
 # Domain data sources
 
 data "opslevel_domain" "mock_domain" {

@@ -10,3 +10,13 @@ variable "project_brief" {
   type    = string
   default = null
 }
+
+variable "start_date" {
+  type    = string
+  default = null
+}
+
+variable "target_date" {
+  type    = string
+  default = null
+}

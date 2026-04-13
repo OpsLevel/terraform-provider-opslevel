@@ -44,6 +44,25 @@ resource "opslevel_campaign" "upgrade_rails" {
 }
 ```
 
+### Campaign with checks
+
+```terraform
+resource "opslevel_campaign" "soc2_compliance" {
+  name      = "SOC2 Compliance Rollout"
+  owner_id  = data.opslevel_team.platform.id
+  filter_id = data.opslevel_filter.tier_1.id
+
+  check_ids = [
+    opslevel_check_custom_event.secret_rotation.id,
+    opslevel_check_custom_event.dependency_scanning.id,
+  ]
+
+  project_brief = <<-EOT
+    All Tier 1 services must pass SOC2 checks by end of Q3.
+  EOT
+}
+```
+
 ### Scheduled campaign
 
 ```terraform
@@ -61,6 +80,14 @@ resource "opslevel_campaign" "python_upgrade" {
 }
 ```
 
+## Check Management
+
+The `check_ids` attribute accepts a list of rubric check IDs. On create, these checks are copied into the campaign. On update, the provider reconciles the list — adding new checks and removing stale ones to match the desired configuration.
+
+Terraform detects drift: if a check is removed from the campaign outside of Terraform (e.g. via the UI), the next `terraform plan` will show it as needing to be re-added.
+
+~> **Note:** The OpsLevel API copies checks into campaigns as separate instances with different IDs but the same name. The provider matches rubric checks to campaign checks by name. If two rubric checks share the same name, the provider may not be able to distinguish them, which can lead to incorrect removal. Ensure rubric check names are unique when using `check_ids`.
+
 ## Schedule Management
 
 Setting both `start_date` and `target_date` schedules the campaign. Removing both fields unschedules it back to draft status.
@@ -77,6 +104,7 @@ Both fields must be set together — setting only one will result in an error.
 
 ### Optional
 
+- `check_ids` (List of String) List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `project_brief` (String) The project brief of the campaign (Markdown).
 - `start_date` (String) The start date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.

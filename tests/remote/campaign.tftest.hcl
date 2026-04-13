@@ -4,7 +4,7 @@ variables {
   project_brief = "Integration test campaign created by Terraform"
 }
 
-run "resource_campaign_create" {
+run "resource_campaign_create_draft" {
   variables {
     name          = var.name
     owner_id      = var.owner_id
@@ -40,7 +40,36 @@ run "resource_campaign_create" {
   }
 }
 
-run "resource_campaign_update" {
+run "resource_campaign_schedule" {
+  variables {
+    name          = var.name
+    owner_id      = var.owner_id
+    project_brief = var.project_brief
+    start_date    = "2026-08-01"
+    target_date   = "2026-12-31"
+  }
+
+  module {
+    source = "./campaign"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.start_date == "2026-08-01"
+    error_message = "campaign start_date does not match"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.target_date == "2026-12-31"
+    error_message = "campaign target_date does not match"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.status == "scheduled"
+    error_message = "campaign should be in scheduled status after setting dates"
+  }
+}
+
+run "resource_campaign_unschedule" {
   variables {
     name          = "TF Test Campaign Updated"
     owner_id      = var.owner_id
@@ -59,5 +88,10 @@ run "resource_campaign_update" {
   assert {
     condition     = opslevel_campaign.test.project_brief == "Updated project brief"
     error_message = "campaign project_brief was not updated"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.status == "draft"
+    error_message = "campaign should be back in draft status after removing dates"
   }
 }
