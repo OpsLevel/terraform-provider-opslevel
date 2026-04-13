@@ -52,6 +52,16 @@ run "resource_campaign_big" {
     condition     = opslevel_campaign.big.html_url == "https://app.opslevel.com/campaigns/test"
     error_message = "wrong html_url in opslevel_campaign.big"
   }
+
+  assert {
+    condition     = length(opslevel_campaign.big.check_ids) == 1
+    error_message = "wrong number of check_ids in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = opslevel_campaign.big.check_ids[0] == var.test_id
+    error_message = "wrong check_ids[0] in opslevel_campaign.big"
+  }
 }
 
 run "resource_campaign_small" {

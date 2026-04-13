@@ -28,6 +28,7 @@ resource "opslevel_campaign" "big" {
   project_brief = "This is a big campaign"
   start_date    = "2026-07-01"
   target_date   = "2026-09-30"
+  check_ids     = [var.test_id]
 }
 
 resource "opslevel_campaign" "small" {

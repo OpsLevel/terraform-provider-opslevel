@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -171,16 +172,6 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 		brief := planModel.ProjectBrief.ValueString()
 		input.ProjectBrief = &brief
 	}
-	if !planModel.CheckIds.IsNull() && !planModel.CheckIds.IsUnknown() {
-		var checkIdStrings []string
-		resp.Diagnostics.Append(planModel.CheckIds.ElementsAs(ctx, &checkIdStrings, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		for _, cid := range checkIdStrings {
-			input.CheckIdsToCopy = append(input.CheckIdsToCopy, opslevel.ID(cid))
-		}
-	}
 
 	campaign, err := r.client.CreateCampaign(input)
 	if err != nil || campaign == nil {
@@ -207,6 +198,25 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 		campaign = scheduled
+	}
+
+	if !planModel.CheckIds.IsNull() && !planModel.CheckIds.IsUnknown() {
+		checkIds := extractCheckIds(ctx, &resp.Diagnostics, planModel.CheckIds)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if len(checkIds) > 0 {
+			updated, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+				CampaignId: campaign.Id,
+				CheckIds:   checkIds,
+			})
+			if err != nil {
+				title, detail := formatOpslevelError("copy checks to campaign", err)
+				resp.Diagnostics.AddError(title, detail)
+				return
+			}
+			campaign = updated
+		}
 	}
 
 	createdModel := NewCampaignResourceModel(*campaign, planModel)
@@ -302,6 +312,27 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 		campaign = unscheduled
 	}
 
+	if !planModel.CheckIds.IsNull() && !planModel.CheckIds.IsUnknown() {
+		if !planModel.CheckIds.Equal(stateModel.CheckIds) {
+			checkIds := extractCheckIds(ctx, &resp.Diagnostics, planModel.CheckIds)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			if len(checkIds) > 0 {
+				updated, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+					CampaignId: campaignId,
+					CheckIds:   checkIds,
+				})
+				if err != nil {
+					title, detail := formatOpslevelError("copy checks to campaign", err)
+					resp.Diagnostics.AddError(title, detail)
+					return
+				}
+				campaign = updated
+			}
+		}
+	}
+
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
 	tflog.Trace(ctx, "updated a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedModel)...)
@@ -324,4 +355,17 @@ func (r *CampaignResource) Delete(ctx context.Context, req resource.DeleteReques
 
 func (r *CampaignResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func extractCheckIds(ctx context.Context, diags *diag.Diagnostics, list types.List) []opslevel.ID {
+	var ids []string
+	diags.Append(list.ElementsAs(ctx, &ids, false)...)
+	if diags.HasError() {
+		return nil
+	}
+	result := make([]opslevel.ID, len(ids))
+	for i, id := range ids {
+		result[i] = opslevel.ID(id)
+	}
+	return result
 }
