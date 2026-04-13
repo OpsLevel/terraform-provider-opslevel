@@ -2,6 +2,7 @@ package opslevel
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -114,7 +115,7 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:    true,
 			},
 			"check_ids": schema.ListAttribute{
-				Description: "List of rubric check IDs to copy into this campaign on creation. The OpsLevel API only supports adding checks (not removing), so changes after initial creation are ignored.",
+				Description: "List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -312,6 +313,11 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 		campaign = unscheduled
 	}
 
+	r.reconcileCampaignChecks(ctx, &resp.Diagnostics, campaignId, stateModel, planModel)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
 	tflog.Trace(ctx, "updated a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedModel)...)
@@ -334,6 +340,108 @@ func (r *CampaignResource) Delete(ctx context.Context, req resource.DeleteReques
 
 func (r *CampaignResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func (r *CampaignResource) reconcileCampaignChecks(
+	ctx context.Context,
+	diags *diag.Diagnostics,
+	campaignId opslevel.ID,
+	stateModel CampaignResourceModel,
+	planModel CampaignResourceModel,
+) {
+	stateIds := extractCheckIdSet(ctx, diags, stateModel.CheckIds)
+	planIds := extractCheckIdSet(ctx, diags, planModel.CheckIds)
+	if diags.HasError() {
+		return
+	}
+
+	var toAdd []opslevel.ID
+	for id := range planIds {
+		if !stateIds[id] {
+			toAdd = append(toAdd, opslevel.ID(id))
+		}
+	}
+
+	var toRemove []string
+	for id := range stateIds {
+		if !planIds[id] {
+			toRemove = append(toRemove, id)
+		}
+	}
+
+	if len(toAdd) == 0 && len(toRemove) == 0 {
+		return
+	}
+
+	if len(toRemove) > 0 {
+		rubricNamesByID := make(map[string]string, len(toRemove))
+		for _, rubricID := range toRemove {
+			check, err := r.client.GetCheck(opslevel.ID(rubricID))
+			if err != nil {
+				diags.AddWarning(
+					"could not look up rubric check",
+					fmt.Sprintf("Could not fetch rubric check %s to match for removal: %s", rubricID, err),
+				)
+				continue
+			}
+			rubricNamesByID[rubricID] = check.Name
+		}
+
+		campaignChecks, err := r.client.ListCampaignChecks(campaignId)
+		if err != nil {
+			title, detail := formatOpslevelError("list campaign checks", err)
+			diags.AddError(title, detail)
+			return
+		}
+
+		campaignCheckByName := make(map[string]opslevel.ID, len(campaignChecks))
+		for _, cc := range campaignChecks {
+			campaignCheckByName[cc.Name] = cc.Id
+		}
+
+		for _, name := range rubricNamesByID {
+			ccID, ok := campaignCheckByName[name]
+			if !ok {
+				tflog.Warn(ctx, "campaign check not found for removal", map[string]any{"check_name": name})
+				continue
+			}
+			if err := r.client.DeleteCheck(ccID); err != nil {
+				title, detail := formatOpslevelError("delete campaign check", err)
+				diags.AddError(title, detail)
+				return
+			}
+			tflog.Info(ctx, "removed campaign check", map[string]any{"check_name": name, "campaign_check_id": string(ccID)})
+		}
+	}
+
+	if len(toAdd) > 0 {
+		_, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+			CampaignId: campaignId,
+			CheckIds:   toAdd,
+		})
+		if err != nil {
+			title, detail := formatOpslevelError("copy checks to campaign", err)
+			diags.AddError(title, detail)
+			return
+		}
+		tflog.Info(ctx, "added checks to campaign", map[string]any{"count": len(toAdd)})
+	}
+}
+
+func extractCheckIdSet(ctx context.Context, diags *diag.Diagnostics, list types.List) map[string]bool {
+	if list.IsNull() || list.IsUnknown() {
+		return map[string]bool{}
+	}
+	var ids []string
+	diags.Append(list.ElementsAs(ctx, &ids, false)...)
+	if diags.HasError() {
+		return nil
+	}
+	set := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		set[id] = true
+	}
+	return set
 }
 
 func extractCheckIds(ctx context.Context, diags *diag.Diagnostics, list types.List) []opslevel.ID {
