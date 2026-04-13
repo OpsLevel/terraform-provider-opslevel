@@ -53,6 +53,12 @@ func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignRes
 		HtmlUrl:      ComputedStringValue(campaign.HtmlUrl),
 	}
 
+	if givenModel.CheckIds.IsNull() || givenModel.CheckIds.IsUnknown() {
+		model.CheckIds = types.ListNull(types.StringType)
+	} else {
+		model.CheckIds = givenModel.CheckIds
+	}
+
 	if !campaign.StartDate.IsZero() {
 		model.StartDate = types.StringValue(campaign.StartDate.Format("2006-01-02"))
 	} else if givenModel.StartDate.IsNull() || givenModel.StartDate.IsUnknown() {
