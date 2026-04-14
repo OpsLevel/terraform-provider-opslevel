@@ -93,14 +93,14 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 // ComponentTypeDataSourceModel is a simplified version of ComponentTypeModel for data sources
 // It excludes relationships, because opslevel-go does not yet have Relationships on ComponentType
 type ComponentTypeDataSourceModel struct {
-	Id                 types.String              `tfsdk:"id"`
-	Name               types.String              `tfsdk:"name"`
-	Alias              types.String              `tfsdk:"alias"`
-	Description        types.String              `tfsdk:"description"`
-	Icon               *ComponentTypeIconModel   `tfsdk:"icon"`
-	OwnerRelationship  *OwnerRelationshipModel   `tfsdk:"owner_relationship"`
-	SystemRelationship *SystemRelationshipModel  `tfsdk:"system_relationship"`
-	Properties         map[string]PropertyModel  `tfsdk:"properties"`
+	Id                 types.String             `tfsdk:"id"`
+	Name               types.String             `tfsdk:"name"`
+	Alias              types.String             `tfsdk:"alias"`
+	Description        types.String             `tfsdk:"description"`
+	Icon               *ComponentTypeIconModel  `tfsdk:"icon"`
+	OwnerRelationship  *OwnerRelationshipModel  `tfsdk:"owner_relationship"`
+	SystemRelationship *SystemRelationshipModel `tfsdk:"system_relationship"`
+	Properties         map[string]PropertyModel `tfsdk:"properties"`
 }
 
 type ComponentTypeDataSourceSingleModel struct {
