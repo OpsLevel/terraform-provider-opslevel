@@ -49,6 +49,13 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 			"management_rules": ManagementRulesDataSourceAttribute(),
 		},
 	},
+	"system_relationship": schema.SingleNestedAttribute{
+		MarkdownDescription: "The system relationship configuration for this component type.",
+		Computed:            true,
+		Attributes: map[string]schema.Attribute{
+			"management_rules": ManagementRulesDataSourceAttribute(),
+		},
+	},
 	"properties": schema.MapNestedAttribute{
 		Description: "The properties of this component type.",
 		Computed:    true,
@@ -86,13 +93,14 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 // ComponentTypeDataSourceModel is a simplified version of ComponentTypeModel for data sources
 // It excludes relationships, because opslevel-go does not yet have Relationships on ComponentType
 type ComponentTypeDataSourceModel struct {
-	Id                types.String             `tfsdk:"id"`
-	Name              types.String             `tfsdk:"name"`
-	Alias             types.String             `tfsdk:"alias"`
-	Description       types.String             `tfsdk:"description"`
-	Icon              *ComponentTypeIconModel  `tfsdk:"icon"`
-	OwnerRelationship *OwnerRelationshipModel  `tfsdk:"owner_relationship"`
-	Properties        map[string]PropertyModel `tfsdk:"properties"`
+	Id                 types.String              `tfsdk:"id"`
+	Name               types.String              `tfsdk:"name"`
+	Alias              types.String              `tfsdk:"alias"`
+	Description        types.String              `tfsdk:"description"`
+	Icon               *ComponentTypeIconModel   `tfsdk:"icon"`
+	OwnerRelationship  *OwnerRelationshipModel   `tfsdk:"owner_relationship"`
+	SystemRelationship *SystemRelationshipModel  `tfsdk:"system_relationship"`
+	Properties         map[string]PropertyModel  `tfsdk:"properties"`
 }
 
 type ComponentTypeDataSourceSingleModel struct {
@@ -130,6 +138,7 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				Properties: map[string]PropertyModel{},
 			}
 			baseModel.OwnerRelationship = buildOwnerRelationshipModel(data)
+			baseModel.SystemRelationship = buildSystemRelationshipModel(data)
 			for _, prop := range data.Properties.Nodes {
 				baseModel.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -181,6 +190,7 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 				Properties: map[string]PropertyModel{},
 			}
 			model.OwnerRelationship = buildOwnerRelationshipModel(data)
+			model.SystemRelationship = buildSystemRelationshipModel(data)
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -204,6 +214,23 @@ func buildOwnerRelationshipModel(data opslevel.ComponentType) *OwnerRelationship
 		}
 
 		return &OwnerRelationshipModel{
+			ManagementRules: types.ListValueMust(
+				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+				ruleValues,
+			),
+		}
+	}
+	return nil
+}
+
+func buildSystemRelationshipModel(data opslevel.ComponentType) *SystemRelationshipModel {
+	if len(data.SystemRelationship.ManagementRules) > 0 {
+		ruleValues := make([]attr.Value, len(data.SystemRelationship.ManagementRules))
+		for i, rule := range data.SystemRelationship.ManagementRules {
+			ruleValues[i] = NewManagementRuleValue(rule)
+		}
+
+		return &SystemRelationshipModel{
 			ManagementRules: types.ListValueMust(
 				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
 				ruleValues,

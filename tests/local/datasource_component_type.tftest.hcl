@@ -15,6 +15,7 @@ run "datasource_component_type_all_fields_accessible" {
       can(data.opslevel_component_type.mock_component_type.alias),
       can(data.opslevel_component_type.mock_component_type.description),
       can(data.opslevel_component_type.mock_component_type.icon),
+      can(data.opslevel_component_type.mock_component_type.system_relationship),
       can(data.opslevel_component_type.mock_component_type.properties),
     ])
     error_message = "Not all expected fields are accessible from opslevel_component_type data source"

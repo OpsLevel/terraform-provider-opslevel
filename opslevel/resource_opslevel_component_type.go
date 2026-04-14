@@ -47,17 +47,22 @@ type RelationshipModel struct {
 }
 
 type ComponentTypeModel struct {
-	Id                types.String                 `tfsdk:"id"`
-	Name              types.String                 `tfsdk:"name"`
-	Alias             types.String                 `tfsdk:"alias"`
-	Description       types.String                 `tfsdk:"description"`
-	Icon              *ComponentTypeIconModel      `tfsdk:"icon"`
-	OwnerRelationship *OwnerRelationshipModel      `tfsdk:"owner_relationship"`
-	Properties        map[string]PropertyModel     `tfsdk:"properties"`
-	Relationships     map[string]RelationshipModel `tfsdk:"relationships"`
+	Id                 types.String                 `tfsdk:"id"`
+	Name               types.String                 `tfsdk:"name"`
+	Alias              types.String                 `tfsdk:"alias"`
+	Description        types.String                 `tfsdk:"description"`
+	Icon               *ComponentTypeIconModel      `tfsdk:"icon"`
+	OwnerRelationship  *OwnerRelationshipModel      `tfsdk:"owner_relationship"`
+	SystemRelationship *SystemRelationshipModel     `tfsdk:"system_relationship"`
+	Properties         map[string]PropertyModel     `tfsdk:"properties"`
+	Relationships      map[string]RelationshipModel `tfsdk:"relationships"`
 }
 
 type OwnerRelationshipModel struct {
+	ManagementRules types.List `tfsdk:"management_rules"`
+}
+
+type SystemRelationshipModel struct {
 	ManagementRules types.List `tfsdk:"management_rules"`
 }
 
@@ -88,6 +93,17 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		}
 	} else {
 		stateModel.OwnerRelationship = nil
+	}
+
+	if stateModel.SystemRelationship != nil {
+		stateModel.SystemRelationship = &SystemRelationshipModel{
+			ManagementRules: ManagementRuleListValueFromResourceAndModel(
+				res.SystemRelationship.ManagementRules,
+				stateModel.SystemRelationship.ManagementRules,
+			),
+		}
+	} else {
+		stateModel.SystemRelationship = nil
 	}
 
 	conn, err := res.GetProperties(s.client, nil)
@@ -175,6 +191,13 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 			"owner_relationship": schema.SingleNestedAttribute{
 				Description: "The owner relationship configuration for this component type.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"management_rules": ManagementRulesResourceAttribute(),
+				},
+			},
+			"system_relationship": schema.SingleNestedAttribute{
+				Description: "The system relationship configuration for this component type.",
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"management_rules": ManagementRulesResourceAttribute(),
@@ -295,13 +318,26 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		}
 	}
 
+	var systemRelInput *opslevel.SystemRelationshipInput
+	if planModel.SystemRelationship != nil && !planModel.SystemRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.SystemRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		systemRelInput = &opslevel.SystemRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Create the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:              nullable(planModel.Name.ValueStringPointer()),
-		Alias:             nullable(planModel.Alias.ValueStringPointer()),
-		Description:       nullable(planModel.Description.ValueStringPointer()),
-		OwnerRelationship: ownerRelInput,
-		Properties:        properties,
+		Name:               nullable(planModel.Name.ValueStringPointer()),
+		Alias:              nullable(planModel.Alias.ValueStringPointer()),
+		Description:        nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship:  ownerRelInput,
+		SystemRelationship: systemRelInput,
+		Properties:         properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
@@ -440,13 +476,26 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 	}
 
+	var systemRelInput *opslevel.SystemRelationshipInput
+	if planModel.SystemRelationship != nil && !planModel.SystemRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.SystemRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		systemRelInput = &opslevel.SystemRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Update the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:              nullable(planModel.Name.ValueStringPointer()),
-		Alias:             nullable(planModel.Alias.ValueStringPointer()),
-		Description:       nullable(planModel.Description.ValueStringPointer()),
-		OwnerRelationship: ownerRelInput,
-		Properties:        properties,
+		Name:               nullable(planModel.Name.ValueStringPointer()),
+		Alias:              nullable(planModel.Alias.ValueStringPointer()),
+		Description:        nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship:  ownerRelInput,
+		SystemRelationship: systemRelInput,
+		Properties:         properties,
 	}
 	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
