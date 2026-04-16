@@ -19,6 +19,23 @@ resource "opslevel_component_type" "api" {
   }
 }
 
+# Campaign resources
+
+resource "opslevel_campaign" "big" {
+  name          = "Big Campaign"
+  owner_id      = var.test_id
+  filter_id     = var.test_id
+  project_brief = "This is a big campaign"
+  start_date    = "2026-07-01"
+  target_date   = "2026-09-30"
+  check_ids     = [var.test_id]
+}
+
+resource "opslevel_campaign" "small" {
+  name     = "Small Campaign"
+  owner_id = var.test_id
+}
+
 # Domain resources
 
 resource "opslevel_domain" "fancy" {

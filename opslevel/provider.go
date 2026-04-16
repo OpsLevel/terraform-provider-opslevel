@@ -170,6 +170,7 @@ func (p *OpslevelProvider) Configure(ctx context.Context, req provider.Configure
 func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAliasResource,
+		NewCampaignResource,
 		NewCheckAlertSourceUsageResource,
 		NewCheckCodeIssueResource,
 		NewCheckCustomEventResource,
@@ -226,6 +227,8 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 
 func (p *OpslevelProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewCampaignDataSource,
+		NewCampaignDataSourcesAll,
 		NewComponentTypeDataSourceSingle,
 		NewComponentTypeDataSourceMulti,
 		NewCategoryDataSource,

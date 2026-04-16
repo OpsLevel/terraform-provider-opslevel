@@ -1,0 +1,1 @@
+terraform import opslevel_campaign.example Z2lkOi8vb3BzbGV2ZWwvQ2FtcGFpZ24vMTIz

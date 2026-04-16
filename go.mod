@@ -55,4 +55,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
+// TODO: Remove this replace directive before merging upstream.
+// It points at the local submodule for fork development; once
+// OpsLevel/opslevel-go merges the campaign CRUD PR (#611) and
+// cuts a release, switch to the published version.
+replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
