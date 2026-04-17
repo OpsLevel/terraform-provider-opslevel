@@ -462,8 +462,13 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if s.reconcileRelationships(ctx, err, id, resp, planModel) {
-		return
+	// Only reconcile relationships if the user manages them via Terraform
+	// (present in either plan or prior state). This prevents deleting
+	// API-side relationships that Terraform never managed.
+	if planModel.Relationships != nil || stateModel.Relationships != nil {
+		if s.reconcileRelationships(ctx, err, id, resp, planModel, stateModel) {
+			return
+		}
 	}
 
 	finalModel, err := s.NewModel(res, planModel)
@@ -473,7 +478,7 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, finalModel)...)
 }
 
-func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err error, id string, resp *resource.UpdateResponse, planModel ComponentTypeModel) bool {
+func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err error, id string, resp *resource.UpdateResponse, planModel ComponentTypeModel, stateModel ComponentTypeModel) bool {
 	// Handle relationship definitions
 	// First, get existing relationship definitions
 	existingRels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
@@ -531,11 +536,16 @@ func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err e
 		}
 	}
 
-	// Delete any relationships that were removed
-	for _, rel := range existingRelMap {
-		_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
-		if err != nil {
-			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete relationship definition '%s', got error: %s", rel.Alias, err))
+	// Delete only relationships that were previously managed by Terraform
+	// (present in prior state) but explicitly removed from the plan.
+	// Relationships that exist on the API but were never in Terraform state
+	// are left untouched.
+	for alias, rel := range existingRelMap {
+		if _, wasInState := stateModel.Relationships[alias]; wasInState {
+			_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
+			if err != nil {
+				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to delete relationship definition '%s', got error: %s", rel.Alias, err))
+			}
 		}
 	}
 	return false
