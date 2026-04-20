@@ -146,16 +146,6 @@ func managedByRelationship() map[string]RelationshipModel {
 	}
 }
 
-func dependsOnRelationship() map[string]RelationshipModel {
-	return map[string]RelationshipModel{
-		"depends_on": {
-			Name:              types.StringValue("Depends On"),
-			AllowedCategories: types.ListNull(types.StringType),
-			AllowedTypes:      types.ListValueMust(types.StringType, []attr.Value{types.StringValue("service")}),
-		},
-	}
-}
-
 func bothRelationships() map[string]RelationshipModel {
 	return map[string]RelationshipModel{
 		"managed_by": {
@@ -181,77 +171,6 @@ func countOps(ops []string, name string) int {
 	return count
 }
 
-// TestReconcileRelationships_NilPlanNilState verifies that when neither plan
-// nor state has relationships, no API calls are made to delete existing
-// API-side relationships (e.g., ones created via the UI).
-// Note: the guard in Update() skips calling reconcileRelationships entirely
-// in this case. This test calls reconcileRelationships directly to verify
-// it is also safe if called.
-func TestReconcileRelationships_NilPlanNilState(t *testing.T) {
-	server, operations := testAPIServer(t)
-	defer server.Close()
-
-	client := newTestClient(server.URL)
-	res := ComponentTypeResource{
-		CommonResourceClient: CommonResourceClient{client: client},
-	}
-
-	ctx := context.Background()
-	resp := &resource.UpdateResponse{}
-
-	planModel := ComponentTypeModel{
-		Relationships: nil,
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: nil,
-	}
-
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
-
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
-	}
-
-	ops := *operations
-	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 0 {
-		t.Errorf("expected 0 deletes when plan and state are both nil, got %d. Operations: %v", deleteCount, ops)
-	}
-}
-
-// TestReconcileRelationships_NilPlanWithState verifies that when relationships
-// were in state but the plan drops them (user removed the block), only the
-// state-managed relationships are deleted.
-func TestReconcileRelationships_NilPlanWithState(t *testing.T) {
-	server, operations := testAPIServer(t)
-	defer server.Close()
-
-	client := newTestClient(server.URL)
-	res := ComponentTypeResource{
-		CommonResourceClient: CommonResourceClient{client: client},
-	}
-
-	ctx := context.Background()
-	resp := &resource.UpdateResponse{}
-
-	planModel := ComponentTypeModel{
-		Relationships: nil, // user removed the relationships block
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: managedByRelationship(), // was previously in state
-	}
-
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
-
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
-	}
-
-	ops := *operations
-	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 1 {
-		t.Errorf("expected 1 delete when state had relationship but plan removed it, got %d. Operations: %v", deleteCount, ops)
-	}
-}
-
 // TestReconcileRelationships_PlanMatchesAPI verifies that when the plan includes
 // the same relationships as the API, nothing is deleted -- only updated.
 func TestReconcileRelationships_PlanMatchesAPI(t *testing.T) {
@@ -266,15 +185,11 @@ func TestReconcileRelationships_PlanMatchesAPI(t *testing.T) {
 	ctx := context.Background()
 	resp := &resource.UpdateResponse{}
 
-	rels := managedByRelationship()
 	planModel := ComponentTypeModel{
-		Relationships: rels,
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: rels,
+		Relationships: managedByRelationship(),
 	}
 
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
+	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel)
 
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
@@ -289,76 +204,9 @@ func TestReconcileRelationships_PlanMatchesAPI(t *testing.T) {
 	}
 }
 
-// TestReconcileRelationships_EmptyPlanNilState verifies that an empty map
-// in plan with nil state does not delete API-side relationships.
-func TestReconcileRelationships_EmptyPlanNilState(t *testing.T) {
-	server, operations := testAPIServer(t)
-	defer server.Close()
-
-	client := newTestClient(server.URL)
-	res := ComponentTypeResource{
-		CommonResourceClient: CommonResourceClient{client: client},
-	}
-
-	ctx := context.Background()
-	resp := &resource.UpdateResponse{}
-
-	planModel := ComponentTypeModel{
-		Relationships: map[string]RelationshipModel{}, // empty, not nil
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: nil,
-	}
-
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
-
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
-	}
-
-	ops := *operations
-	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 0 {
-		t.Errorf("expected 0 deletes with empty plan and nil state, got %d. Operations: %v", deleteCount, ops)
-	}
-}
-
-// TestReconcileRelationships_APIHasExtraNotInState verifies that relationships
-// existing on the API but never managed by Terraform (not in state) are left alone.
-func TestReconcileRelationships_APIHasExtraNotInState(t *testing.T) {
-	server, operations := testAPIServer(t)
-	defer server.Close()
-
-	client := newTestClient(server.URL)
-	res := ComponentTypeResource{
-		CommonResourceClient: CommonResourceClient{client: client},
-	}
-
-	ctx := context.Background()
-	resp := &resource.UpdateResponse{}
-
-	// Plan and state are both empty -- user never managed relationships via TF.
-	// But the API has "managed_by" (created via UI).
-	planModel := ComponentTypeModel{
-		Relationships: map[string]RelationshipModel{},
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: map[string]RelationshipModel{},
-	}
-
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
-
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
-	}
-
-	ops := *operations
-	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 0 {
-		t.Errorf("expected 0 deletes for API-only relationships not in state, got %d. Operations: %v", deleteCount, ops)
-	}
-}
-
-// TestReconcileRelationships_RemoveOneKeepOne verifies that when the user removes
-// one relationship from config but keeps another, only the removed one is deleted.
+// TestReconcileRelationships_RemoveOneKeepOne verifies that when the plan keeps
+// one relationship and drops another, the dropped one is deleted and the kept
+// one is updated.
 func TestReconcileRelationships_RemoveOneKeepOne(t *testing.T) {
 	server, operations := testAPIServerTwoRels(t)
 	defer server.Close()
@@ -371,16 +219,11 @@ func TestReconcileRelationships_RemoveOneKeepOne(t *testing.T) {
 	ctx := context.Background()
 	resp := &resource.UpdateResponse{}
 
-	// Plan keeps "managed_by" but drops "depends_on"
 	planModel := ComponentTypeModel{
 		Relationships: managedByRelationship(),
 	}
-	// State had both
-	stateModel := ComponentTypeModel{
-		Relationships: bothRelationships(),
-	}
 
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
+	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel)
 
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
@@ -396,7 +239,7 @@ func TestReconcileRelationships_RemoveOneKeepOne(t *testing.T) {
 }
 
 // TestReconcileRelationships_AddNewRelationship verifies that when the plan adds
-// a relationship not on the API, it gets created.
+// a relationship not on the API, it gets created and the existing one is updated.
 func TestReconcileRelationships_AddNewRelationship(t *testing.T) {
 	server, operations := testAPIServer(t)
 	defer server.Close()
@@ -413,12 +256,8 @@ func TestReconcileRelationships_AddNewRelationship(t *testing.T) {
 	planModel := ComponentTypeModel{
 		Relationships: bothRelationships(),
 	}
-	// State only had "managed_by"
-	stateModel := ComponentTypeModel{
-		Relationships: managedByRelationship(),
-	}
 
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
+	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel)
 
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
@@ -436,10 +275,12 @@ func TestReconcileRelationships_AddNewRelationship(t *testing.T) {
 	}
 }
 
-// TestReconcileRelationships_RemoveAllFromState verifies that when the user
-// explicitly removes all relationships (had them in state, plan is now empty),
-// all state-managed relationships are deleted.
-func TestReconcileRelationships_RemoveAllFromState(t *testing.T) {
+// TestReconcileRelationships_EmptyPlanDeletesAll verifies that when the plan
+// passes an empty (but non-nil) relationships map -- i.e., the user explicitly
+// set `relationships = {}` -- every relationship on the component type is
+// deleted. This is the contract the guard in Update() protects: reconcile only
+// runs when the user is managing relationships via this resource.
+func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	server, operations := testAPIServerTwoRels(t)
 	defer server.Close()
 
@@ -451,16 +292,11 @@ func TestReconcileRelationships_RemoveAllFromState(t *testing.T) {
 	ctx := context.Background()
 	resp := &resource.UpdateResponse{}
 
-	// Plan has empty relationships (user removed the block)
 	planModel := ComponentTypeModel{
 		Relationships: map[string]RelationshipModel{},
 	}
-	// State had both relationships
-	stateModel := ComponentTypeModel{
-		Relationships: bothRelationships(),
-	}
 
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
+	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel)
 
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
@@ -469,44 +305,5 @@ func TestReconcileRelationships_RemoveAllFromState(t *testing.T) {
 	ops := *operations
 	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 2 {
 		t.Errorf("expected 2 deletes (both removed from plan), got %d. Operations: %v", deleteCount, ops)
-	}
-}
-
-// TestReconcileRelationships_StateHasOneAPIHasExtraKeepBoth verifies that when
-// state manages one relationship and the API has an extra one (created via UI),
-// the extra one is not deleted even when plan matches state.
-func TestReconcileRelationships_StateHasOneAPIHasExtraKeepBoth(t *testing.T) {
-	server, operations := testAPIServerTwoRels(t)
-	defer server.Close()
-
-	client := newTestClient(server.URL)
-	res := ComponentTypeResource{
-		CommonResourceClient: CommonResourceClient{client: client},
-	}
-
-	ctx := context.Background()
-	resp := &resource.UpdateResponse{}
-
-	// Plan and state both have only "managed_by".
-	// API has both "managed_by" and "depends_on" (depends_on created via UI).
-	planModel := ComponentTypeModel{
-		Relationships: managedByRelationship(),
-	}
-	stateModel := ComponentTypeModel{
-		Relationships: managedByRelationship(),
-	}
-
-	res.reconcileRelationships(ctx, nil, "Z2lkOi8vY3Q", resp, planModel, stateModel)
-
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
-	}
-
-	ops := *operations
-	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 0 {
-		t.Errorf("expected 0 deletes (depends_on is API-only, not in state), got %d. Operations: %v", deleteCount, ops)
-	}
-	if updateCount := countOps(ops, "relationshipDefinitionUpdate"); updateCount != 1 {
-		t.Errorf("expected 1 update (managed_by), got %d. Operations: %v", updateCount, ops)
 	}
 }
