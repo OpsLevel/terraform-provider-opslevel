@@ -52,17 +52,13 @@ type ComponentTypeModel struct {
 	Alias              types.String                 `tfsdk:"alias"`
 	Description        types.String                 `tfsdk:"description"`
 	Icon               *ComponentTypeIconModel      `tfsdk:"icon"`
-	OwnerRelationship  *OwnerRelationshipModel      `tfsdk:"owner_relationship"`
-	SystemRelationship *SystemRelationshipModel     `tfsdk:"system_relationship"`
+	OwnerRelationship  *RelationshipConfigModel     `tfsdk:"owner_relationship"`
+	SystemRelationship *RelationshipConfigModel     `tfsdk:"system_relationship"`
 	Properties         map[string]PropertyModel     `tfsdk:"properties"`
 	Relationships      map[string]RelationshipModel `tfsdk:"relationships"`
 }
 
-type OwnerRelationshipModel struct {
-	ManagementRules types.List `tfsdk:"management_rules"`
-}
-
-type SystemRelationshipModel struct {
+type RelationshipConfigModel struct {
 	ManagementRules types.List `tfsdk:"management_rules"`
 }
 
@@ -85,7 +81,7 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	}
 
 	if stateModel.OwnerRelationship != nil {
-		stateModel.OwnerRelationship = &OwnerRelationshipModel{
+		stateModel.OwnerRelationship = &RelationshipConfigModel{
 			ManagementRules: ManagementRuleListValueFromResourceAndModel(
 				res.OwnerRelationship.ManagementRules,
 				stateModel.OwnerRelationship.ManagementRules,
@@ -96,7 +92,7 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	}
 
 	if stateModel.SystemRelationship != nil {
-		stateModel.SystemRelationship = &SystemRelationshipModel{
+		stateModel.SystemRelationship = &RelationshipConfigModel{
 			ManagementRules: ManagementRuleListValueFromResourceAndModel(
 				res.SystemRelationship.ManagementRules,
 				stateModel.SystemRelationship.ManagementRules,

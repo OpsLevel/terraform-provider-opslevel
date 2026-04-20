@@ -98,8 +98,8 @@ type ComponentTypeDataSourceModel struct {
 	Alias              types.String             `tfsdk:"alias"`
 	Description        types.String             `tfsdk:"description"`
 	Icon               *ComponentTypeIconModel  `tfsdk:"icon"`
-	OwnerRelationship  *OwnerRelationshipModel  `tfsdk:"owner_relationship"`
-	SystemRelationship *SystemRelationshipModel `tfsdk:"system_relationship"`
+	OwnerRelationship  *RelationshipConfigModel `tfsdk:"owner_relationship"`
+	SystemRelationship *RelationshipConfigModel `tfsdk:"system_relationship"`
 	Properties         map[string]PropertyModel `tfsdk:"properties"`
 }
 
@@ -137,8 +137,8 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				},
 				Properties: map[string]PropertyModel{},
 			}
-			baseModel.OwnerRelationship = buildOwnerRelationshipModel(data)
-			baseModel.SystemRelationship = buildSystemRelationshipModel(data)
+			baseModel.OwnerRelationship = buildRelationshipModel(data.OwnerRelationship.ManagementRules)
+			baseModel.SystemRelationship = buildRelationshipModel(data.SystemRelationship.ManagementRules)
 			for _, prop := range data.Properties.Nodes {
 				baseModel.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -189,8 +189,8 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 				},
 				Properties: map[string]PropertyModel{},
 			}
-			model.OwnerRelationship = buildOwnerRelationshipModel(data)
-			model.SystemRelationship = buildSystemRelationshipModel(data)
+			model.OwnerRelationship = buildRelationshipModel(data.OwnerRelationship.ManagementRules)
+			model.SystemRelationship = buildRelationshipModel(data.SystemRelationship.ManagementRules)
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -206,36 +206,18 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 	}
 }
 
-func buildOwnerRelationshipModel(data opslevel.ComponentType) *OwnerRelationshipModel {
-	if len(data.OwnerRelationship.ManagementRules) > 0 {
-		ruleValues := make([]attr.Value, len(data.OwnerRelationship.ManagementRules))
-		for i, rule := range data.OwnerRelationship.ManagementRules {
-			ruleValues[i] = NewManagementRuleValue(rule)
-		}
-
-		return &OwnerRelationshipModel{
-			ManagementRules: types.ListValueMust(
-				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
-				ruleValues,
-			),
-		}
+func buildRelationshipModel(rules []opslevel.RelationshipDefinitionManagementRule) *RelationshipConfigModel {
+	if len(rules) == 0 {
+		return nil
 	}
-	return nil
-}
-
-func buildSystemRelationshipModel(data opslevel.ComponentType) *SystemRelationshipModel {
-	if len(data.SystemRelationship.ManagementRules) > 0 {
-		ruleValues := make([]attr.Value, len(data.SystemRelationship.ManagementRules))
-		for i, rule := range data.SystemRelationship.ManagementRules {
-			ruleValues[i] = NewManagementRuleValue(rule)
-		}
-
-		return &SystemRelationshipModel{
-			ManagementRules: types.ListValueMust(
-				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
-				ruleValues,
-			),
-		}
+	ruleValues := make([]attr.Value, len(rules))
+	for i, rule := range rules {
+		ruleValues[i] = NewManagementRuleValue(rule)
 	}
-	return nil
+	return &RelationshipConfigModel{
+		ManagementRules: types.ListValueMust(
+			types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+			ruleValues,
+		),
+	}
 }
