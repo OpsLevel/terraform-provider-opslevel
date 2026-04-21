@@ -39,6 +39,7 @@ Read-Only:
 - `name` (String) The unique name of the component type.
 - `owner_relationship` (Attributes) The owner relationship configuration for this component type. (see [below for nested schema](#nestedatt--all--owner_relationship))
 - `properties` (Attributes Map) The properties of this component type. (see [below for nested schema](#nestedatt--all--properties))
+- `system_relationship` (Attributes) The system relationship configuration for this component type. (see [below for nested schema](#nestedatt--all--system_relationship))
 
 <a id="nestedatt--all--icon"></a>
 ### Nested Schema for `all.icon`
@@ -58,6 +59,30 @@ Read-Only:
 
 <a id="nestedatt--all--owner_relationship--management_rules"></a>
 ### Nested Schema for `all.owner_relationship.management_rules`
+
+Read-Only:
+
+- `operator` (String) The condition operator for this rule.
+- `source_property` (String) The property on the source component to evaluate.
+- `source_tag_key` (String) When source_property is 'tag', this specifies the tag key to match.
+- `source_tag_operation` (String) When source_property is 'tag', this specifies the matching operation.
+- `target_category` (String) The category of the target resource.
+- `target_property` (String) The property on the target resource to match against.
+- `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match.
+- `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation.
+- `target_type` (String) The type of the target resource.
+
+
+
+<a id="nestedatt--all--system_relationship"></a>
+### Nested Schema for `all.system_relationship`
+
+Read-Only:
+
+- `management_rules` (Attributes List) Rules that automatically manage relationships based on property matching conditions. (see [below for nested schema](#nestedatt--all--system_relationship--management_rules))
+
+<a id="nestedatt--all--system_relationship--management_rules"></a>
+### Nested Schema for `all.system_relationship.management_rules`
 
 Read-Only:
 
