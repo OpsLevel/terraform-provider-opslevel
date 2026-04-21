@@ -462,8 +462,14 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if s.reconcileRelationships(ctx, err, id, resp, planModel) {
-		return
+	// Only reconcile relationships when the user manages them via this resource's
+	// `relationships` attribute (present in either plan or prior state). Standalone
+	// relationships managed via the `opslevel_relationship_definition` resource are
+	// not touched here.
+	if planModel.Relationships != nil || stateModel.Relationships != nil {
+		if s.reconcileRelationships(ctx, err, id, resp, planModel) {
+			return
+		}
 	}
 
 	finalModel, err := s.NewModel(res, planModel)
@@ -531,7 +537,7 @@ func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err e
 		}
 	}
 
-	// Delete any relationships that were removed
+	// Delete any relationships that were removed from the plan.
 	for _, rel := range existingRelMap {
 		_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
 		if err != nil {
