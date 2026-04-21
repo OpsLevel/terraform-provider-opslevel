@@ -472,6 +472,20 @@ Optional:
 
 
 
+<a id="nestedatt--relationships"></a>
+### Nested Schema for `relationships`
+
+Required:
+
+- `name` (String) The display name of the relationship definition.
+
+Optional:
+
+- `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
+- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
+- `description` (String) The description of the relationship definition.
+
+
 <a id="nestedatt--system_relationship"></a>
 ### Nested Schema for `system_relationship`
 
@@ -496,21 +510,6 @@ Optional:
 - `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match. Required if target_property is 'tag', must not be set otherwise.
 - `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.
 - `target_type` (String) The type of the target resource. Either target_category or target_type must be specified, but not both.
-
-
-
-<a id="nestedatt--relationships"></a>
-### Nested Schema for `relationships`
-
-Required:
-
-- `name` (String) The display name of the relationship definition.
-
-Optional:
-
-- `allowed_categories` (List of String) The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.
-- `allowed_types` (List of String) The types of resources that can be selected for this relationship definition. Can include any component type alias on your account or 'team'.
-- `description` (String) The description of the relationship definition.
 
 ## Import
 

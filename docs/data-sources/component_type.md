@@ -69,6 +69,19 @@ Read-Only:
 
 
 
+<a id="nestedatt--properties"></a>
+### Nested Schema for `properties`
+
+Read-Only:
+
+- `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
+- `description` (String) The description of the property definition.
+- `display_status` (String) The display status of the property.
+- `locked_status` (String) Restricts what sources are able to assign values to this property.
+- `name` (String) The name of the property definition.
+- `schema` (String) The schema of the property.
+
+
 <a id="nestedatt--system_relationship"></a>
 ### Nested Schema for `system_relationship`
 
@@ -90,19 +103,5 @@ Read-Only:
 - `target_tag_key` (String) When target_property is 'tag', this specifies the tag key to match.
 - `target_tag_operation` (String) When target_property is 'tag', this specifies the matching operation.
 - `target_type` (String) The type of the target resource.
-
-
-
-<a id="nestedatt--properties"></a>
-### Nested Schema for `properties`
-
-Read-Only:
-
-- `allowed_in_config_files` (Boolean) Whether or not the property is allowed to be set in opslevel.yml config files.
-- `description` (String) The description of the property definition.
-- `display_status` (String) The display status of the property.
-- `locked_status` (String) Restricts what sources are able to assign values to this property.
-- `name` (String) The name of the property definition.
-- `schema` (String) The schema of the property.
 
 

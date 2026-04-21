@@ -1,3 +1,0 @@
-kind: Fixed
-body: Fixed `opslevel_component_type` update silently deleting relationship definitions managed via `opslevel_relationship_definition`
-time: 2026-04-21T20:44:17.975274+05:30
