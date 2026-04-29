@@ -309,19 +309,10 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	if planModel.ApiDocumentPath.ValueString() != "" {
-		apiDocPath := planModel.ApiDocumentPath.ValueString()
-		if planModel.PreferredApiDocumentSource.IsNull() {
-			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
-				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s for service. error: %s", apiDocPath, err))
-				return
-			}
-		} else {
-			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
-			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
-				resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s", apiDocPath, sourceEnum, err))
-				return
-			}
+	if shouldUpdate, apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel, nil); shouldUpdate {
+		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, sourceEnum); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update API document settings for service %s. error: %s", service.Name, err))
+			return
 		}
 	}
 
@@ -401,6 +392,30 @@ func unsetIdentifierHelper(plan, state basetypes.StringValue) *opslevel.Identifi
 	return nil
 }
 
+func serviceApiDocSettingsUpdateInput(plan ServiceResourceModel, state *ServiceResourceModel) (bool, string, *opslevel.ApiDocumentSourceEnum) {
+	managesApiDocPath := !plan.ApiDocumentPath.IsNull()
+	managesApiDocSource := !plan.PreferredApiDocumentSource.IsNull()
+	if state != nil {
+		managesApiDocPath = managesApiDocPath || !state.ApiDocumentPath.IsNull()
+		managesApiDocSource = managesApiDocSource || !state.PreferredApiDocumentSource.IsNull()
+	}
+	if !managesApiDocPath && !managesApiDocSource {
+		return false, "", nil
+	}
+
+	apiDocPath := ""
+	if !plan.ApiDocumentPath.IsNull() {
+		apiDocPath = plan.ApiDocumentPath.ValueString()
+	}
+
+	if plan.PreferredApiDocumentSource.IsNull() {
+		return true, apiDocPath, nil
+	}
+
+	sourceEnum := opslevel.ApiDocumentSourceEnum(plan.PreferredApiDocumentSource.ValueString())
+	return true, apiDocPath, &sourceEnum
+}
+
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
@@ -477,32 +492,10 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
-	if planModel.ApiDocumentPath.IsNull() {
-		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), "", nil); err != nil {
-			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to unset 'api_document_path' for service %s. error: %s", service.Name, err))
+	if shouldUpdate, apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel, &stateModel); shouldUpdate {
+		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, sourceEnum); err != nil {
+			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update API document settings for service %s. error: %s", service.Name, err))
 			return
-		}
-	} else {
-		apiDocPath := planModel.ApiDocumentPath.ValueString()
-		if planModel.PreferredApiDocumentSource.IsNull() {
-			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, nil); err != nil {
-				resp.Diagnostics.AddError("opslevel client error",
-					fmt.Sprintf(
-						"Unable to set provided 'api_document_path' %s for service. error: %s",
-						apiDocPath, err),
-				)
-				return
-			}
-		} else {
-			sourceEnum := opslevel.ApiDocumentSourceEnum(planModel.PreferredApiDocumentSource.ValueString())
-			if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, &sourceEnum); err != nil {
-				resp.Diagnostics.AddError("opslevel client error",
-					fmt.Sprintf(
-						"Unable to set provided 'api_document_path' %s with doc source '%s' for service. error: %s",
-						apiDocPath, sourceEnum, err),
-				)
-				return
-			}
 		}
 	}
 
