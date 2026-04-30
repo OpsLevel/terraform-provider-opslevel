@@ -67,6 +67,44 @@ func TestServiceApiDocSettingsUpdateInput(t *testing.T) {
 			expectedDocPath: "",
 		},
 		{
+			name: "update ignores unchanged source without path",
+			plan: ServiceResourceModel{
+				ApiDocumentPath:            types.StringNull(),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
+			},
+			state: &ServiceResourceModel{
+				ApiDocumentPath:            types.StringNull(),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
+			},
+			expectedUpdate: false,
+		},
+		{
+			name: "update ignores unchanged path and source",
+			plan: ServiceResourceModel{
+				ApiDocumentPath:            types.StringValue("openapi.yaml"),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
+			},
+			state: &ServiceResourceModel{
+				ApiDocumentPath:            types.StringValue("openapi.yaml"),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
+			},
+			expectedUpdate: false,
+		},
+		{
+			name: "update changes managed source without path",
+			plan: ServiceResourceModel{
+				ApiDocumentPath:            types.StringNull(),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
+			},
+			state: &ServiceResourceModel{
+				ApiDocumentPath:            types.StringNull(),
+				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
+			},
+			expectedUpdate:    true,
+			expectedDocPath:   "",
+			expectedDocSource: &opslevelgo.ApiDocumentSourceEnumPush,
+		},
+		{
 			name: "update clears managed path",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringNull(),

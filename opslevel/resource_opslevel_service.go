@@ -393,6 +393,12 @@ func unsetIdentifierHelper(plan, state basetypes.StringValue) *opslevel.Identifi
 }
 
 func serviceApiDocSettingsUpdateInput(plan ServiceResourceModel, state *ServiceResourceModel) (bool, string, *opslevel.ApiDocumentSourceEnum) {
+	if state != nil &&
+		plan.ApiDocumentPath.Equal(state.ApiDocumentPath) &&
+		plan.PreferredApiDocumentSource.Equal(state.PreferredApiDocumentSource) {
+		return false, "", nil
+	}
+
 	managesApiDocPath := !plan.ApiDocumentPath.IsNull()
 	managesApiDocSource := !plan.PreferredApiDocumentSource.IsNull()
 	if state != nil {
