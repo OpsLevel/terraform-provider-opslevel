@@ -11,121 +11,58 @@ func TestServiceApiDocSettingsUpdateInput(t *testing.T) {
 	testCases := []struct {
 		name              string
 		plan              ServiceResourceModel
-		state             *ServiceResourceModel
-		expectedUpdate    bool
 		expectedDocPath   string
 		expectedDocSource *opslevelgo.ApiDocumentSourceEnum
 	}{
 		{
-			name: "create ignores unmanaged settings",
+			name: "neither field set",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringNull(),
 				PreferredApiDocumentSource: types.StringNull(),
 			},
-			expectedUpdate: false,
+			expectedDocPath: "",
 		},
 		{
-			name: "create updates push source without path",
+			name: "push source without path",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringNull(),
 				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
 			},
-			expectedUpdate:    true,
 			expectedDocPath:   "",
 			expectedDocSource: &opslevelgo.ApiDocumentSourceEnumPush,
 		},
 		{
-			name: "create updates pull source without path",
+			name: "pull source without path",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringNull(),
 				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
 			},
-			expectedUpdate:    true,
 			expectedDocPath:   "",
 			expectedDocSource: &opslevelgo.ApiDocumentSourceEnumPull,
 		},
 		{
-			name: "create updates path without source",
+			name: "path without source",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringValue("openapi.yaml"),
 				PreferredApiDocumentSource: types.StringNull(),
 			},
-			expectedUpdate:  true,
 			expectedDocPath: "openapi.yaml",
 		},
 		{
-			name: "update clears managed source",
-			plan: ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringNull(),
-			},
-			state: &ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
-			},
-			expectedUpdate:  true,
-			expectedDocPath: "",
-		},
-		{
-			name: "update ignores unchanged source without path",
-			plan: ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
-			},
-			state: &ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
-			},
-			expectedUpdate: false,
-		},
-		{
-			name: "update ignores unchanged path and source",
+			name: "path with source",
 			plan: ServiceResourceModel{
 				ApiDocumentPath:            types.StringValue("openapi.yaml"),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
-			},
-			state: &ServiceResourceModel{
-				ApiDocumentPath:            types.StringValue("openapi.yaml"),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
-			},
-			expectedUpdate: false,
-		},
-		{
-			name: "update changes managed source without path",
-			plan: ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
 				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPush)),
 			},
-			state: &ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringValue(string(opslevelgo.ApiDocumentSourceEnumPull)),
-			},
-			expectedUpdate:    true,
-			expectedDocPath:   "",
+			expectedDocPath:   "openapi.yaml",
 			expectedDocSource: &opslevelgo.ApiDocumentSourceEnumPush,
-		},
-		{
-			name: "update clears managed path",
-			plan: ServiceResourceModel{
-				ApiDocumentPath:            types.StringNull(),
-				PreferredApiDocumentSource: types.StringNull(),
-			},
-			state: &ServiceResourceModel{
-				ApiDocumentPath:            types.StringValue("openapi.yaml"),
-				PreferredApiDocumentSource: types.StringNull(),
-			},
-			expectedUpdate:  true,
-			expectedDocPath: "",
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			shouldUpdate, docPath, docSource := serviceApiDocSettingsUpdateInput(testCase.plan, testCase.state)
+			docPath, docSource := serviceApiDocSettingsUpdateInput(testCase.plan)
 
-			if shouldUpdate != testCase.expectedUpdate {
-				t.Fatalf("expected update %t, got %t", testCase.expectedUpdate, shouldUpdate)
-			}
 			if docPath != testCase.expectedDocPath {
 				t.Fatalf("expected doc path %q, got %q", testCase.expectedDocPath, docPath)
 			}

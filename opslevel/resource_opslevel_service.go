@@ -309,7 +309,8 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	if shouldUpdate, apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel, nil); shouldUpdate {
+	if !planModel.ApiDocumentPath.IsNull() || !planModel.PreferredApiDocumentSource.IsNull() {
+		apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel)
 		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, sourceEnum); err != nil {
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update API document settings for service %s. error: %s", service.Name, err))
 			return
@@ -392,36 +393,6 @@ func unsetIdentifierHelper(plan, state basetypes.StringValue) *opslevel.Identifi
 	return nil
 }
 
-func serviceApiDocSettingsUpdateInput(plan ServiceResourceModel, state *ServiceResourceModel) (bool, string, *opslevel.ApiDocumentSourceEnum) {
-	if state != nil &&
-		plan.ApiDocumentPath.Equal(state.ApiDocumentPath) &&
-		plan.PreferredApiDocumentSource.Equal(state.PreferredApiDocumentSource) {
-		return false, "", nil
-	}
-
-	managesApiDocPath := !plan.ApiDocumentPath.IsNull()
-	managesApiDocSource := !plan.PreferredApiDocumentSource.IsNull()
-	if state != nil {
-		managesApiDocPath = managesApiDocPath || !state.ApiDocumentPath.IsNull()
-		managesApiDocSource = managesApiDocSource || !state.PreferredApiDocumentSource.IsNull()
-	}
-	if !managesApiDocPath && !managesApiDocSource {
-		return false, "", nil
-	}
-
-	apiDocPath := ""
-	if !plan.ApiDocumentPath.IsNull() {
-		apiDocPath = plan.ApiDocumentPath.ValueString()
-	}
-
-	if plan.PreferredApiDocumentSource.IsNull() {
-		return true, apiDocPath, nil
-	}
-
-	sourceEnum := opslevel.ApiDocumentSourceEnum(plan.PreferredApiDocumentSource.ValueString())
-	return true, apiDocPath, &sourceEnum
-}
-
 func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	planModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.Plan)
 	stateModel := read[ServiceResourceModel](ctx, &resp.Diagnostics, req.State)
@@ -498,7 +469,9 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
-	if shouldUpdate, apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel, &stateModel); shouldUpdate {
+	if !planModel.ApiDocumentPath.Equal(stateModel.ApiDocumentPath) ||
+		!planModel.PreferredApiDocumentSource.Equal(stateModel.PreferredApiDocumentSource) {
+		apiDocPath, sourceEnum := serviceApiDocSettingsUpdateInput(planModel)
 		if _, err := r.client.ServiceApiDocSettingsUpdate(string(service.Id), apiDocPath, sourceEnum); err != nil {
 			resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to update API document settings for service %s. error: %s", service.Name, err))
 			return
@@ -559,4 +532,16 @@ func updateServiceNote(client opslevel.Client, service opslevel.Service, planMod
 	}
 
 	return client.UpdateServiceNote(serviceNoteUpdateInput)
+}
+
+func serviceApiDocSettingsUpdateInput(plan ServiceResourceModel) (string, *opslevel.ApiDocumentSourceEnum) {
+	apiDocPath := ""
+	if !plan.ApiDocumentPath.IsNull() {
+		apiDocPath = plan.ApiDocumentPath.ValueString()
+	}
+	if plan.PreferredApiDocumentSource.IsNull() {
+		return apiDocPath, nil
+	}
+	sourceEnum := opslevel.ApiDocumentSourceEnum(plan.PreferredApiDocumentSource.ValueString())
+	return apiDocPath, &sourceEnum
 }
