@@ -37,7 +37,7 @@ tasks:
       - which gofumpt
     cmds:
       - task: go-install-tool
-        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@latest" }
+        vars: { GO_TOOL: "gofumpt", GO_TOOL_PATH: "mvdan.cc/gofumpt@v0.7.0" }
 
   go-install-golangci-lint:
     desc: go install "golangci-lint"
