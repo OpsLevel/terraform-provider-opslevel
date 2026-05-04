@@ -57,6 +57,24 @@ func TestServiceApiDocSettingsUpdateInput(t *testing.T) {
 			expectedDocPath:   "openapi.yaml",
 			expectedDocSource: &opslevelgo.ApiDocumentSourceEnumPush,
 		},
+		{
+			name: "unknown source without path",
+			plan: ServiceResourceModel{
+				ApiDocumentPath:            types.StringNull(),
+				PreferredApiDocumentSource: types.StringUnknown(),
+			},
+			expectedDocPath:   "",
+			expectedDocSource: nil,
+		},
+		{
+			name: "unknown path without source",
+			plan: ServiceResourceModel{
+				ApiDocumentPath:            types.StringUnknown(),
+				PreferredApiDocumentSource: types.StringNull(),
+			},
+			expectedDocPath:   "",
+			expectedDocSource: nil,
+		},
 	}
 
 	for _, testCase := range testCases {
