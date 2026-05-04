@@ -539,7 +539,7 @@ func serviceApiDocSettingsUpdateInput(plan ServiceResourceModel) (string, *opsle
 	if !plan.ApiDocumentPath.IsNull() {
 		apiDocPath = plan.ApiDocumentPath.ValueString()
 	}
-	if plan.PreferredApiDocumentSource.IsNull() {
+	if plan.PreferredApiDocumentSource.IsNull() || plan.PreferredApiDocumentSource.IsUnknown() {
 		return apiDocPath, nil
 	}
 	sourceEnum := opslevel.ApiDocumentSourceEnum(plan.PreferredApiDocumentSource.ValueString())
