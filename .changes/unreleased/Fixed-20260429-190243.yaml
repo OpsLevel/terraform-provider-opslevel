@@ -1,3 +1,0 @@
-kind: Fixed
-body: Fixed `opslevel_service` dropping `preferred_api_document_source` after apply when `api_document_path` was not set, which caused a "Provider produced inconsistent result after apply" error
-time: 2026-04-29T19:02:43.236755+05:30
