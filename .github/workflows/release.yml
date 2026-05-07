@@ -58,9 +58,8 @@ jobs:
           then
             echo "Skip Changie..."
           else
-            go install github.com/miniscruff/changie@v1.23.0
-            changie batch ${{ steps.next_version.outputs.version_tag }}
-            changie merge
+            go tool changie batch ${{ steps.next_version.outputs.version_tag }}
+            go tool changie merge
           fi
       - name: Generate Terraform Docs
         run: task docs
