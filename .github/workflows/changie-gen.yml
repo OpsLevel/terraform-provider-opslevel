@@ -20,6 +20,11 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+
     - name: Check if changelog file exists already
       shell: bash
       id: changelog_check
@@ -38,8 +43,7 @@ jobs:
         PR_TITLE: ${{ github.event.pull_request.title }}
       shell: bash
       run: |
-        go install github.com/miniscruff/changie@v1.23.0
-        changie new --kind Dependency --body "$PR_TITLE"
+        go tool changie new --kind Dependency --body "$PR_TITLE"
 
     - name: Commit & Push changes
       if: steps.changelog_check.outputs.exists == 'false'

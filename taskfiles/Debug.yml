@@ -16,15 +16,13 @@ tasks:
   do-debug-attach:
     desc: Second, attach to headless debug sessions
     aliases: ["dbg-attach", "dbg2", "debug2"]
-    deps:
-      - install-delve
     vars:
       LOCAL_PORT:
         sh: grep 'API server listening at' {{.DEBUG_LOG}} | cut -d':' -f3
     interactive: true
     cmds:
       - echo "Set breakpoints once connected, then run 'task debug-plan' in a new shell"
-      - dlv connect 127.0.0.1:{{.LOCAL_PORT}}
+      - go tool dlv connect 127.0.0.1:{{.LOCAL_PORT}}
 
   do-debug-*:
     desc: After debug-start and debug-attach, run "terraform {{index .MATCH 0}}" with 'TF_REATTACH_PROVIDERS'
@@ -48,8 +46,6 @@ tasks:
   do-debug-start:
     desc: First, start headless debug
     aliases: ["dbg-start", "dbg1", "debug1"]
-    deps:
-      - install-delve
     vars:
       BINARY: terraform-provider-opslevel_debug_{{.TF_DEBUG_VERSION}}
     interactive: true
@@ -61,11 +57,4 @@ tasks:
         ignore_error: true
       - task: tf:terraform-command
         vars: { TF_COMMAND: "init -upgrade", TF_CMD_DIR: "{{.ROOT_DIR}}/{{.WORKSPACE_DIR}}" }
-      - dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.ROOT_DIR}}/{{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
-
-  install-delve:
-    desc: Install delve for debugging
-    status:
-      - which dlv
-    cmds:
-      - go install github.com/go-delve/delve/cmd/dlv@latest
+      - go tool dlv exec --accept-multiclient --api-version=2 --continue --headless --wd={{.ROOT_DIR}}/{{.WORKSPACE_DIR}} {{.BINARY}} -- -debug | tee {{.DEBUG_LOG}}
