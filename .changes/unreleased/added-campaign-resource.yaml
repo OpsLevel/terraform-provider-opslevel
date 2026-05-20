@@ -1,0 +1,2 @@
+kind: Added
+body: Added `opslevel_campaign` resource for managing OpsLevel campaigns as code, including scheduling support. Also added `opslevel_campaign` and `opslevel_campaigns` data sources.
