@@ -15,10 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout branch that Dependabot labeled
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Go
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      with:
+        go-version-file: go.mod
 
     - name: Check if changelog file exists already
       shell: bash
@@ -34,10 +39,11 @@ jobs:
 
     - name: Create changie log
       if: steps.changelog_check.outputs.exists == 'false'
-      uses: miniscruff/changie-action@v2
-      with:
-        version: latest
-        args: new --kind Dependency --body "${{ github.event.pull_request.title }}"
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+      shell: bash
+      run: |
+        go tool changie new --kind Dependency --body "$PR_TITLE"
 
     - name: Commit & Push changes
       if: steps.changelog_check.outputs.exists == 'false'

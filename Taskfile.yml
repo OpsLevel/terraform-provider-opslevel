@@ -26,8 +26,6 @@ tasks:
     desc: Workflow to run in CI
     deps:
       - install:brew-install-jq
-      - install:go-install-gofumpt
-      - install:go-install-golangci-lint
     cmds:
       - task: lint
       - task: test
@@ -45,23 +43,21 @@ tasks:
     desc: Fix formatting, linting, go.mod, and update submodule
     deps:
       - install:brew-install-terraform
-      - install:go-install-golangci-lint
     cmds:
       - task: go:update-opslevel-go
-      - gofumpt -w .
+      - go tool gofumpt -w .
       - go get -u
       - go mod tidy
-      - golangci-lint run --fix
+      - go tool golangci-lint run --fix
       - task: terraform:terraform-format-fix
 
   lint:
     desc: Formatting and linting
     deps:
       - install:brew-install-terraform
-      - install:go-install-golangci-lint
     cmds:
-      - test -z "$(gofumpt -d -e . | tee /dev/stderr)"
-      - golangci-lint run
+      - test -z "$(go tool gofumpt -d -e . | tee /dev/stderr)"
+      - go tool golangci-lint run
       - task: terraform:terraform-command
         vars: { TF_COMMAND: "validate -no-tests", TF_CMD_DIR: "{{.ROOT_DIR}}" }
       - task: terraform:terraform-format-check
@@ -70,9 +66,6 @@ tasks:
     desc: Setup linter, formatter, Terraform, and Terraform workspace
     deps:
       - install:brew-install-terraform
-      - install:go-install-changie
-      - install:go-install-gofumpt
-      - install:go-install-golangci-lint
     cmds:
       - task: terraform:setup-terraform-from
         vars: { SETUP_DIR: "{{.WORKSPACE_DIR}}" }

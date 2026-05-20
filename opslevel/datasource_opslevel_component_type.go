@@ -49,6 +49,13 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 			"management_rules": ManagementRulesDataSourceAttribute(),
 		},
 	},
+	"system_relationship": schema.SingleNestedAttribute{
+		MarkdownDescription: "The system relationship configuration for this component type.",
+		Computed:            true,
+		Attributes: map[string]schema.Attribute{
+			"management_rules": ManagementRulesDataSourceAttribute(),
+		},
+	},
 	"properties": schema.MapNestedAttribute{
 		Description: "The properties of this component type.",
 		Computed:    true,
@@ -86,13 +93,14 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 // ComponentTypeDataSourceModel is a simplified version of ComponentTypeModel for data sources
 // It excludes relationships, because opslevel-go does not yet have Relationships on ComponentType
 type ComponentTypeDataSourceModel struct {
-	Id                types.String             `tfsdk:"id"`
-	Name              types.String             `tfsdk:"name"`
-	Alias             types.String             `tfsdk:"alias"`
-	Description       types.String             `tfsdk:"description"`
-	Icon              *ComponentTypeIconModel  `tfsdk:"icon"`
-	OwnerRelationship *OwnerRelationshipModel  `tfsdk:"owner_relationship"`
-	Properties        map[string]PropertyModel `tfsdk:"properties"`
+	Id                 types.String             `tfsdk:"id"`
+	Name               types.String             `tfsdk:"name"`
+	Alias              types.String             `tfsdk:"alias"`
+	Description        types.String             `tfsdk:"description"`
+	Icon               *ComponentTypeIconModel  `tfsdk:"icon"`
+	OwnerRelationship  *RelationshipConfigModel `tfsdk:"owner_relationship"`
+	SystemRelationship *RelationshipConfigModel `tfsdk:"system_relationship"`
+	Properties         map[string]PropertyModel `tfsdk:"properties"`
 }
 
 type ComponentTypeDataSourceSingleModel struct {
@@ -129,7 +137,8 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				},
 				Properties: map[string]PropertyModel{},
 			}
-			baseModel.OwnerRelationship = buildOwnerRelationshipModel(data)
+			baseModel.OwnerRelationship = buildRelationshipModel(data.OwnerRelationship.ManagementRules)
+			baseModel.SystemRelationship = buildRelationshipModel(data.SystemRelationship.ManagementRules)
 			for _, prop := range data.Properties.Nodes {
 				baseModel.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -180,7 +189,8 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 				},
 				Properties: map[string]PropertyModel{},
 			}
-			model.OwnerRelationship = buildOwnerRelationshipModel(data)
+			model.OwnerRelationship = buildRelationshipModel(data.OwnerRelationship.ManagementRules)
+			model.SystemRelationship = buildRelationshipModel(data.SystemRelationship.ManagementRules)
 			for _, prop := range data.Properties.Nodes {
 				model.Properties[prop.Aliases[0]] = PropertyModel{
 					Name:                 types.StringValue(prop.Name),
@@ -196,19 +206,18 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 	}
 }
 
-func buildOwnerRelationshipModel(data opslevel.ComponentType) *OwnerRelationshipModel {
-	if len(data.OwnerRelationship.ManagementRules) > 0 {
-		ruleValues := make([]attr.Value, len(data.OwnerRelationship.ManagementRules))
-		for i, rule := range data.OwnerRelationship.ManagementRules {
-			ruleValues[i] = NewManagementRuleValue(rule)
-		}
-
-		return &OwnerRelationshipModel{
-			ManagementRules: types.ListValueMust(
-				types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
-				ruleValues,
-			),
-		}
+func buildRelationshipModel(rules []opslevel.RelationshipDefinitionManagementRule) *RelationshipConfigModel {
+	if len(rules) == 0 {
+		return nil
 	}
-	return nil
+	ruleValues := make([]attr.Value, len(rules))
+	for i, rule := range rules {
+		ruleValues[i] = NewManagementRuleValue(rule)
+	}
+	return &RelationshipConfigModel{
+		ManagementRules: types.ListValueMust(
+			types.ObjectType{AttrTypes: ManagementRuleModelAttrs()},
+			ruleValues,
+		),
+	}
 }

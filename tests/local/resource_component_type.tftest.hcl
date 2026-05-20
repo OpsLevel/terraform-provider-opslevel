@@ -86,6 +86,17 @@ run "resource_component_type_properties" {
   }
 }
 
+run "resource_component_type_system_relationship" {
+  providers = {
+    opslevel = opslevel.fake
+  }
+
+  assert {
+    condition     = can(opslevel_component_type.api.system_relationship)
+    error_message = "system_relationship attribute missing from opslevel_component_type.api"
+  }
+}
+
 run "resource_component_type_relationships" {
   providers = {
     opslevel = opslevel.fake
