@@ -33,16 +33,16 @@ type CampaignResource struct {
 }
 
 type CampaignResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	OwnerId        types.String `tfsdk:"owner_id"`
-	FilterId       types.String `tfsdk:"filter_id"`
-	ProjectBrief   types.String `tfsdk:"project_brief"`
-	CheckIds       types.List   `tfsdk:"check_ids"`
-	StartDate      types.String `tfsdk:"start_date"`
-	TargetDate     types.String `tfsdk:"target_date"`
-	Status         types.String `tfsdk:"status"`
-	HtmlUrl        types.String `tfsdk:"html_url"`
+	Id           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	OwnerId      types.String `tfsdk:"owner_id"`
+	FilterId     types.String `tfsdk:"filter_id"`
+	ProjectBrief types.String `tfsdk:"project_brief"`
+	CheckIds     types.List   `tfsdk:"check_ids"`
+	StartDate    types.String `tfsdk:"start_date"`
+	TargetDate   types.String `tfsdk:"target_date"`
+	Status       types.String `tfsdk:"status"`
+	HtmlUrl      types.String `tfsdk:"html_url"`
 }
 
 func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignResourceModel) CampaignResourceModel {
