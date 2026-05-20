@@ -212,7 +212,9 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	createdModel := NewCampaignResourceModel(*campaign, planModel)
-	createdModel.CheckIds = planModel.CheckIds
+	if !planModel.CheckIds.IsUnknown() {
+		createdModel.CheckIds = planModel.CheckIds
+	}
 	tflog.Trace(ctx, "created a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdModel)...)
 }
@@ -262,10 +264,8 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 
 	updateInput.FilterId = nullableID(planModel.FilterId.ValueStringPointer())
 
-	if !planModel.ProjectBrief.IsNull() {
-		brief := planModel.ProjectBrief.ValueString()
-		updateInput.ProjectBrief = &brief
-	}
+	brief := planModel.ProjectBrief.ValueString()
+	updateInput.ProjectBrief = &brief
 
 	campaign, err := r.client.UpdateCampaign(updateInput)
 	if err != nil {
@@ -311,7 +311,9 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
-	updatedModel.CheckIds = planModel.CheckIds
+	if !planModel.CheckIds.IsUnknown() {
+		updatedModel.CheckIds = planModel.CheckIds
+	}
 	tflog.Trace(ctx, "updated a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedModel)...)
 }
