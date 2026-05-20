@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
-	github.com/opslevel/opslevel-go/v2026 v2026.3.6
+	github.com/opslevel/opslevel-go/v2026 v2026.5.20
 	github.com/relvacode/iso8601 v1.7.0
 	golang.org/x/net v0.49.0
 )
@@ -51,12 +51,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128004102-de31872fb2ec // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// TODO: Remove this replace directive before merging upstream.
-// It points at the local submodule for fork development; once
-// OpsLevel/opslevel-go merges the campaign CRUD PR (#611) and
-// cuts a release, switch to the published version.
-replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
