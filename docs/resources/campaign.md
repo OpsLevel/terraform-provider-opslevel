@@ -41,6 +41,21 @@ resource "opslevel_campaign" "upgrade_rails" {
     2. Run the Rails upgrade checklist
     3. Verify all tests pass
   EOT
+
+  # Send a weekly Slack and email reminder to component owners while the
+  # campaign is in progress. days_of_week is only valid with a weekly cadence.
+  reminder = {
+    channels       = ["slack", "email"]
+    frequency      = 1
+    frequency_unit = "week"
+    days_of_week   = ["monday", "thursday"]
+    time_of_day    = "09:30"
+    timezone       = "America/Chicago"
+    message        = "Friendly reminder to complete your Rails 7 upgrade checks."
+
+    # Fallback channel used when a team has no default Slack contact.
+    default_slack_channel = "#platform-eng"
+  }
 }
 ```
 
@@ -57,6 +72,7 @@ resource "opslevel_campaign" "upgrade_rails" {
 - `check_ids` (List of String) List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `project_brief` (String) The project brief of the campaign (Markdown).
+- `reminder` (Attributes) Configuration for recurring campaign reminders sent to component owners via Slack, email, or Microsoft Teams. Reminders are only delivered while the campaign is in_progress or delayed. (see [below for nested schema](#nestedatt--reminder))
 - `start_date` (String) The start date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.
 - `target_date` (String) The target end date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.
 
@@ -65,6 +81,28 @@ resource "opslevel_campaign" "upgrade_rails" {
 - `html_url` (String) The URL to the campaign in the OpsLevel UI.
 - `id` (String) The ID of the campaign.
 - `status` (String) The current status of the campaign (draft, scheduled, in_progress, delayed, ended).
+
+<a id="nestedatt--reminder"></a>
+### Nested Schema for `reminder`
+
+Required:
+
+- `channels` (List of String) The channels through which reminders are delivered. One or more of: email, microsoft_teams, slack.
+- `frequency` (Number) The interval (in frequency_unit) at which reminders are delivered. Must be at least 1.
+- `frequency_unit` (String) The unit of the frequency interval. One of: day, month, week.
+- `time_of_day` (String) The time of day reminders are delivered, in 24-hour "HH:MM" format.
+- `timezone` (String) The IANA timezone in which time_of_day is evaluated (e.g. "America/Chicago").
+
+Optional:
+
+- `days_of_week` (List of String) The weekdays on which reminders are delivered. Only supported (and required) when frequency_unit is "week".
+- `default_microsoft_teams_channel` (String) Microsoft Teams channel notified when a team has no default Teams contact.
+- `default_slack_channel` (String) Slack channel notified when a team has no default Slack contact. A leading '#' is added automatically.
+- `message` (String) An optional custom message included in the reminder.
+
+Read-Only:
+
+- `next_occurrence` (String) The next time a reminder will be delivered, based on the current configuration. Null until the campaign is in_progress or delayed.
 
 ## Import
 

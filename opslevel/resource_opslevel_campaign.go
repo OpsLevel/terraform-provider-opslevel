@@ -3,7 +3,13 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -13,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
 	"github.com/relvacode/iso8601"
@@ -41,8 +48,154 @@ type CampaignResourceModel struct {
 	CheckIds     types.List   `tfsdk:"check_ids"`
 	StartDate    types.String `tfsdk:"start_date"`
 	TargetDate   types.String `tfsdk:"target_date"`
+	Reminder     types.Object `tfsdk:"reminder"`
 	Status       types.String `tfsdk:"status"`
 	HtmlUrl      types.String `tfsdk:"html_url"`
+}
+
+// CampaignReminderModel describes the nested reminder configuration block.
+type CampaignReminderModel struct {
+	Channels                     types.List   `tfsdk:"channels"`
+	Frequency                    types.Int64  `tfsdk:"frequency"`
+	FrequencyUnit                types.String `tfsdk:"frequency_unit"`
+	TimeOfDay                    types.String `tfsdk:"time_of_day"`
+	Timezone                     types.String `tfsdk:"timezone"`
+	DaysOfWeek                   types.List   `tfsdk:"days_of_week"`
+	Message                      types.String `tfsdk:"message"`
+	DefaultSlackChannel          types.String `tfsdk:"default_slack_channel"`
+	DefaultMicrosoftTeamsChannel types.String `tfsdk:"default_microsoft_teams_channel"`
+	NextOccurrence               types.String `tfsdk:"next_occurrence"`
+}
+
+func reminderAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"channels":                        types.ListType{ElemType: types.StringType},
+		"frequency":                       types.Int64Type,
+		"frequency_unit":                  types.StringType,
+		"time_of_day":                     types.StringType,
+		"timezone":                        types.StringType,
+		"days_of_week":                    types.ListType{ElemType: types.StringType},
+		"message":                         types.StringType,
+		"default_slack_channel":           types.StringType,
+		"default_microsoft_teams_channel": types.StringType,
+		"next_occurrence":                 types.StringType,
+	}
+}
+
+// buildCampaignReminderInput converts the Terraform reminder object into the SDK input.
+// Returns nil when no reminder block is configured. days_of_week is only sent for
+// weekly cadences (the API rejects it otherwise).
+func buildCampaignReminderInput(ctx context.Context, diags *diag.Diagnostics, obj types.Object) *opslevel.CampaignReminderInput {
+	if obj.IsNull() || obj.IsUnknown() {
+		return nil
+	}
+	var rm CampaignReminderModel
+	diags.Append(obj.As(ctx, &rm, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return nil
+	}
+
+	channelStrings, d := ListValueToStringSlice(ctx, rm.Channels)
+	diags.Append(d...)
+	channels := make([]opslevel.CampaignReminderChannelEnum, len(channelStrings))
+	for i, c := range channelStrings {
+		channels[i] = opslevel.CampaignReminderChannelEnum(c)
+	}
+
+	input := &opslevel.CampaignReminderInput{
+		Channels:      channels,
+		Frequency:     int(rm.Frequency.ValueInt64()),
+		FrequencyUnit: opslevel.CampaignReminderFrequencyUnitEnum(rm.FrequencyUnit.ValueString()),
+		TimeOfDay:     rm.TimeOfDay.ValueString(),
+		Timezone:      rm.Timezone.ValueString(),
+	}
+
+	if rm.FrequencyUnit.ValueString() == string(opslevel.CampaignReminderFrequencyUnitEnumWeek) {
+		dayStrings, dd := ListValueToStringSlice(ctx, rm.DaysOfWeek)
+		diags.Append(dd...)
+		for _, day := range dayStrings {
+			input.DaysOfWeek = append(input.DaysOfWeek, opslevel.DayOfWeekEnum(day))
+		}
+	}
+
+	if !rm.Message.IsNull() && !rm.Message.IsUnknown() {
+		input.Message = rm.Message.ValueStringPointer()
+	}
+	if !rm.DefaultSlackChannel.IsNull() && !rm.DefaultSlackChannel.IsUnknown() {
+		input.DefaultSlackChannel = rm.DefaultSlackChannel.ValueStringPointer()
+	}
+	if !rm.DefaultMicrosoftTeamsChannel.IsNull() && !rm.DefaultMicrosoftTeamsChannel.IsUnknown() {
+		input.DefaultMicrosoftTeamsChannel = rm.DefaultMicrosoftTeamsChannel.ValueStringPointer()
+	}
+	return input
+}
+
+// preserveHashChannel keeps the user-configured channel value when it is
+// semantically equal to the API value (the API prefixes a leading '#'), so
+// "platform-eng" in config does not perpetually drift against "#platform-eng".
+func preserveHashChannel(apiVal string, given types.String) types.String {
+	if apiVal == "" {
+		return types.StringNull()
+	}
+	if !given.IsNull() && !given.IsUnknown() {
+		g := given.ValueString()
+		if g == apiVal || "#"+strings.TrimPrefix(g, "#") == apiVal {
+			return given
+		}
+	}
+	return types.StringValue(apiVal)
+}
+
+// campaignReminderToObject maps an SDK reminder onto a Terraform object,
+// preserving user-formatted values from the given (plan/state) object where
+// the API would otherwise introduce noise. Returns a null object when no
+// reminder is configured on the campaign.
+func campaignReminderToObject(ctx context.Context, diags *diag.Diagnostics, reminder *opslevel.CampaignReminder, given types.Object) types.Object {
+	if reminder == nil {
+		return types.ObjectNull(reminderAttrTypes())
+	}
+
+	var prior CampaignReminderModel
+	havePrior := !given.IsNull() && !given.IsUnknown()
+	if havePrior {
+		diags.Append(given.As(ctx, &prior, basetypes.ObjectAsOptions{})...)
+	}
+
+	channels := make([]attr.Value, len(reminder.Channels))
+	for i, c := range reminder.Channels {
+		channels[i] = types.StringValue(string(c))
+	}
+
+	daysList := types.ListNull(types.StringType)
+	if len(reminder.DaysOfWeek) > 0 {
+		days := make([]attr.Value, len(reminder.DaysOfWeek))
+		for i, day := range reminder.DaysOfWeek {
+			days[i] = types.StringValue(string(day))
+		}
+		daysList = types.ListValueMust(types.StringType, days)
+	}
+
+	nextOccurrence := types.StringNull()
+	if !reminder.NextOccurrence.IsZero() {
+		nextOccurrence = types.StringValue(reminder.NextOccurrence.Format(time.RFC3339))
+	}
+
+	rm := CampaignReminderModel{
+		Channels:                     types.ListValueMust(types.StringType, channels),
+		Frequency:                    types.Int64Value(int64(reminder.Frequency)),
+		FrequencyUnit:                types.StringValue(string(reminder.FrequencyUnit)),
+		TimeOfDay:                    types.StringValue(reminder.TimeOfDay),
+		Timezone:                     types.StringValue(reminder.Timezone),
+		DaysOfWeek:                   daysList,
+		Message:                      StringValueFromResourceAndModelField(reminder.Message, prior.Message),
+		DefaultSlackChannel:          preserveHashChannel(reminder.DefaultSlackChannel, prior.DefaultSlackChannel),
+		DefaultMicrosoftTeamsChannel: preserveHashChannel(reminder.DefaultMicrosoftTeamsChannel, prior.DefaultMicrosoftTeamsChannel),
+		NextOccurrence:               nextOccurrence,
+	}
+
+	obj, d := types.ObjectValueFrom(ctx, reminderAttrTypes(), rm)
+	diags.Append(d...)
+	return obj
 }
 
 func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignResourceModel) CampaignResourceModel {
@@ -53,6 +206,7 @@ func NewCampaignResourceModel(campaign opslevel.Campaign, givenModel CampaignRes
 		FilterId:     OptionalStringValue(string(campaign.Filter.Id)),
 		ProjectBrief: StringValueFromResourceAndModelField(campaign.RawProjectBrief, givenModel.ProjectBrief),
 		CheckIds:     types.ListNull(types.StringType),
+		Reminder:     types.ObjectNull(reminderAttrTypes()),
 		Status:       ComputedStringValue(string(campaign.Status)),
 		HtmlUrl:      ComputedStringValue(campaign.HtmlUrl),
 	}
@@ -120,6 +274,72 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Description: "The target end date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.",
 				Optional:    true,
 			},
+			"reminder": schema.SingleNestedAttribute{
+				Description: "Configuration for recurring campaign reminders sent to component owners via Slack, email, or Microsoft Teams. Reminders are only delivered while the campaign is in_progress or delayed.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"channels": schema.ListAttribute{
+						Description: "The channels through which reminders are delivered. One or more of: " + strings.Join(opslevel.AllCampaignReminderChannelEnum, ", ") + ".",
+						Required:    true,
+						ElementType: types.StringType,
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+							listvalidator.ValueStringsAre(stringvalidator.OneOf(opslevel.AllCampaignReminderChannelEnum...)),
+						},
+					},
+					"frequency": schema.Int64Attribute{
+						Description: "The interval (in frequency_unit) at which reminders are delivered. Must be at least 1.",
+						Required:    true,
+						Validators:  []validator.Int64{int64validator.AtLeast(1)},
+					},
+					"frequency_unit": schema.StringAttribute{
+						Description: "The unit of the frequency interval. One of: " + strings.Join(opslevel.AllCampaignReminderFrequencyUnitEnum, ", ") + ".",
+						Required:    true,
+						Validators:  []validator.String{stringvalidator.OneOf(opslevel.AllCampaignReminderFrequencyUnitEnum...)},
+					},
+					"time_of_day": schema.StringAttribute{
+						Description: "The time of day reminders are delivered, in 24-hour \"HH:MM\" format.",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`),
+								"must be a 24-hour time in \"HH:MM\" format (e.g. \"09:30\")",
+							),
+						},
+					},
+					"timezone": schema.StringAttribute{
+						Description: "The IANA timezone in which time_of_day is evaluated (e.g. \"America/Chicago\").",
+						Required:    true,
+					},
+					"days_of_week": schema.ListAttribute{
+						Description: "The weekdays on which reminders are delivered. Only supported (and required) when frequency_unit is \"week\".",
+						Optional:    true,
+						ElementType: types.StringType,
+						Validators: []validator.List{
+							listvalidator.ValueStringsAre(stringvalidator.OneOf(opslevel.AllDayOfWeekEnum...)),
+						},
+					},
+					"message": schema.StringAttribute{
+						Description: "An optional custom message included in the reminder.",
+						Optional:    true,
+					},
+					"default_slack_channel": schema.StringAttribute{
+						Description: "Slack channel notified when a team has no default Slack contact. A leading '#' is added automatically.",
+						Optional:    true,
+					},
+					"default_microsoft_teams_channel": schema.StringAttribute{
+						Description: "Microsoft Teams channel notified when a team has no default Teams contact.",
+						Optional:    true,
+					},
+					"next_occurrence": schema.StringAttribute{
+						Description: "The next time a reminder will be delivered, based on the current configuration. Null until the campaign is in_progress or delayed.",
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+				},
+			},
 			"status": schema.StringAttribute{
 				Description: "The current status of the campaign (draft, scheduled, in_progress, delayed, ended).",
 				Computed:    true,
@@ -147,6 +367,32 @@ func (r *CampaignResource) ValidateConfig(ctx context.Context, req resource.Vali
 			"Both start_date and target_date must be set together to schedule a campaign, or both must be omitted.",
 		)
 	}
+
+	if !config.Reminder.IsNull() && !config.Reminder.IsUnknown() {
+		var rm CampaignReminderModel
+		resp.Diagnostics.Append(config.Reminder.As(ctx, &rm, basetypes.ObjectAsOptions{})...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		isWeekly := rm.FrequencyUnit.ValueString() == string(opslevel.CampaignReminderFrequencyUnitEnumWeek)
+		hasDays := !rm.DaysOfWeek.IsNull() && !rm.DaysOfWeek.IsUnknown() && len(rm.DaysOfWeek.Elements()) > 0
+
+		if isWeekly && !hasDays {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("reminder").AtName("days_of_week"),
+				"Invalid Reminder Configuration",
+				"days_of_week must contain at least one day when frequency_unit is \"week\".",
+			)
+		}
+		if !isWeekly && hasDays {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("reminder").AtName("days_of_week"),
+				"Invalid Reminder Configuration",
+				"days_of_week is only supported when frequency_unit is \"week\".",
+			)
+		}
+	}
 }
 
 func (r *CampaignResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -163,6 +409,10 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	if !planModel.ProjectBrief.IsNull() {
 		brief := planModel.ProjectBrief.ValueString()
 		input.ProjectBrief = &brief
+	}
+	input.Reminder = buildCampaignReminderInput(ctx, &resp.Diagnostics, planModel.Reminder)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	campaign, err := r.client.CreateCampaign(input)
@@ -215,6 +465,10 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 	if !planModel.CheckIds.IsUnknown() {
 		createdModel.CheckIds = planModel.CheckIds
 	}
+	createdModel.Reminder = campaignReminderToObject(ctx, &resp.Diagnostics, campaign.Reminder, planModel.Reminder)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	tflog.Trace(ctx, "created a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &createdModel)...)
 }
@@ -238,6 +492,7 @@ func (r *CampaignResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	readModel := NewCampaignResourceModel(*campaign, stateModel)
 	readModel.CheckIds = r.readCampaignCheckIds(ctx, &resp.Diagnostics, campaign.Id, stateModel.CheckIds)
+	readModel.Reminder = campaignReminderToObject(ctx, &resp.Diagnostics, campaign.Reminder, stateModel.Reminder)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -266,6 +521,17 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 
 	brief := planModel.ProjectBrief.ValueString()
 	updateInput.ProjectBrief = &brief
+
+	plannedReminder := buildCampaignReminderInput(ctx, &resp.Diagnostics, planModel.Reminder)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if plannedReminder != nil {
+		updateInput.Reminder = opslevel.NewNullableFrom(*plannedReminder)
+	} else if !stateModel.Reminder.IsNull() {
+		// Reminder block removed from config -> explicitly clear it on the API.
+		updateInput.Reminder = opslevel.NewNullOf[opslevel.CampaignReminderInput]()
+	}
 
 	campaign, err := r.client.UpdateCampaign(updateInput)
 	if err != nil {
@@ -313,6 +579,10 @@ func (r *CampaignResource) Update(ctx context.Context, req resource.UpdateReques
 	updatedModel := NewCampaignResourceModel(*campaign, planModel)
 	if !planModel.CheckIds.IsUnknown() {
 		updatedModel.CheckIds = planModel.CheckIds
+	}
+	updatedModel.Reminder = campaignReminderToObject(ctx, &resp.Diagnostics, campaign.Reminder, planModel.Reminder)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	tflog.Trace(ctx, "updated a campaign resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &updatedModel)...)

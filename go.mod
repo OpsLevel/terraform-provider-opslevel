@@ -282,7 +282,8 @@ require (
 	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect
 )
 
-// replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
+// TODO: remove before merge and bump the require above to the released opslevel-go version.
+replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
 
 tool (
 	github.com/go-delve/delve/cmd/dlv
