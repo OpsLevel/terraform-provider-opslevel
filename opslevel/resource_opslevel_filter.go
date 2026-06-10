@@ -112,12 +112,12 @@ func NewFilterResourceModel(ctx context.Context, filter opslevel.Filter, givenMo
 		foundPlanPredModel := ExtractFilterPredicateModel(&opslevelPredicate, givenPredicateModels)
 
 		// Models from config/plan/state may have case sensitive fields set, API based models will not
-		if !foundPlanPredModel.CaseSensitive.IsNull() && !foundPlanPredModel.CaseSensitive.IsUnknown() {
+		if !foundPlanPredModel.CaseSensitive.IsNull() && !foundPlanPredModel.CaseSensitive.IsUnknown() && opslevelPredicate.CaseSensitive != nil {
 			foundPlanPredModel.CaseSensitive = types.BoolValue(*opslevelPredicate.CaseSensitive)
 		} else {
 			foundPlanPredModel.CaseSensitive = types.BoolNull()
 		}
-		if !foundPlanPredModel.CaseInsensitive.IsNull() && !foundPlanPredModel.CaseInsensitive.IsUnknown() {
+		if !foundPlanPredModel.CaseInsensitive.IsNull() && !foundPlanPredModel.CaseInsensitive.IsUnknown() && opslevelPredicate.CaseSensitive != nil {
 			foundPlanPredModel.CaseInsensitive = types.BoolValue(!*opslevelPredicate.CaseSensitive)
 		} else {
 			foundPlanPredModel.CaseInsensitive = types.BoolNull()
