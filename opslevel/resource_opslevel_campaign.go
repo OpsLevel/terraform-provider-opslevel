@@ -368,31 +368,44 @@ func (r *CampaignResource) ValidateConfig(ctx context.Context, req resource.Vali
 		)
 	}
 
-	if !config.Reminder.IsNull() && !config.Reminder.IsUnknown() {
-		var rm CampaignReminderModel
-		resp.Diagnostics.Append(config.Reminder.As(ctx, &rm, basetypes.ObjectAsOptions{})...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	resp.Diagnostics.Append(validateReminderConfig(ctx, config.Reminder)...)
+}
 
-		isWeekly := rm.FrequencyUnit.ValueString() == string(opslevel.CampaignReminderFrequencyUnitEnumWeek)
-		hasDays := !rm.DaysOfWeek.IsNull() && !rm.DaysOfWeek.IsUnknown() && len(rm.DaysOfWeek.Elements()) > 0
-
-		if isWeekly && !hasDays {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("reminder").AtName("days_of_week"),
-				"Invalid Reminder Configuration",
-				"days_of_week must contain at least one day when frequency_unit is \"week\".",
-			)
-		}
-		if !isWeekly && hasDays {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("reminder").AtName("days_of_week"),
-				"Invalid Reminder Configuration",
-				"days_of_week is only supported when frequency_unit is \"week\".",
-			)
-		}
+// validateReminderConfig enforces the reminder rules that the API also enforces:
+// days_of_week is required for a weekly cadence and rejected for any other cadence.
+// A null/unknown reminder (no block configured) produces no diagnostics. Returned
+// diagnostics are keyed to the days_of_week attribute path.
+func validateReminderConfig(ctx context.Context, reminder types.Object) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if reminder.IsNull() || reminder.IsUnknown() {
+		return diags
 	}
+
+	var rm CampaignReminderModel
+	diags.Append(reminder.As(ctx, &rm, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	isWeekly := rm.FrequencyUnit.ValueString() == string(opslevel.CampaignReminderFrequencyUnitEnumWeek)
+	hasDays := !rm.DaysOfWeek.IsNull() && !rm.DaysOfWeek.IsUnknown() && len(rm.DaysOfWeek.Elements()) > 0
+
+	daysPath := path.Root("reminder").AtName("days_of_week")
+	if isWeekly && !hasDays {
+		diags.AddAttributeError(
+			daysPath,
+			"Invalid Reminder Configuration",
+			"days_of_week must contain at least one day when frequency_unit is \"week\".",
+		)
+	}
+	if !isWeekly && hasDays {
+		diags.AddAttributeError(
+			daysPath,
+			"Invalid Reminder Configuration",
+			"days_of_week is only supported when frequency_unit is \"week\".",
+		)
+	}
+	return diags
 }
 
 func (r *CampaignResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
