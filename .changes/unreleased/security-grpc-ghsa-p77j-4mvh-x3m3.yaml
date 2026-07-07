@@ -1,0 +1,2 @@
+kind: Security
+body: Bumped `google.golang.org/grpc` to v1.79.3 to patch GHSA-p77j-4mvh-x3m3, an authorization bypass via a missing leading slash in the HTTP/2 `:path` pseudo-header.
