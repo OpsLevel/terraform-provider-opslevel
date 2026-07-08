@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/opslevel/opslevel-go/v2026 v2026.5.20
 	github.com/relvacode/iso8601 v1.7.0
-	golang.org/x/net v0.54.0
+	golang.org/x/net v0.55.0
 )
 
 require (
