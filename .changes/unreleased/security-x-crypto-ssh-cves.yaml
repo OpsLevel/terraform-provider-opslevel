@@ -1,2 +1,0 @@
-kind: Security
-body: Bumped `golang.org/x/crypto` to v0.52.0 to patch 7 critical CVEs in `x/crypto/ssh` (GO-2026-5020, 5023, 5006, 5017, 5019, 5021, 5005). Requires Go 1.25.0.

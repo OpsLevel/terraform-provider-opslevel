@@ -1,2 +1,0 @@
-kind: Security
-body: Bumped `golang.org/x/net` to v0.55.0 to patch GO-2026-5026 in `x/net/idna`, where `ToASCII`/`ToUnicode` incorrectly accepted Punycode-encoded labels that decoded to ASCII-only labels.
