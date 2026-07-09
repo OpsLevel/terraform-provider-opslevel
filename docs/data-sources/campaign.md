@@ -27,8 +27,25 @@ Campaign data source
 - `name` (String) The name of the campaign.
 - `owner_id` (String) The ID of the team that owns this campaign.
 - `project_brief` (String) The raw project brief of the campaign (Markdown).
+- `reminder` (Attributes) The recurring reminder configured for this campaign, if any. (see [below for nested schema](#nestedatt--reminder))
 - `start_date` (String) The start date of the campaign.
 - `status` (String) The current status of the campaign.
 - `target_date` (String) The target end date of the campaign.
+
+<a id="nestedatt--reminder"></a>
+### Nested Schema for `reminder`
+
+Read-Only:
+
+- `channels` (List of String) The channels through which reminders are delivered.
+- `days_of_week` (List of String) The weekdays on which reminders are delivered (weekly cadence only).
+- `default_microsoft_teams_channel` (String) Microsoft Teams channel notified when a team has no default Teams contact.
+- `default_slack_channel` (String) Slack channel notified when a team has no default Slack contact.
+- `frequency` (Number) The interval (in frequency_unit) at which reminders are delivered.
+- `frequency_unit` (String) The unit of the frequency interval.
+- `message` (String) The custom message included in the reminder.
+- `next_occurrence` (String) The next time a reminder will be delivered, based on the current configuration.
+- `time_of_day` (String) The time of day reminders are delivered, in 24-hour "HH:MM" format.
+- `timezone` (String) The IANA timezone in which time_of_day is evaluated.
 
 

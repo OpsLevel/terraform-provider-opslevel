@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
@@ -46,6 +47,54 @@ var campaignSchemaAttrs = map[string]schema.Attribute{
 		Description: "The raw project brief of the campaign (Markdown).",
 		Computed:    true,
 	},
+	"reminder": schema.SingleNestedAttribute{
+		Description: "The recurring reminder configured for this campaign, if any.",
+		Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"channels": schema.ListAttribute{
+				Description: "The channels through which reminders are delivered.",
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"frequency": schema.Int64Attribute{
+				Description: "The interval (in frequency_unit) at which reminders are delivered.",
+				Computed:    true,
+			},
+			"frequency_unit": schema.StringAttribute{
+				Description: "The unit of the frequency interval.",
+				Computed:    true,
+			},
+			"time_of_day": schema.StringAttribute{
+				Description: "The time of day reminders are delivered, in 24-hour \"HH:MM\" format.",
+				Computed:    true,
+			},
+			"timezone": schema.StringAttribute{
+				Description: "The IANA timezone in which time_of_day is evaluated.",
+				Computed:    true,
+			},
+			"days_of_week": schema.ListAttribute{
+				Description: "The weekdays on which reminders are delivered (weekly cadence only).",
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"message": schema.StringAttribute{
+				Description: "The custom message included in the reminder.",
+				Computed:    true,
+			},
+			"default_slack_channel": schema.StringAttribute{
+				Description: "Slack channel notified when a team has no default Slack contact.",
+				Computed:    true,
+			},
+			"default_microsoft_teams_channel": schema.StringAttribute{
+				Description: "Microsoft Teams channel notified when a team has no default Teams contact.",
+				Computed:    true,
+			},
+			"next_occurrence": schema.StringAttribute{
+				Description: "The next time a reminder will be delivered, based on the current configuration.",
+				Computed:    true,
+			},
+		},
+	},
 	"start_date": schema.StringAttribute{
 		Description: "The start date of the campaign.",
 		Computed:    true,
@@ -75,12 +124,13 @@ type campaignDataSourceModel struct {
 	Name         types.String `tfsdk:"name"`
 	OwnerId      types.String `tfsdk:"owner_id"`
 	ProjectBrief types.String `tfsdk:"project_brief"`
+	Reminder     types.Object `tfsdk:"reminder"`
 	StartDate    types.String `tfsdk:"start_date"`
 	Status       types.String `tfsdk:"status"`
 	TargetDate   types.String `tfsdk:"target_date"`
 }
 
-func newCampaignDataSourceModel(campaign opslevel.Campaign, identifier string) campaignDataSourceModel {
+func newCampaignDataSourceModel(ctx context.Context, diags *diag.Diagnostics, campaign opslevel.Campaign, identifier string) campaignDataSourceModel {
 	model := campaignDataSourceModel{
 		FilterId:     ComputedStringValue(string(campaign.Filter.Id)),
 		HtmlUrl:      ComputedStringValue(campaign.HtmlUrl),
@@ -89,6 +139,7 @@ func newCampaignDataSourceModel(campaign opslevel.Campaign, identifier string) c
 		Name:         ComputedStringValue(campaign.Name),
 		OwnerId:      ComputedStringValue(string(campaign.Owner.Id)),
 		ProjectBrief: ComputedStringValue(campaign.RawProjectBrief),
+		Reminder:     campaignReminderToObject(ctx, diags, campaign.Reminder, types.ObjectNull(reminderAttrTypes())),
 		Status:       ComputedStringValue(string(campaign.Status)),
 	}
 	if !campaign.StartDate.IsZero() {
@@ -133,7 +184,10 @@ func (d *CampaignDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	stateModel := newCampaignDataSourceModel(*campaign, configModel.Identifier.ValueString())
+	stateModel := newCampaignDataSourceModel(ctx, &resp.Diagnostics, *campaign, configModel.Identifier.ValueString())
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	tflog.Trace(ctx, "read an OpsLevel Campaign data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }
