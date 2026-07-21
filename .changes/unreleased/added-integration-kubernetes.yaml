@@ -1,0 +1,2 @@
+kind: Added
+body: New `opslevel_integration_kubernetes` resource for managing a Kubernetes integration's ETL config (`extract_definition` / `transform_definition`) as code
