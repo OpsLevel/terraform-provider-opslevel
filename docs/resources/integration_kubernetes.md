@@ -16,24 +16,27 @@ Kubernetes Integration resource
 resource "opslevel_integration_kubernetes" "dev" {
   name = "Kubernetes Integration"
 
-  # Both definitions are optional - OpsLevel's defaults are used when unset.
-  extract_definition = <<-EOT
-    extractors:
-      - external_kind: "v1/Namespace"
-        external_id: ".metadata.uid"
-      - external_kind: "apps/v1/Deployment"
-        external_id: ".metadata.uid"
-  EOT
+  # Optional - OpsLevel's default definitions are used when unset.
+  # The two definitions are managed as a unit, so set both together.
+  etl_definition = {
+    extract_definition = <<-EOT
+      extractors:
+        - external_kind: "v1/Namespace"
+          external_id: ".metadata.uid"
+        - external_kind: "apps/v1/Deployment"
+          external_id: ".metadata.uid"
+    EOT
 
-  transform_definition = <<-EOT
-    transforms:
-      - external_kind: v1/Namespace
-        opslevel_kind: kubernetes_namespace
-        opslevel_identifier: ".metadata.name"
-        on_component_not_found: create
-        properties:
-          name: ".metadata.name"
-  EOT
+    transform_definition = <<-EOT
+      transforms:
+        - external_kind: v1/Namespace
+          opslevel_kind: kubernetes_namespace
+          opslevel_identifier: ".metadata.name"
+          on_component_not_found: create
+          properties:
+            name: ".metadata.name"
+    EOT
+  }
 }
 ```
 
@@ -46,12 +49,19 @@ resource "opslevel_integration_kubernetes" "dev" {
 
 ### Optional
 
-- `extract_definition` (String) The YAML definition for extracting data from inbound payloads. If not set, OpsLevel's default extract definition is used. Note: OpsLevel normalizes the stored YAML, so the value read from the API may be formatted differently than the configured value. Removing this attribute keeps the last applied definition.
-- `transform_definition` (String) The YAML definition for transforming extracted data to OpsLevel resources. If not set, OpsLevel's default transform definition is used. Note: OpsLevel normalizes the stored YAML, so the value read from the API may be formatted differently than the configured value. Removing this attribute keeps the last applied definition.
+- `etl_definition` (Attributes) The ETL definitions used to import data from the integration. If not set, OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together. (see [below for nested schema](#nestedatt--etl_definition))
 
 ### Read-Only
 
 - `id` (String) The ID of the Kubernetes integration.
+
+<a id="nestedatt--etl_definition"></a>
+### Nested Schema for `etl_definition`
+
+Required:
+
+- `extract_definition` (String) The YAML definition for extracting data from inbound payloads.
+- `transform_definition` (String) The YAML definition for transforming extracted data to OpsLevel resources.
 
 ## Import
 

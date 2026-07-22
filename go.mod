@@ -9,6 +9,7 @@ require (
 	github.com/opslevel/opslevel-go/v2026 v2026.7.21
 	github.com/relvacode/iso8601 v1.7.0
 	golang.org/x/net v0.55.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -272,7 +273,6 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	mvdan.cc/gofumpt v0.8.0 // indirect
 	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect

@@ -5,19 +5,21 @@ variables {
   name = "TF Test Kubernetes Integration"
 
   # optional fields
-  extract_definition = <<-EOT
-    extractors:
-      - external_kind: "v1/Namespace"
-        external_id: ".metadata.uid"
-  EOT
+  etl_definition = {
+    extract_definition = <<-EOT
+      extractors:
+        - external_kind: "v1/Namespace"
+          external_id: ".metadata.uid"
+    EOT
 
-  transform_definition = <<-EOT
-    transforms:
-      - external_kind: v1/Namespace
-        opslevel_kind: kubernetes_namespace
-        opslevel_identifier: ".metadata.name"
-        on_component_not_found: create
-  EOT
+    transform_definition = <<-EOT
+      transforms:
+        - external_kind: v1/Namespace
+          opslevel_kind: kubernetes_namespace
+          opslevel_identifier: ".metadata.name"
+          on_component_not_found: create
+    EOT
+  }
 }
 
 run "resource_integration_kubernetes_create_with_all_fields" {
@@ -28,10 +30,9 @@ run "resource_integration_kubernetes_create_with_all_fields" {
 
   assert {
     condition = alltrue([
-      can(opslevel_integration_kubernetes.this.extract_definition),
+      can(opslevel_integration_kubernetes.this.etl_definition),
       can(opslevel_integration_kubernetes.this.id),
       can(opslevel_integration_kubernetes.this.name),
-      can(opslevel_integration_kubernetes.this.transform_definition),
     ])
     error_message = replace(var.error_unexpected_resource_fields, "TYPE", var.resource_name)
   }
@@ -51,20 +52,20 @@ run "resource_integration_kubernetes_create_with_all_fields" {
   }
 
   assert {
-    condition = opslevel_integration_kubernetes.this.extract_definition == var.extract_definition
+    condition = opslevel_integration_kubernetes.this.etl_definition.extract_definition == var.etl_definition.extract_definition
     error_message = format(
       "expected '%v' but got '%v'",
-      var.extract_definition,
-      opslevel_integration_kubernetes.this.extract_definition,
+      var.etl_definition.extract_definition,
+      opslevel_integration_kubernetes.this.etl_definition.extract_definition,
     )
   }
 
   assert {
-    condition = opslevel_integration_kubernetes.this.transform_definition == var.transform_definition
+    condition = opslevel_integration_kubernetes.this.etl_definition.transform_definition == var.etl_definition.transform_definition
     error_message = format(
       "expected '%v' but got '%v'",
-      var.transform_definition,
-      opslevel_integration_kubernetes.this.transform_definition,
+      var.etl_definition.transform_definition,
+      opslevel_integration_kubernetes.this.etl_definition.transform_definition,
     )
   }
 
@@ -73,25 +74,27 @@ run "resource_integration_kubernetes_create_with_all_fields" {
 run "resource_integration_kubernetes_update_definitions" {
 
   variables {
-    extract_definition = <<-EOT
-      extractors:
-        - external_kind: "v1/Namespace"
-          external_id: ".metadata.uid"
-        - external_kind: "apps/v1/Deployment"
-          external_id: ".metadata.uid"
-    EOT
+    etl_definition = {
+      extract_definition = <<-EOT
+        extractors:
+          - external_kind: "v1/Namespace"
+            external_id: ".metadata.uid"
+          - external_kind: "apps/v1/Deployment"
+            external_id: ".metadata.uid"
+      EOT
 
-    transform_definition = <<-EOT
-      transforms:
-        - external_kind: v1/Namespace
-          opslevel_kind: kubernetes_namespace
-          opslevel_identifier: ".metadata.name"
-          on_component_not_found: create
-        - external_kind: apps/v1/Deployment
-          opslevel_kind: kubernetes_deployment
-          opslevel_identifier: ".metadata.uid"
-          on_component_not_found: create
-    EOT
+      transform_definition = <<-EOT
+        transforms:
+          - external_kind: v1/Namespace
+            opslevel_kind: kubernetes_namespace
+            opslevel_identifier: ".metadata.name"
+            on_component_not_found: create
+          - external_kind: apps/v1/Deployment
+            opslevel_kind: kubernetes_deployment
+            opslevel_identifier: ".metadata.uid"
+            on_component_not_found: create
+      EOT
+    }
   }
 
   module {
@@ -117,20 +120,20 @@ run "resource_integration_kubernetes_update_definitions" {
   }
 
   assert {
-    condition = opslevel_integration_kubernetes.this.extract_definition == var.extract_definition
+    condition = opslevel_integration_kubernetes.this.etl_definition.extract_definition == var.etl_definition.extract_definition
     error_message = format(
       "expected '%v' but got '%v'",
-      var.extract_definition,
-      opslevel_integration_kubernetes.this.extract_definition,
+      var.etl_definition.extract_definition,
+      opslevel_integration_kubernetes.this.etl_definition.extract_definition,
     )
   }
 
   assert {
-    condition = opslevel_integration_kubernetes.this.transform_definition == var.transform_definition
+    condition = opslevel_integration_kubernetes.this.etl_definition.transform_definition == var.etl_definition.transform_definition
     error_message = format(
       "expected '%v' but got '%v'",
-      var.transform_definition,
-      opslevel_integration_kubernetes.this.transform_definition,
+      var.etl_definition.transform_definition,
+      opslevel_integration_kubernetes.this.etl_definition.transform_definition,
     )
   }
 
