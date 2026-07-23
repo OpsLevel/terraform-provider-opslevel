@@ -3,10 +3,23 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/opslevel/opslevel-go/v2026"
+	"gopkg.in/yaml.v3"
 )
+
+func yamlEquivalent(a, b string) bool {
+	var aValue, bValue any
+	if err := yaml.Unmarshal([]byte(a), &aValue); err != nil {
+		return false
+	}
+	if err := yaml.Unmarshal([]byte(b), &bValue); err != nil {
+		return false
+	}
+	return reflect.DeepEqual(aValue, bValue)
+}
 
 type TerraformSource interface {
 	Get(ctx context.Context, target interface{}) diag.Diagnostics

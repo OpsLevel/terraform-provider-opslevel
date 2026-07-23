@@ -71,6 +71,37 @@ run "resource_integration_kubernetes_create_with_all_fields" {
 
 }
 
+run "resource_integration_kubernetes_unset_definitions" {
+
+  variables {
+    etl_definition = null
+  }
+
+  module {
+    source = "./integration_kubernetes"
+  }
+
+  assert {
+    condition = run.resource_integration_kubernetes_create_with_all_fields.this.id == opslevel_integration_kubernetes.this.id
+    error_message = format(
+      "expected id '%v' to be unchanged after unset but got '%v'",
+      run.resource_integration_kubernetes_create_with_all_fields.this.id,
+      opslevel_integration_kubernetes.this.id,
+    )
+  }
+
+  assert {
+    condition     = opslevel_integration_kubernetes.this.etl_definition.extract_definition == ""
+    error_message = "expected extract_definition to be the empty-string default after unset"
+  }
+
+  assert {
+    condition     = opslevel_integration_kubernetes.this.etl_definition.transform_definition == ""
+    error_message = "expected transform_definition to be the empty-string default after unset"
+  }
+
+}
+
 run "resource_integration_kubernetes_update_definitions" {
 
   variables {

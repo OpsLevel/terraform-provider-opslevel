@@ -3,20 +3,19 @@ package opslevel
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -33,9 +32,6 @@ type IntegrationKubernetesResource struct {
 	CommonResourceClient
 }
 
-// IntegrationKubernetesEtlDefinitionModel describes the extract/transform definition pair.
-// The API manages the two definitions as a unit (clearing one clears both), so they are
-// modeled as a single object.
 type IntegrationKubernetesEtlDefinitionModel struct {
 	ExtractDefinition   types.String `tfsdk:"extract_definition"`
 	TransformDefinition types.String `tfsdk:"transform_definition"`
@@ -55,22 +51,6 @@ type IntegrationKubernetesResourceModel struct {
 	Name          types.String `tfsdk:"name"`
 }
 
-// yamlEquivalent reports whether two YAML documents carry the same data. The API parses and
-// re-serializes stored definitions, so equivalent documents can differ in formatting.
-func yamlEquivalent(a, b string) bool {
-	var aValue, bValue any
-	if err := yaml.Unmarshal([]byte(a), &aValue); err != nil {
-		return false
-	}
-	if err := yaml.Unmarshal([]byte(b), &bValue); err != nil {
-		return false
-	}
-	return reflect.DeepEqual(aValue, bValue)
-}
-
-// NewIntegrationKubernetesResourceModel builds the state model from an API response. Each
-// definition keeps the given model's string when it is semantically equal to the API value,
-// so formatting normalization does not show up as drift but real remote changes do.
 func NewIntegrationKubernetesResourceModel(ctx context.Context, kubernetesIntegration opslevel.Integration, givenModel IntegrationKubernetesResourceModel, diags *diag.Diagnostics) IntegrationKubernetesResourceModel {
 	etlModel := IntegrationKubernetesEtlDefinitionModel{
 		ExtractDefinition:   RequiredStringValue(kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition),
@@ -79,11 +59,15 @@ func NewIntegrationKubernetesResourceModel(ctx context.Context, kubernetesIntegr
 	if !givenModel.EtlDefinition.IsNull() && !givenModel.EtlDefinition.IsUnknown() {
 		var givenEtlModel IntegrationKubernetesEtlDefinitionModel
 		diags.Append(givenModel.EtlDefinition.As(ctx, &givenEtlModel, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-		if yamlEquivalent(givenEtlModel.ExtractDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition) {
-			etlModel.ExtractDefinition = givenEtlModel.ExtractDefinition
-		}
-		if yamlEquivalent(givenEtlModel.TransformDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.TransformDefinition) {
-			etlModel.TransformDefinition = givenEtlModel.TransformDefinition
+		if givenEtlModel.ExtractDefinition.ValueString() == "" && givenEtlModel.TransformDefinition.ValueString() == "" {
+			etlModel = givenEtlModel
+		} else {
+			if yamlEquivalent(givenEtlModel.ExtractDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition) {
+				etlModel.ExtractDefinition = givenEtlModel.ExtractDefinition
+			}
+			if yamlEquivalent(givenEtlModel.TransformDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.TransformDefinition) {
+				etlModel.TransformDefinition = givenEtlModel.TransformDefinition
+			}
 		}
 	}
 	etlObject, objDiags := types.ObjectValueFrom(ctx, integrationKubernetesEtlDefinitionAttrs(), etlModel)
@@ -107,7 +91,7 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 
 		Attributes: map[string]schema.Attribute{
 			"etl_definition": schema.SingleNestedAttribute{
-				Description: "The ETL definitions used to import data from the integration. If not set, OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together.",
+				Description: "The ETL definitions used to import data from the integration. If not set (or removed), OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together.",
 				Optional:    true,
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
@@ -120,6 +104,13 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 						Required:    true,
 					},
 				},
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					integrationKubernetesEtlDefinitionAttrs(),
+					map[string]attr.Value{
+						"extract_definition":   types.StringValue(""),
+						"transform_definition": types.StringValue(""),
+					},
+				)),
 			},
 			"id": schema.StringAttribute{
 				Description: "The ID of the Kubernetes integration.",
@@ -136,9 +127,7 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 	}
 }
 
-// newKubernetesIntegrationInput only sets the definition fields when the etl_definition object
-// has a known value. Unknown values (unset in config) must be omitted so the API keeps its
-// defaults - sending an explicit null would clear both definitions on the server.
+// Both definitions are omitted when unset - the API rejects an empty string for YAML.
 func newKubernetesIntegrationInput(ctx context.Context, planModel IntegrationKubernetesResourceModel, diags *diag.Diagnostics) opslevel.KubernetesIntegrationInput {
 	input := opslevel.KubernetesIntegrationInput{
 		Name: nullable(planModel.Name.ValueStringPointer()),
@@ -146,8 +135,10 @@ func newKubernetesIntegrationInput(ctx context.Context, planModel IntegrationKub
 	if !planModel.EtlDefinition.IsNull() && !planModel.EtlDefinition.IsUnknown() {
 		var etlModel IntegrationKubernetesEtlDefinitionModel
 		diags.Append(planModel.EtlDefinition.As(ctx, &etlModel, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-		input.ExtractDefinition = refOf(opslevel.YAML(etlModel.ExtractDefinition.ValueString()))
-		input.TransformDefinition = refOf(opslevel.YAML(etlModel.TransformDefinition.ValueString()))
+		if etlModel.ExtractDefinition.ValueString() != "" || etlModel.TransformDefinition.ValueString() != "" {
+			input.ExtractDefinition = refOf(opslevel.YAML(etlModel.ExtractDefinition.ValueString()))
+			input.TransformDefinition = refOf(opslevel.YAML(etlModel.TransformDefinition.ValueString()))
+		}
 	}
 	return input
 }
