@@ -1,3 +1,0 @@
-kind: Fixed
-body: Fixed nil-pointer dereference in `opslevel_filter` read when state holds a `case_sensitive` value for a predicate (e.g. `exists`, `matches` against an ID) that the OpsLevel API returns as `nil` — previously caused `terraform plan` to crash for workspaces upgrading from 0.8.x state
-time: 2026-07-09T09:05:31.233309Z
