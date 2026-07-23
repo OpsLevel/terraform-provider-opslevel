@@ -198,6 +198,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewIntegrationAzureResourcesResource,
 		NewIntegrationEndpointResource,
 		NewIntegrationGoogleCloudResource,
+		NewIntegrationKubernetesResource,
 		NewPropertyAssignmentResource,
 		NewPropertyDefinitionResource,
 		NewRelationshipDefinitionResource,
