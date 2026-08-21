@@ -1,0 +1,3 @@
+kind: Dependency
+body: Bump github.com/cilium/ebpf from 0.11.0 to 0.22.0
+time: 2026-08-21T22:43:24.422484255Z
