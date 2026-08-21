@@ -1,0 +1,4 @@
+kind: Feature
+body: Add `opslevel_integration_custom` resource for managing Custom Integrations,
+  including their Extract and Transform mapping configuration.
+time: 2026-08-19T01:30:00+05:30

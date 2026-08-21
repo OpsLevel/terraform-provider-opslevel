@@ -1,7 +1,7 @@
 resource "opslevel_integration_kubernetes" "dev" {
   name = "Kubernetes Integration"
 
-  # Optional - OpsLevel's default definitions are used when unset.
+  # Optional - OpsLevel's default definitions are used when omitted on create.
   # The two definitions are managed as a unit, so set both together.
   etl_definition = {
     extract_definition = <<-EOT

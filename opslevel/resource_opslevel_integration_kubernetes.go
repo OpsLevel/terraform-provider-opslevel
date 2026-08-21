@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
 )
@@ -32,18 +29,6 @@ type IntegrationKubernetesResource struct {
 	CommonResourceClient
 }
 
-type IntegrationKubernetesEtlDefinitionModel struct {
-	ExtractDefinition   types.String `tfsdk:"extract_definition"`
-	TransformDefinition types.String `tfsdk:"transform_definition"`
-}
-
-func integrationKubernetesEtlDefinitionAttrs() map[string]attr.Type {
-	return map[string]attr.Type{
-		"extract_definition":   types.StringType,
-		"transform_definition": types.StringType,
-	}
-}
-
 // IntegrationKubernetesResourceModel describes the Kubernetes Integration managed resource.
 type IntegrationKubernetesResourceModel struct {
 	EtlDefinition types.Object `tfsdk:"etl_definition"`
@@ -52,29 +37,8 @@ type IntegrationKubernetesResourceModel struct {
 }
 
 func NewIntegrationKubernetesResourceModel(ctx context.Context, kubernetesIntegration opslevel.Integration, givenModel IntegrationKubernetesResourceModel, diags *diag.Diagnostics) IntegrationKubernetesResourceModel {
-	etlModel := IntegrationKubernetesEtlDefinitionModel{
-		ExtractDefinition:   RequiredStringValue(kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition),
-		TransformDefinition: RequiredStringValue(kubernetesIntegration.KubernetesIntegrationFragment.TransformDefinition),
-	}
-	if !givenModel.EtlDefinition.IsNull() && !givenModel.EtlDefinition.IsUnknown() {
-		var givenEtlModel IntegrationKubernetesEtlDefinitionModel
-		diags.Append(givenModel.EtlDefinition.As(ctx, &givenEtlModel, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-		if givenEtlModel.ExtractDefinition.ValueString() == "" && givenEtlModel.TransformDefinition.ValueString() == "" {
-			etlModel = givenEtlModel
-		} else {
-			if yamlEquivalent(givenEtlModel.ExtractDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition) {
-				etlModel.ExtractDefinition = givenEtlModel.ExtractDefinition
-			}
-			if yamlEquivalent(givenEtlModel.TransformDefinition.ValueString(), kubernetesIntegration.KubernetesIntegrationFragment.TransformDefinition) {
-				etlModel.TransformDefinition = givenEtlModel.TransformDefinition
-			}
-		}
-	}
-	etlObject, objDiags := types.ObjectValueFrom(ctx, integrationKubernetesEtlDefinitionAttrs(), etlModel)
-	diags.Append(objDiags...)
-
 	return IntegrationKubernetesResourceModel{
-		EtlDefinition: etlObject,
+		EtlDefinition: reconcileIntegrationEtlDefinition(ctx, kubernetesIntegration.KubernetesIntegrationFragment.ExtractDefinition, kubernetesIntegration.KubernetesIntegrationFragment.TransformDefinition, givenModel.EtlDefinition, diags),
 		Id:            ComputedStringValue(string(kubernetesIntegration.Id)),
 		Name:          RequiredStringValue(kubernetesIntegration.Name),
 	}
@@ -90,28 +54,7 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 		MarkdownDescription: "Kubernetes Integration resource",
 
 		Attributes: map[string]schema.Attribute{
-			"etl_definition": schema.SingleNestedAttribute{
-				Description: "The ETL definitions used to import data from the integration. If not set (or removed), OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together.",
-				Optional:    true,
-				Computed:    true,
-				Attributes: map[string]schema.Attribute{
-					"extract_definition": schema.StringAttribute{
-						Description: "The YAML definition for extracting data from inbound payloads.",
-						Required:    true,
-					},
-					"transform_definition": schema.StringAttribute{
-						Description: "The YAML definition for transforming extracted data to OpsLevel resources.",
-						Required:    true,
-					},
-				},
-				Default: objectdefault.StaticValue(types.ObjectValueMust(
-					integrationKubernetesEtlDefinitionAttrs(),
-					map[string]attr.Value{
-						"extract_definition":   types.StringValue(""),
-						"transform_definition": types.StringValue(""),
-					},
-				)),
-			},
+			"etl_definition": integrationEtlDefinitionSchemaAttribute(),
 			"id": schema.StringAttribute{
 				Description: "The ID of the Kubernetes integration.",
 				Computed:    true,
@@ -132,13 +75,10 @@ func newKubernetesIntegrationInput(ctx context.Context, planModel IntegrationKub
 	input := opslevel.KubernetesIntegrationInput{
 		Name: nullable(planModel.Name.ValueStringPointer()),
 	}
-	if !planModel.EtlDefinition.IsNull() && !planModel.EtlDefinition.IsUnknown() {
-		var etlModel IntegrationKubernetesEtlDefinitionModel
-		diags.Append(planModel.EtlDefinition.As(ctx, &etlModel, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})...)
-		if etlModel.ExtractDefinition.ValueString() != "" || etlModel.TransformDefinition.ValueString() != "" {
-			input.ExtractDefinition = refOf(opslevel.YAML(etlModel.ExtractDefinition.ValueString()))
-			input.TransformDefinition = refOf(opslevel.YAML(etlModel.TransformDefinition.ValueString()))
-		}
+	extractDefinition, transformDefinition := integrationEtlDefinitionInput(ctx, planModel.EtlDefinition, diags)
+	if extractDefinition != nil || transformDefinition != nil {
+		input.ExtractDefinition = extractDefinition
+		input.TransformDefinition = transformDefinition
 	}
 	return input
 }
@@ -182,6 +122,9 @@ func (r *IntegrationKubernetesResource) Read(ctx context.Context, req resource.R
 			return
 		}
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("Unable to read Kubernetes integration, got error: %s", err))
+		return
+	}
+	if !verifyIntegrationType(&resp.Diagnostics, *kubernetesIntegration, "kubernetes") {
 		return
 	}
 

@@ -196,6 +196,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 		NewInfrastructureResource,
 		NewIntegrationAwsResource,
 		NewIntegrationAzureResourcesResource,
+		NewIntegrationCustomResource,
 		NewIntegrationEndpointResource,
 		NewIntegrationGoogleCloudResource,
 		NewIntegrationKubernetesResource,

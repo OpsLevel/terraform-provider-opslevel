@@ -80,3 +80,31 @@ func PreventRemovalPlanModifier(fieldName string) planmodifier.List {
 		fieldName: fieldName,
 	}
 }
+
+type useStateForEquivalentYAMLModifier struct{}
+
+func (m useStateForEquivalentYAMLModifier) Description(ctx context.Context) string {
+	return "Preserves prior state when planned YAML is semantically equivalent."
+}
+
+func (m useStateForEquivalentYAMLModifier) MarkdownDescription(ctx context.Context) string {
+	return "Preserves prior state when planned YAML is semantically equivalent."
+}
+
+func (m useStateForEquivalentYAMLModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.PlanValue.Equal(req.StateValue) {
+		return
+	}
+
+	if req.PlanValue.IsNull() || req.PlanValue.IsUnknown() || req.StateValue.IsNull() || req.StateValue.IsUnknown() {
+		return
+	}
+
+	if yamlEquivalent(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
+		resp.PlanValue = req.StateValue
+	}
+}
+
+func UseStateForEquivalentYAML() planmodifier.String {
+	return useStateForEquivalentYAMLModifier{}
+}

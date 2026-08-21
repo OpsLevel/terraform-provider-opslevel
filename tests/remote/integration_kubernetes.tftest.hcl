@@ -91,13 +91,21 @@ run "resource_integration_kubernetes_unset_definitions" {
   }
 
   assert {
-    condition     = opslevel_integration_kubernetes.this.etl_definition.extract_definition == ""
-    error_message = "expected extract_definition to be the empty-string default after unset"
+    condition = opslevel_integration_kubernetes.this.etl_definition.extract_definition == run.resource_integration_kubernetes_create_with_all_fields.this.etl_definition.extract_definition
+    error_message = format(
+      "expected extract_definition to remain '%v' after unset but got '%v'",
+      run.resource_integration_kubernetes_create_with_all_fields.this.etl_definition.extract_definition,
+      opslevel_integration_kubernetes.this.etl_definition.extract_definition,
+    )
   }
 
   assert {
-    condition     = opslevel_integration_kubernetes.this.etl_definition.transform_definition == ""
-    error_message = "expected transform_definition to be the empty-string default after unset"
+    condition = opslevel_integration_kubernetes.this.etl_definition.transform_definition == run.resource_integration_kubernetes_create_with_all_fields.this.etl_definition.transform_definition
+    error_message = format(
+      "expected transform_definition to remain '%v' after unset but got '%v'",
+      run.resource_integration_kubernetes_create_with_all_fields.this.etl_definition.transform_definition,
+      opslevel_integration_kubernetes.this.etl_definition.transform_definition,
+    )
   }
 
 }
