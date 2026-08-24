@@ -62,7 +62,7 @@ func (r *IntegrationCustomResource) Schema(ctx context.Context, req resource.Sch
 		MarkdownDescription: "Custom Integration resource",
 
 		Attributes: map[string]schema.Attribute{
-			"etl_definition": integrationEtlDefinitionSchemaAttribute(),
+			"etl_definition": integrationEtlDefinitionSchemaAttribute("If omitted, the integration is created without any mapping and will not ingest data until definitions are set."),
 			"id": schema.StringAttribute{
 				Description: "The ID of the Custom integration.",
 				Computed:    true,
@@ -75,7 +75,7 @@ func (r *IntegrationCustomResource) Schema(ctx context.Context, req resource.Sch
 				Required:    true,
 			},
 			"webhook_url": schema.StringAttribute{
-				Description: "The endpoint to send data to via webhook. Empty unless the integration has a push based extractor.",
+				Description: "The endpoint to send data to via webhook. Always present for a custom integration; it does not indicate whether any extractor is push based.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -85,7 +85,7 @@ func (r *IntegrationCustomResource) Schema(ctx context.Context, req resource.Sch
 	}
 }
 
-// Both definitions are omitted when unset - the API rejects an empty string for YAML.
+// Both definitions are omitted when unset; empty strings are rejected by the schema validators.
 func newCustomIntegrationInput(ctx context.Context, planModel IntegrationCustomResourceModel, diags *diag.Diagnostics) opslevel.CustomIntegrationInput {
 	input := opslevel.CustomIntegrationInput{
 		Name: nullable(planModel.Name.ValueStringPointer()),

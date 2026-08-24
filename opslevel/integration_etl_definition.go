@@ -6,7 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/opslevel/opslevel-go/v2026"
@@ -24,15 +26,27 @@ func integrationEtlDefinitionAttrs() map[string]attr.Type {
 	}
 }
 
-func integrationEtlDefinitionSchemaAttribute() schema.SingleNestedAttribute {
+// omittedBehaviour describes what happens when the block is omitted at create
+// time. It differs by integration: Kubernetes seeds default definitions, Custom
+// seeds nothing, so the two resources cannot share one description.
+func integrationEtlDefinitionSchemaAttribute(omittedBehaviour string) schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
-		Description: "The ETL definitions used to import data from the integration. If omitted when the integration is created, OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together.",
+		Description: "The ETL definitions used to import data from the integration. " + omittedBehaviour + " The API manages the two definitions as a unit, so both must be set together.",
 		Optional:    true,
 		Computed:    true,
+		// UseNonNullStateForUnknown, not UseStateForUnknown: copying a null prior
+		// state in would leave a known-null plan that Update then contradicts with
+		// a known object, tripping "inconsistent result after apply".
+		PlanModifiers: []planmodifier.Object{
+			objectplanmodifier.UseNonNullStateForUnknown(),
+		},
 		Attributes: map[string]schema.Attribute{
 			"extract_definition": schema.StringAttribute{
 				Description: "The YAML definition for extracting data from inbound payloads.",
 				Required:    true,
+				Validators: []validator.String{
+					NonEmptyYAML(),
+				},
 				PlanModifiers: []planmodifier.String{
 					UseStateForEquivalentYAML(),
 				},
@@ -40,6 +54,9 @@ func integrationEtlDefinitionSchemaAttribute() schema.SingleNestedAttribute {
 			"transform_definition": schema.StringAttribute{
 				Description: "The YAML definition for transforming extracted data to OpsLevel resources.",
 				Required:    true,
+				Validators: []validator.String{
+					NonEmptyYAML(),
+				},
 				PlanModifiers: []planmodifier.String{
 					UseStateForEquivalentYAML(),
 				},
@@ -81,7 +98,17 @@ func integrationEtlDefinitionInput(ctx context.Context, etlDefinition types.Obje
 		return nil, nil
 	}
 
-	if etlModel.ExtractDefinition.ValueString() == "" && etlModel.TransformDefinition.ValueString() == "" {
+	// Unreachable while the NonEmptyYAML validators hold. Kept as a fail-safe:
+	// sending a definition that decodes to nil clears the stored one, because
+	// YamlType coerces it to nil and the interactors assign whenever provided.
+	// Report rather than silently sending nothing, so a gap in validation surfaces
+	// instead of looking like a successful no-op.
+	if etlModel.ExtractDefinition.ValueString() == "" || etlModel.TransformDefinition.ValueString() == "" {
+		diags.AddError(
+			"Incomplete ETL definition",
+			"Both extract_definition and transform_definition must be set to non-empty YAML. "+
+				"Omit the entire etl_definition block to leave the definitions untouched.",
+		)
 		return nil, nil
 	}
 

@@ -16,7 +16,8 @@ Custom Integration resource
 resource "opslevel_integration_custom" "dev" {
   name = "Custom Integration"
 
-  # Optional - OpsLevel's default definitions are used when omitted on create.
+  # Optional - but omitting it creates an integration with no mapping, which
+  # ingests nothing until definitions are set.
   # The two definitions are managed as a unit, so set both together.
   etl_definition = {
     extract_definition = <<-EOT
@@ -52,12 +53,12 @@ output "custom_integration_webhook_url" {
 
 ### Optional
 
-- `etl_definition` (Attributes) The ETL definitions used to import data from the integration. If omitted when the integration is created, OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together. (see [below for nested schema](#nestedatt--etl_definition))
+- `etl_definition` (Attributes) The ETL definitions used to import data from the integration. If omitted, the integration is created without any mapping and will not ingest data until definitions are set. The API manages the two definitions as a unit, so both must be set together. (see [below for nested schema](#nestedatt--etl_definition))
 
 ### Read-Only
 
 - `id` (String) The ID of the Custom integration.
-- `webhook_url` (String) The endpoint to send data to via webhook. Empty unless the integration has a push based extractor.
+- `webhook_url` (String) The endpoint to send data to via webhook. Always present for a custom integration; it does not indicate whether any extractor is push based.
 
 <a id="nestedatt--etl_definition"></a>
 ### Nested Schema for `etl_definition`

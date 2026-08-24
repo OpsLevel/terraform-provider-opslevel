@@ -1,7 +1,8 @@
 resource "opslevel_integration_custom" "dev" {
   name = "Custom Integration"
 
-  # Optional - OpsLevel's default definitions are used when omitted on create.
+  # Optional - but omitting it creates an integration with no mapping, which
+  # ingests nothing until definitions are set.
   # The two definitions are managed as a unit, so set both together.
   etl_definition = {
     extract_definition = <<-EOT

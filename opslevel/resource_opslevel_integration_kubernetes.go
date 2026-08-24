@@ -54,7 +54,7 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 		MarkdownDescription: "Kubernetes Integration resource",
 
 		Attributes: map[string]schema.Attribute{
-			"etl_definition": integrationEtlDefinitionSchemaAttribute(),
+			"etl_definition": integrationEtlDefinitionSchemaAttribute("If omitted when the integration is created, OpsLevel's default Kubernetes definitions are used."),
 			"id": schema.StringAttribute{
 				Description: "The ID of the Kubernetes integration.",
 				Computed:    true,
@@ -70,7 +70,7 @@ func (r *IntegrationKubernetesResource) Schema(ctx context.Context, req resource
 	}
 }
 
-// Both definitions are omitted when unset - the API rejects an empty string for YAML.
+// Both definitions are omitted when unset; empty strings are rejected by the schema validators.
 func newKubernetesIntegrationInput(ctx context.Context, planModel IntegrationKubernetesResourceModel, diags *diag.Diagnostics) opslevel.KubernetesIntegrationInput {
 	input := opslevel.KubernetesIntegrationInput{
 		Name: nullable(planModel.Name.ValueStringPointer()),
