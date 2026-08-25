@@ -23,7 +23,7 @@ resource "opslevel_integration_custom" "dev" {
   }
 }
 
-# The endpoint to POST payloads to, for push based extractors.
+# The endpoint to POST payloads to. Every custom integration has one.
 output "custom_integration_webhook_url" {
   value = opslevel_integration_custom.dev.webhook_url
 }

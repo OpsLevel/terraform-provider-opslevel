@@ -1,4 +1,4 @@
-kind: Bugfix
+kind: Fixed
 body: '`opslevel_integration_kubernetes` now keeps `etl_definition` state in sync
   with the API when the block is omitted after creation, and no longer plans changes
   for semantically equivalent YAML.'

@@ -38,7 +38,10 @@ type IntegrationCustomResourceModel struct {
 }
 
 func NewIntegrationCustomResourceModel(ctx context.Context, customIntegration opslevel.Integration, givenModel IntegrationCustomResourceModel, diags *diag.Diagnostics) IntegrationCustomResourceModel {
-	// webhookUrl is nullable on the API - only push-based integrations have one.
+	// Every custom integration has a webhook URL, independent of whether any
+	// extractor is push based. The nil check only guards against a malformed
+	// response; RequiredStringValue below keeps "" out of state as null, which
+	// UseStateForUnknown would otherwise pin against a later non-null value.
 	webhookURL := ""
 	if customIntegration.WebhookURL != nil {
 		webhookURL = *customIntegration.WebhookURL
@@ -48,7 +51,7 @@ func NewIntegrationCustomResourceModel(ctx context.Context, customIntegration op
 		EtlDefinition: reconcileIntegrationEtlDefinition(ctx, customIntegration.CustomIntegrationFragment.ExtractDefinition, customIntegration.CustomIntegrationFragment.TransformDefinition, givenModel.EtlDefinition, diags),
 		Id:            ComputedStringValue(string(customIntegration.Id)),
 		Name:          RequiredStringValue(customIntegration.Name),
-		WebhookURL:    ComputedStringValue(webhookURL),
+		WebhookURL:    RequiredStringValue(webhookURL),
 	}
 }
 

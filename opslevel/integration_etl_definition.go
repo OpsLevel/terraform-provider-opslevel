@@ -98,17 +98,14 @@ func integrationEtlDefinitionInput(ctx context.Context, etlDefinition types.Obje
 		return nil, nil
 	}
 
-	// Unreachable while the NonEmptyYAML validators hold. Kept as a fail-safe:
-	// sending a definition that decodes to nil clears the stored one, because
+	// Omit, never error. This runs against the plan, and for an Optional+Computed
+	// attribute with a null config Terraform proposes the prior state - so an
+	// integration created without definitions legitimately arrives here as an empty
+	// pair, and erroring would permanently block every later update. Config is
+	// already covered by the NonEmptyYAML validators. Omitting also protects the
+	// half-empty case: sending "" would clear the stored definition, because
 	// YamlType coerces it to nil and the interactors assign whenever provided.
-	// Report rather than silently sending nothing, so a gap in validation surfaces
-	// instead of looking like a successful no-op.
 	if etlModel.ExtractDefinition.ValueString() == "" || etlModel.TransformDefinition.ValueString() == "" {
-		diags.AddError(
-			"Incomplete ETL definition",
-			"Both extract_definition and transform_definition must be set to non-empty YAML. "+
-				"Omit the entire etl_definition block to leave the definitions untouched.",
-		)
 		return nil, nil
 	}
 

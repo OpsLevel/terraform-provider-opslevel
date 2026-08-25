@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -85,5 +86,31 @@ func TestNonEmptyYAML(t *testing.T) {
 					testCase.expectError, testCase.value, resp.Diagnostics.HasError(), resp.Diagnostics)
 			}
 		})
+	}
+}
+
+// A custom integration created without an etl_definition block stores an empty
+// pair in state. Terraform proposes that state as the plan on the next update, so
+// this path must omit the fields rather than error, or the resource can never be
+// updated again.
+func TestIntegrationEtlDefinitionInputOmitsEmptyPair(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	diags := &diag.Diagnostics{}
+	state := reconcileIntegrationEtlDefinition(ctx, "", "", types.ObjectNull(integrationEtlDefinitionAttrs()), diags)
+
+	if state.IsNull() || state.IsUnknown() {
+		t.Fatalf("expected a known object in state, got null=%v unknown=%v", state.IsNull(), state.IsUnknown())
+	}
+
+	inputDiags := &diag.Diagnostics{}
+	extract, transform := integrationEtlDefinitionInput(ctx, state, inputDiags)
+
+	if inputDiags.HasError() {
+		t.Fatalf("an empty pair from state must not error, got: %v", inputDiags.Errors())
+	}
+	if extract != nil || transform != nil {
+		t.Fatalf("expected both definitions omitted, got extract=%v transform=%v", extract, transform)
 	}
 }
