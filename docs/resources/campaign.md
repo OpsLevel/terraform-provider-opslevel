@@ -54,7 +54,7 @@ resource "opslevel_campaign" "upgrade_rails" {
 
 ### Optional
 
-- `check_ids` (List of String) List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.
+- `check_ids` (List of String, Deprecated) Deprecated. List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set. Use opslevel_campaign_check instead.
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `project_brief` (String) The project brief of the campaign (Markdown).
 - `start_date` (String) The start date of the campaign (YYYY-MM-DD). Setting both start_date and target_date schedules the campaign.
@@ -69,6 +69,8 @@ resource "opslevel_campaign" "upgrade_rails" {
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import opslevel_campaign.example Z2lkOi8vb3BzbGV2ZWwvQ2FtcGFpZ24vMTIz

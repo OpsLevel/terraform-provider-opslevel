@@ -107,7 +107,12 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:    true,
 			},
 			"check_ids": schema.ListAttribute{
-				Description: "List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.",
+				DeprecationMessage: "Use the opslevel_campaign_check resource instead. check_ids records the " +
+					"copy instruction that was issued, not the campaign's actual membership, and it matches " +
+					"campaign checks by name, which is unreliable when names collide. Do not use both on the " +
+					"same campaign - they manage the same checks by different means and will fight, deleting " +
+					"and re-copying checks on every apply.",
+				Description: "Deprecated. List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set. Use opslevel_campaign_check instead.",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
