@@ -91,7 +91,7 @@ func (r *IntegrationCustomResource) Schema(ctx context.Context, req resource.Sch
 // Both definitions are omitted when unset; empty strings are rejected by the schema validators.
 func newCustomIntegrationInput(ctx context.Context, planModel IntegrationCustomResourceModel, diags *diag.Diagnostics) opslevel.CustomIntegrationInput {
 	input := opslevel.CustomIntegrationInput{
-		Name: nullable(planModel.Name.ValueStringPointer()),
+		Name: planModel.Name.ValueStringPointer(),
 	}
 	extractDefinition, transformDefinition := integrationEtlDefinitionInput(ctx, planModel.EtlDefinition, diags)
 	if extractDefinition != nil || transformDefinition != nil {
