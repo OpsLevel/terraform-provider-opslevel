@@ -18,7 +18,7 @@ jobs:
         fetch-depth: 0
         submodules: 'true'
     - name: Snyk Test
-      uses: snyk/actions/golang@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+      uses: snyk/actions/golang@12140f4059e244892ae643824a95459a102120dd # master
       continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
