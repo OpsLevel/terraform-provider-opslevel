@@ -9,9 +9,18 @@ permissions:
   contents: write
   pull-requests: read
 
+# Serialize runs per PR. Without this, two runs can both pass the
+# "does a changelog already exist?" check before either has pushed one.
+concurrency:
+  group: changie-gen-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   generate-changelog:
-    if: contains(github.event.pull_request.labels.*.name, 'dependencies')
+    # React only to the 'dependencies' label being added. Checking
+    # contains(labels.*.name, 'dependencies') instead re-runs the job for every
+    # later label Dependabot applies, once per label.
+    if: github.event.label.name == 'dependencies'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout branch that Dependabot labeled
@@ -19,23 +28,32 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Set up Go
-      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6
-      with:
-        go-version-file: go.mod
+        # The check below needs the base branch and enough history for a
+        # merge-base. The default shallow, single-ref checkout has neither.
+        fetch-depth: 0
 
     - name: Check if changelog file exists already
       shell: bash
       id: changelog_check
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
       run: |
-        if [[ -n $(git diff --name-only main -- .changes/unreleased/*.yaml) ]]; then
-          echo "exists=true" >> $GITHUB_OUTPUT
+        # Fail loudly rather than silently falling through to "create a new
+        # one", which is how this check used to mask its own errors.
+        set -euo pipefail
+        if [[ -n "$(git diff --name-only "origin/${BASE_REF}...HEAD" -- .changes/unreleased/)" ]]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
           echo "Changelog already exists for this PR, skip creating a new one"
         else
-          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "exists=false" >> "$GITHUB_OUTPUT"
           echo "No changelog exists for this PR, creating a new one"
         fi
+
+    - name: Set up Go
+      if: steps.changelog_check.outputs.exists == 'false'
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6
+      with:
+        go-version-file: go.mod
 
     - name: Create changie log
       if: steps.changelog_check.outputs.exists == 'false'
@@ -49,9 +67,14 @@ jobs:
       if: steps.changelog_check.outputs.exists == 'false'
       shell: bash
       run: |
+        set -euo pipefail
         git config user.name "OpsLevel Bots"
         git config user.email "bots@opslevel.com"
-        git pull
-        git add .
+        git add .changes/unreleased
+        if git diff --cached --quiet; then
+          echo "changie produced no new file, nothing to commit"
+          exit 0
+        fi
         git commit -m "Add automated changelog yaml from template"
+        git pull --rebase
         git push
