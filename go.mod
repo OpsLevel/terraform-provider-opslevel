@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
+	github.com/hashicorp/terraform-plugin-go v0.29.0
 	github.com/hashicorp/terraform-plugin-log v0.11.0
 	github.com/opslevel/opslevel-go/v2026 v2026.8.28
 	github.com/relvacode/iso8601 v1.8.0
@@ -130,7 +131,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/terraform-plugin-go v0.29.0 // indirect
 	github.com/hashicorp/terraform-registry-address v0.4.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.2.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect

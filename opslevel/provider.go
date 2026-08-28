@@ -171,6 +171,7 @@ func (p *OpslevelProvider) Resources(context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewAliasResource,
 		NewCampaignResource,
+		NewCampaignCheckResource,
 		NewCheckAlertSourceUsageResource,
 		NewCheckCodeIssueResource,
 		NewCheckCustomEventResource,
