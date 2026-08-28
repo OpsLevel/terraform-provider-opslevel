@@ -198,7 +198,7 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 		if len(checkIds) > 0 {
-			updated, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+			updated, _, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
 				CampaignId: campaign.Id,
 				CheckIds:   checkIds,
 			})
@@ -495,7 +495,7 @@ func (r *CampaignResource) reconcileCampaignChecks(
 	}
 
 	if len(toAdd) > 0 {
-		_, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+		_, _, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
 			CampaignId: campaignId,
 			CheckIds:   toAdd,
 		})
