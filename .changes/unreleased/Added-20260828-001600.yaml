@@ -1,0 +1,3 @@
+kind: Added
+body: Expose a campaign's checks, including where each was copied from, on the opslevel_campaign data source
+time: 2026-08-28T00:16:00.834886-04:00

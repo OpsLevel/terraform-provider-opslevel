@@ -21,6 +21,7 @@ Campaign data source
 
 ### Read-Only
 
+- `checks` (Attributes List) The checks that are on this campaign. Use these ids to import existing campaign checks as opslevel_campaign_check resources. (see [below for nested schema](#nestedatt--checks))
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `html_url` (String) The URL to the campaign in the OpsLevel UI.
 - `id` (String) The ID of the campaign.
@@ -31,4 +32,11 @@ Campaign data source
 - `status` (String) The current status of the campaign.
 - `target_date` (String) The target end date of the campaign.
 
+<a id="nestedatt--checks"></a>
+### Nested Schema for `checks`
 
+Read-Only:
+
+- `id` (String) The id of the check on the campaign.
+- `name` (String) The display name of the check.
+- `source_check_id` (String) The id of the rubric check this check was copied from. Null if the source check has been deleted, or if the copy was made before OpsLevel began recording this.
