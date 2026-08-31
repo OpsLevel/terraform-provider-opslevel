@@ -40,3 +40,5 @@ Read-Only:
 - `id` (String) The id of the check on the campaign.
 - `name` (String) The display name of the check.
 - `source_check_id` (String) The id of the rubric check this check was copied from. Null if the source check has been deleted, or if the copy was made before OpsLevel began recording this.
+
+

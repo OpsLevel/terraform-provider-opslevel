@@ -1,6 +1,0 @@
-kind: Removed
-body: '`etl_definition.extract_definition` and `etl_definition.transform_definition`
-  no longer accept an empty string. Empty values could not round-trip and would clear
-  a stored definition on the API. Omit the whole `etl_definition` block instead to
-  keep OpsLevel''s defaults.'
-time: 2026-08-24T12:00:00+05:30

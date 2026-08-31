@@ -95,8 +95,6 @@ resource "opslevel_campaign_check" "rails_checks" {
 
 Import is supported using the following syntax:
 
-The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
-
 ```shell
 # Import using the id of the check on the campaign - not the id of the rubric
 # check it was copied from. The campaign is derived from the check itself.
