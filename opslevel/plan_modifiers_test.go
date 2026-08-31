@@ -1,4 +1,4 @@
-package opslevel
+package opslevel_test
 
 import (
 	"context"
@@ -7,110 +7,131 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	opsleveltf "github.com/opslevel/terraform-provider-opslevel/opslevel"
 )
 
-func TestUseStateForEquivalentYAML(t *testing.T) {
-	t.Parallel()
-
-	stateValue := types.StringValue("---\nextractors:\n- external_kind: widget\n  external_id: \".id\"\n")
-
-	testCases := map[string]struct {
-		planValue types.String
-		expected  types.String
-	}{
-		"equivalent-yaml": {
-			planValue: types.StringValue("extractors:\n  - external_kind: widget\n    external_id: \".id\"\n"),
-			expected:  stateValue,
-		},
-		"different-yaml": {
-			planValue: types.StringValue("extractors:\n  - external_kind: widget\n    external_id: \".other\"\n"),
-			expected:  types.StringValue("extractors:\n  - external_kind: widget\n    external_id: \".other\"\n"),
-		},
-	}
-
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			req := planmodifier.StringRequest{
-				StateValue: stateValue,
-				PlanValue:  testCase.planValue,
-			}
-			resp := &planmodifier.StringResponse{
-				PlanValue: req.PlanValue,
-			}
-
-			UseStateForEquivalentYAML().PlanModifyString(context.Background(), req, resp)
-
-			if !resp.PlanValue.Equal(testCase.expected) {
-				t.Fatalf("expected plan value %q, got %q", testCase.expected.ValueString(), resp.PlanValue.ValueString())
-			}
-		})
+func TestImmutableViolation_UnchangedValueIsAllowed(t *testing.T) {
+	violated, reason := opsleveltf.ImmutableViolation(
+		types.StringValue("check-a"),
+		types.StringValue("check-a"),
+	)
+	if violated {
+		t.Errorf("expected no violation for an unchanged value, got %q", reason)
 	}
 }
 
-func TestNonEmptyYAML(t *testing.T) {
-	t.Parallel()
-
-	testCases := map[string]struct {
-		value       string
-		expectError bool
-	}{
-		"empty-string":     {value: "", expectError: true},
-		"single-space":     {value: " ", expectError: true},
-		"whitespace-only":  {value: "   \n\t\n", expectError: true},
-		"document-marker":  {value: "---\n", expectError: true},
-		"explicit-null":    {value: "null", expectError: true},
-		"tilde-null":       {value: "~", expectError: true},
-		"comment-only":     {value: "# nothing here\n", expectError: true},
-		"valid-definition": {value: "extractors:\n- external_kind: widget\n", expectError: false},
-		"malformed-yaml":   {value: "extractors:\n\t- bad tab indent\n", expectError: true},
+func TestImmutableViolation_ChangingValueIsForbidden(t *testing.T) {
+	violated, reason := opsleveltf.ImmutableViolation(
+		types.StringValue("check-a"),
+		types.StringValue("check-b"),
+	)
+	if !violated {
+		t.Fatal("expected changing a write-once value to be a violation")
 	}
-
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			req := validator.StringRequest{
-				Path:        path.Root("etl_definition").AtName("extract_definition"),
-				ConfigValue: types.StringValue(testCase.value),
-			}
-			resp := &validator.StringResponse{}
-
-			NonEmptyYAML().ValidateString(context.Background(), req, resp)
-
-			if resp.Diagnostics.HasError() != testCase.expectError {
-				t.Fatalf("expected error=%v for %q, got error=%v (%v)",
-					testCase.expectError, testCase.value, resp.Diagnostics.HasError(), resp.Diagnostics)
-			}
-		})
+	if reason == "" {
+		t.Error("expected a reason explaining the violation")
 	}
 }
 
-// A custom integration created without an etl_definition block stores an empty
-// pair in state. Terraform proposes that state as the plan on the next update, so
-// this path must omit the fields rather than error, or the resource can never be
-// updated again.
-func TestIntegrationEtlDefinitionInputOmitsEmptyPair(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-	diags := &diag.Diagnostics{}
-	state := reconcileIntegrationEtlDefinition(ctx, "", "", types.ObjectNull(integrationEtlDefinitionAttrs()), diags)
-
-	if state.IsNull() || state.IsUnknown() {
-		t.Fatalf("expected a known object in state, got null=%v unknown=%v", state.IsNull(), state.IsUnknown())
+// An imported campaign check has no record of what it was copied from, and the
+// copy already happened, so the user cannot supply one after the fact.
+func TestImmutableViolation_SettingAValueWhereNoneExistsIsForbidden(t *testing.T) {
+	violated, reason := opsleveltf.ImmutableViolation(
+		types.StringNull(),
+		types.StringValue("check-a"),
+	)
+	if !violated {
+		t.Fatal("expected setting a previously-null write-once value to be a violation")
 	}
-
-	inputDiags := &diag.Diagnostics{}
-	extract, transform := integrationEtlDefinitionInput(ctx, state, inputDiags)
-
-	if inputDiags.HasError() {
-		t.Fatalf("an empty pair from state must not error, got: %v", inputDiags.Errors())
+	if reason == "" {
+		t.Error("expected a reason explaining the violation")
 	}
-	if extract != nil || transform != nil {
-		t.Fatalf("expected both definitions omitted, got extract=%v transform=%v", extract, transform)
+}
+
+func TestImmutableViolation_RemovingAValueIsForbidden(t *testing.T) {
+	violated, _ := opsleveltf.ImmutableViolation(
+		types.StringValue("check-a"),
+		types.StringNull(),
+	)
+	if !violated {
+		t.Error("expected removing a write-once value to be a violation")
+	}
+}
+
+// A plan value can be unknown when it references a resource that does not exist
+// yet. There is nothing to compare, so it cannot be judged a violation.
+func TestImmutableViolation_UnknownPlanValueIsAllowed(t *testing.T) {
+	violated, _ := opsleveltf.ImmutableViolation(
+		types.StringValue("check-a"),
+		types.StringUnknown(),
+	)
+	if violated {
+		t.Error("expected an unknown plan value to be allowed")
+	}
+}
+
+func TestImmutableViolation_BothNullIsAllowed(t *testing.T) {
+	violated, _ := opsleveltf.ImmutableViolation(
+		types.StringNull(),
+		types.StringNull(),
+	)
+	if violated {
+		t.Error("expected two null values to be allowed")
+	}
+}
+
+func objectValue(null bool) tftypes.Value {
+	t := tftypes.Object{AttributeTypes: map[string]tftypes.Type{}}
+	if null {
+		return tftypes.NewValue(t, nil)
+	}
+	return tftypes.NewValue(t, map[string]tftypes.Value{})
+}
+
+func runImmutableModifier(state, plan tftypes.Value, stateValue, planValue types.String) diag.Diagnostics {
+	req := planmodifier.StringRequest{
+		Path:       path.Root("copied_from_check_id"),
+		State:      tfsdk.State{Raw: state},
+		Plan:       tfsdk.Plan{Raw: plan},
+		StateValue: stateValue,
+		PlanValue:  planValue,
+	}
+	resp := &planmodifier.StringResponse{PlanValue: planValue}
+	opsleveltf.ImmutableStringPlanModifier().PlanModifyString(context.Background(), req, resp)
+	return resp.Diagnostics
+}
+
+// On create there is no prior state, so every write-once attribute looks like it
+// is being "set where none exists". Creating must not error.
+func TestImmutableStringPlanModifier_AllowsCreate(t *testing.T) {
+	diags := runImmutableModifier(
+		objectValue(true), objectValue(false),
+		types.StringNull(), types.StringValue("check-a"),
+	)
+	if diags.HasError() {
+		t.Errorf("expected create to be allowed, got %v", diags.Errors())
+	}
+}
+
+func TestImmutableStringPlanModifier_AllowsDestroy(t *testing.T) {
+	diags := runImmutableModifier(
+		objectValue(false), objectValue(true),
+		types.StringValue("check-a"), types.StringNull(),
+	)
+	if diags.HasError() {
+		t.Errorf("expected destroy to be allowed, got %v", diags.Errors())
+	}
+}
+
+func TestImmutableStringPlanModifier_ErrorsOnChange(t *testing.T) {
+	diags := runImmutableModifier(
+		objectValue(false), objectValue(false),
+		types.StringValue("check-a"), types.StringValue("check-b"),
+	)
+	if !diags.HasError() {
+		t.Fatal("expected changing a write-once attribute to error")
 	}
 }

@@ -1,0 +1,3 @@
+kind: Deprecated
+body: Deprecate check_ids on opslevel_campaign in favor of the opslevel_campaign_check resource
+time: 2026-08-27T14:24:20.89928-04:00
