@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"gopkg.in/yaml.v3"
 )
 
 // preventRemovalPlanModifier checks if list items are being removed and returns an error
@@ -80,6 +82,76 @@ func PreventRemovalPlanModifier(fieldName string) planmodifier.List {
 	return preventRemovalPlanModifier{
 		fieldName: fieldName,
 	}
+}
+
+type useStateForEquivalentYAMLModifier struct{}
+
+func (m useStateForEquivalentYAMLModifier) Description(ctx context.Context) string {
+	return "Preserves prior state when planned YAML is semantically equivalent."
+}
+
+func (m useStateForEquivalentYAMLModifier) MarkdownDescription(ctx context.Context) string {
+	return "Preserves prior state when planned YAML is semantically equivalent."
+}
+
+func (m useStateForEquivalentYAMLModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.PlanValue.Equal(req.StateValue) {
+		return
+	}
+
+	if req.PlanValue.IsNull() || req.PlanValue.IsUnknown() || req.StateValue.IsNull() || req.StateValue.IsUnknown() {
+		return
+	}
+
+	if yamlEquivalent(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
+		resp.PlanValue = req.StateValue
+	}
+}
+
+func UseStateForEquivalentYAML() planmodifier.String {
+	return useStateForEquivalentYAMLModifier{}
+}
+
+type nonEmptyYAMLValidator struct{}
+
+func (v nonEmptyYAMLValidator) Description(ctx context.Context) string {
+	return "must be a YAML document that does not decode to null"
+}
+
+func (v nonEmptyYAMLValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// Rejects "", " ", "---", "null" and "~". They all decode to nil, which the API
+// stores as a cleared definition rather than rejecting - so without this they
+// silently wipe an existing definition and still produce a clean plan.
+func (v nonEmptyYAMLValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	var decoded any
+	if err := yaml.Unmarshal([]byte(req.ConfigValue.ValueString()), &decoded); err != nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid YAML",
+			fmt.Sprintf("Expected a valid YAML document, got error: %s", err),
+		)
+		return
+	}
+
+	if decoded == nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Empty YAML definition",
+			"This decodes to null, which clears the definition stored in OpsLevel. "+
+				"Omit the entire etl_definition block instead of setting an empty definition.",
+		)
+	}
+}
+
+func NonEmptyYAML() validator.String {
+	return nonEmptyYAMLValidator{}
 }
 
 // ImmutableViolation reports whether moving a write-once attribute from

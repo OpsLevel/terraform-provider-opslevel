@@ -16,7 +16,7 @@ Kubernetes Integration resource
 resource "opslevel_integration_kubernetes" "dev" {
   name = "Kubernetes Integration"
 
-  # Optional - OpsLevel's default definitions are used when unset.
+  # Optional - OpsLevel's default definitions are used when omitted on create.
   # The two definitions are managed as a unit, so set both together.
   etl_definition = {
     extract_definition = <<-EOT
@@ -49,7 +49,7 @@ resource "opslevel_integration_kubernetes" "dev" {
 
 ### Optional
 
-- `etl_definition` (Attributes) The ETL definitions used to import data from the integration. If not set (or removed), OpsLevel's default definitions are used. The API manages the two definitions as a unit, so both must be set together. (see [below for nested schema](#nestedatt--etl_definition))
+- `etl_definition` (Attributes) The ETL definitions used to import data from the integration. If omitted when the integration is created, OpsLevel's default Kubernetes definitions are used. The API manages the two definitions as a unit, so both must be set together. (see [below for nested schema](#nestedatt--etl_definition))
 
 ### Read-Only
 

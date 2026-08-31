@@ -87,3 +87,12 @@ func asEnumNonEmpty[T ~string](s *string) *T {
 	value := T(*s)
 	return &value
 }
+
+func verifyIntegrationType(d *diag.Diagnostics, integration opslevel.Integration, expectedType string) bool {
+	if integration.Type == expectedType {
+		return true
+	}
+
+	d.AddError("unexpected integration type", fmt.Sprintf("Expected integration type %q but got %q", expectedType, integration.Type))
+	return false
+}
