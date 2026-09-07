@@ -37,6 +37,8 @@ type teamDataSourceModel struct {
 	Name        types.String      `tfsdk:"name"`
 	ParentAlias types.String      `tfsdk:"parent_alias"`
 	ParentId    types.String      `tfsdk:"parent_id"`
+	Properties  []propertyModel   `tfsdk:"properties"`
+	Tags        types.List        `tfsdk:"tags"`
 }
 
 type teamContactModel struct {
@@ -149,6 +151,18 @@ var teamDatasourceSchemaAttrs = map[string]schema.Attribute{
 		Description: "The id of the parent team.",
 		Computed:    true,
 	},
+	"properties": schema.ListNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: opslevelPropertyAttrs,
+		},
+		Description: "Custom properties for this team. Includes an entry for every team property definition; `value` is null where the team has no value assigned.",
+		Computed:    true,
+	},
+	"tags": schema.ListAttribute{
+		ElementType: types.StringType,
+		Description: "A list of tags applied to the team.",
+		Computed:    true,
+	},
 }
 
 func teamAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
@@ -210,6 +224,15 @@ func newTeamDataSourceModel(team opslevel.Team) teamDataSourceModel {
 	if team.Memberships != nil {
 		teamDataSourceModel.Members = newTeamMembersAllModel(team.Memberships.Nodes)
 	}
+	// Every team starts with zero tags - they cannot be set at creation - so an empty
+	// list is the common answer here, not an unknown one.
+	if team.Tags == nil {
+		teamDataSourceModel.Tags = ComputedStringListValue(nil)
+	} else {
+		teamDataSourceModel.Tags = ComputedStringListValue(flattenTagArray(team.Tags.Nodes))
+	}
+	// NOTE: team's hydrate does not populate properties, they are fetched separately in Read
+	teamDataSourceModel.Properties = []propertyModel{}
 	return teamDataSourceModel
 }
 
@@ -263,6 +286,14 @@ func (teamDataSource *TeamDataSource) Read(ctx context.Context, req datasource.R
 	}
 
 	teamDataModel := newTeamDataSourceModel(*team)
+
+	// Properties come back with the team itself; re-fetching here would append a
+	// duplicate of the first page onto what the query already returned.
+	if team.Properties != nil {
+		propertiesModel, diags := NewPropertiesAllModel(ctx, team.Properties.Nodes)
+		resp.Diagnostics.Append(diags...)
+		teamDataModel.Properties = propertiesModel
+	}
 
 	// Save data into Terraform state
 	tflog.Trace(ctx, "read an OpsLevel Team data source")

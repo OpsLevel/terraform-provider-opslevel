@@ -17,8 +17,21 @@ data "opslevel_team" "devs" {
   alias = "developers"
 }
 
-data "opslevel_team" "devs" {
+data "opslevel_team" "devs_by_id" {
   id = "Z2lkOi8vb3BzbGV2ZWwvU2VydmljZS83NzQ0"
+}
+
+# Tags are returned as "key:value" strings, property values as JSON strings.
+output "devs_tags" {
+  value = data.opslevel_team.devs.tags
+}
+
+output "devs_properties" {
+  value = {
+    for property in data.opslevel_team.devs.properties :
+    property.definition.aliases[0] => jsondecode(property.value)
+    if length(property.definition.aliases) > 0 && property.value != null
+  }
 }
 ```
 
@@ -37,6 +50,8 @@ data "opslevel_team" "devs" {
 - `name` (String) The name of the Team.
 - `parent_alias` (String) The alias of the parent team.
 - `parent_id` (String) The id of the parent team.
+- `properties` (Attributes List) Custom properties for this team. Includes an entry for every team property definition; `value` is null where the team has no value assigned. (see [below for nested schema](#nestedatt--properties))
+- `tags` (List of String) A list of tags applied to the team.
 
 <a id="nestedatt--contacts"></a>
 ### Nested Schema for `contacts`
@@ -59,5 +74,22 @@ Read-Only:
 
 - `email` (String) The email address of the team member.
 - `role` (String) The role of the team member.
+
+
+<a id="nestedatt--properties"></a>
+### Nested Schema for `properties`
+
+Read-Only:
+
+- `definition` (Attributes) (see [below for nested schema](#nestedatt--properties--definition))
+- `value` (String) The value of the custom property.
+
+<a id="nestedatt--properties--definition"></a>
+### Nested Schema for `properties.definition`
+
+Read-Only:
+
+- `aliases` (List of String) A list of human-friendly, unique identifiers of the property definition.
+- `id` (String) The id of the property definition.
 
 

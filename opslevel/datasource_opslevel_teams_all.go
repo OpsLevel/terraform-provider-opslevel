@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
 )
@@ -24,10 +25,17 @@ type teamDataSourcesAllModel struct {
 	Teams []teamDataSourceModel `tfsdk:"teams"`
 }
 
-func newTeamDataSourcesAllModel(teams []opslevel.Team) teamDataSourcesAllModel {
+func newTeamDataSourcesAllModel(ctx context.Context, teams []opslevel.Team, diags *diag.Diagnostics) teamDataSourcesAllModel {
 	teamModels := make([]teamDataSourceModel, 0)
-	for _, team := range teams {
-		teamModel := newTeamDataSourceModel(team)
+	for i := range teams {
+		teamModel := newTeamDataSourceModel(teams[i])
+
+		if teams[i].Properties != nil {
+			propertiesModel, propDiags := NewPropertiesAllModel(ctx, teams[i].Properties.Nodes)
+			diags.Append(propDiags...)
+			teamModel.Properties = propertiesModel
+		}
+
 		teamModels = append(teamModels, teamModel)
 	}
 	return teamDataSourcesAllModel{Teams: teamModels}
@@ -68,7 +76,7 @@ func (d *TeamDataSourcesAll) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list teams, got error: %s", err))
 		return
 	}
-	stateModel := newTeamDataSourcesAllModel(teams.Nodes)
+	stateModel := newTeamDataSourcesAllModel(ctx, teams.Nodes, &resp.Diagnostics)
 
 	tflog.Trace(ctx, "listed all OpsLevel Team data sources")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
