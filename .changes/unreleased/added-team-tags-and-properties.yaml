@@ -1,2 +1,0 @@
-kind: Added
-body: Added `tags` and `properties` to the `opslevel_team` and `opslevel_teams` data sources, so team metadata in OpsLevel can be read and passed into other Terraform-managed resources.
