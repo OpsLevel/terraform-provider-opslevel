@@ -231,7 +231,8 @@ func newTeamDataSourceModel(team opslevel.Team) teamDataSourceModel {
 	} else {
 		teamDataSourceModel.Tags = ComputedStringListValue(flattenTagArray(team.Tags.Nodes))
 	}
-	// NOTE: team's hydrate does not populate properties, they are fetched separately in Read
+	// Properties arrive with the team, but mapping them needs a context, so Read fills
+	// them in. Default to empty so a team with none reports [] rather than null.
 	teamDataSourceModel.Properties = []propertyModel{}
 	return teamDataSourceModel
 }
