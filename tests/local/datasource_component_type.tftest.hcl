@@ -13,6 +13,7 @@ run "datasource_component_type_all_fields_accessible" {
       can(data.opslevel_component_type.mock_component_type.id),
       can(data.opslevel_component_type.mock_component_type.name),
       can(data.opslevel_component_type.mock_component_type.alias),
+      can(data.opslevel_component_type.mock_component_type.category),
       can(data.opslevel_component_type.mock_component_type.description),
       can(data.opslevel_component_type.mock_component_type.icon),
       can(data.opslevel_component_type.mock_component_type.properties),
@@ -28,6 +29,11 @@ run "datasource_component_type_all_fields_accessible" {
   assert {
     condition     = data.opslevel_component_type.mock_component_type.alias == "service"
     error_message = "component_type data source should return correct alias"
+  }
+
+  assert {
+    condition     = data.opslevel_component_type.mock_component_type.category == "default"
+    error_message = "component_type data source should return correct category"
   }
 }
 

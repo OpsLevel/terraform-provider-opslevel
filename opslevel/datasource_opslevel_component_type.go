@@ -24,6 +24,10 @@ var ComponentTypeDataSourceSchema = map[string]schema.Attribute{
 		MarkdownDescription: "The unique alias of the component type.",
 		Computed:            true,
 	},
+	"category": schema.StringAttribute{
+		MarkdownDescription: "The catalog category this component type is filed under, for example `default` or `infrastructure`.",
+		Computed:            true,
+	},
 	"description": schema.StringAttribute{
 		MarkdownDescription: "The description of the component type.",
 		Computed:            true,
@@ -89,6 +93,7 @@ type ComponentTypeDataSourceModel struct {
 	Id                types.String             `tfsdk:"id"`
 	Name              types.String             `tfsdk:"name"`
 	Alias             types.String             `tfsdk:"alias"`
+	Category          types.String             `tfsdk:"category"`
 	Description       types.String             `tfsdk:"description"`
 	Icon              *ComponentTypeIconModel  `tfsdk:"icon"`
 	OwnerRelationship *OwnerRelationshipModel  `tfsdk:"owner_relationship"`
@@ -122,6 +127,7 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
+				Category:    ComputedStringValue(data.Category),
 				Description: types.StringValue(data.Description),
 				Icon: &ComponentTypeIconModel{
 					Color: types.StringValue(data.Icon.Color),
@@ -173,6 +179,7 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
+				Category:    ComputedStringValue(data.Category),
 				Description: types.StringValue(data.Description),
 				Icon: &ComponentTypeIconModel{
 					Color: types.StringValue(data.Icon.Color),

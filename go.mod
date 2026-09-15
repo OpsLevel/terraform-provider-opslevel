@@ -55,4 +55,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
+// TODO: remove before merge and bump the require above to the released opslevel-go version.
+replace github.com/opslevel/opslevel-go/v2026 => ./submodules/opslevel-go
