@@ -243,6 +243,40 @@ func TestCampaignReminderToObject_NoPriorUsesApiValue(t *testing.T) {
 	}
 }
 
+func TestNewCampaignResourceModel_Dates(t *testing.T) {
+	scheduled := opslevel.Campaign{
+		CampaignId: opslevel.CampaignId{Id: "camp-1", Name: "Upgrade Rails"},
+		Status:     opslevel.CampaignStatusEnumScheduled,
+		StartDate:  iso8601.Time{Time: time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)},
+		TargetDate: iso8601.Time{Time: time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)},
+	}
+
+	model := NewCampaignResourceModel(scheduled, CampaignResourceModel{})
+	if got := model.Name.ValueString(); got != "Upgrade Rails" {
+		t.Errorf("name = %q, want Upgrade Rails", got)
+	}
+	if got := model.StartDate.ValueString(); got != "2026-07-01" {
+		t.Errorf("start_date = %q, want 2026-07-01", got)
+	}
+	if got := model.TargetDate.ValueString(); got != "2026-09-30" {
+		t.Errorf("target_date = %q, want 2026-09-30", got)
+	}
+	// The reminder is filled in by the caller, not by the base mapping.
+	if !model.Reminder.IsNull() {
+		t.Error("expected a null reminder from the base mapping")
+	}
+
+	unscheduled := NewCampaignResourceModel(opslevel.Campaign{
+		CampaignId: opslevel.CampaignId{Id: "camp-2", Name: "Draft"},
+	}, CampaignResourceModel{})
+	if !unscheduled.StartDate.IsNull() {
+		t.Errorf("start_date = %v, want null when unset", unscheduled.StartDate)
+	}
+	if !unscheduled.TargetDate.IsNull() {
+		t.Errorf("target_date = %v, want null when unset", unscheduled.TargetDate)
+	}
+}
+
 func TestNewCampaignDataSourceModel_Reminder(t *testing.T) {
 	var diags diag.Diagnostics
 
