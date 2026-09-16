@@ -135,7 +135,7 @@ func NewComponentTypeDataSourceSingle() datasource.DataSource {
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
-				Category:    ComputedStringValue(data.Category),
+				Category:    categoryValue(data.Category),
 				Description: types.StringValue(data.Description),
 				Icon: &ComponentTypeIconModel{
 					Color: types.StringValue(data.Icon.Color),
@@ -188,7 +188,7 @@ func NewComponentTypeDataSourceMulti() datasource.DataSource {
 				Id:          types.StringValue(string(data.Id)),
 				Name:        types.StringValue(data.Name),
 				Alias:       types.StringValue(data.Aliases[0]),
-				Category:    ComputedStringValue(data.Category),
+				Category:    categoryValue(data.Category),
 				Description: types.StringValue(data.Description),
 				Icon: &ComponentTypeIconModel{
 					Color: types.StringValue(data.Icon.Color),

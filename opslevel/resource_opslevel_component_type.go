@@ -34,6 +34,11 @@ type PropertyModel struct {
 	Schema               types.String `tfsdk:"schema"`
 }
 
+// componentTypeCategoryDefault is the catalog every component type sits in unless it
+// is filed under Infrastructure. It is not a closed set - categories are account-scoped
+// aliases - this is only the baseline the API falls back to.
+const componentTypeCategoryDefault = "default"
+
 type ComponentTypeIconModel struct {
 	Color types.String `tfsdk:"color"`
 	Name  types.String `tfsdk:"name"`
@@ -75,7 +80,7 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	stateModel.Id = types.StringValue(string(res.Id))
 	stateModel.Name = types.StringValue(res.Name)
 	stateModel.Alias = types.StringValue(res.Aliases[0])
-	stateModel.Category = ComputedStringValue(res.Category)
+	stateModel.Category = categoryValue(res.Category)
 	stateModel.Description = types.StringValue(res.Description)
 	// icon is optional rather than computed, so leave it null when the config omits it.
 	// The API always returns an icon, and echoing it back would not match the config.
@@ -134,6 +139,18 @@ func setCategoryInput(input *opslevel.ComponentTypeInput, category types.String)
 		return
 	}
 	input.Category = opslevel.RefOf(category.ValueString())
+}
+
+// categoryValue maps a category read from the API onto state. Every component type
+// belongs to a catalog and `default` is the one that is not Infrastructure, so an
+// empty read is treated as `default` rather than null. Without this, a config that
+// sets category = "default" explicitly would plan "default" but apply to null, which
+// Terraform rejects as an inconsistent result rather than tolerating as drift.
+func categoryValue(category string) types.String {
+	if category == "" {
+		return types.StringValue(componentTypeCategoryDefault)
+	}
+	return types.StringValue(category)
 }
 
 func NewPropertiesInput(model ComponentTypeModel) (*[]opslevel.ComponentTypePropertyDefinitionInput, error) {
