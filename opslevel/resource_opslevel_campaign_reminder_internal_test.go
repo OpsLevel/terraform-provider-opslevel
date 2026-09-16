@@ -53,16 +53,15 @@ func TestBuildCampaignReminderInput_NullReturnsNil(t *testing.T) {
 func TestBuildCampaignReminderInput_WeeklyIncludesDays(t *testing.T) {
 	var diags diag.Diagnostics
 	obj := newReminderObject(t, CampaignReminderModel{
-		Channels:                     stringList("slack", "email"),
-		Frequency:                    types.Int64Value(1),
-		FrequencyUnit:                types.StringValue("week"),
-		TimeOfDay:                    types.StringValue("09:30"),
-		Timezone:                     types.StringValue("America/Chicago"),
-		DaysOfWeek:                   stringList("monday", "thursday"),
-		Message:                      types.StringValue("hello"),
-		DefaultSlackChannel:          types.StringValue("#platform-eng"),
-		DefaultMicrosoftTeamsChannel: types.StringNull(),
-		NextOccurrence:               types.StringNull(),
+		Channels:            stringList("slack", "email"),
+		Frequency:           types.Int64Value(1),
+		FrequencyUnit:       types.StringValue("week"),
+		TimeOfDay:           types.StringValue("09:30"),
+		Timezone:            types.StringValue("America/Chicago"),
+		DaysOfWeek:          stringList("monday", "thursday"),
+		Message:             types.StringValue("hello"),
+		DefaultSlackChannel: types.StringValue("#platform-eng"),
+		NextOccurrence:      types.StringNull(),
 	})
 
 	got := buildCampaignReminderInput(context.Background(), &diags, obj)
@@ -78,36 +77,32 @@ func TestBuildCampaignReminderInput_WeeklyIncludesDays(t *testing.T) {
 	if got.Frequency != 1 {
 		t.Errorf("frequency = %d, want 1", got.Frequency)
 	}
-	if len(got.Channels) != 2 {
+	if got.Channels == nil || len(*got.Channels) != 2 {
 		t.Errorf("channels = %v, want 2", got.Channels)
 	}
-	if len(got.DaysOfWeek) != 2 {
+	if got.DaysOfWeek == nil || len(*got.DaysOfWeek) != 2 {
 		t.Errorf("days_of_week = %v, want 2", got.DaysOfWeek)
 	}
-	if got.Message == nil || *got.Message != "hello" {
+	if got.Message == nil || got.Message.Value != "hello" {
 		t.Errorf("message = %v, want hello", got.Message)
 	}
-	if got.DefaultSlackChannel == nil || *got.DefaultSlackChannel != "#platform-eng" {
+	if got.DefaultSlackChannel == nil || got.DefaultSlackChannel.Value != "#platform-eng" {
 		t.Errorf("default_slack_channel = %v, want #platform-eng", got.DefaultSlackChannel)
-	}
-	if got.DefaultMicrosoftTeamsChannel != nil {
-		t.Errorf("default_microsoft_teams_channel = %v, want nil", got.DefaultMicrosoftTeamsChannel)
 	}
 }
 
 func TestBuildCampaignReminderInput_NonWeeklyOmitsDays(t *testing.T) {
 	var diags diag.Diagnostics
 	obj := newReminderObject(t, CampaignReminderModel{
-		Channels:                     stringList("slack"),
-		Frequency:                    types.Int64Value(2),
-		FrequencyUnit:                types.StringValue("day"),
-		TimeOfDay:                    types.StringValue("14:00"),
-		Timezone:                     types.StringValue("America/Chicago"),
-		DaysOfWeek:                   stringList("monday"), // present but must be ignored
-		Message:                      types.StringNull(),
-		DefaultSlackChannel:          types.StringNull(),
-		DefaultMicrosoftTeamsChannel: types.StringNull(),
-		NextOccurrence:               types.StringNull(),
+		Channels:            stringList("slack"),
+		Frequency:           types.Int64Value(2),
+		FrequencyUnit:       types.StringValue("day"),
+		TimeOfDay:           types.StringValue("14:00"),
+		Timezone:            types.StringValue("America/Chicago"),
+		DaysOfWeek:          stringList("monday"), // present but must be ignored
+		Message:             types.StringNull(),
+		DefaultSlackChannel: types.StringNull(),
+		NextOccurrence:      types.StringNull(),
 	})
 
 	got := buildCampaignReminderInput(context.Background(), &diags, obj)
@@ -117,8 +112,8 @@ func TestBuildCampaignReminderInput_NonWeeklyOmitsDays(t *testing.T) {
 	if got == nil {
 		t.Fatal("expected an input, got nil")
 	}
-	if len(got.DaysOfWeek) != 0 {
-		t.Errorf("days_of_week = %v, want empty for daily cadence", got.DaysOfWeek)
+	if got.DaysOfWeek != nil {
+		t.Errorf("days_of_week = %v, want omitted for daily cadence", *got.DaysOfWeek)
 	}
 	if got.Message != nil {
 		t.Errorf("message = %v, want nil", got.Message)
@@ -161,20 +156,20 @@ func TestPreserveHashChannel(t *testing.T) {
 	}
 }
 
-func TestCampaignReminderToObject_NilReturnsNull(t *testing.T) {
+func TestCampaignReminderToObject_ZeroValueReturnsNull(t *testing.T) {
 	var diags diag.Diagnostics
-	obj := campaignReminderToObject(context.Background(), &diags, nil, types.ObjectNull(reminderAttrTypes()))
+	obj := campaignReminderToObject(context.Background(), &diags, opslevel.CampaignReminder{}, types.ObjectNull(reminderAttrTypes()))
 	if diags.HasError() {
 		t.Fatalf("unexpected diags: %v", diags)
 	}
 	if !obj.IsNull() {
-		t.Fatal("expected a null object for a nil reminder")
+		t.Fatal("expected a null object for a campaign with no reminder")
 	}
 }
 
 func TestCampaignReminderToObject_PopulatedPreservesGivenSlackForm(t *testing.T) {
 	var diags diag.Diagnostics
-	reminder := &opslevel.CampaignReminder{
+	reminder := opslevel.CampaignReminder{
 		Channels:            []opslevel.CampaignReminderChannelEnum{opslevel.CampaignReminderChannelEnumSlack},
 		DaysOfWeek:          []opslevel.DayOfWeekEnum{opslevel.DayOfWeekEnumMonday},
 		DefaultSlackChannel: "#platform-eng",
@@ -187,16 +182,15 @@ func TestCampaignReminderToObject_PopulatedPreservesGivenSlackForm(t *testing.T)
 	}
 	// User configured the channel without the leading '#'; it should be preserved.
 	given := newReminderObject(t, CampaignReminderModel{
-		Channels:                     stringList("slack"),
-		Frequency:                    types.Int64Value(1),
-		FrequencyUnit:                types.StringValue("week"),
-		TimeOfDay:                    types.StringValue("09:30"),
-		Timezone:                     types.StringValue("America/Chicago"),
-		DaysOfWeek:                   stringList("monday"),
-		Message:                      types.StringValue("hello"),
-		DefaultSlackChannel:          types.StringValue("platform-eng"),
-		DefaultMicrosoftTeamsChannel: types.StringNull(),
-		NextOccurrence:               types.StringNull(),
+		Channels:            stringList("slack"),
+		Frequency:           types.Int64Value(1),
+		FrequencyUnit:       types.StringValue("week"),
+		TimeOfDay:           types.StringValue("09:30"),
+		Timezone:            types.StringValue("America/Chicago"),
+		DaysOfWeek:          stringList("monday"),
+		Message:             types.StringValue("hello"),
+		DefaultSlackChannel: types.StringValue("platform-eng"),
+		NextOccurrence:      types.StringNull(),
 	})
 
 	obj := campaignReminderToObject(context.Background(), &diags, reminder, given)
@@ -224,7 +218,7 @@ func TestCampaignReminderToObject_PopulatedPreservesGivenSlackForm(t *testing.T)
 
 func TestCampaignReminderToObject_NoPriorUsesApiValue(t *testing.T) {
 	var diags diag.Diagnostics
-	reminder := &opslevel.CampaignReminder{
+	reminder := opslevel.CampaignReminder{
 		Channels:            []opslevel.CampaignReminderChannelEnum{opslevel.CampaignReminderChannelEnumEmail},
 		DefaultSlackChannel: "#platform-eng",
 		Frequency:           2,
@@ -253,8 +247,8 @@ func TestNewCampaignDataSourceModel_Reminder(t *testing.T) {
 	var diags diag.Diagnostics
 
 	withReminder := opslevel.Campaign{
-		Name: "C",
-		Reminder: &opslevel.CampaignReminder{
+		CampaignId: opslevel.CampaignId{Name: "C"},
+		Reminder: opslevel.CampaignReminder{
 			Channels:      []opslevel.CampaignReminderChannelEnum{opslevel.CampaignReminderChannelEnumEmail},
 			DaysOfWeek:    []opslevel.DayOfWeekEnum{opslevel.DayOfWeekEnumMonday},
 			Frequency:     1,
@@ -271,7 +265,7 @@ func TestNewCampaignDataSourceModel_Reminder(t *testing.T) {
 		t.Error("expected reminder to be set on the data source model")
 	}
 
-	noReminder := newCampaignDataSourceModel(context.Background(), &diags, opslevel.Campaign{Name: "C"}, "id")
+	noReminder := newCampaignDataSourceModel(context.Background(), &diags, opslevel.Campaign{CampaignId: opslevel.CampaignId{Name: "C"}}, "id")
 	if diags.HasError() {
 		t.Fatalf("unexpected diags: %v", diags)
 	}
@@ -283,16 +277,15 @@ func TestNewCampaignDataSourceModel_Reminder(t *testing.T) {
 func TestValidateReminderConfig(t *testing.T) {
 	base := func(freqUnit string, days types.List) CampaignReminderModel {
 		return CampaignReminderModel{
-			Channels:                     stringList("slack"),
-			Frequency:                    types.Int64Value(1),
-			FrequencyUnit:                types.StringValue(freqUnit),
-			TimeOfDay:                    types.StringValue("09:30"),
-			Timezone:                     types.StringValue("UTC"),
-			DaysOfWeek:                   days,
-			Message:                      types.StringNull(),
-			DefaultSlackChannel:          types.StringNull(),
-			DefaultMicrosoftTeamsChannel: types.StringNull(),
-			NextOccurrence:               types.StringNull(),
+			Channels:            stringList("slack"),
+			Frequency:           types.Int64Value(1),
+			FrequencyUnit:       types.StringValue(freqUnit),
+			TimeOfDay:           types.StringValue("09:30"),
+			Timezone:            types.StringValue("UTC"),
+			DaysOfWeek:          days,
+			Message:             types.StringNull(),
+			DefaultSlackChannel: types.StringNull(),
+			NextOccurrence:      types.StringNull(),
 		}
 	}
 
@@ -335,8 +328,8 @@ func TestNewCampaignListItemModels_Reminder(t *testing.T) {
 	var diags diag.Diagnostics
 	campaigns := []opslevel.Campaign{
 		{
-			Name: "a",
-			Reminder: &opslevel.CampaignReminder{
+			CampaignId: opslevel.CampaignId{Name: "a"},
+			Reminder: opslevel.CampaignReminder{
 				Channels:      []opslevel.CampaignReminderChannelEnum{opslevel.CampaignReminderChannelEnumSlack},
 				Frequency:     1,
 				FrequencyUnit: opslevel.CampaignReminderFrequencyUnitEnumDay,
@@ -344,7 +337,7 @@ func TestNewCampaignListItemModels_Reminder(t *testing.T) {
 				Timezone:      "UTC",
 			},
 		},
-		{Name: "b"},
+		{CampaignId: opslevel.CampaignId{Name: "b"}},
 	}
 
 	models := newCampaignListItemModels(context.Background(), &diags, campaigns)

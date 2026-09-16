@@ -21,6 +21,7 @@ Campaign data source
 
 ### Read-Only
 
+- `checks` (Attributes List) The checks that are on this campaign. Use these ids to import existing campaign checks as opslevel_campaign_check resources. (see [below for nested schema](#nestedatt--checks))
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `html_url` (String) The URL to the campaign in the OpsLevel UI.
 - `id` (String) The ID of the campaign.
@@ -32,6 +33,16 @@ Campaign data source
 - `status` (String) The current status of the campaign.
 - `target_date` (String) The target end date of the campaign.
 
+<a id="nestedatt--checks"></a>
+### Nested Schema for `checks`
+
+Read-Only:
+
+- `id` (String) The id of the check on the campaign.
+- `name` (String) The display name of the check.
+- `source_check_id` (String) The id of the rubric check this check was copied from. Null if the source check has been deleted, or if the copy was made before OpsLevel began recording this.
+
+
 <a id="nestedatt--reminder"></a>
 ### Nested Schema for `reminder`
 
@@ -39,7 +50,6 @@ Read-Only:
 
 - `channels` (List of String) The channels through which reminders are delivered.
 - `days_of_week` (List of String) The weekdays on which reminders are delivered (weekly cadence only).
-- `default_microsoft_teams_channel` (String) Microsoft Teams channel notified when a team has no default Teams contact.
 - `default_slack_channel` (String) Slack channel notified when a team has no default Slack contact.
 - `frequency` (Number) The interval (in frequency_unit) at which reminders are delivered.
 - `frequency_unit` (String) The unit of the frequency interval.

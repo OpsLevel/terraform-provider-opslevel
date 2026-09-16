@@ -46,7 +46,6 @@ Read-Only:
 
 - `channels` (List of String) The channels through which reminders are delivered.
 - `days_of_week` (List of String) The weekdays on which reminders are delivered (weekly cadence only).
-- `default_microsoft_teams_channel` (String) Microsoft Teams channel notified when a team has no default Teams contact.
 - `default_slack_channel` (String) Slack channel notified when a team has no default Slack contact.
 - `frequency` (Number) The interval (in frequency_unit) at which reminders are delivered.
 - `frequency_unit` (String) The unit of the frequency interval.

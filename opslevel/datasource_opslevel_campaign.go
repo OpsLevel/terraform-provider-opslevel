@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -85,10 +86,6 @@ var campaignSchemaAttrs = map[string]schema.Attribute{
 				Description: "Slack channel notified when a team has no default Slack contact.",
 				Computed:    true,
 			},
-			"default_microsoft_teams_channel": schema.StringAttribute{
-				Description: "Microsoft Teams channel notified when a team has no default Teams contact.",
-				Computed:    true,
-			},
 			"next_occurrence": schema.StringAttribute{
 				Description: "The next time a reminder will be delivered, based on the current configuration.",
 				Computed:    true,
@@ -116,6 +113,39 @@ func CampaignAttributes(attrs map[string]schema.Attribute) map[string]schema.Att
 	return attrs
 }
 
+// campaignCheckAttrTypes describes one entry in a campaign's checks list.
+var campaignCheckAttrTypes = map[string]attr.Type{
+	"id":              types.StringType,
+	"name":            types.StringType,
+	"source_check_id": types.StringType,
+}
+
+// CampaignCheckListValue converts a campaign's checks into the data source's
+// checks attribute.
+//
+// A check with no source reports source_check_id as null rather than an empty
+// string: the source may have been deleted, or the copy may predate OpsLevel
+// recording where copies came from. Null distinguishes "unknown" from a real id.
+func CampaignCheckListValue(ctx context.Context, checks []opslevel.CampaignCheckNode) (types.List, diag.Diagnostics) {
+	values := make([]attr.Value, 0, len(checks))
+	for _, check := range checks {
+		sourceCheckId := types.StringNull()
+		if check.SourceCheck.Id != "" {
+			sourceCheckId = types.StringValue(string(check.SourceCheck.Id))
+		}
+		obj, diags := types.ObjectValue(campaignCheckAttrTypes, map[string]attr.Value{
+			"id":              types.StringValue(string(check.Id)),
+			"name":            types.StringValue(check.Name),
+			"source_check_id": sourceCheckId,
+		})
+		if diags.HasError() {
+			return types.ListNull(types.ObjectType{AttrTypes: campaignCheckAttrTypes}), diags
+		}
+		values = append(values, obj)
+	}
+	return types.ListValue(types.ObjectType{AttrTypes: campaignCheckAttrTypes}, values)
+}
+
 type campaignDataSourceModel struct {
 	FilterId     types.String `tfsdk:"filter_id"`
 	HtmlUrl      types.String `tfsdk:"html_url"`
@@ -128,6 +158,7 @@ type campaignDataSourceModel struct {
 	StartDate    types.String `tfsdk:"start_date"`
 	Status       types.String `tfsdk:"status"`
 	TargetDate   types.String `tfsdk:"target_date"`
+	Checks       types.List   `tfsdk:"checks"`
 }
 
 func newCampaignDataSourceModel(ctx context.Context, diags *diag.Diagnostics, campaign opslevel.Campaign, identifier string) campaignDataSourceModel {
@@ -141,6 +172,7 @@ func newCampaignDataSourceModel(ctx context.Context, diags *diag.Diagnostics, ca
 		ProjectBrief: ComputedStringValue(campaign.RawProjectBrief),
 		Reminder:     campaignReminderToObject(ctx, diags, campaign.Reminder, types.ObjectNull(reminderAttrTypes())),
 		Status:       ComputedStringValue(string(campaign.Status)),
+		Checks:       types.ListNull(types.ObjectType{AttrTypes: campaignCheckAttrTypes}),
 	}
 	if !campaign.StartDate.IsZero() {
 		model.StartDate = types.StringValue(campaign.StartDate.Format("2006-01-02"))
@@ -167,6 +199,29 @@ func (d *CampaignDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Description: "The id of the campaign to find.",
 				Required:    true,
 			},
+			"checks": schema.ListNestedAttribute{
+				Description: "The checks that are on this campaign. Use these ids to import existing " +
+					"campaign checks as opslevel_campaign_check resources.",
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Description: "The id of the check on the campaign.",
+							Computed:    true,
+						},
+						"name": schema.StringAttribute{
+							Description: "The display name of the check.",
+							Computed:    true,
+						},
+						"source_check_id": schema.StringAttribute{
+							Description: "The id of the rubric check this check was copied from. Null if " +
+								"the source check has been deleted, or if the copy was made before " +
+								"OpsLevel began recording this.",
+							Computed: true,
+						},
+					},
+				},
+			},
 		}),
 	}
 }
@@ -188,6 +243,19 @@ func (d *CampaignDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	campaignChecks, err := d.client.ListCampaignChecks(campaign.Id)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read campaign checks, got error: %s", err))
+		return
+	}
+	checks, diags := CampaignCheckListValue(ctx, campaignChecks)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	stateModel.Checks = checks
+
 	tflog.Trace(ctx, "read an OpsLevel Campaign data source")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &stateModel)...)
 }

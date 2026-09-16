@@ -55,30 +55,28 @@ type CampaignResourceModel struct {
 
 // CampaignReminderModel describes the nested reminder configuration block.
 type CampaignReminderModel struct {
-	Channels                     types.List   `tfsdk:"channels"`
-	Frequency                    types.Int64  `tfsdk:"frequency"`
-	FrequencyUnit                types.String `tfsdk:"frequency_unit"`
-	TimeOfDay                    types.String `tfsdk:"time_of_day"`
-	Timezone                     types.String `tfsdk:"timezone"`
-	DaysOfWeek                   types.List   `tfsdk:"days_of_week"`
-	Message                      types.String `tfsdk:"message"`
-	DefaultSlackChannel          types.String `tfsdk:"default_slack_channel"`
-	DefaultMicrosoftTeamsChannel types.String `tfsdk:"default_microsoft_teams_channel"`
-	NextOccurrence               types.String `tfsdk:"next_occurrence"`
+	Channels            types.List   `tfsdk:"channels"`
+	Frequency           types.Int64  `tfsdk:"frequency"`
+	FrequencyUnit       types.String `tfsdk:"frequency_unit"`
+	TimeOfDay           types.String `tfsdk:"time_of_day"`
+	Timezone            types.String `tfsdk:"timezone"`
+	DaysOfWeek          types.List   `tfsdk:"days_of_week"`
+	Message             types.String `tfsdk:"message"`
+	DefaultSlackChannel types.String `tfsdk:"default_slack_channel"`
+	NextOccurrence      types.String `tfsdk:"next_occurrence"`
 }
 
 func reminderAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"channels":                        types.ListType{ElemType: types.StringType},
-		"frequency":                       types.Int64Type,
-		"frequency_unit":                  types.StringType,
-		"time_of_day":                     types.StringType,
-		"timezone":                        types.StringType,
-		"days_of_week":                    types.ListType{ElemType: types.StringType},
-		"message":                         types.StringType,
-		"default_slack_channel":           types.StringType,
-		"default_microsoft_teams_channel": types.StringType,
-		"next_occurrence":                 types.StringType,
+		"channels":              types.ListType{ElemType: types.StringType},
+		"frequency":             types.Int64Type,
+		"frequency_unit":        types.StringType,
+		"time_of_day":           types.StringType,
+		"timezone":              types.StringType,
+		"days_of_week":          types.ListType{ElemType: types.StringType},
+		"message":               types.StringType,
+		"default_slack_channel": types.StringType,
+		"next_occurrence":       types.StringType,
 	}
 }
 
@@ -103,7 +101,7 @@ func buildCampaignReminderInput(ctx context.Context, diags *diag.Diagnostics, ob
 	}
 
 	input := &opslevel.CampaignReminderInput{
-		Channels:      channels,
+		Channels:      &channels,
 		Frequency:     int(rm.Frequency.ValueInt64()),
 		FrequencyUnit: opslevel.CampaignReminderFrequencyUnitEnum(rm.FrequencyUnit.ValueString()),
 		TimeOfDay:     rm.TimeOfDay.ValueString(),
@@ -113,19 +111,18 @@ func buildCampaignReminderInput(ctx context.Context, diags *diag.Diagnostics, ob
 	if rm.FrequencyUnit.ValueString() == string(opslevel.CampaignReminderFrequencyUnitEnumWeek) {
 		dayStrings, dd := ListValueToStringSlice(ctx, rm.DaysOfWeek)
 		diags.Append(dd...)
-		for _, day := range dayStrings {
-			input.DaysOfWeek = append(input.DaysOfWeek, opslevel.DayOfWeekEnum(day))
+		days := make([]opslevel.DayOfWeekEnum, len(dayStrings))
+		for i, day := range dayStrings {
+			days[i] = opslevel.DayOfWeekEnum(day)
 		}
+		input.DaysOfWeek = &days
 	}
 
 	if !rm.Message.IsNull() && !rm.Message.IsUnknown() {
-		input.Message = rm.Message.ValueStringPointer()
+		input.Message = opslevel.RefOf(rm.Message.ValueString())
 	}
 	if !rm.DefaultSlackChannel.IsNull() && !rm.DefaultSlackChannel.IsUnknown() {
-		input.DefaultSlackChannel = rm.DefaultSlackChannel.ValueStringPointer()
-	}
-	if !rm.DefaultMicrosoftTeamsChannel.IsNull() && !rm.DefaultMicrosoftTeamsChannel.IsUnknown() {
-		input.DefaultMicrosoftTeamsChannel = rm.DefaultMicrosoftTeamsChannel.ValueStringPointer()
+		input.DefaultSlackChannel = opslevel.RefOf(rm.DefaultSlackChannel.ValueString())
 	}
 	return input
 }
@@ -150,8 +147,10 @@ func preserveHashChannel(apiVal string, given types.String) types.String {
 // preserving user-formatted values from the given (plan/state) object where
 // the API would otherwise introduce noise. Returns a null object when no
 // reminder is configured on the campaign.
-func campaignReminderToObject(ctx context.Context, diags *diag.Diagnostics, reminder *opslevel.CampaignReminder, given types.Object) types.Object {
-	if reminder == nil {
+func campaignReminderToObject(ctx context.Context, diags *diag.Diagnostics, reminder opslevel.CampaignReminder, given types.Object) types.Object {
+	// Campaign.Reminder is a value, so a campaign without one arrives as the zero
+	// struct. frequencyUnit is always populated when a reminder does exist.
+	if reminder.FrequencyUnit == "" {
 		return types.ObjectNull(reminderAttrTypes())
 	}
 
@@ -181,16 +180,15 @@ func campaignReminderToObject(ctx context.Context, diags *diag.Diagnostics, remi
 	}
 
 	rm := CampaignReminderModel{
-		Channels:                     types.ListValueMust(types.StringType, channels),
-		Frequency:                    types.Int64Value(int64(reminder.Frequency)),
-		FrequencyUnit:                types.StringValue(string(reminder.FrequencyUnit)),
-		TimeOfDay:                    types.StringValue(reminder.TimeOfDay),
-		Timezone:                     types.StringValue(reminder.Timezone),
-		DaysOfWeek:                   daysList,
-		Message:                      StringValueFromResourceAndModelField(reminder.Message, prior.Message),
-		DefaultSlackChannel:          preserveHashChannel(reminder.DefaultSlackChannel, prior.DefaultSlackChannel),
-		DefaultMicrosoftTeamsChannel: preserveHashChannel(reminder.DefaultMicrosoftTeamsChannel, prior.DefaultMicrosoftTeamsChannel),
-		NextOccurrence:               nextOccurrence,
+		Channels:            types.ListValueMust(types.StringType, channels),
+		Frequency:           types.Int64Value(int64(reminder.Frequency)),
+		FrequencyUnit:       types.StringValue(string(reminder.FrequencyUnit)),
+		TimeOfDay:           types.StringValue(reminder.TimeOfDay),
+		Timezone:            types.StringValue(reminder.Timezone),
+		DaysOfWeek:          daysList,
+		Message:             StringValueFromResourceAndModelField(reminder.Message, prior.Message),
+		DefaultSlackChannel: preserveHashChannel(reminder.DefaultSlackChannel, prior.DefaultSlackChannel),
+		NextOccurrence:      nextOccurrence,
 	}
 
 	obj, d := types.ObjectValueFrom(ctx, reminderAttrTypes(), rm)
@@ -261,7 +259,12 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:    true,
 			},
 			"check_ids": schema.ListAttribute{
-				Description: "List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.",
+				DeprecationMessage: "Use the opslevel_campaign_check resource instead. check_ids records the " +
+					"copy instruction that was issued, not the campaign's actual membership, and it matches " +
+					"campaign checks by name, which is unreliable when names collide. Do not use both on the " +
+					"same campaign - they manage the same checks by different means and will fight, deleting " +
+					"and re-copying checks on every apply.",
+				Description: "Deprecated. List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set. Use opslevel_campaign_check instead.",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
@@ -325,10 +328,6 @@ func (r *CampaignResource) Schema(ctx context.Context, req resource.SchemaReques
 					},
 					"default_slack_channel": schema.StringAttribute{
 						Description: "Slack channel notified when a team has no default Slack contact. A leading '#' is added automatically.",
-						Optional:    true,
-					},
-					"default_microsoft_teams_channel": schema.StringAttribute{
-						Description: "Microsoft Teams channel notified when a team has no default Teams contact.",
 						Optional:    true,
 					},
 					"next_occurrence": schema.StringAttribute{
@@ -461,7 +460,7 @@ func (r *CampaignResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 		if len(checkIds) > 0 {
-			updated, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+			updated, _, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
 				CampaignId: campaign.Id,
 				CheckIds:   checkIds,
 			})
@@ -778,7 +777,7 @@ func (r *CampaignResource) reconcileCampaignChecks(
 	}
 
 	if len(toAdd) > 0 {
-		_, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
+		_, _, err := r.client.CopyChecksToCampaign(opslevel.ChecksCopyToCampaignInput{
 			CampaignId: campaignId,
 			CheckIds:   toAdd,
 		})

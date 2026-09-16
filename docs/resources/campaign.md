@@ -69,7 +69,7 @@ resource "opslevel_campaign" "upgrade_rails" {
 
 ### Optional
 
-- `check_ids` (List of String) List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set.
+- `check_ids` (List of String, Deprecated) Deprecated. List of rubric check IDs to associate with this campaign. On create, checks are copied into the campaign. On update, checks are added or removed to match the desired set. Use opslevel_campaign_check instead.
 - `filter_id` (String) The ID of the filter applied to this campaign.
 - `project_brief` (String) The project brief of the campaign (Markdown).
 - `reminder` (Attributes) Configuration for recurring campaign reminders sent to component owners via Slack, email, or Microsoft Teams. Reminders are only delivered while the campaign is in_progress or delayed. (see [below for nested schema](#nestedatt--reminder))
@@ -96,7 +96,6 @@ Required:
 Optional:
 
 - `days_of_week` (List of String) The weekdays on which reminders are delivered. Only supported (and required) when frequency_unit is "week".
-- `default_microsoft_teams_channel` (String) Microsoft Teams channel notified when a team has no default Teams contact.
 - `default_slack_channel` (String) Slack channel notified when a team has no default Slack contact. A leading '#' is added automatically.
 - `message` (String) An optional custom message included in the reminder.
 
