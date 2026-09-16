@@ -95,3 +95,95 @@ run "resource_campaign_unschedule" {
     error_message = "campaign should be back in draft status after removing dates"
   }
 }
+
+run "resource_campaign_create_with_reminder" {
+  variables {
+    name          = var.name
+    owner_id      = var.owner_id
+    project_brief = var.project_brief
+    reminder = {
+      channels       = ["slack", "email"]
+      frequency      = 1
+      frequency_unit = "week"
+      days_of_week   = ["monday", "thursday"]
+      time_of_day    = "09:30"
+      timezone       = "America/Chicago"
+      message        = "Please complete your campaign checks."
+    }
+  }
+
+  module {
+    source = "./campaign"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder.frequency_unit == "week"
+    error_message = "reminder frequency_unit does not match"
+  }
+
+  assert {
+    condition     = length(opslevel_campaign.test.reminder.channels) == 2
+    error_message = "reminder channels do not match"
+  }
+
+  assert {
+    condition     = length(opslevel_campaign.test.reminder.days_of_week) == 2
+    error_message = "reminder days_of_week do not match"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder.time_of_day == "09:30"
+    error_message = "reminder time_of_day does not match"
+  }
+}
+
+run "resource_campaign_update_reminder_to_daily" {
+  variables {
+    name          = var.name
+    owner_id      = var.owner_id
+    project_brief = var.project_brief
+    reminder = {
+      channels       = ["slack"]
+      frequency      = 2
+      frequency_unit = "day"
+      time_of_day    = "14:00"
+      timezone       = "America/Chicago"
+    }
+  }
+
+  module {
+    source = "./campaign"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder.frequency_unit == "day"
+    error_message = "reminder frequency_unit was not updated to day"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder.frequency == 2
+    error_message = "reminder frequency was not updated"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder.days_of_week == null
+    error_message = "reminder days_of_week should be null for a daily cadence"
+  }
+}
+
+run "resource_campaign_clear_reminder" {
+  variables {
+    name          = var.name
+    owner_id      = var.owner_id
+    project_brief = var.project_brief
+  }
+
+  module {
+    source = "./campaign"
+  }
+
+  assert {
+    condition     = opslevel_campaign.test.reminder == null
+    error_message = "reminder should be cleared when the block is removed"
+  }
+}
