@@ -238,6 +238,29 @@ run "resource_service_create_with_empty_optional_fields" {
 
 }
 
+run "resource_service_create_with_preferred_api_document_source_without_path" {
+
+  variables {
+    name                          = "New ${var.name} with API doc source only"
+    preferred_api_document_source = "PUSH"
+  }
+
+  module {
+    source = "./opslevel_modules/modules/service"
+  }
+
+  assert {
+    condition     = opslevel_service.this.api_document_path == null
+    error_message = var.error_expected_null_field
+  }
+
+  assert {
+    condition     = opslevel_service.this.preferred_api_document_source == "PUSH"
+    error_message = "expected preferred_api_document_source to be persisted without api_document_path"
+  }
+
+}
+
 run "resource_service_update_unset_optional_fields" {
 
   variables {

@@ -47,18 +47,19 @@ type RelationshipModel struct {
 }
 
 type ComponentTypeModel struct {
-	Id                types.String                 `tfsdk:"id"`
-	Name              types.String                 `tfsdk:"name"`
-	Alias             types.String                 `tfsdk:"alias"`
-	Category          types.String                 `tfsdk:"category"`
-	Description       types.String                 `tfsdk:"description"`
-	Icon              *ComponentTypeIconModel      `tfsdk:"icon"`
-	OwnerRelationship *OwnerRelationshipModel      `tfsdk:"owner_relationship"`
-	Properties        map[string]PropertyModel     `tfsdk:"properties"`
-	Relationships     map[string]RelationshipModel `tfsdk:"relationships"`
+	Id                 types.String                 `tfsdk:"id"`
+	Name               types.String                 `tfsdk:"name"`
+	Alias              types.String                 `tfsdk:"alias"`
+	Category           types.String                 `tfsdk:"category"`
+	Description        types.String                 `tfsdk:"description"`
+	Icon               *ComponentTypeIconModel      `tfsdk:"icon"`
+	OwnerRelationship  *RelationshipConfigModel     `tfsdk:"owner_relationship"`
+	SystemRelationship *RelationshipConfigModel     `tfsdk:"system_relationship"`
+	Properties         map[string]PropertyModel     `tfsdk:"properties"`
+	Relationships      map[string]RelationshipModel `tfsdk:"relationships"`
 }
 
-type OwnerRelationshipModel struct {
+type RelationshipConfigModel struct {
 	ManagementRules types.List `tfsdk:"management_rules"`
 }
 
@@ -86,7 +87,7 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	}
 
 	if stateModel.OwnerRelationship != nil {
-		stateModel.OwnerRelationship = &OwnerRelationshipModel{
+		stateModel.OwnerRelationship = &RelationshipConfigModel{
 			ManagementRules: ManagementRuleListValueFromResourceAndModel(
 				res.OwnerRelationship.ManagementRules,
 				stateModel.OwnerRelationship.ManagementRules,
@@ -94,6 +95,17 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		}
 	} else {
 		stateModel.OwnerRelationship = nil
+	}
+
+	if stateModel.SystemRelationship != nil {
+		stateModel.SystemRelationship = &RelationshipConfigModel{
+			ManagementRules: ManagementRuleListValueFromResourceAndModel(
+				res.SystemRelationship.ManagementRules,
+				stateModel.SystemRelationship.ManagementRules,
+			),
+		}
+	} else {
+		stateModel.SystemRelationship = nil
 	}
 
 	conn, err := res.GetProperties(s.client, nil)
@@ -199,6 +211,13 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 			"owner_relationship": schema.SingleNestedAttribute{
 				Description: "The owner relationship configuration for this component type.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"management_rules": ManagementRulesResourceAttribute(),
+				},
+			},
+			"system_relationship": schema.SingleNestedAttribute{
+				Description: "The system relationship configuration for this component type.",
 				Optional:    true,
 				Attributes: map[string]schema.Attribute{
 					"management_rules": ManagementRulesResourceAttribute(),
@@ -319,13 +338,26 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		}
 	}
 
+	var systemRelInput *opslevel.SystemRelationshipInput
+	if planModel.SystemRelationship != nil && !planModel.SystemRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.SystemRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		systemRelInput = &opslevel.SystemRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Create the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:              nullable(planModel.Name.ValueStringPointer()),
-		Alias:             nullable(planModel.Alias.ValueStringPointer()),
-		Description:       nullable(planModel.Description.ValueStringPointer()),
-		OwnerRelationship: ownerRelInput,
-		Properties:        properties,
+		Name:               nullable(planModel.Name.ValueStringPointer()),
+		Alias:              nullable(planModel.Alias.ValueStringPointer()),
+		Description:        nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship:  ownerRelInput,
+		SystemRelationship: systemRelInput,
+		Properties:         properties,
 	}
 	setCategoryInput(&input, planModel.Category)
 	if planModel.Icon != nil && !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
@@ -465,13 +497,26 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 	}
 
+	var systemRelInput *opslevel.SystemRelationshipInput
+	if planModel.SystemRelationship != nil && !planModel.SystemRelationship.ManagementRules.IsNull() {
+		managementRules := ParseManagementRules(ctx, planModel.SystemRelationship.ManagementRules, planModel.Alias.ValueString(), &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		systemRelInput = &opslevel.SystemRelationshipInput{
+			ManagementRules: &managementRules,
+		}
+	}
+
 	// Update the component type first
 	input := opslevel.ComponentTypeInput{
-		Name:              nullable(planModel.Name.ValueStringPointer()),
-		Alias:             nullable(planModel.Alias.ValueStringPointer()),
-		Description:       nullable(planModel.Description.ValueStringPointer()),
-		OwnerRelationship: ownerRelInput,
-		Properties:        properties,
+		Name:               nullable(planModel.Name.ValueStringPointer()),
+		Alias:              nullable(planModel.Alias.ValueStringPointer()),
+		Description:        nullable(planModel.Description.ValueStringPointer()),
+		OwnerRelationship:  ownerRelInput,
+		SystemRelationship: systemRelInput,
+		Properties:         properties,
 	}
 	setCategoryInput(&input, planModel.Category)
 	if planModel.Icon != nil && !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
@@ -488,8 +533,14 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if s.reconcileRelationships(ctx, err, id, resp, planModel) {
-		return
+	// Only reconcile relationships when the user manages them via this resource's
+	// `relationships` attribute (present in either plan or prior state). Standalone
+	// relationships managed via the `opslevel_relationship_definition` resource are
+	// not touched here.
+	if planModel.Relationships != nil || stateModel.Relationships != nil {
+		if s.reconcileRelationships(ctx, err, id, resp, planModel) {
+			return
+		}
 	}
 
 	finalModel, err := s.NewModel(res, planModel)
@@ -557,7 +608,7 @@ func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err e
 		}
 	}
 
-	// Delete any relationships that were removed
+	// Delete any relationships that were removed from the plan.
 	for _, rel := range existingRelMap {
 		_, err := s.client.DeleteRelationshipDefinition(string(rel.Id))
 		if err != nil {

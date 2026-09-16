@@ -15,7 +15,7 @@ jobs:
     environment: "Production"
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           submodules: 'true'
@@ -30,23 +30,23 @@ jobs:
           echo version_bump=$(echo $VERSION_BUMP | tr -d "\"") >> $GITHUB_OUTPUT
       - name: Determine Next Version
         id: next_version
-        uses: zwaldowski/semver-release-action@v4
+        uses: zwaldowski/semver-release-action@a1fcf12dda3d10c122d1d9cb161dece6363c7e19 # v6
         with:
           dry_run: true
           bump: ${{ steps.bump.outputs.version_bump }}
           prefix: "v"
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6
         with:
           go-version-file: go.mod
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cache Go modules
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -58,9 +58,8 @@ jobs:
           then
             echo "Skip Changie..."
           else
-            go install github.com/miniscruff/changie@v1.23.0
-            changie batch ${{ steps.next_version.outputs.version_tag }}
-            changie merge
+            go tool changie batch ${{ steps.next_version.outputs.version_tag }}
+            go tool changie merge
           fi
       - name: Generate Terraform Docs
         run: task docs
@@ -85,12 +84,12 @@ jobs:
           gh release delete ${{ steps.next_version.outputs.version_tag }} || true
       - name: Import GPG key
         id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6.1.0
+        uses: goreleaser/goreleaser-action@9ed2f89a662bf1735a48bc8557fd212fa902bebf # v6.1.0
         with:
           args: release --clean --release-notes=./.changes/${{ steps.next_version.outputs.version_tag }}.md
         env:

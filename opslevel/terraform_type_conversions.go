@@ -91,6 +91,18 @@ func OptionalStringListValue(values []string) basetypes.ListValue {
 	return types.ListValueMust(types.StringType, elems)
 }
 
+// Returns values wrapped in a types.ListValue, empty rather than null when there are
+// none. Use this where "none" is a real answer rather than an unknown - a team with no
+// tags genuinely has zero tags, so callers can length() it without a null check.
+func ComputedStringListValue(values []string) basetypes.ListValue {
+	elems := make([]attr.Value, len(values))
+	for i, v := range values {
+		elems[i] = types.StringValue(v)
+	}
+
+	return types.ListValueMust(types.StringType, elems)
+}
+
 // unquotes unwanted quotes from strings in maps, returns original value in most cases
 func unquote(value string) string {
 	if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {

@@ -20,6 +20,23 @@ resource "opslevel_component_type" "api" {
   }
 }
 
+# Campaign resources
+
+resource "opslevel_campaign" "big" {
+  name          = "Big Campaign"
+  owner_id      = var.test_id
+  filter_id     = var.test_id
+  project_brief = "This is a big campaign"
+  start_date    = "2026-07-01"
+  target_date   = "2026-09-30"
+  check_ids     = [var.test_id]
+}
+
+resource "opslevel_campaign" "small" {
+  name     = "Small Campaign"
+  owner_id = var.test_id
+}
+
 # Domain resources
 
 resource "opslevel_domain" "fancy" {
@@ -103,6 +120,30 @@ resource "opslevel_integration_azure_resources" "example" {
   ownership_tag_overrides = true
   subscription_id         = "01234567-0123-0123-0123-012345678901"
   tenant_id               = "98765432-9876-9876-9876-987654321098"
+}
+
+# Integration Custom resources
+
+resource "opslevel_integration_custom" "example" {
+  name = "dev"
+
+  etl_definition = {
+    extract_definition = <<-EOT
+      extractors:
+        - external_kind: widget
+          external_id: ".id"
+    EOT
+
+    transform_definition = <<-EOT
+      transforms:
+        - external_kind: widget
+          opslevel_kind: component
+          opslevel_identifier: ".id"
+          on_component_not_found: create
+          properties:
+            name: ".name"
+    EOT
+  }
 }
 
 # Property Assignment
@@ -724,4 +765,3 @@ resource "opslevel_tag" "example" {
   key   = "yacht"
   value = "racing"
 }
-
