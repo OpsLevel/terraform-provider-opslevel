@@ -4,4 +4,5 @@ resource "opslevel_campaign" "test" {
   project_brief = var.project_brief
   start_date    = var.start_date
   target_date   = var.target_date
+  reminder      = var.reminder
 }
