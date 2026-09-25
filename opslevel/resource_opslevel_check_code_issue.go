@@ -74,11 +74,8 @@ func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, g
 	stateModel.Constraint = RequiredStringValue(string(check.Constraint))
 	stateModel.IssueName = OptionalStringValue(check.IssueName)
 	stateModel.IssueType = OptionalStringListValue(check.IssueType)
-	// NOTE: API prevents MaxAllowed from being zero
 	if !givenModel.MaxAllowed.IsNull() {
-		if check.MaxAllowed > 0 {
-			stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
-		}
+		stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
 	} else {
 		stateModel.MaxAllowed = types.Int64Null()
 	}
