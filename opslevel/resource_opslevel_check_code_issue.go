@@ -74,11 +74,6 @@ func NewCheckCodeIssueResourceModel(ctx context.Context, check opslevel.Check, g
 	stateModel.Constraint = RequiredStringValue(string(check.Constraint))
 	stateModel.IssueName = OptionalStringValue(check.IssueName)
 	stateModel.IssueType = OptionalStringListValue(check.IssueType)
-	// Round-trip whatever the API returns for max_allowed, including 0. A zero
-	// threshold is valid data the API can store (OpsLevel's own UI creates such
-	// checks via the generic checkCreate mutation), so dropping 0 here left them
-	// unrepresentable in state, causing perpetual drift and "inconsistent result
-	// after apply" errors.
 	if !givenModel.MaxAllowed.IsNull() {
 		stateModel.MaxAllowed = types.Int64Value(int64(check.MaxAllowed))
 	} else {
