@@ -1,3 +1,0 @@
-kind: Fixed
-body: '`opslevel_check_code_issue` now round-trips `max_allowed = 0` in state instead of mapping a returned 0 to null. This removes the perpetual `null -> 0` plan diff and the "Provider produced inconsistent result after apply" error for zero-valued checks. Note: creating or updating a check with `max_allowed = 0` still requires OpsLevel to accept 0 on the `checkCodeIssueCreate`/`checkCodeIssueUpdate` mutations (their generic `checkCreate` mutation already does).'
-time: 2026-09-21T14:31:05.000000000Z
