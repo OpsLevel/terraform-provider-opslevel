@@ -307,3 +307,47 @@ func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 		t.Errorf("expected 2 deletes (both removed from plan), got %d. Operations: %v", deleteCount, ops)
 	}
 }
+
+func TestCategoryValue(t *testing.T) {
+	cases := []struct {
+		name string
+		api  string
+		want string
+	}{
+		{"empty read falls back to default", "", "default"},
+		{"default is passed through", "default", "default"},
+		{"infrastructure is passed through", "infrastructure", "infrastructure"},
+		{"account-scoped alias is passed through", "data_assets", "data_assets"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := categoryValue(tc.api)
+			if got.IsNull() {
+				t.Fatalf("category = null, want %q", tc.want)
+			}
+			if got.ValueString() != tc.want {
+				t.Errorf("category = %q, want %q", got.ValueString(), tc.want)
+			}
+		})
+	}
+}
+
+func TestSetCategoryInput(t *testing.T) {
+	// An absent category must not appear in the request at all: sending an explicit
+	// null would clear it, and the field may not exist on the account's schema.
+	var input opslevel.ComponentTypeInput
+	setCategoryInput(&input, types.StringNull())
+	if input.Category != nil {
+		t.Errorf("category = %v, want omitted for a null config value", input.Category)
+	}
+
+	setCategoryInput(&input, types.StringUnknown())
+	if input.Category != nil {
+		t.Errorf("category = %v, want omitted for an unknown config value", input.Category)
+	}
+
+	setCategoryInput(&input, types.StringValue("infrastructure"))
+	if input.Category == nil || input.Category.Value != "infrastructure" {
+		t.Errorf("category = %v, want infrastructure", input.Category)
+	}
+}

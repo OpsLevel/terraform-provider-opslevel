@@ -379,6 +379,28 @@ resource "opslevel_component_type" "vendor" {
   }
 }
 
+resource "opslevel_component_type" "redis_cloud" {
+  name        = "Redis Cloud"
+  alias       = "redis_cloud"
+  description = "A Redis Cloud database."
+  # Files this component type under the Infrastructure catalog alongside RDS and S3,
+  # rather than the Components catalog.
+  category = "infrastructure"
+  icon = {
+    color = "#f5222d"
+    name  = "PhDatabase"
+  }
+  properties = {
+    region = {
+      name          = "Region"
+      locked_status = "unlocked"
+      schema = jsonencode({
+        "type" : "string"
+      })
+    }
+  }
+}
+
 resource "opslevel_component_type" "ml-ai" {
   name        = "ML / AI"
   alias       = "ml-ai"
@@ -410,6 +432,7 @@ resource "opslevel_component_type" "ml-ai" {
 
 ### Optional
 
+- `category` (String) The catalog category this component type is filed under. `infrastructure` surfaces the type in the Infrastructure catalog, `default` in the Components catalog. Can be any component category alias on your account. Leaving this unset preserves whatever category the component type already has.
 - `description` (String) The description of the component type.
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--icon))
 - `owner_relationship` (Attributes) The owner relationship configuration for this component type. (see [below for nested schema](#nestedatt--owner_relationship))

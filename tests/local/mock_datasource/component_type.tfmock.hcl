@@ -2,6 +2,7 @@ mock_data "opslevel_component_type" {
   defaults = {
     name        = "Service"
     alias       = "service"
+    category    = "default"
     description = "A service component type"
     icon = {
       color = "#3B82F6"

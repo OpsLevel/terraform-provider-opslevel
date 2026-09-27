@@ -19,6 +19,7 @@ run "datasource_component_type_all_fields_accessible" {
       can(data.opslevel_component_type.test.id),
       can(data.opslevel_component_type.test.name),
       can(data.opslevel_component_type.test.alias),
+      can(data.opslevel_component_type.test.category),
       can(data.opslevel_component_type.test.description),
       can(data.opslevel_component_type.test.icon),
       can(data.opslevel_component_type.test.properties),
@@ -56,6 +57,11 @@ run "datasource_component_type_read_service" {
   assert {
     condition     = data.opslevel_component_type.test.name == "Service"
     error_message = format("'%s' data source should return correct name", var.component_type_one)
+  }
+
+  assert {
+    condition     = data.opslevel_component_type.test.category == "default"
+    error_message = format("'%s' data source should return correct category", var.component_type_one)
   }
 }
 

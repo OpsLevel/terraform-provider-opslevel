@@ -1,0 +1,3 @@
+kind: Added
+body: Add `category` to the `opslevel_component_type` resource and data sources, so a component type can be filed under the Infrastructure catalog with `category = "infrastructure"`
+time: 2026-09-15T11:00:00.000000000-05:00

@@ -33,6 +33,7 @@ output "all" {
 Read-Only:
 
 - `alias` (String) The unique alias of the component type.
+- `category` (String) The catalog category this component type is filed under, for example `default` or `infrastructure`.
 - `description` (String) The description of the component type.
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--all--icon))
 - `id` (String) The ID of this resource.

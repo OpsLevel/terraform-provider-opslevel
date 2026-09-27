@@ -27,6 +27,11 @@ run "resource_component_type_api" {
     condition     = opslevel_component_type.api.description == "An API component type"
     error_message = "wrong description for opslevel_component_type.api"
   }
+
+  assert {
+    condition     = opslevel_component_type.api.category == "infrastructure"
+    error_message = "wrong category for opslevel_component_type.api"
+  }
 }
 
 run "resource_component_type_icon_structure" {

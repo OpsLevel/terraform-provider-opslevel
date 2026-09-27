@@ -34,6 +34,11 @@ type PropertyModel struct {
 	Schema               types.String `tfsdk:"schema"`
 }
 
+// componentTypeCategoryDefault is the catalog every component type sits in unless it
+// is filed under Infrastructure. It is not a closed set - categories are account-scoped
+// aliases - this is only the baseline the API falls back to.
+const componentTypeCategoryDefault = "default"
+
 type ComponentTypeIconModel struct {
 	Color types.String `tfsdk:"color"`
 	Name  types.String `tfsdk:"name"`
@@ -50,6 +55,7 @@ type ComponentTypeModel struct {
 	Id                 types.String                 `tfsdk:"id"`
 	Name               types.String                 `tfsdk:"name"`
 	Alias              types.String                 `tfsdk:"alias"`
+	Category           types.String                 `tfsdk:"category"`
 	Description        types.String                 `tfsdk:"description"`
 	Icon               *ComponentTypeIconModel      `tfsdk:"icon"`
 	OwnerRelationship  *RelationshipConfigModel     `tfsdk:"owner_relationship"`
@@ -74,10 +80,15 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 	stateModel.Id = types.StringValue(string(res.Id))
 	stateModel.Name = types.StringValue(res.Name)
 	stateModel.Alias = types.StringValue(res.Aliases[0])
+	stateModel.Category = categoryValue(res.Category)
 	stateModel.Description = types.StringValue(res.Description)
-	stateModel.Icon = &ComponentTypeIconModel{
-		Color: types.StringValue(res.Icon.Color),
-		Name:  types.StringValue(string(res.Icon.Name)),
+	// icon is optional rather than computed, so leave it null when the config omits it.
+	// The API always returns an icon, and echoing it back would not match the config.
+	if stateModel.Icon != nil {
+		stateModel.Icon = &ComponentTypeIconModel{
+			Color: types.StringValue(res.Icon.Color),
+			Name:  types.StringValue(string(res.Icon.Name)),
+		}
 	}
 
 	if stateModel.OwnerRelationship != nil {
@@ -118,6 +129,28 @@ func (s ComponentTypeResource) NewModel(res *opslevel.ComponentType, stateModel 
 		}
 	}
 	return stateModel, nil
+}
+
+// setCategoryInput only sets category when the config supplies one. Sending an explicit
+// null would clear the category, and on accounts where the API does not expose the field
+// at all, sending it would fail the whole mutation.
+func setCategoryInput(input *opslevel.ComponentTypeInput, category types.String) {
+	if category.IsNull() || category.IsUnknown() {
+		return
+	}
+	input.Category = opslevel.RefOf(category.ValueString())
+}
+
+// categoryValue maps a category read from the API onto state. Every component type
+// belongs to a catalog and `default` is the one that is not Infrastructure, so an
+// empty read is treated as `default` rather than null. Without this, a config that
+// sets category = "default" explicitly would plan "default" but apply to null, which
+// Terraform rejects as an inconsistent result rather than tolerating as drift.
+func categoryValue(category string) types.String {
+	if category == "" {
+		return types.StringValue(componentTypeCategoryDefault)
+	}
+	return types.StringValue(category)
 }
 
 func NewPropertiesInput(model ComponentTypeModel) (*[]opslevel.ComponentTypePropertyDefinitionInput, error) {
@@ -164,6 +197,14 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"category": schema.StringAttribute{
+				MarkdownDescription: "The catalog category this component type is filed under. `infrastructure` surfaces the type in the Infrastructure catalog, `default` in the Components catalog. Can be any component category alias on your account. Leaving this unset preserves whatever category the component type already has.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"description": schema.StringAttribute{
@@ -335,7 +376,8 @@ func (s ComponentTypeResource) Create(ctx context.Context, req resource.CreateRe
 		SystemRelationship: systemRelInput,
 		Properties:         properties,
 	}
-	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+	setCategoryInput(&input, planModel.Category)
+	if planModel.Icon != nil && !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
 			Color: planModel.Icon.Color.ValueString(),
 			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
@@ -493,7 +535,8 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		SystemRelationship: systemRelInput,
 		Properties:         properties,
 	}
-	if !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
+	setCategoryInput(&input, planModel.Category)
+	if planModel.Icon != nil && !planModel.Icon.Color.IsNull() && !planModel.Icon.Name.IsNull() {
 		input.Icon = &opslevel.ComponentTypeIconInput{
 			Color: planModel.Icon.Color.ValueString(),
 			Name:  opslevel.ComponentTypeIconEnum(planModel.Icon.Name.ValueString()),
