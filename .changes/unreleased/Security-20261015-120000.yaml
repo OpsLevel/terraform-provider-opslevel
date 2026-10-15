@@ -1,3 +1,0 @@
-kind: Security
-body: 'Fix GO-2026-6612 (HTTP/2 server double flow-control refund) by bumping `golang.org/x/net` to v0.60.0 and building with Go 1.26.9. The minimum Go version for building the provider is now 1.26.'
-time: 2026-10-15T12:00:00.000000000Z
