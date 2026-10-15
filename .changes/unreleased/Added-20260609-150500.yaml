@@ -1,0 +1,3 @@
+kind: Added
+body: Added a `reminder` block to the `opslevel_campaign` resource for configuring recurring Slack, email, and Microsoft Teams reminders on a schedule.
+time: 2026-06-09T15:05:00.000000-05:00

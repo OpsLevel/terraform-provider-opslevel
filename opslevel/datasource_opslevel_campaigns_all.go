@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/opslevel/opslevel-go/v2026"
@@ -28,6 +29,7 @@ type campaignListItemModel struct {
 	Name         types.String `tfsdk:"name"`
 	OwnerId      types.String `tfsdk:"owner_id"`
 	ProjectBrief types.String `tfsdk:"project_brief"`
+	Reminder     types.Object `tfsdk:"reminder"`
 	StartDate    types.String `tfsdk:"start_date"`
 	Status       types.String `tfsdk:"status"`
 	TargetDate   types.String `tfsdk:"target_date"`
@@ -38,7 +40,7 @@ type campaignDataSourcesAllModel struct {
 	Campaigns []campaignListItemModel `tfsdk:"campaigns"`
 }
 
-func newCampaignListItemModels(campaigns []opslevel.Campaign) []campaignListItemModel {
+func newCampaignListItemModels(ctx context.Context, diags *diag.Diagnostics, campaigns []opslevel.Campaign) []campaignListItemModel {
 	models := make([]campaignListItemModel, 0, len(campaigns))
 	for _, c := range campaigns {
 		m := campaignListItemModel{
@@ -48,6 +50,7 @@ func newCampaignListItemModels(campaigns []opslevel.Campaign) []campaignListItem
 			Name:         ComputedStringValue(c.Name),
 			OwnerId:      OptionalStringValue(string(c.Owner.Id)),
 			ProjectBrief: OptionalStringValue(c.RawProjectBrief),
+			Reminder:     campaignReminderToObject(ctx, diags, c.Reminder, types.ObjectNull(reminderAttrTypes())),
 			Status:       ComputedStringValue(string(c.Status)),
 		}
 		if !c.StartDate.IsZero() {
@@ -109,7 +112,10 @@ func (d *CampaignDataSourcesAll) Read(ctx context.Context, req datasource.ReadRe
 
 	stateModel := campaignDataSourcesAllModel{
 		Status:    configModel.Status,
-		Campaigns: newCampaignListItemModels(campaigns.Nodes),
+		Campaigns: newCampaignListItemModels(ctx, &resp.Diagnostics, campaigns.Nodes),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	tflog.Trace(ctx, "read OpsLevel Campaigns data source")

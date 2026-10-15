@@ -26,4 +26,19 @@ resource "opslevel_campaign" "upgrade_rails" {
     2. Run the Rails upgrade checklist
     3. Verify all tests pass
   EOT
+
+  # Send a weekly Slack and email reminder to component owners while the
+  # campaign is in progress. days_of_week is only valid with a weekly cadence.
+  reminder = {
+    channels       = ["slack", "email"]
+    frequency      = 1
+    frequency_unit = "week"
+    days_of_week   = ["monday", "thursday"]
+    time_of_day    = "09:30"
+    timezone       = "America/Chicago"
+    message        = "Friendly reminder to complete your Rails 7 upgrade checks."
+
+    # Fallback channel used when a team has no default Slack contact.
+    default_slack_channel = "#platform-eng"
+  }
 }

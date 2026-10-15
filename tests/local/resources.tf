@@ -29,6 +29,17 @@ resource "opslevel_campaign" "big" {
   start_date    = "2026-07-01"
   target_date   = "2026-09-30"
   check_ids     = [var.test_id]
+
+  reminder = {
+    channels              = ["slack", "email"]
+    frequency             = 1
+    frequency_unit        = "week"
+    days_of_week          = ["monday", "thursday"]
+    time_of_day           = "09:30"
+    timezone              = "America/Chicago"
+    message               = "Please complete your campaign checks."
+    default_slack_channel = "#platform-eng"
+  }
 }
 
 resource "opslevel_campaign" "small" {

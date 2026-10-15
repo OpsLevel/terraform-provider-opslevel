@@ -62,6 +62,41 @@ run "resource_campaign_big" {
     condition     = opslevel_campaign.big.check_ids[0] == var.test_id
     error_message = "wrong check_ids[0] in opslevel_campaign.big"
   }
+
+  assert {
+    condition     = opslevel_campaign.big.reminder.frequency_unit == "week"
+    error_message = "wrong reminder.frequency_unit in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = opslevel_campaign.big.reminder.frequency == 1
+    error_message = "wrong reminder.frequency in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = opslevel_campaign.big.reminder.time_of_day == "09:30"
+    error_message = "wrong reminder.time_of_day in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = opslevel_campaign.big.reminder.timezone == "America/Chicago"
+    error_message = "wrong reminder.timezone in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = length(opslevel_campaign.big.reminder.channels) == 2
+    error_message = "wrong number of reminder.channels in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = length(opslevel_campaign.big.reminder.days_of_week) == 2
+    error_message = "wrong number of reminder.days_of_week in opslevel_campaign.big"
+  }
+
+  assert {
+    condition     = opslevel_campaign.big.reminder.default_slack_channel == "#platform-eng"
+    error_message = "wrong reminder.default_slack_channel in opslevel_campaign.big"
+  }
 }
 
 run "resource_campaign_small" {
