@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fix a provider crash when an `opslevel_component_type` is created or updated without an `icon` block, and stop reporting an icon in state when the configuration does not set one
+time: 2026-09-15T11:05:00.000000000-05:00

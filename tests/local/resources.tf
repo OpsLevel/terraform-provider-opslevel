@@ -3,6 +3,7 @@
 resource "opslevel_component_type" "api" {
   name        = "API"
   alias       = "api"
+  category    = "infrastructure"
   description = "An API component type"
   icon = {
     color = "#F59E0B"

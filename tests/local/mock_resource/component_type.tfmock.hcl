@@ -3,6 +3,7 @@ mock_resource "opslevel_component_type" {
     # id intentionally omitted - will be assigned a random string
     name        = "API"
     alias       = "api"
+    category    = "infrastructure"
     description = "An API component type"
     icon = {
       color = "#F59E0B"
