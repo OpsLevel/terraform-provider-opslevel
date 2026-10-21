@@ -36,7 +36,7 @@ func managementRuleResourceAttributes() map[string]resschema.Attribute {
 			Optional:    true,
 		},
 		"source_tag_operation": resschema.StringAttribute{
-			Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if source_property is 'tag', must not be set otherwise",
+			Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Must not be set unless source_property is 'tag'.",
 			Optional:    true,
 		},
 		"target_category": resschema.StringAttribute{
@@ -52,7 +52,7 @@ func managementRuleResourceAttributes() map[string]resschema.Attribute {
 			Optional:    true,
 		},
 		"target_tag_operation": resschema.StringAttribute{
-			Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Required if target_property is 'tag', must not be set otherwise.",
+			Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Must not be set unless target_property is 'tag'.",
 			Optional:    true,
 		},
 		"target_type": resschema.StringAttribute{
