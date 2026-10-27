@@ -49,7 +49,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		Name:              RequiredStringValue(definition.Name),
 		Alias:             RequiredStringValue(definition.Alias),
 		Description:       StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
-		ComponentType:     givenModel.ComponentType,
+		ComponentType:     componentTypeValueFromResourceAndModel(definition.ComponentType, givenModel.ComponentType),
 		AllowedCategories: StringListValueFromResourceAndModelField(definition.Metadata.AllowedCategories, givenModel.AllowedCategories),
 		AllowedTypes:      StringListValueFromResourceAndModelField(definition.Metadata.AllowedTypes, givenModel.AllowedTypes),
 	}
@@ -57,6 +57,16 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 	model.ManagementRules = ManagementRuleListValueFromResourceAndModel(definition.ManagementRules, givenModel.ManagementRules)
 
 	return model
+}
+
+// componentTypeValueFromResourceAndModel keeps the configured component type, which can be its ID or its alias.
+// An imported definition has none in state yet, so it takes the alias the API reports; leaving it null would make
+// component_type's RequiresReplace destroy and recreate the definition on the first plan.
+func componentTypeValueFromResourceAndModel(componentType opslevel.ComponentTypeId, modelValue types.String) types.String {
+	if !modelValue.IsNull() || len(componentType.Aliases) == 0 {
+		return modelValue
+	}
+	return types.StringValue(componentType.Aliases[0])
 }
 
 func (r *RelationshipDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
