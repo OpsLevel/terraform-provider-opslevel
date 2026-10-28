@@ -2,7 +2,7 @@ module github.com/opslevel/terraform-provider-opslevel
 
 go 1.26.0
 
-toolchain go1.26.9
+toolchain go1.26.10
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
