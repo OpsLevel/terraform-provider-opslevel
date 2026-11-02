@@ -2,6 +2,7 @@
 package opslevel
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -38,6 +39,9 @@ func managementRuleResourceAttributes() map[string]resschema.Attribute {
 		"source_tag_operation": resschema.StringAttribute{
 			Description: "When source_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Must not be set unless source_property is 'tag'.",
 			Optional:    true,
+			Validators: []validator.String{
+				stringvalidator.OneOf(tagOperationEquals, tagOperationStartsWith),
+			},
 		},
 		"target_category": resschema.StringAttribute{
 			Description: "The category of the target resource. Either target_category or target_type must be specified, but not both.",
@@ -54,6 +58,9 @@ func managementRuleResourceAttributes() map[string]resschema.Attribute {
 		"target_tag_operation": resschema.StringAttribute{
 			Description: "When target_property is 'tag', this specifies the matching operation. Either 'equals' or 'starts_with'. Defaults to 'equals'. Must not be set unless target_property is 'tag'.",
 			Optional:    true,
+			Validators: []validator.String{
+				stringvalidator.OneOf(tagOperationEquals, tagOperationStartsWith),
+			},
 		},
 		"target_type": resschema.StringAttribute{
 			Description: "The type of the target resource. Either target_category or target_type must be specified, but not both.",

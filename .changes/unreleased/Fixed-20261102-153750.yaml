@@ -1,0 +1,3 @@
+kind: Fixed
+body: Management rules on opslevel_relationship_definition and opslevel_component_type now reject a source_tag_operation or target_tag_operation other than 'equals' or 'starts_with' at plan time, instead of failing with "inconsistent result after apply".
+time: 2026-11-02T15:37:50.268708+05:30
