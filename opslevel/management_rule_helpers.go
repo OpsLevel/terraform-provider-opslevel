@@ -18,6 +18,11 @@ var (
 	COMPONENT_BUILTIN_PROPERTIES = []string{"name", "alias", "tag"}
 )
 
+const (
+	tagOperationEquals     = "equals"
+	tagOperationStartsWith = "starts_with"
+)
+
 type ManagementRuleModel struct {
 	Operator           types.String `tfsdk:"operator"`
 	SourceProperty     types.String `tfsdk:"source_property"`
@@ -151,7 +156,7 @@ func BuildPropertyString(property, tagKey, tagOperation string) string {
 	}
 
 	operation := "eq"
-	if tagOperation == "starts_with" {
+	if tagOperation == tagOperationStartsWith {
 		operation = "starts_with"
 	}
 
@@ -168,10 +173,10 @@ func ParsePropertyString(propertyStr string) (property, tagKey, tagOperation str
 	remainder := strings.TrimPrefix(propertyStr, "tag_key_")
 
 	if strings.HasPrefix(remainder, "eq:") {
-		tagOperation = "equals"
+		tagOperation = tagOperationEquals
 		tagKey = strings.TrimPrefix(remainder, "eq:")
 	} else if strings.HasPrefix(remainder, "starts_with:") {
-		tagOperation = "starts_with"
+		tagOperation = tagOperationStartsWith
 		tagKey = strings.TrimPrefix(remainder, "starts_with:")
 	}
 
@@ -182,7 +187,7 @@ func ParsePropertyString(propertyStr string) (property, tagKey, tagOperation str
 // reports 'equals', since BuildPropertyString sends an unset operation as 'equals'. Without this,
 // Terraform reports an inconsistent result after apply.
 func tagOperationValueFromResourceAndModel(resourceValue string, modelValue attr.Value) basetypes.StringValue {
-	if resourceValue == "equals" && modelValue != nil && modelValue.IsNull() {
+	if resourceValue == tagOperationEquals && modelValue != nil && modelValue.IsNull() {
 		return types.StringNull()
 	}
 	return OptionalStringValue(resourceValue)
