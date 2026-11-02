@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -59,13 +60,22 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 	return model
 }
 
-// componentTypeValueFromResourceAndModel keeps the configured component type, which can be its ID or its alias.
-// An imported definition has none in state yet, so it takes the alias the API reports; leaving it null would make
-// component_type's RequiresReplace destroy and recreate the definition on the first plan.
+// componentTypeValueFromResourceAndModel reads the component type from the API, using the model only to choose
+// between its ID and its alias. An imported definition has no component_type in state yet, so it gets the alias;
+// leaving it null would make component_type's RequiresReplace destroy and recreate the definition on the first plan.
 func componentTypeValueFromResourceAndModel(componentType opslevel.ComponentTypeId, modelValue types.String) types.String {
-	if !modelValue.IsNull() || len(componentType.Aliases) == 0 {
+	if opslevel.IsID(modelValue.ValueString()) {
+		return types.StringValue(string(componentType.Id))
+	}
+	if len(componentType.Aliases) == 0 {
 		return modelValue
 	}
+	// OpsLevel matches aliases case-insensitively, so a configured alias in another case names the same component
+	// type. Returning the API's spelling would differ from the plan and fail the apply.
+	if strings.EqualFold(modelValue.ValueString(), componentType.Aliases[0]) {
+		return modelValue
+	}
+	// An alias in state, or null after an import.
 	return types.StringValue(componentType.Aliases[0])
 }
 
