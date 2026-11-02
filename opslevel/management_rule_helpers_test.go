@@ -46,32 +46,24 @@ func ruleAttribute(list basetypes.ListValue, index int, name string) attr.Value 
 	return list.Elements()[index].(basetypes.ObjectValue).Attributes()[name]
 }
 
-func TestManagementRuleListValueFromResourceAndModel_UnsetTargetTagOperationMatchesPlan(t *testing.T) {
-	planRules := managementRuleModelList(nil)
+func TestTagOperation_PlannedValueSurvivesTheAPIRoundTrip(t *testing.T) {
+	// Terraform requires the value read back after apply to match the plan.
+	for _, rule := range []struct {
+		property   string
+		configured types.String
+	}{
+		{"tag", types.StringNull()},
+		{"tag", types.StringValue("equals")},
+		{"tag", types.StringValue("starts_with")},
+		{"alias", types.StringNull()},
+	} {
+		planned := opsleveltf.PlannedTagOperation(rule.configured, types.StringValue(rule.property))
+		sent := opsleveltf.BuildPropertyString(rule.property, "business_unit", planned.ValueString())
+		_, _, readBack := opsleveltf.ParsePropertyString(sent)
 
-	stateRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
-		[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("alias", "tag_key_eq:business_unit")},
-		planRules,
-	)
-
-	if !stateRules.Equal(planRules) {
-		t.Errorf("expected state to match the plan when target_tag_operation is unset, got %s", stateRules)
-	}
-}
-
-func TestManagementRuleListValueFromResourceAndModel_UnsetSourceTagOperationMatchesPlan(t *testing.T) {
-	planRules := managementRuleModelList(map[string]attr.Value{
-		"source_property": types.StringValue("tag"),
-		"source_tag_key":  types.StringValue("business_unit"),
-	})
-
-	stateRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
-		[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("tag_key_eq:business_unit", "tag_key_eq:business_unit")},
-		planRules,
-	)
-
-	if !stateRules.Equal(planRules) {
-		t.Errorf("expected state to match the plan when source_tag_operation is unset, got %s", stateRules)
+		if readBack != planned.ValueString() {
+			t.Errorf("property %q configured %s: planned %s, sent %q, read back %q", rule.property, rule.configured, planned, sent, readBack)
+		}
 	}
 }
 
@@ -93,44 +85,34 @@ func TestManagementRuleListValueFromResourceAndModel_ExplicitTagOperationsMatchP
 	}
 }
 
-func TestManagementRuleListValueFromResourceAndModel_UnsetTagOperationStillShowsStartsWithDrift(t *testing.T) {
-	stateRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
-		[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("alias", "tag_key_starts_with:business_unit")},
-		managementRuleModelList(nil),
-	)
-
-	if got := ruleAttribute(stateRules, 0, "target_tag_operation"); !got.Equal(types.StringValue("starts_with")) {
-		t.Errorf("expected a starts_with rule changed outside Terraform to read back as starts_with, got %s", got)
-	}
-}
-
-func TestManagementRuleListValueFromResourceAndModel_NoModelRuleReadsEquals(t *testing.T) {
+func TestManagementRuleListValueFromResourceAndModel_ReportsTheAPIOperation(t *testing.T) {
 	objectType := types.ObjectType{AttrTypes: opsleveltf.ManagementRuleModelAttrs()}
+	for _, operation := range []struct{ apiProperty, expected string }{
+		{"tag_key_eq:business_unit", "equals"},
+		{"tag_key_starts_with:business_unit", "starts_with"},
+	} {
+		// A null model is what an import starts from.
+		for _, model := range []basetypes.ListValue{managementRuleModelList(nil), types.ListNull(objectType)} {
+			stateRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
+				[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("alias", operation.apiProperty)},
+				model,
+			)
 
-	importedRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
-		[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("alias", "tag_key_eq:business_unit")},
-		types.ListNull(objectType),
-	)
-
-	if got := ruleAttribute(importedRules, 0, "target_tag_operation"); !got.Equal(types.StringValue("equals")) {
-		t.Errorf("expected an imported rule to read back target_tag_operation as equals, got %s", got)
+			if got := ruleAttribute(stateRules, 0, "target_tag_operation"); !got.Equal(types.StringValue(operation.expected)) {
+				t.Errorf("expected %q to read back as %q, got %s", operation.apiProperty, operation.expected, got)
+			}
+		}
 	}
 }
 
-func TestManagementRuleListValueFromResourceAndModel_RuleBeyondModelReadsEquals(t *testing.T) {
+func TestManagementRuleListValueFromResourceAndModel_RuleWithoutTagHasNoOperation(t *testing.T) {
 	stateRules := opsleveltf.ManagementRuleListValueFromResourceAndModel(
-		[]opslevelgo.RelationshipDefinitionManagementRule{
-			tagManagementRule("alias", "tag_key_eq:business_unit"),
-			tagManagementRule("alias", "tag_key_eq:team"),
-		},
+		[]opslevelgo.RelationshipDefinitionManagementRule{tagManagementRule("alias", "name")},
 		managementRuleModelList(nil),
 	)
 
 	if got := ruleAttribute(stateRules, 0, "target_tag_operation"); !got.IsNull() {
-		t.Errorf("expected the planned rule to keep target_tag_operation unset, got %s", got)
-	}
-	if got := ruleAttribute(stateRules, 1, "target_tag_operation"); !got.Equal(types.StringValue("equals")) {
-		t.Errorf("expected a rule added outside Terraform to read back target_tag_operation as equals, got %s", got)
+		t.Errorf("expected no target_tag_operation for a rule whose target_property is not 'tag', got %s", got)
 	}
 }
 

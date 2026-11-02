@@ -50,12 +50,6 @@ func ManagementRuleModelAttrs() map[string]attr.Type {
 }
 
 func NewManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRule) attr.Value {
-	return newManagementRuleValue(rule, nil)
-}
-
-// newManagementRuleValue builds a rule from the API. modelAttrs holds the matching rule from the plan or
-// state, or is nil when there is none (data sources, import).
-func newManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRule, modelAttrs map[string]attr.Value) attr.Value {
 	var targetCategory types.String
 	if rule.TargetCategory != nil && !rule.TargetCategory.SetNull {
 		targetCategory = types.StringValue(rule.TargetCategory.Value)
@@ -79,11 +73,11 @@ func newManagementRuleValue(rule opslevel.RelationshipDefinitionManagementRule, 
 			"operator":             types.StringValue(string(rule.Operator)),
 			"source_property":      types.StringValue(sourceProperty),
 			"source_tag_key":       OptionalStringValue(sourceTagKey),
-			"source_tag_operation": tagOperationValueFromResourceAndModel(sourceTagOp, modelAttrs["source_tag_operation"]),
+			"source_tag_operation": OptionalStringValue(sourceTagOp),
 			"target_category":      targetCategory,
 			"target_property":      types.StringValue(targetProperty),
 			"target_tag_key":       OptionalStringValue(targetTagKey),
-			"target_tag_operation": tagOperationValueFromResourceAndModel(targetTagOp, modelAttrs["target_tag_operation"]),
+			"target_tag_operation": OptionalStringValue(targetTagOp),
 			"target_type":          targetType,
 		},
 	)
@@ -183,16 +177,6 @@ func ParsePropertyString(propertyStr string) (property, tagKey, tagOperation str
 	return
 }
 
-// tagOperationValueFromResourceAndModel keeps a tag operation the model left unset null when the API
-// reports 'equals', since BuildPropertyString sends an unset operation as 'equals'. Without this,
-// Terraform reports an inconsistent result after apply.
-func tagOperationValueFromResourceAndModel(resourceValue string, modelValue attr.Value) basetypes.StringValue {
-	if resourceValue == tagOperationEquals && modelValue != nil && modelValue.IsNull() {
-		return types.StringNull()
-	}
-	return OptionalStringValue(resourceValue)
-}
-
 func IsBuiltinProperty(targetTypeOrCategory string, propertyName string, isType bool) bool {
 	var builtinProps []string
 
@@ -221,17 +205,9 @@ func IsBuiltinProperty(targetTypeOrCategory string, propertyName string, isType 
 }
 
 func ManagementRuleListValueFromResourceAndModel(resourceRules []opslevel.RelationshipDefinitionManagementRule, modelValue basetypes.ListValue) basetypes.ListValue {
-	// The API returns rules in the order they were sent, so each one lines up with the model rule at its index.
-	modelRules := modelValue.Elements()
 	ruleValues := make([]attr.Value, len(resourceRules))
 	for i, rule := range resourceRules {
-		var modelAttrs map[string]attr.Value
-		if i < len(modelRules) {
-			if modelRule, ok := modelRules[i].(basetypes.ObjectValue); ok {
-				modelAttrs = modelRule.Attributes()
-			}
-		}
-		ruleValues[i] = newManagementRuleValue(rule, modelAttrs)
+		ruleValues[i] = NewManagementRuleValue(rule)
 	}
 
 	objectType := types.ObjectType{AttrTypes: ManagementRuleModelAttrs()}

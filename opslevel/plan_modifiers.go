@@ -223,3 +223,55 @@ func (m immutableStringPlanModifier) PlanModifyString(ctx context.Context, req p
 func ImmutableStringPlanModifier() planmodifier.String {
 	return immutableStringPlanModifier{}
 }
+
+// PlannedTagOperation returns the tag operation to plan for a management rule.
+//
+// A configured value is kept. An unset one is planned as 'equals' when the rule's property is 'tag',
+// because BuildPropertyString sends it as equals and the API reads back "equals"; planning anything
+// else would make Terraform report an inconsistent result after apply. A rule whose property is not
+// 'tag' has no operation, and an unknown property leaves the operation unknown until apply.
+func PlannedTagOperation(configValue, property types.String) types.String {
+	if !configValue.IsNull() {
+		return configValue
+	}
+	if property.IsUnknown() {
+		return types.StringUnknown()
+	}
+	if property.ValueString() == "tag" {
+		return types.StringValue(tagOperationEquals)
+	}
+	return types.StringNull()
+}
+
+// tagOperationDefaultModifier plans a management rule's tag operation from its sibling property
+// attribute (source_property or target_property) in the same rule.
+type tagOperationDefaultModifier struct {
+	propertyAttribute string
+}
+
+func (m tagOperationDefaultModifier) Description(ctx context.Context) string {
+	return fmt.Sprintf("Defaults to '%s' when %s is 'tag'", tagOperationEquals, m.propertyAttribute)
+}
+
+func (m tagOperationDefaultModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m tagOperationDefaultModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Destroying: the value is going away with the resource.
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var property types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, req.Path.ParentPath().AtName(m.propertyAttribute), &property)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.PlanValue = PlannedTagOperation(req.ConfigValue, property)
+}
+
+func TagOperationDefault(propertyAttribute string) planmodifier.String {
+	return tagOperationDefaultModifier{propertyAttribute: propertyAttribute}
+}
