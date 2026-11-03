@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -49,7 +50,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		Name:              RequiredStringValue(definition.Name),
 		Alias:             RequiredStringValue(definition.Alias),
 		Description:       StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
-		ComponentType:     givenModel.ComponentType,
+		ComponentType:     componentTypeValueFromResourceAndModel(definition.ComponentType, givenModel.ComponentType),
 		AllowedCategories: StringListValueFromResourceAndModelField(definition.Metadata.AllowedCategories, givenModel.AllowedCategories),
 		AllowedTypes:      StringListValueFromResourceAndModelField(definition.Metadata.AllowedTypes, givenModel.AllowedTypes),
 	}
@@ -57,6 +58,25 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 	model.ManagementRules = ManagementRuleListValueFromResourceAndModel(definition.ManagementRules, givenModel.ManagementRules)
 
 	return model
+}
+
+// componentTypeValueFromResourceAndModel reads the component type from the API, using the model only to choose
+// between its ID and its alias. An imported definition has no component_type in state yet, so it gets the alias;
+// leaving it null would make component_type's RequiresReplace destroy and recreate the definition on the first plan.
+func componentTypeValueFromResourceAndModel(componentType opslevel.ComponentTypeId, modelValue types.String) types.String {
+	if opslevel.IsID(modelValue.ValueString()) {
+		return types.StringValue(string(componentType.Id))
+	}
+	if len(componentType.Aliases) == 0 {
+		return modelValue
+	}
+	// OpsLevel matches aliases case-insensitively, so a configured alias in another case names the same component
+	// type. Returning the API's spelling would differ from the plan and fail the apply.
+	if strings.EqualFold(modelValue.ValueString(), componentType.Aliases[0]) {
+		return modelValue
+	}
+	// An alias in state, or null after an import.
+	return types.StringValue(componentType.Aliases[0])
 }
 
 func (r *RelationshipDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
