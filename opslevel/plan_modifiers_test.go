@@ -135,3 +135,29 @@ func TestImmutableStringPlanModifier_ErrorsOnChange(t *testing.T) {
 		t.Fatal("expected changing a write-once attribute to error")
 	}
 }
+
+func TestPlannedTagOperation_KeepsConfiguredValue(t *testing.T) {
+	for _, configured := range []types.String{types.StringValue("equals"), types.StringValue("starts_with"), types.StringUnknown()} {
+		if got := opsleveltf.PlannedTagOperation(configured, types.StringValue("tag")); !got.Equal(configured) {
+			t.Errorf("expected configured %s to be kept, got %s", configured, got)
+		}
+	}
+}
+
+func TestPlannedTagOperation_UnsetOnTagPropertyPlansEquals(t *testing.T) {
+	if got := opsleveltf.PlannedTagOperation(types.StringNull(), types.StringValue("tag")); !got.Equal(types.StringValue("equals")) {
+		t.Errorf("expected an unset operation on a 'tag' property to plan \"equals\", got %s", got)
+	}
+}
+
+func TestPlannedTagOperation_UnsetOnOtherPropertyPlansNull(t *testing.T) {
+	if got := opsleveltf.PlannedTagOperation(types.StringNull(), types.StringValue("alias")); !got.IsNull() {
+		t.Errorf("expected no operation for a property that is not 'tag', got %s", got)
+	}
+}
+
+func TestPlannedTagOperation_UnsetOnUnknownPropertyStaysUnknown(t *testing.T) {
+	if got := opsleveltf.PlannedTagOperation(types.StringNull(), types.StringUnknown()); !got.IsUnknown() {
+		t.Errorf("expected the operation to stay unknown while the property is unknown, got %s", got)
+	}
+}
