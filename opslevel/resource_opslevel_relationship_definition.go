@@ -3,6 +3,7 @@ package opslevel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -20,6 +21,7 @@ import (
 var (
 	_ resource.ResourceWithConfigure   = &RelationshipDefinitionResource{}
 	_ resource.ResourceWithImportState = &RelationshipDefinitionResource{}
+	_ resource.ResourceWithModifyPlan  = &RelationshipDefinitionResource{}
 )
 
 func NewRelationshipDefinitionResource() resource.Resource {
@@ -49,7 +51,7 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 		Name:              RequiredStringValue(definition.Name),
 		Alias:             RequiredStringValue(definition.Alias),
 		Description:       StringValueFromResourceAndModelField(definition.Description, givenModel.Description),
-		ComponentType:     givenModel.ComponentType,
+		ComponentType:     componentTypeValueFromResourceAndModel(definition.ComponentType, givenModel.ComponentType),
 		AllowedCategories: StringListValueFromResourceAndModelField(definition.Metadata.AllowedCategories, givenModel.AllowedCategories),
 		AllowedTypes:      StringListValueFromResourceAndModelField(definition.Metadata.AllowedTypes, givenModel.AllowedTypes),
 	}
@@ -57,6 +59,64 @@ func NewRelationshipDefinitionResourceModel(definition opslevel.RelationshipDefi
 	model.ManagementRules = ManagementRuleListValueFromResourceAndModel(definition.ManagementRules, givenModel.ManagementRules)
 
 	return model
+}
+
+// componentTypeValueFromResourceAndModel reads the component type from the API, using the model only to choose
+// between its ID and its alias. An imported definition has no component_type in state yet, so it gets the alias;
+// leaving it null would make component_type's RequiresReplace destroy and recreate the definition on the first plan.
+func componentTypeValueFromResourceAndModel(componentType opslevel.ComponentTypeId, modelValue types.String) types.String {
+	if opslevel.IsID(modelValue.ValueString()) {
+		return types.StringValue(string(componentType.Id))
+	}
+	if len(componentType.Aliases) == 0 {
+		return modelValue
+	}
+	// OpsLevel matches aliases case-insensitively, so a configured alias in another case names the same component
+	// type. Returning the API's spelling would differ from the plan and fail the apply.
+	if strings.EqualFold(modelValue.ValueString(), componentType.Aliases[0]) {
+		return modelValue
+	}
+	// An alias in state, or null after an import.
+	return types.StringValue(componentType.Aliases[0])
+}
+
+// ModifyPlan replaces the definition only when component_type moves to a different component type. This lives here
+// rather than in a RequiresReplaceIf on the attribute because it needs r.client, and attribute plan modifiers run on
+// a resource instance that was never configured.
+func (r *RelationshipDefinitionResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	var stateValue, planValue types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("component_type"), &stateValue)...)
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("component_type"), &planValue)...)
+	if resp.Diagnostics.HasError() || stateValue.Equal(planValue) {
+		return
+	}
+	if !r.sameComponentType(stateValue, planValue) {
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("component_type"))
+	}
+}
+
+// sameComponentType reports whether two component_type values name the same component type. A component type can
+// be given by its alias in any case or by its ID, and an import puts the alias in state, so comparing the strings
+// would replace a definition whose config uses the ID.
+func (r *RelationshipDefinitionResource) sameComponentType(stateValue, planValue types.String) bool {
+	if stateValue.IsNull() || stateValue.IsUnknown() || planValue.IsNull() || planValue.IsUnknown() {
+		return false
+	}
+	if strings.EqualFold(stateValue.ValueString(), planValue.ValueString()) {
+		return true
+	}
+	stateComponentType, err := r.client.GetComponentType(stateValue.ValueString())
+	if err != nil || stateComponentType == nil || stateComponentType.Id == "" {
+		return false
+	}
+	planComponentType, err := r.client.GetComponentType(planValue.ValueString())
+	if err != nil || planComponentType == nil || planComponentType.Id == "" {
+		return false
+	}
+	return stateComponentType.Id == planComponentType.Id
 }
 
 func (r *RelationshipDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -96,9 +156,6 @@ func (r *RelationshipDefinitionResource) Schema(ctx context.Context, req resourc
 			"component_type": schema.StringAttribute{
 				Description: "The component type that the relationship belongs to. Must be a valid component type alias from your OpsLevel account or 'team'.",
 				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"allowed_categories": schema.ListAttribute{
 				Description: "The categories of resources that can be selected for this relationship definition. Can include any component category alias on your account.",

@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fixed opslevel_relationship_definition destroying and recreating the definition, and deleting its relationships, after an import or when component_type switched between the component type's alias and its ID.
+time: 2026-10-27T13:59:28.068166+05:30
