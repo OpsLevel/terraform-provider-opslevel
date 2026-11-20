@@ -251,6 +251,11 @@ func (r *RelationshipDefinitionResource) Read(ctx context.Context, req resource.
 		resp.Diagnostics.AddError("opslevel client error", fmt.Sprintf("unable to read relationship definition with id '%s', got error: %s", id, err))
 		return
 	}
+	// The API returns null, not an error, for a relationship definition that no longer exists.
+	if definition == nil || definition.Id == "" {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
 	verifiedStateModel := NewRelationshipDefinitionResourceModel(*definition, stateModel)
 	tflog.Trace(ctx, fmt.Sprintf("read a relationship definition resource with id '%s'", id))

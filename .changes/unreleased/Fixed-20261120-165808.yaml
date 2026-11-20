@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Fixed `opslevel_component_type` deleting every relationship definition on the component type, including ones managed by `opslevel_relationship_definition`, when `relationships = {}` was set or removed. The plan didn''t show these deletions. An empty `relationships` map now behaves the same as leaving it unset.'
+time: 2026-11-20T16:58:08.478343+05:30

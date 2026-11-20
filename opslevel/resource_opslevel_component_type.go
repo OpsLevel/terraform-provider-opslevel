@@ -249,8 +249,8 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 			"relationships": schema.MapNestedAttribute{
-				Description: "The relationships that can be defined for this component type.",
-				Optional:    true,
+				MarkdownDescription: "The relationship definitions for this component type. Once this map has entries, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset. An empty map is the same as leaving it unset.",
+				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -507,11 +507,7 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	// Only reconcile relationships when the user manages them via this resource's
-	// `relationships` attribute (present in either plan or prior state). Standalone
-	// relationships managed via the `opslevel_relationship_definition` resource are
-	// not touched here.
-	if planModel.Relationships != nil || stateModel.Relationships != nil {
+	if managesRelationships(planModel, stateModel) {
 		if s.reconcileRelationships(ctx, err, id, resp, planModel) {
 			return
 		}
@@ -522,6 +518,14 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 		resp.Diagnostics.AddError("error", fmt.Sprintf("unable to build resource, got error: %s", err))
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, finalModel)...)
+}
+
+// managesRelationships reports whether this resource manages the component type's relationship definitions
+// through its `relationships` attribute (in the plan or the prior state). When it does, it manages all of
+// them. An empty map manages nothing, the same as leaving `relationships` out, so relationship definitions
+// managed by the `opslevel_relationship_definition` resource are left alone.
+func managesRelationships(planModel ComponentTypeModel, stateModel ComponentTypeModel) bool {
+	return len(planModel.Relationships) > 0 || len(stateModel.Relationships) > 0
 }
 
 func (s ComponentTypeResource) reconcileRelationships(ctx context.Context, err error, id string, resp *resource.UpdateResponse, planModel ComponentTypeModel) bool {
