@@ -1,9 +1,18 @@
 package opslevel_test
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	opslevelgo "github.com/opslevel/opslevel-go/v2026"
 	opsleveltf "github.com/opslevel/terraform-provider-opslevel/opslevel"
 )
@@ -53,5 +62,84 @@ func TestNewRelationshipDefinitionResourceModel_ReadsAnIDFromTheAPI(t *testing.T
 		if got := componentTypeReadWith(types.StringValue(stateValue)); !got.Equal(types.StringValue(componentTypeID)) {
 			t.Errorf("expected an ID in state (%s) to read the API's ID, got %s", stateValue, got)
 		}
+	}
+}
+
+const relationshipDefinitionID = "Z2lkOi8vb3BzbGV2ZWwvUmVsYXRpb25zaGlwRGVmaW5pdGlvbi8x"
+
+// readRelationshipDefinition runs Read with only the ID in state, against a fake API whose
+// relationshipDefinition field returns definitionJSON.
+func readRelationshipDefinition(t *testing.T, definitionJSON string) resource.ReadResponse {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("failed to read request body: %v", err)
+		}
+		if !strings.Contains(string(body), "relationshipDefinition(") {
+			t.Errorf("unexpected request: %s", body)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"data":{"account":{"relationshipDefinition":` + definitionJSON + `}}}`))
+	}))
+	t.Cleanup(server.Close)
+
+	ctx := context.Background()
+	r := opsleveltf.NewRelationshipDefinitionResource().(*opsleveltf.RelationshipDefinitionResource)
+	client := opslevelgo.NewGQLClient(
+		opslevelgo.SetURL(server.URL+"/LOCAL_TESTING/test"),
+		opslevelgo.SetAPIToken("test-token"),
+		opslevelgo.SetMaxRetries(0),
+	)
+	var configureResp resource.ConfigureResponse
+	r.Configure(ctx, resource.ConfigureRequest{ProviderData: client}, &configureResp)
+	if configureResp.Diagnostics.HasError() {
+		t.Fatalf("unexpected configure errors: %v", configureResp.Diagnostics.Errors())
+	}
+
+	var schemaResp resource.SchemaResponse
+	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	objectType := schemaResp.Schema.Type().TerraformType(ctx).(tftypes.Object)
+	attributes := make(map[string]tftypes.Value, len(objectType.AttributeTypes))
+	for name, attributeType := range objectType.AttributeTypes {
+		attributes[name] = tftypes.NewValue(attributeType, nil)
+	}
+	attributes["id"] = tftypes.NewValue(tftypes.String, relationshipDefinitionID)
+	state := tfsdk.State{Schema: schemaResp.Schema, Raw: tftypes.NewValue(objectType, attributes)}
+
+	resp := resource.ReadResponse{State: state}
+	r.Read(ctx, resource.ReadRequest{State: state}, &resp)
+	return resp
+}
+
+func TestRelationshipDefinitionResource_ReadRemovesADeletedDefinition(t *testing.T) {
+	// The API returns null, with no error, for a definition deleted outside Terraform.
+	resp := readRelationshipDefinition(t, `null`)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+	if !resp.State.Raw.IsNull() {
+		t.Errorf("expected the deleted definition to be removed from state, got %s", resp.State.Raw)
+	}
+}
+
+func TestRelationshipDefinitionResource_ReadKeepsAnExistingDefinition(t *testing.T) {
+	resp := readRelationshipDefinition(t, `{"id":"`+relationshipDefinitionID+`","alias":"infrastructure","name":"Infrastructure","description":"",`+
+		`"metadata":{"allowedCategories":[],"allowedTypes":["team"],"maxItems":0,"minItems":0},`+
+		`"componentType":{"id":"`+componentTypeID+`","aliases":["business_unit"]},"managementRules":[]}`)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+	if resp.State.Raw.IsNull() {
+		t.Fatal("expected the existing definition to stay in state")
+	}
+	var id types.String
+	if diags := resp.State.GetAttribute(context.Background(), path.Root("id"), &id); diags.HasError() {
+		t.Fatalf("unable to read id from state: %v", diags.Errors())
+	}
+	if !id.Equal(types.StringValue(relationshipDefinitionID)) {
+		t.Errorf("expected id %s in state, got %s", relationshipDefinitionID, id)
 	}
 }

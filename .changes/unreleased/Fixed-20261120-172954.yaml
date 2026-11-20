@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fixed `opslevel_relationship_definition` writing a blank `id`, `alias` and `name` to state when its relationship definition was deleted outside Terraform. The next apply then failed with "RelationshipDefinition with alias '' does not exist". Read now removes the resource from state, so Terraform plans to recreate it.
+time: 2026-11-20T17:29:54.895598+05:30
