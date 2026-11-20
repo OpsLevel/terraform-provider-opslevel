@@ -275,11 +275,11 @@ func TestReconcileRelationships_AddNewRelationship(t *testing.T) {
 	}
 }
 
-// TestReconcileRelationships_EmptyPlanDeletesAll verifies that when the plan
-// passes an empty (but non-nil) relationships map -- i.e., the user explicitly
-// set `relationships = {}` -- every relationship on the component type is
-// deleted. This is the contract the guard in Update() protects: reconcile only
-// runs when the user is managing relationships via this resource.
+// TestReconcileRelationships_EmptyPlanDeletesAll verifies that emptying a
+// `relationships` map that had entries deletes every relationship on the
+// component type: once this resource manages relationships, it manages all of
+// them. Update() only reconciles an empty plan when the prior state had
+// relationships (see TestManagesRelationships).
 func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	server, operations := testAPIServerTwoRels(t)
 	defer server.Close()
@@ -305,5 +305,40 @@ func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	ops := *operations
 	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 2 {
 		t.Errorf("expected 2 deletes (both removed from plan), got %d. Operations: %v", deleteCount, ops)
+	}
+}
+
+// TestManagesRelationships verifies when Update() reconciles relationships. An
+// empty map must behave like an unset one, so `relationships = {}` never
+// deletes definitions managed by opslevel_relationship_definition.
+func TestManagesRelationships(t *testing.T) {
+	empty := map[string]RelationshipModel{}
+
+	tests := []struct {
+		name  string
+		plan  map[string]RelationshipModel
+		state map[string]RelationshipModel
+		want  bool
+	}{
+		{name: "unset in plan and state", plan: nil, state: nil, want: false},
+		{name: "empty map in plan, unset in state", plan: empty, state: nil, want: false},
+		{name: "empty map in plan and state", plan: empty, state: empty, want: false},
+		{name: "empty map removed from config", plan: nil, state: empty, want: false},
+		{name: "entries added", plan: managedByRelationship(), state: empty, want: true},
+		{name: "entries kept", plan: managedByRelationship(), state: managedByRelationship(), want: true},
+		{name: "entries emptied", plan: empty, state: managedByRelationship(), want: true},
+		{name: "entries removed from config", plan: nil, state: managedByRelationship(), want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := managesRelationships(
+				ComponentTypeModel{Relationships: tt.plan},
+				ComponentTypeModel{Relationships: tt.state},
+			)
+			if got != tt.want {
+				t.Errorf("managesRelationships() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
