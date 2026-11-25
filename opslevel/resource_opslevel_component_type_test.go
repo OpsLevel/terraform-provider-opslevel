@@ -10,8 +10,11 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/opslevel/opslevel-go/v2026"
 	"golang.org/x/net/context"
 )
@@ -275,11 +278,11 @@ func TestReconcileRelationships_AddNewRelationship(t *testing.T) {
 	}
 }
 
-// TestReconcileRelationships_EmptyPlanDeletesAll verifies that emptying a
-// `relationships` map that had entries deletes every relationship on the
-// component type: once this resource manages relationships, it manages all of
-// them. Update() only reconciles an empty plan when the prior state had
-// relationships (see TestManagesRelationships).
+// TestReconcileRelationships_EmptyPlanDeletesAll verifies that when the plan
+// passes an empty (but non-nil) relationships map -- i.e., the user explicitly
+// set `relationships = {}` -- every relationship on the component type is
+// deleted. This is the contract the guard in Update() protects: reconcile only
+// runs when the user is managing relationships via this resource.
 func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	server, operations := testAPIServerTwoRels(t)
 	defer server.Close()
@@ -308,37 +311,115 @@ func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	}
 }
 
-// TestManagesRelationships verifies when Update() reconciles relationships. An
-// empty map must behave like an unset one, so `relationships = {}` never
-// deletes definitions managed by opslevel_relationship_definition.
-func TestManagesRelationships(t *testing.T) {
-	empty := map[string]RelationshipModel{}
+// testComponentTypeReadServer answers the queries ComponentTypeResource.Read makes: the
+// component type, its properties, and its relationship definitions (one, "managed_by").
+func testComponentTypeReadServer(t *testing.T) (*httptest.Server, *[]string) {
+	t.Helper()
+	var mu sync.Mutex
+	var operations []string
 
-	tests := []struct {
-		name  string
-		plan  map[string]RelationshipModel
-		state map[string]RelationshipModel
-		want  bool
-	}{
-		{name: "unset in plan and state", plan: nil, state: nil, want: false},
-		{name: "empty map in plan, unset in state", plan: empty, state: nil, want: false},
-		{name: "empty map in plan and state", plan: empty, state: empty, want: false},
-		{name: "empty map removed from config", plan: nil, state: empty, want: false},
-		{name: "entries added", plan: managedByRelationship(), state: empty, want: true},
-		{name: "entries kept", plan: managedByRelationship(), state: managedByRelationship(), want: true},
-		{name: "entries emptied", plan: empty, state: managedByRelationship(), want: true},
-		{name: "entries removed from config", plan: nil, state: managedByRelationship(), want: true},
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("failed to read request body: %v", err)
+		}
+
+		var gqlReq graphqlRequest
+		if err := json.Unmarshal(body, &gqlReq); err != nil {
+			t.Errorf("failed to unmarshal request: %v", err)
+		}
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		w.Header().Set("Content-Type", "application/json")
+
+		// The properties and relationship definition queries also mention componentType, so match them first.
+		switch query := gqlReq.Query; {
+		case strings.Contains(query, "relationshipDefinitions("):
+			operations = append(operations, "relationshipDefinitionsList")
+			w.Write([]byte(`{"data":{"account":{"relationshipDefinitions":{"nodes":[{"id":"Z2lkOi8vMTIz","alias":"managed_by","name":"Managed By","description":"","metadata":{"allowedCategories":[],"allowedTypes":["team"],"maxItems":0,"minItems":0},"componentType":{"id":"Z2lkOi8vY3Q","aliases":["test_type"]},"managementRules":[]}],"pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":"","endCursor":""}}}}}`))
+
+		case strings.Contains(query, "properties("):
+			operations = append(operations, "componentTypePropertyList")
+			w.Write([]byte(`{"data":{"account":{"componentType":{"properties":{"nodes":[],"pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":"","endCursor":""}}}}}}`))
+
+		case strings.Contains(query, "componentType("):
+			operations = append(operations, "componentTypeGet")
+			w.Write([]byte(`{"data":{"account":{"componentType":{"id":"Z2lkOi8vY3Q","aliases":["test_type"],"description":"","href":"","icon":{"color":"#000000","name":"PhBird"},"isDefault":false,"name":"Test Type","ownerRelationship":{"managementRules":[]},"systemRelationship":{"managementRules":[]},"timestamps":{"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}}}}}`))
+
+		default:
+			t.Errorf("unhandled query: %s", gqlReq.Query)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	}))
+
+	return server, &operations
+}
+
+// readComponentType runs Read with only the ID in state, plus `relationships = {}` when emptyRelationships is true.
+func readComponentType(t *testing.T, emptyRelationships bool) (resource.ReadResponse, []string) {
+	t.Helper()
+	server, operations := testComponentTypeReadServer(t)
+	t.Cleanup(server.Close)
+
+	ctx := context.Background()
+	res := ComponentTypeResource{
+		CommonResourceClient: CommonResourceClient{client: newTestClient(server.URL)},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := managesRelationships(
-				ComponentTypeModel{Relationships: tt.plan},
-				ComponentTypeModel{Relationships: tt.state},
-			)
-			if got != tt.want {
-				t.Errorf("managesRelationships() = %v, want %v", got, tt.want)
-			}
-		})
+	var schemaResp resource.SchemaResponse
+	res.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	objectType := schemaResp.Schema.Type().TerraformType(ctx).(tftypes.Object)
+	attributes := make(map[string]tftypes.Value, len(objectType.AttributeTypes))
+	for name, attributeType := range objectType.AttributeTypes {
+		attributes[name] = tftypes.NewValue(attributeType, nil)
+	}
+	attributes["id"] = tftypes.NewValue(tftypes.String, "Z2lkOi8vY3Q")
+	if emptyRelationships {
+		attributes["relationships"] = tftypes.NewValue(objectType.AttributeTypes["relationships"], map[string]tftypes.Value{})
+	}
+	state := tfsdk.State{Schema: schemaResp.Schema, Raw: tftypes.NewValue(objectType, attributes)}
+
+	resp := resource.ReadResponse{State: state}
+	res.Read(ctx, resource.ReadRequest{State: state}, &resp)
+	return resp, *operations
+}
+
+// TestComponentTypeRead_EmptyRelationshipsReadsEveryDefinition verifies that an explicitly
+// empty `relationships` map reads every definition on the component type into state, so
+// the plan shows the definitions that `relationships = {}` would delete.
+func TestComponentTypeRead_EmptyRelationshipsReadsEveryDefinition(t *testing.T) {
+	resp, ops := readComponentType(t, true)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+
+	var relationships map[string]RelationshipModel
+	if diags := resp.State.GetAttribute(context.Background(), path.Root("relationships"), &relationships); diags.HasError() {
+		t.Fatalf("unable to read relationships from state: %v", diags.Errors())
+	}
+	if _, ok := relationships["managed_by"]; !ok || len(relationships) != 1 {
+		t.Errorf("expected managed_by in state, got %v. Operations: %v", relationships, ops)
+	}
+}
+
+// TestComponentTypeRead_UnsetRelationshipsStayUnset verifies that a component type that
+// doesn't set `relationships` never reads relationship definitions into state.
+func TestComponentTypeRead_UnsetRelationshipsStayUnset(t *testing.T) {
+	resp, ops := readComponentType(t, false)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+
+	var relationships map[string]RelationshipModel
+	if diags := resp.State.GetAttribute(context.Background(), path.Root("relationships"), &relationships); diags.HasError() {
+		t.Fatalf("unable to read relationships from state: %v", diags.Errors())
+	}
+	if relationships != nil {
+		t.Errorf("expected relationships to stay unset, got %v", relationships)
+	}
+	if listCount := countOps(ops, "relationshipDefinitionsList"); listCount != 0 {
+		t.Errorf("expected no relationship definitions query, got %d. Operations: %v", listCount, ops)
 	}
 }
