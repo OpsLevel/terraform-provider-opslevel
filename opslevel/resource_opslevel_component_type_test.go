@@ -311,9 +311,10 @@ func TestReconcileRelationships_EmptyPlanDeletesAll(t *testing.T) {
 	}
 }
 
-// testComponentTypeReadServer answers the queries ComponentTypeResource.Read makes: the
-// component type, its properties, and its relationship definitions (one, "managed_by").
-func testComponentTypeReadServer(t *testing.T) (*httptest.Server, *[]string) {
+// testComponentTypeServer answers the requests ComponentTypeResource.Read and Update make:
+// the component type, its update, its properties, and its relationship definitions (one,
+// "managed_by"), including deleting one.
+func testComponentTypeServer(t *testing.T) (*httptest.Server, *[]string) {
 	t.Helper()
 	var mu sync.Mutex
 	var operations []string
@@ -336,6 +337,14 @@ func testComponentTypeReadServer(t *testing.T) (*httptest.Server, *[]string) {
 
 		// The properties and relationship definition queries also mention componentType, so match them first.
 		switch query := gqlReq.Query; {
+		case strings.Contains(query, "componentTypeUpdate("):
+			operations = append(operations, "componentTypeUpdate")
+			w.Write([]byte(`{"data":{"componentTypeUpdate":{"componentType":{"id":"Z2lkOi8vY3Q","aliases":["test_type"],"description":"","href":"","icon":{"color":"#000000","name":"PhBird"},"isDefault":false,"name":"Test Type","ownerRelationship":{"managementRules":[]},"systemRelationship":{"managementRules":[]},"timestamps":{"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}},"errors":[]}}}`))
+
+		case strings.Contains(query, "relationshipDefinitionDelete("):
+			operations = append(operations, "relationshipDefinitionDelete")
+			w.Write([]byte(`{"data":{"relationshipDefinitionDelete":{"deletedId":"Z2lkOi8vMTIz","errors":[]}}}`))
+
 		case strings.Contains(query, "relationshipDefinitions("):
 			operations = append(operations, "relationshipDefinitionsList")
 			w.Write([]byte(`{"data":{"account":{"relationshipDefinitions":{"nodes":[{"id":"Z2lkOi8vMTIz","alias":"managed_by","name":"Managed By","description":"","metadata":{"allowedCategories":[],"allowedTypes":["team"],"maxItems":0,"minItems":0},"componentType":{"id":"Z2lkOi8vY3Q","aliases":["test_type"]},"managementRules":[]}],"pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":"","endCursor":""}}}}}`))
@@ -360,7 +369,7 @@ func testComponentTypeReadServer(t *testing.T) (*httptest.Server, *[]string) {
 // readComponentType runs Read with only the ID in state, plus `relationships = {}` when emptyRelationships is true.
 func readComponentType(t *testing.T, emptyRelationships bool) (resource.ReadResponse, []string) {
 	t.Helper()
-	server, operations := testComponentTypeReadServer(t)
+	server, operations := testComponentTypeServer(t)
 	t.Cleanup(server.Close)
 
 	ctx := context.Background()
@@ -421,5 +430,83 @@ func TestComponentTypeRead_UnsetRelationshipsStayUnset(t *testing.T) {
 	}
 	if listCount := countOps(ops, "relationshipDefinitionsList"); listCount != 0 {
 		t.Errorf("expected no relationship definitions query, got %d. Operations: %v", listCount, ops)
+	}
+}
+
+// updateComponentType runs Update with the given `relationships` in the plan and in the prior state.
+func updateComponentType(t *testing.T, planRelationships, stateRelationships map[string]RelationshipModel) (resource.UpdateResponse, []string) {
+	t.Helper()
+	server, operations := testComponentTypeServer(t)
+	t.Cleanup(server.Close)
+
+	ctx := context.Background()
+	res := ComponentTypeResource{
+		CommonResourceClient: CommonResourceClient{client: newTestClient(server.URL)},
+	}
+
+	var schemaResp resource.SchemaResponse
+	res.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	nullObject := tftypes.NewValue(schemaResp.Schema.Type().TerraformType(ctx), nil)
+	model := func(relationships map[string]RelationshipModel) ComponentTypeModel {
+		return ComponentTypeModel{
+			Id:            types.StringValue("Z2lkOi8vY3Q"),
+			Name:          types.StringValue("Test Type"),
+			Alias:         types.StringValue("test_type"),
+			Description:   types.StringValue(""),
+			Icon:          &ComponentTypeIconModel{Color: types.StringValue("#000000"), Name: types.StringValue("PhBird")},
+			Properties:    map[string]PropertyModel{},
+			Relationships: relationships,
+		}
+	}
+
+	plan := tfsdk.Plan{Schema: schemaResp.Schema, Raw: nullObject}
+	if diags := plan.Set(ctx, model(planRelationships)); diags.HasError() {
+		t.Fatalf("unable to build plan: %v", diags.Errors())
+	}
+	state := tfsdk.State{Schema: schemaResp.Schema, Raw: nullObject}
+	if diags := state.Set(ctx, model(stateRelationships)); diags.HasError() {
+		t.Fatalf("unable to build state: %v", diags.Errors())
+	}
+
+	resp := resource.UpdateResponse{State: state}
+	res.Update(ctx, resource.UpdateRequest{Plan: plan, State: state}, &resp)
+	return resp, *operations
+}
+
+// TestComponentTypeUpdate_RemovedRelationshipsStopsManaging verifies that removing
+// `relationships` stops managing the definitions without deleting them.
+func TestComponentTypeUpdate_RemovedRelationshipsStopsManaging(t *testing.T) {
+	resp, ops := updateComponentType(t, nil, managedByRelationship())
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+
+	if listCount := countOps(ops, "relationshipDefinitionsList"); listCount != 0 {
+		t.Errorf("expected no reconcile, got %d relationship definition lists. Operations: %v", listCount, ops)
+	}
+	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 0 {
+		t.Errorf("expected 0 deletes, got %d. Operations: %v", deleteCount, ops)
+	}
+
+	var relationships map[string]RelationshipModel
+	if diags := resp.State.GetAttribute(context.Background(), path.Root("relationships"), &relationships); diags.HasError() {
+		t.Fatalf("unable to read relationships from state: %v", diags.Errors())
+	}
+	if relationships != nil {
+		t.Errorf("expected relationships to be unset in state, got %v", relationships)
+	}
+}
+
+// TestComponentTypeUpdate_EmptyRelationshipsDeletesEveryDefinition verifies that
+// `relationships = {}` means the component type has no relationship definitions, so
+// Update deletes every definition on it.
+func TestComponentTypeUpdate_EmptyRelationshipsDeletesEveryDefinition(t *testing.T) {
+	resp, ops := updateComponentType(t, map[string]RelationshipModel{}, map[string]RelationshipModel{})
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+
+	if deleteCount := countOps(ops, "relationshipDefinitionDelete"); deleteCount != 1 {
+		t.Errorf("expected 1 delete (managed_by), got %d. Operations: %v", deleteCount, ops)
 	}
 }

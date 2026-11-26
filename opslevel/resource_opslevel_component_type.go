@@ -249,7 +249,7 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 			"relationships": schema.MapNestedAttribute{
-				MarkdownDescription: "The relationship definitions for this component type. When set, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. An empty map means the component type has no relationship definitions. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset.",
+				MarkdownDescription: "The relationship definitions for this component type. When set, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. An empty map means the component type has no relationship definitions. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset. Removing `relationships` stops managing the definitions without deleting them. To delete them, set `relationships = {}` and apply first.",
 				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -508,10 +508,10 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Only reconcile relationships when the user manages them via this resource's
-	// `relationships` attribute (present in either plan or prior state). Standalone
-	// relationships managed via the `opslevel_relationship_definition` resource are
-	// not touched here.
-	if planModel.Relationships != nil || stateModel.Relationships != nil {
+	// `relationships` attribute in the plan; `{}` means none. Removing the attribute
+	// stops managing them without deleting any. Standalone relationships managed via
+	// the `opslevel_relationship_definition` resource are not touched here.
+	if planModel.Relationships != nil {
 		if s.reconcileRelationships(ctx, err, id, resp, planModel) {
 			return
 		}

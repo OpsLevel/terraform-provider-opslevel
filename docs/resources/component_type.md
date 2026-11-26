@@ -413,7 +413,7 @@ resource "opslevel_component_type" "ml-ai" {
 - `description` (String) The description of the component type.
 - `icon` (Attributes) The icon associated with the component type (see [below for nested schema](#nestedatt--icon))
 - `owner_relationship` (Attributes) The owner relationship configuration for this component type. (see [below for nested schema](#nestedatt--owner_relationship))
-- `relationships` (Attributes Map) The relationship definitions for this component type. When set, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. An empty map means the component type has no relationship definitions. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset. (see [below for nested schema](#nestedatt--relationships))
+- `relationships` (Attributes Map) The relationship definitions for this component type. When set, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. An empty map means the component type has no relationship definitions. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset. Removing `relationships` stops managing the definitions without deleting them. To delete them, set `relationships = {}` and apply first. (see [below for nested schema](#nestedatt--relationships))
 - `system_relationship` (Attributes) The system relationship configuration for this component type. (see [below for nested schema](#nestedatt--system_relationship))
 
 ### Read-Only
