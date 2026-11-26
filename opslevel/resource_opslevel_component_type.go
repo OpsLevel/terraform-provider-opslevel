@@ -249,8 +249,8 @@ func (s ComponentTypeResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 			"relationships": schema.MapNestedAttribute{
-				Description: "The relationships that can be defined for this component type.",
-				Optional:    true,
+				MarkdownDescription: "The relationship definitions for this component type. When set, this resource manages every relationship definition on the component type and deletes any that aren't listed here, including ones created with `opslevel_relationship_definition`. An empty map means the component type has no relationship definitions. To manage relationship definitions with `opslevel_relationship_definition` instead, leave this unset. Removing `relationships` stops managing the definitions without deleting them. To delete them, set `relationships = {}` and apply first.",
+				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -407,8 +407,8 @@ func (s ComponentTypeResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Relationships can either be managed independently or within the context of a component but not both. Only fetch relationships if they have
-	// been defined in the config
-	if len(stateModel.Relationships) > 0 {
+	// been defined in the config. An explicitly empty map counts, so the plan shows every definition it would delete.
+	if stateModel.Relationships != nil {
 		// Get relationship definitions
 		rels, err := s.client.ListRelationshipDefinitions(&opslevel.PayloadVariables{
 			"componentType": opslevel.NewIdentifier(id),
@@ -508,10 +508,10 @@ func (s ComponentTypeResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	// Only reconcile relationships when the user manages them via this resource's
-	// `relationships` attribute (present in either plan or prior state). Standalone
-	// relationships managed via the `opslevel_relationship_definition` resource are
-	// not touched here.
-	if planModel.Relationships != nil || stateModel.Relationships != nil {
+	// `relationships` attribute in the plan; `{}` means none. Removing the attribute
+	// stops managing them without deleting any. Standalone relationships managed via
+	// the `opslevel_relationship_definition` resource are not touched here.
+	if planModel.Relationships != nil {
 		if s.reconcileRelationships(ctx, err, id, resp, planModel) {
 			return
 		}

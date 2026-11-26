@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Fixed `opslevel_component_type` with `relationships = {}` deleting relationship definitions on the component type without showing them in the plan; the plan now lists each one it will delete. Removing `relationships` now stops managing the component type''s relationship definitions instead of deleting them. To delete them, set `relationships = {}` and apply first.'
+time: 2026-11-20T16:58:08.478343+05:30
