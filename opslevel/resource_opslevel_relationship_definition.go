@@ -242,6 +242,11 @@ func (r *RelationshipDefinitionResource) Read(ctx context.Context, req resource.
 	}
 
 	id := stateModel.Id.ValueString()
+	// Earlier provider versions saved a deleted relationship definition with no ID, which the API can't look up.
+	if id == "" {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	definition, err := r.client.GetRelationshipDefinition(id)
 	if err != nil {
 		if (definition == nil || definition.Id == "") && opslevel.IsOpsLevelApiError(err) {

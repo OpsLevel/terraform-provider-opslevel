@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -67,11 +68,13 @@ func TestNewRelationshipDefinitionResourceModel_ReadsAnIDFromTheAPI(t *testing.T
 
 const relationshipDefinitionID = "Z2lkOi8vb3BzbGV2ZWwvUmVsYXRpb25zaGlwRGVmaW5pdGlvbi8x"
 
-// readRelationshipDefinition runs Read with only the ID in state, against a fake API whose
-// relationshipDefinition field returns definitionJSON.
-func readRelationshipDefinition(t *testing.T, definitionJSON string) resource.ReadResponse {
+// readRelationshipDefinition runs Read with only the ID in state (null when id is empty), against a fake API
+// whose relationshipDefinition field returns definitionJSON. It also returns the number of API requests.
+func readRelationshipDefinition(t *testing.T, id, definitionJSON string) (resource.ReadResponse, int32) {
 	t.Helper()
+	var requests atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Errorf("failed to read request body: %v", err)
@@ -106,17 +109,19 @@ func readRelationshipDefinition(t *testing.T, definitionJSON string) resource.Re
 	for name, attributeType := range objectType.AttributeTypes {
 		attributes[name] = tftypes.NewValue(attributeType, nil)
 	}
-	attributes["id"] = tftypes.NewValue(tftypes.String, relationshipDefinitionID)
+	if id != "" {
+		attributes["id"] = tftypes.NewValue(tftypes.String, id)
+	}
 	state := tfsdk.State{Schema: schemaResp.Schema, Raw: tftypes.NewValue(objectType, attributes)}
 
 	resp := resource.ReadResponse{State: state}
 	r.Read(ctx, resource.ReadRequest{State: state}, &resp)
-	return resp
+	return resp, requests.Load()
 }
 
 func TestRelationshipDefinitionResource_ReadRemovesADeletedDefinition(t *testing.T) {
 	// The API returns null, with no error, for a definition deleted outside Terraform.
-	resp := readRelationshipDefinition(t, `null`)
+	resp, _ := readRelationshipDefinition(t, relationshipDefinitionID, `null`)
 	if resp.Diagnostics.HasError() {
 		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
 	}
@@ -125,8 +130,22 @@ func TestRelationshipDefinitionResource_ReadRemovesADeletedDefinition(t *testing
 	}
 }
 
+func TestRelationshipDefinitionResource_ReadRemovesADefinitionWithNoID(t *testing.T) {
+	// Earlier provider versions saved a deleted definition with a null ID, which made every plan fail.
+	resp, requests := readRelationshipDefinition(t, "", `null`)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected errors: %v", resp.Diagnostics.Errors())
+	}
+	if !resp.State.Raw.IsNull() {
+		t.Errorf("expected the definition with no ID to be removed from state, got %s", resp.State.Raw)
+	}
+	if requests != 0 {
+		t.Errorf("expected no API request for a definition with no ID, got %d", requests)
+	}
+}
+
 func TestRelationshipDefinitionResource_ReadKeepsAnExistingDefinition(t *testing.T) {
-	resp := readRelationshipDefinition(t, `{"id":"`+relationshipDefinitionID+`","alias":"infrastructure","name":"Infrastructure","description":"",`+
+	resp, _ := readRelationshipDefinition(t, relationshipDefinitionID, `{"id":"`+relationshipDefinitionID+`","alias":"infrastructure","name":"Infrastructure","description":"",`+
 		`"metadata":{"allowedCategories":[],"allowedTypes":["team"],"maxItems":0,"minItems":0},`+
 		`"componentType":{"id":"`+componentTypeID+`","aliases":["business_unit"]},"managementRules":[]}`)
 	if resp.Diagnostics.HasError() {
